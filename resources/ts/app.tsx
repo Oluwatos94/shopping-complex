@@ -12,10 +12,8 @@ createInertiaApp({
             page.default.layout || ((page: any) => <Layout children={page} />);
 
     return page;
-},
+    },
     setup({ el, App, props }) {
         createRoot(el).render(<App {...props} />);
     },
 }).then((r) => {});
-
-
