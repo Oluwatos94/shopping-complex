@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->unsignedBigInteger('reviewable_id'); // ID of the reviewed entity
             $table->string('reviewable_type'); // Type of the reviewed entity (e.g., Product, Vendor)
-            $table->text('review_text');
-            $table->unsignedTinyInteger('rating'); // 1-5 stars
+            $table->text('comment')->nullable();
+            $table->unsignedTinyInteger('rating');
             $table->timestamps();
         });
     }
