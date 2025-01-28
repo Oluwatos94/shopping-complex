@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('countries', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Country name
-            $table->string('code', 3)->unique(); // ISO alpha-3 code
+            $table->string('name')->unique();
+            $table->string('iso_code', 3)->unique(); // ISO alpha-3 code
             $table->string('phone_code', 5)->nullable(); // Country calling code
             $table->timestamps();
         });

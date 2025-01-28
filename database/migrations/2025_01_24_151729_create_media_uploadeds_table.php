@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('media_name');
             $table->string('media_path');
-            $table->string('media_type'); // e.g., 'image', 'video'
+            $table->string('media_size');
+            $table->string('media_type_id'); // e.g., 'image', 'video'
             $table->unsignedBigInteger('uploaded_by'); // User who uploaded the media
             $table->timestamps();
 
             $table->foreign('uploaded_by')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('media_type')->references('id')->on('media_types')->cascadeOnDelete();
         });
     }
 

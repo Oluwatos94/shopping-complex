@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('entity_type'); // e.g., 'Product', 'User'
             $table->unsignedBigInteger('entity_id'); // ID of the entity
-            $table->string('action'); // e.g., 'view', 'purchase'
+            $table->string('event_type'); // e.g., 'view', 'purchase'
             $table->ipAddress('ip_address')->nullable(); // IP of the user
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // Optional: linked user
             $table->timestamps();

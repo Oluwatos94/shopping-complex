@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->unsignedBigInteger('shareable_id'); // ID of the shared entity
             $table->string('shareable_type'); // Type of the shared entity (e.g., Product, Post)
+            $table->string('platform'); // e.g., Facebook, Twitter
             $table->timestamps();
         });
     }
