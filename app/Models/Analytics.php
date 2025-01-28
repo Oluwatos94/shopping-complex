@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Comment extends Model
+class Analytics extends Model
 {
     use HasFactory;
 
@@ -14,9 +14,10 @@ class Comment extends Model
      */
     protected $fillable = [
         'user_id',
-        'commentable_id',    // Polymorphic
-        'commentable_type',  // Polymorphic
-        'content',
+        'entity_type',    // e.g., 'Product', 'User'
+        'entity_id',      // ID of the entity
+        'event_type',     // e.g., 'view', 'click', 'purchase'
+        'ip_address',
     ];
 
     /**
@@ -25,10 +26,5 @@ class Comment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function commentable()
-    {
-        return $this->morphTo();
     }
 }

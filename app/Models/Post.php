@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Comment extends Model
+class Post extends Model
 {
     use HasFactory;
 
@@ -14,9 +14,9 @@ class Comment extends Model
      */
     protected $fillable = [
         'user_id',
-        'commentable_id',    // Polymorphic
-        'commentable_type',  // Polymorphic
+        'title',
         'content',
+        'published_at',
     ];
 
     /**
@@ -27,8 +27,18 @@ class Comment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function commentable()
+    public function comments()
     {
-        return $this->morphTo();
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function likes()
+    {
+        return $this->morphMany(Like::class, 'likable');
+    }
+
+    public function shares()
+    {
+        return $this->morphMany(Share::class, 'shared');
     }
 }
