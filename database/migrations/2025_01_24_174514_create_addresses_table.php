@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // Owner of the address
-            $table->string('address_line_1');
-            $table->string('address_line_2')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('street');
             $table->string('city');
             $table->string('state');
-            $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
-            $table->boolean('is_primary')->default(false); // Mark as primary address
+            $table->string('country');
+            $table->decimal('latitude', 10, 8); // e.g., 40.712776
+            $table->decimal('longitude', 11, 8); // e.g., -74.005974
             $table->timestamps();
         });
     }
