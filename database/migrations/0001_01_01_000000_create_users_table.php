@@ -15,10 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'vendor', 'buyer'])->default('buyer');
-            $table->string('phone_number');
+            $table->enum('role', ['customer', 'vendor', 'admin'])->default('customer');
+            $table->string('phone')->nullable();
+            $table->string('google_id')->nullable();
+            $table->string('x_id')->nullable();
+            $table->text('bio')->nullable(); // Vendor description
+            $table->string('business_name')->nullable(); // Vendor-specific
             $table->rememberToken();
             $table->timestamps();
         });

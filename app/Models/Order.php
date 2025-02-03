@@ -13,34 +13,35 @@ class Order extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'user_id',
-        'order_number',
-        'total_amount',
+        'customer_id',
+        'vendor_id',
         'status_id',
-        'payment_method',
-        'ordered_at',
+        'total',
     ];
 
     /**
      * Relationships.
      */
-    public function user()
+    // Relationships
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(User::class, 'vendor_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     public function products()
     {
-        return $this->hasMany(OrderProduct::class);
-    }
-
-    public function status()
-    {
-        return $this->belongsTo(OrderStatus::class, 'status_id');
-    }
-
-    public function statusHistory()
-    {
-        return $this->hasMany(OrderStatusHistory::class);
+        return $this->belongsToMany(Product::class, 'order_items')
+            ->withPivot('quantity', 'price')
+            ->withTimestamps();
     }
 }

@@ -16,10 +16,11 @@ class Product extends Model
         'name',
         'description',
         'price',
-        'quantity',
         'vendor_id',
-        'brand_id',
-        'product_type_id'
+        'category_id',
+        'slug',
+        'stock',
+        'is_active',
     ];
 
     /**
@@ -27,44 +28,38 @@ class Product extends Model
      */
     public function vendor()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(User::class, 'vendor_id');
     }
 
-    /**
-     * Relationships.
-     */
-    public function brand()
+    public function category()
     {
-        return $this->belongsTo(Brand::class);
+        return $this->belongsTo(Category::class);
     }
 
-    public function productType()
+    public function media()
     {
-        return $this->belongsTo(ProductType::class);
+        return $this->morphMany(Media::class, 'model');
     }
 
-    public function categories()
+    public function orders()
     {
-        return $this->belongsToMany(Category::class, 'product_category');
+        return $this->belongsToMany(Order::class, 'order_items')
+            ->withPivot('quantity', 'price')
+            ->withTimestamps();
     }
 
-    public function metaTags()
+    public function reviews()
     {
-        return $this->morphMany(MetaTag::class, 'taggable');
+        return $this->hasMany(Review::class);
     }
 
-    public function attributes()
+    public function basket()
     {
-        return $this->hasMany(ProductAttribute::class);
+        return $this->hasMany(CustomerBasket::class);
     }
 
-    public function featured()
+    public function wishlist()
     {
-        return $this->hasOne(ProductFeatured::class);
-    }
-
-    public function pricingBrands()
-    {
-        return $this->hasMany(ProductPricingBrand::class);
+        return $this->hasMany(CustomerWishlist::class);
     }
 }

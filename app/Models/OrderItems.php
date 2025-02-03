@@ -5,29 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderStatusHistory extends Model
+class OrderItem extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'order_id',
-        'status_id',
-        'changed_at',
+        'product_id',
+        'quantity',
+        'price',
     ];
 
-    /**
-     * Relationships.
-     */
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function status()
+    public function product()
     {
-        return $this->belongsTo(OrderStatus::class, 'status_id');
+        return $this->belongsTo(Product::class);
     }
 }

@@ -14,12 +14,12 @@ class Address extends Model
      */
     protected $fillable = [
         'user_id',
-        'address_line_1',
-        'address_line_2',
+        'street',
         'city',
         'state',
-        'country_id',
-        'is_primary',
+        'country',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -28,10 +28,5 @@ class Address extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function country()
-    {
-        return $this->belongsTo(Country::class);
     }
 }

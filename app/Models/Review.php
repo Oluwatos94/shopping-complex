@@ -13,9 +13,8 @@ class Review extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'user_id',
-        'reviewable_id',
-        'reviewable_type',
+        'customer_id',
+        'product_id',
         'rating',
         'comment',
     ];
@@ -23,13 +22,13 @@ class Review extends Model
     /**
      * Relationships.
      */
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
-    public function reviewable()
+    public function product()
     {
-        return $this->morphTo();
+        return $this->belongsTo(Product::class);
     }
 }

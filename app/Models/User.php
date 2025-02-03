@@ -21,9 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'phone_number',
+        'role',
+        'phone',
         'google_id',
-        'facebook_id',
+        'x_id',
+        'bio',
+        'business_name',
     ];
 
     /**
@@ -49,31 +52,49 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relationships.
-     */
-    public function roles()
+    // Relationships
+    public function address()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->hasOne(Address::class);
     }
 
-    public function vendor()
+    public function products()
     {
-        return $this->hasOne(Vendor::class);
+        return $this->hasMany(Product::class, 'vendor_id');
     }
 
-    public function buyer()
+    public function ordersAsCustomer()
     {
-        return $this->hasOne(Buyer::class);
+        return $this->hasMany(Order::class, 'customer_id');
     }
 
-    public function orders()
+    public function ordersAsVendor()
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Order::class, 'vendor_id');
     }
 
-    public function addresses()
+    public function reviews()
     {
-        return $this->hasMany(Address::class);
+        return $this->hasMany(Review::class, 'customer_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function basket()
+    {
+        return $this->hasMany(CustomerBasket::class);
+    }
+
+    public function wishlist()
+    {
+        return $this->hasMany(CustomerWishlist::class);
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'model');
     }
 }

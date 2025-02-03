@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('currencies', function (Blueprint $table) {
+        Schema::create('media', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 3)->unique(); // Currency code (e.g., 'USD', 'EUR')
-            $table->string('name'); // Currency name (e.g., 'United States Dollar')
-            $table->string('symbol')->nullable(); // Currency symbol (e.g., '$', '€')
+            $table->morphs('model'); // Links to products, users, etc.
+            $table->string('url');
+            $table->string('type')->nullable(); // e.g., 'image', 'logo'
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('currencies');
+        Schema::dropIfExists('media');
     }
 };
