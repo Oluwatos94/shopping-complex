@@ -1,22 +1,40 @@
 <?php
 
-namespace App\Models;
+namespace ModulesShoppingComplex\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use ModulesShoppingComplex\Customer\Models\CustomerBasket;
+use ModulesShoppingComplex\Customer\Models\CustomerWishlist;
+use ModulesShoppingComplex\Media\Models\Media;
+use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Notification\Models\Notification;
+use ModulesShoppingComplex\Order\Models\Order;
+use ModulesShoppingComplex\Product\Models\Product;
+use ModulesShoppingComplex\Review\Models\Review;
+use ModulesShoppingComplex\Shared\Models\Address;
 
+/**
+ * @property int $id
+ * @property int|null $role_id
+ * @property string $name
+ * @property string $email
+ * @property string|null $password
+ * @property string|null $phone
+ * @property string|null $google_id
+ * @property string|null $bio
+ * @property string|null $business_name
+ * @property string|null $session_id
+ * @property Carbon $created_at
+ * @property Carbon|null $updated_at
+ */
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasTableName;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    /** {@inheritdoc} */
     protected $fillable = [
         'name',
         'email',
@@ -24,26 +42,17 @@ class User extends Authenticatable
         'role',
         'phone',
         'google_id',
-        'x_id',
         'bio',
         'business_name',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    /** {@inheritdoc} */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    /** {@inheritdoc} */
     protected function casts(): array
     {
         return [
@@ -52,7 +61,6 @@ class User extends Authenticatable
         ];
     }
 
-    // Relationships
     public function address()
     {
         return $this->hasOne(Address::class);

@@ -1,25 +1,30 @@
 <?php
 
-namespace App\Models;
+namespace ModulesShoppingComplex\Product\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use ModulesShoppingComplex\Category\Models\Category;
+use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property int $category_id
+ * @property Carbon $created_at
+ * @property Carbon|null $updated_at
+ */
 class ProductCategory extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTableName;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    /** {@inheritdoc} */
     protected $fillable = [
         'product_id',
         'category_id',
     ];
 
-    /**
-     * Relationships.
-     */
     public function product()
     {
         return $this->belongsTo(Product::class);

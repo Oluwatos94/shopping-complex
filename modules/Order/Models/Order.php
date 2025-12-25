@@ -1,17 +1,28 @@
 <?php
 
-namespace App\Models;
+namespace ModulesShoppingComplex\Order\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Product\Models\Product;
+use ModulesShoppingComplex\User\Models\User;
 
+/**
+ * @property int $id
+ * @property int $customer_id
+ * @property int $vendor_id
+ * @property int|null $status_id
+ * @property float $total
+ * @property Carbon $created_at
+ * @property Carbon|null $updated_at
+ */
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTableName;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    /** {@inheritdoc} */
     protected $fillable = [
         'customer_id',
         'vendor_id',
@@ -19,10 +30,6 @@ class Order extends Model
         'total',
     ];
 
-    /**
-     * Relationships.
-     */
-    // Relationships
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');

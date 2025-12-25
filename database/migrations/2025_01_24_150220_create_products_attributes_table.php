@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Product\Models\ProductAttribute;
+use ModulesShoppingComplex\Product\Models\Product;
 
 return new class extends Migration
 {
@@ -11,9 +13,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products_attributes', function (Blueprint $table) {
+        Schema::create(ProductAttribute::getTableName(), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained(Product::getTableName())->cascadeOnDelete();
             $table->string('attribute_name'); // e.g., 'Color', 'Size'
             $table->string('attribute_value'); // e.g., 'Red', 'Large'
             $table->timestamps();
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products_attributes');
+        Schema::dropIfExists(ProductAttribute::getTableName());
     }
 };

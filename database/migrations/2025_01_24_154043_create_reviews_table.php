@@ -3,6 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Review\Models\Review;
+use ModulesShoppingComplex\User\Models\User;
+use ModulesShoppingComplex\Product\Models\Product;
 
 return new class extends Migration
 {
@@ -11,10 +14,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reviews', function (Blueprint $table) {
+        Schema::create(Review::getTableName(), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('customer_id')->constrained(User::getTableName())->onDelete('cascade');
+            $table->foreignId('product_id')->constrained(Product::getTableName())->onDelete('cascade');
             $table->integer('rating')->between(1, 5);
             $table->text('comment')->nullable();
             $table->timestamps();
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reviews');
+        Schema::dropIfExists(Review::getTableName());
     }
 };

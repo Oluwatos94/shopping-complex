@@ -1,17 +1,37 @@
 <?php
 
-namespace App\Models;
+namespace ModulesShoppingComplex\Product\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use ModulesShoppingComplex\Category\Models\Category;
+use ModulesShoppingComplex\Customer\Models\CustomerBasket;
+use ModulesShoppingComplex\Customer\Models\CustomerWishlist;
+use ModulesShoppingComplex\Media\Models\Media;
+use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Order\Models\Order;
+use ModulesShoppingComplex\Review\Models\Review;
+use ModulesShoppingComplex\User\Models\User;
 
+/**
+ * @property int $id
+ * @property int $vendor_id
+ * @property int $category_id
+ * @property string $name
+ * @property string $slug
+ * @property string $description
+ * @property float $price
+ * @property int $stock
+ * @property bool $is_active
+ * @property Carbon $created_at
+ * @property Carbon|null $updated_at
+ */
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTableName;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    /** {@inheritdoc} */
     protected $fillable = [
         'name',
         'description',
@@ -23,9 +43,6 @@ class Product extends Model
         'is_active',
     ];
 
-    /**
-     * Relationships.
-     */
     public function vendor()
     {
         return $this->belongsTo(User::class, 'vendor_id');

@@ -3,6 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Product\Models\Product;
+use ModulesShoppingComplex\User\Models\User;
+use ModulesShoppingComplex\Category\Models\Category;
 
 return new class extends Migration
 {
@@ -11,10 +14,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create(Product::getTableName(), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vendor_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
+            $table->foreignId('vendor_id')->constrained(User::getTableName())->onDelete('cascade');
+            $table->foreignId('category_id')->constrained(Category::getTableName())->onDelete('cascade');
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description');
@@ -30,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists(Product::getTableName());
     }
 };

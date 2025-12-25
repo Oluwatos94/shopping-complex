@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\User\Models\User;
 
 return new class extends Migration
 {
@@ -11,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create(User::getTableName(), function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -19,7 +20,6 @@ return new class extends Migration
             $table->enum('role', ['customer', 'vendor', 'admin'])->default('customer');
             $table->string('phone')->nullable();
             $table->string('google_id')->nullable();
-            $table->string('x_id')->nullable();
             $table->text('bio')->nullable(); // Vendor description
             $table->string('business_name')->nullable(); // Vendor-specific
             $table->rememberToken();
@@ -47,7 +47,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists(User::getTableName());
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
