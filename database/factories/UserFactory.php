@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\User\Models\User>
  */
 class UserFactory extends Factory
 {
@@ -19,7 +19,7 @@ class UserFactory extends Factory
     /**
      * Define the model's default state.
      *
-     * @return array<string, mixed>
+     * {@inheritdoc}
      */
     public function definition(): array
     {

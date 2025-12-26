@@ -3,6 +3,7 @@
 namespace ModulesShoppingComplex\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -32,7 +33,7 @@ use ModulesShoppingComplex\Shared\Models\Address;
  */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasTableName;
+    use HasFactory, HasTableName, Notifiable;
 
     /** {@inheritdoc} */
     protected $fillable = [

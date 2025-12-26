@@ -1,0 +1,79 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Analysis level (0-9, higher is stricter)
+    level: 5
+
+    # Paths to analyze
+    paths:
+        - app
+        - modules
+        - config
+        - database
+        - routes
+
+    # Exclude files/directories from analysis
+    excludePaths:
+        - */node_modules/*
+        - */vendor/*
+        - */storage/*
+        - */bootstrap/cache/*
+        - database/migrations/*_create_cache_table.php
+        - database/migrations/*_create_jobs_table.php
+        - database/migrations/0001_01_01_000001_create_cache_table.php
+        - database/migrations/0001_01_01_000002_create_jobs_table.php
+
+    # Laravel-specific options
+    checkModelProperties: true
+    checkOctaneCompatibility: false
+    noUnnecessaryCollectionCall: true
+    noUnnecessaryCollectionCallOnly: []
+    noUnnecessaryCollectionCallExcept: []
+
+    # Additional rules
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
+
+    # Ignore errors for specific patterns (use sparingly)
+    ignoreErrors:
+        # Ignore dynamic property access in models (common in Laravel)
+        -
+            message: '#Access to an undefined property [a-zA-Z0-9\\_]+::\$[a-zA-Z_]+#'
+            path: modules/*/Models/*.php
+        # Ignore undefined method on Illuminate\Database\Eloquent\Builder
+        -
+            message: '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+
+    # Universal object crates (allow dynamic properties)
+    universalObjectCratesClasses:
+        - stdClass
+
+    # Stub files for better type inference
+    stubFiles:
+        # Add custom stub files here if needed
+
+    # Bootstrap file (for custom autoloading, if needed)
+    bootstrapFiles:
+        # - phpstan-bootstrap.php
+
+    # Parallel processing (speeds up analysis)
+    parallel:
+        jobSize: 20
+        maximumNumberOfProcesses: 4
+        minimumNumberOfJobsPerProcess: 2
+
+    # Custom rules
+    customRulesetUsed: false
+
+    # Bleeding edge features (optional - enables experimental features)
+    # polluteScopeWithLoopInitialAssignments: true
+    # polluteScopeWithAlwaysIterableForeach: true
+    # checkAlwaysTrueCheckTypeFunctionCall: true
+    # checkAlwaysTrueInstanceof: true
+    # checkAlwaysTrueStrictComparison: true
+    # checkExplicitMixedMissingReturn: true
+    # checkFunctionNameCase: true
+    # checkInternalClassCaseSensitivity: true
+    # reportMaybesInMethodSignatures: true
+    # reportStaticMethodSignatures: true

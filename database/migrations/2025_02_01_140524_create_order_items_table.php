@@ -3,8 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Order\Models\OrderItem;
 use ModulesShoppingComplex\Order\Models\Order;
+use ModulesShoppingComplex\Order\Models\OrderItem;
 use ModulesShoppingComplex\Product\Models\Product;
 
 return new class extends Migration
