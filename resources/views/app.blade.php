@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Shopping Complex</title>
-        @routes
+
         @viteReactRefresh
-        @vite('resources/ts/app.tsx')
+        @vite(['resources/css/app.css', 'resources/ts/app.tsx'])
         @inertiaHead
     </head>
-    <body>
+    <body class="antialiased">
         @inertia
     </body>
 </html>
