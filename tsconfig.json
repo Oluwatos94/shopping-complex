@@ -1,18 +1,60 @@
 {
     "compilerOptions": {
-        "target": "esnext",
-        "module": "esnext",
-        "jsx": "react",
-        "strict": true,
-        "moduleResolution": "node",
+        // Language and Environment
+        "target": "ES2020",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "jsx": "react-jsx",
+
+        // Modules
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+
+        // Emit
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "noEmit": true,
+
+        // Interop Constraints
+        "isolatedModules": true,
+        "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
+
+        // Type Checking - Strict Mode
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "noUncheckedIndexedAccess": true,
+        "allowUnusedLabels": false,
+        "allowUnreachableCode": false,
+
+        // Completeness
+        "skipLibCheck": true,
+
+        // Path Mapping
         "baseUrl": ".",
         "paths": {
-        "@/*": ["resources/ts/*"]
+            "@/*": ["resources/ts/*"],
+            "@/components/*": ["resources/ts/components/*"],
+            "@/types": ["resources/ts/types"],
+            "@/types/*": ["resources/ts/types/*"],
+            "@/layouts/*": ["resources/ts/components/Layout/*"],
+            "@/pages/*": ["resources/ts/pages/*"],
+            "@/utils/*": ["resources/ts/utils/*"]
         }
     },
-    "include": ["resources/ts/**/*"],
-    "exclude": ["node_modules"]
+    "include": [
+        "resources/ts/**/*",
+        "resources/ts/**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules",
+        "public",
+        "vendor",
+        "storage"
+    ]
 }

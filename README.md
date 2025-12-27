@@ -1,66 +1,293 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Shopping Complex
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern marketplace platform connecting customers with vendors in real-time. Built with Laravel 11, React, TypeScript, and Inertia.js.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- 🛍️ **Real-time vendor connections** - Connect with vendors instantly like Uber/Bolt
+- **Category-based browsing** - Browse vendors by product categories
+- **Live chat** - Direct messaging between customers and vendors
+- **Order tracking** - Real-time order status updates
+- **Review system** - Customer reviews and ratings
+- **Modern UI** - Responsive design with TailwindCSS
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Backend
+- **Laravel 11** - PHP framework
+- **MySQL** - Database
 
-## Learning Laravel
+### Frontend
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Inertia.js** - SPA without API
+- **TailwindCSS** - Styling
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Prerequisites
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **PHP** >= 8.2
+- **Composer** >= 2.0
+- **Node.js** >= 18.0 (or **Bun** >= 1.0)
+- **MySQL** >= 8.0
+- **Git**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+### 1. Clone the Repository
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+git clone <repository-url>
+cd shopping-complex
+```
 
-### Premium Partners
+### 2. Install PHP Dependencies
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+```bash
+composer install
+```
 
-## Contributing
+### 3. Install Node Dependencies
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Using Bun (recommended):
+```bash
+bun install
+```
 
-## Code of Conduct
+Or using npm:
+```bash
+npm install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4. Environment Setup
 
-## Security Vulnerabilities
+Copy the environment file:
+```bash
+cp .env.example .env
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Generate application key:
+```bash
+php artisan key:generate
+```
 
-## License
+### 5. Database Setup
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+#### Option A: MySQL (Recommended for Production)
+
+Update `.env` file with your MySQL credentials:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=shopping_complex
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+Create the database:
+```bash
+# MySQL command line
+mysql -u your_username -p
+CREATE DATABASE shopping_complex;
+exit;
+```
+
+### 6. Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### 7. Seed Database (Optional)
+
+```bash
+php artisan db:seed
+```
+
+### 8. Build Frontend Assets
+
+Development mode with hot reload:
+```bash
+bun run dev
+# or
+npm run dev
+```
+
+Production build:
+```bash
+bun run build
+# or
+npm run build
+```
+
+## Running the Application
+
+### Option 1: Using Composer Dev Script (Recommended)
+
+This starts all services (Laravel server, Vite, queue worker, and logs):
+```bash
+composer dev
+```
+
+The application will be available at: **http://localhost:8000**
+
+### Option 2: Manual Start
+
+In separate terminal windows:
+
+**Terminal 1 - Laravel Server:**
+```bash
+php artisan serve
+```
+
+**Terminal 2 - Vite Dev Server:**
+```bash
+bun run dev
+```
+
+**Terminal 3 - Queue Worker (Optional):**
+```bash
+php artisan queue:work
+```
+
+## Project Structure
+
+```
+shopping-complex/
+├── app/
+│   └── Http/
+│       ├── Controllers/      # Controllers
+│       └── Middleware/        # Middleware
+├── modules/                   # Modular architecture
+│   ├── User/
+│   │   ├── Models/           # User model
+│   │   ├── Controllers/      # User controllers
+│   │   ├── Services/         # Business logic
+│   │   └── Repositories/     # Data access
+│   ├── Product/
+│   ├── Order/
+│   ├── Customer/
+│   ├── Review/
+│   ├── Category/
+│   ├── Media/
+│   └── Notification/
+├── database/
+│   ├── migrations/           # Database migrations
+│   └── seeders/              # Database seeders
+├── resources/
+│   ├── css/
+│   │   └── app.css           # Global styles
+│   ├── ts/                   # TypeScript source
+│   │   ├── components/       # React components
+│   │   │   ├── Layout/       # Layout components
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   └── ...
+│   │   ├── pages/            # Page components
+│   │   │   └── index.tsx     # Home page
+│   │   ├── types/            # TypeScript types
+│   │   │   ├── index.ts      # Central export
+│   │   │   ├── user.ts       # User types
+│   │   │   ├── product.ts    # Product types
+│   │   │   ├── common.ts     # Shared types
+│   │   │   └── landing.ts    # Landing types
+│   │   ├── app.tsx           # React entry point
+│   │   └── layouts.tsx       # Layout wrapper
+│   └── views/
+│       └── app.blade.php     # Main Blade template
+├── routes/
+│   ├── web.php               # Web routes
+│   └── api.php               # API routes
+├── public/                   # Public assets
+├── tailwind.config.js        # Tailwind configuration
+├── tsconfig.json             # TypeScript configuration
+├── vite.config.js            # Vite configuration
+├── phpstan.neon              # PHPStan configuration
+└── composer.json             # PHP dependencies
+```
+
+## TypeScript Configuration
+
+### Path Aliases
+
+The project uses path aliases for cleaner imports:
+
+```typescript
+// Instead of: import { User } from '../../../types/user'
+import { User } from '@/types';
+
+// Available aliases:
+import Header from '@/components/Header';
+import { BaseLayout } from '@/layouts/BaseLayout';
+import { Product } from '@/types';
+```
+
+### Configured Aliases
+
+- `@/*` → `resources/ts/*`
+- `@/components/*` → `resources/ts/components/*`
+- `@/types` → `resources/ts/types`
+- `@/layouts/*` → `resources/ts/components/Layout/*`
+- `@/pages/*` → `resources/ts/pages/*`
+
+## Code Quality
+
+### Run PHPStan
+
+```bash
+composer phpstan
+```
+
+### TypeScript Type Checking
+
+```bash
+bun run tsc --noEmit
+# or
+npm run tsc --noEmit
+```
+
+## Development Workflow
+
+### 1. Start Development Servers
+
+```bash
+composer dev
+```
+
+### 2. Make Changes
+
+- **Backend**: Edit files in `app/`, `modules/`, `routes/`
+- **Frontend**: Edit files in `resources/ts/`
+
+### 3. Hot Reload
+
+Vite will automatically reload changes. For backend changes, restart the server.
+
+### 4. Database Changes
+
+Create migration:
+```bash
+php artisan make:migration create_something_table
+```
+
+Run migrations:
+```bash
+php artisan migrate
+```
+## Color Scheme
+
+The application uses a custom color palette:
+
+- **Primary Olive**: `#86885e`
+- **Primary Dark**: `#272518`
+- **Primary Light**: `#cacfca`
+- **Primary Brown**: `#523026`
+- **Primary Peach**: `#d49f89`
+
+### Database connection errors
+
+Check MySQL is running:
+```bash
+sudo service mysql status
+sudo service mysql start
+```
