@@ -8,11 +8,22 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './resources/**/*.vue',
+        './resources/**/*.tsx',
+        './resources/**/*.ts',
     ],
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                primary: {
+                    olive: '#86885e',
+                    dark: '#272518',
+                    light: '#cacfca',
+                    brown: '#523026',
+                    peach: '#d49f89',
+                },
             },
         },
     },
