@@ -1,34 +1,36 @@
 <?php
 
-namespace ModulesShoppingComplex\Customer\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Product\Models\Product;
-use ModulesShoppingComplex\User\Models\User;
 
 /**
  * @property int $id
- * @property int $user_id
+ * @property int $order_id
  * @property int $product_id
+ * @property int $quantity
+ * @property float $price
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class CustomerWishlist extends Model
+class OrderItem extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'user_id',
+        'order_id',
         'product_id',
+        'quantity',
+        'price',
     ];
 
-    public function user()
+    public function order()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Order::class);
     }
 
     public function product()

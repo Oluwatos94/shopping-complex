@@ -1,6 +1,6 @@
 <?php
 
-namespace ModulesShoppingComplex\Product\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,25 +9,25 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
  * @property int $id
- * @property int $product_id
- * @property string $attribute_name
- * @property string $attribute_value
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class ProductAttribute extends Model
+class Category extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'product_id',
-        'attribute_name',
-        'attribute_value',
+        'name',
+        'description',
+        'slug',
     ];
 
-    public function product()
+    public function products()
     {
-        return $this->belongsTo(Product::class);
+        return $this->hasMany(Product::class);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace ModulesShoppingComplex\Media\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,27 +9,25 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
  * @property int $id
- * @property string $url
- * @property string $type
- * @property int $model_id
- * @property string $model_type
+ * @property int $product_id
+ * @property bool $is_featured
+ * @property Carbon|null $featured_at
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class Media extends Model
+class ProductFeatured extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'url',
-        'type',
-        'model_id',
-        'model_type',
+        'product_id',
+        'is_featured',
+        'featured_at',
     ];
 
-    public function model()
+    public function product()
     {
-        return $this->morphTo();
+        return $this->belongsTo(Product::class);
     }
 }

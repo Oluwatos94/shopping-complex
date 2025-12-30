@@ -1,37 +1,36 @@
 <?php
 
-namespace ModulesShoppingComplex\Order\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Product\Models\Product;
 
 /**
  * @property int $id
- * @property int $order_id
+ * @property int $customer_id
  * @property int $product_id
- * @property int $quantity
- * @property float $price
+ * @property int $rating
+ * @property string|null $comment
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class OrderItem extends Model
+class Review extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'order_id',
+        'customer_id',
         'product_id',
-        'quantity',
-        'price',
+        'rating',
+        'comment',
     ];
 
-    public function order()
+    public function customer()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
     public function product()

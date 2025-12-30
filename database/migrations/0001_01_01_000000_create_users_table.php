@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\User\Models\User;
+use ModulesShoppingComplex\Models\User;
 
 return new class extends Migration
 {
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->text('bio')->nullable(); // Vendor description
             $table->string('business_name')->nullable(); // Vendor-specific
             $table->rememberToken();
+            $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
 
