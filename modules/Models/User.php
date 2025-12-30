@@ -1,21 +1,21 @@
 <?php
 
-namespace ModulesShoppingComplex\User\Models;
+namespace ModulesShoppingComplex\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use ModulesShoppingComplex\Customer\Models\CustomerBasket;
-use ModulesShoppingComplex\Customer\Models\CustomerWishlist;
-use ModulesShoppingComplex\Media\Models\Media;
+use ModulesShoppingComplex\Models\CustomerBasket;
+use ModulesShoppingComplex\Models\CustomerWishlist;
+use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Notification\Models\Notification;
-use ModulesShoppingComplex\Order\Models\Order;
-use ModulesShoppingComplex\Product\Models\Product;
-use ModulesShoppingComplex\Review\Models\Review;
-use ModulesShoppingComplex\Shared\Models\Address;
+use ModulesShoppingComplex\Models\Notification;
+use ModulesShoppingComplex\Models\Order;
+use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Models\Review;
+use ModulesShoppingComplex\Models\Address;
 
 /**
  * @property int $id

@@ -1,30 +1,35 @@
 <?php
 
-namespace ModulesShoppingComplex\Product\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Product\Models\Product;
+use ModulesShoppingComplex\User\Models\User;
 
 /**
  * @property int $id
+ * @property int $user_id
  * @property int $product_id
- * @property bool $is_featured
- * @property Carbon|null $featured_at
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class ProductFeatured extends Model
+class CustomerWishlist extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
+        'user_id',
         'product_id',
-        'is_featured',
-        'featured_at',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function product()
     {

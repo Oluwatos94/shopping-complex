@@ -1,11 +1,12 @@
 <?php
 
-namespace ModulesShoppingComplex\Order\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Order\Models\OrderItem;
 use ModulesShoppingComplex\Product\Models\Product;
 use ModulesShoppingComplex\User\Models\User;
 

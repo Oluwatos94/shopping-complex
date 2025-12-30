@@ -1,13 +1,12 @@
 <?php
 
-namespace ModulesShoppingComplex\Shared\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 use ModulesShoppingComplex\User\Models\User;
-
 /**
  * @property int $id
  * @property int $user_id

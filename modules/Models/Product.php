@@ -1,16 +1,16 @@
 <?php
 
-namespace ModulesShoppingComplex\Product\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use ModulesShoppingComplex\Category\Models\Category;
-use ModulesShoppingComplex\Customer\Models\CustomerBasket;
-use ModulesShoppingComplex\Customer\Models\CustomerWishlist;
-use ModulesShoppingComplex\Media\Models\Media;
+use ModulesShoppingComplex\Models\Category;
+use ModulesShoppingComplex\Models\CustomerBasket;
+use ModulesShoppingComplex\Models\CustomerWishlist;
+use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Order\Models\Order;
+use ModulesShoppingComplex\Models\Order;
 use ModulesShoppingComplex\Review\Models\Review;
 use ModulesShoppingComplex\User\Models\User;
 

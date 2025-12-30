@@ -1,35 +1,33 @@
 <?php
 
-namespace ModulesShoppingComplex\Media\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-
+use ModulesShoppingComplex\Product\Models\Product;
 /**
  * @property int $id
- * @property string $url
- * @property string $type
- * @property int $model_id
- * @property string $model_type
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class Media extends Model
+class Category extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'url',
-        'type',
-        'model_id',
-        'model_type',
+        'name',
+        'description',
+        'slug',
     ];
 
-    public function model()
+    public function products()
     {
-        return $this->morphTo();
+        return $this->hasMany(Product::class);
     }
 }

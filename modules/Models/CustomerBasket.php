@@ -1,34 +1,40 @@
 <?php
 
-namespace ModulesShoppingComplex\Category\Models;
+namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\User\Models\User;
 use ModulesShoppingComplex\Product\Models\Product;
 
 /**
  * @property int $id
- * @property string $name
- * @property string $slug
- * @property string|null $description
+ * @property int $user_id
+ * @property int $product_id
+ * @property int $quantity
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
-class Category extends Model
+class CustomerBasket extends Model
 {
     use HasFactory, HasTableName;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'name',
-        'description',
-        'slug',
+        'user_id',
+        'product_id',
+        'quantity',
     ];
 
-    public function products()
+    public function user()
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(User::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 }
