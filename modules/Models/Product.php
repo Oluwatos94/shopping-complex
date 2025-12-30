@@ -5,14 +5,7 @@ namespace ModulesShoppingComplex\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use ModulesShoppingComplex\Models\Category;
-use ModulesShoppingComplex\Models\CustomerBasket;
-use ModulesShoppingComplex\Models\CustomerWishlist;
-use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Models\Order;
-use ModulesShoppingComplex\Review\Models\Review;
-use ModulesShoppingComplex\User\Models\User;
 
 /**
  * @property int $id

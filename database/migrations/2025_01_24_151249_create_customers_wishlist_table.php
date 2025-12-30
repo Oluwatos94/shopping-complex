@@ -3,9 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Customer\Models\CustomerWishlist;
-use ModulesShoppingComplex\User\Models\User;
-use ModulesShoppingComplex\Product\Models\Product;
+use ModulesShoppingComplex\Models\CustomerWishlist;
+use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Models\User;
 
 return new class extends Migration
 {

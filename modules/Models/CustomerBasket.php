@@ -6,8 +6,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\User\Models\User;
-use ModulesShoppingComplex\Product\Models\Product;
 
 /**
  * @property int $id

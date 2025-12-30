@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use ModulesShoppingComplex\User\Models\User;
+use ModulesShoppingComplex\Models\User;
 
 class DatabaseSeeder extends Seeder
 {

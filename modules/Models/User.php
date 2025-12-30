@@ -7,21 +7,14 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use ModulesShoppingComplex\Models\CustomerBasket;
-use ModulesShoppingComplex\Models\CustomerWishlist;
-use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
-use ModulesShoppingComplex\Models\Notification;
-use ModulesShoppingComplex\Models\Order;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\Address;
 
 /**
  * @property int $id
  * @property int|null $role_id
  * @property string $name
  * @property string $email
+ * @property Carbon|null $email_verified_at
  * @property string|null $password
  * @property string|null $phone
  * @property string|null $google_id
