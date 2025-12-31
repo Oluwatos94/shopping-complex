@@ -5,6 +5,7 @@ namespace ModulesShoppingComplex\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
@@ -19,10 +20,11 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property bool $is_active
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  */
 class Product extends Model
 {
-    use HasFactory, HasTableName;
+    use HasFactory, HasTableName, SoftDeletes;
 
     /** {@inheritdoc} */
     protected $fillable = [
