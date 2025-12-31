@@ -31,6 +31,7 @@ class ProductRepository
                 'id',
                 'name',
                 'price',
+                'stock',
                 'is_active',
                 'created_at',
             ])
