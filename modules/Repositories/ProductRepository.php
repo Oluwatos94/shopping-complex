@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
+use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,7 +13,7 @@ use ModulesShoppingComplex\Models\Product;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class ProductRepository
+class ProductRepository extends BasePageRepository
 {
     /**
      * Get all products with pagination and filtering

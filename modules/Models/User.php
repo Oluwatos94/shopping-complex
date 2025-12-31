@@ -12,6 +12,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
 /**
  * @property int $id
  * @property int|null $role_id
+ * @property string $role
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
