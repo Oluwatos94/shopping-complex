@@ -8,21 +8,21 @@ export interface Product {
     vendor_id: number;
     category_id: number;
     name: string;
+    slug: string;
     description: string;
     price: number;
     sale_price?: number;
-    stock_quantity: number;
-    sku: string;
+    stock: number;
     is_active: boolean;
     is_featured: boolean;
-    images: ProductImage[];
-    attributes: ProductAttribute[];
+    images?: ProductImage[];
     vendor?: Vendor;
     category?: Category;
-    reviews_count: number;
+    reviews_count?: number;
     average_rating: number;
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 /**
