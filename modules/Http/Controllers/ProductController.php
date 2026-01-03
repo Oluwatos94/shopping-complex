@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\ProductFormRequest;
+use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Services\ProductService;
 
@@ -19,21 +20,17 @@ class ProductController extends Controller
         private readonly ProductService $productService
     ) {}
 
-    /**
-     * Display a listing of the products (publicly accessible).
-     */
     public function index(): Response
     {
         $products = $this->productService->index(perPage: 20);
+        $categories = Category::withCount('products')->get();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
+            'categories' => $categories,
         ]);
     }
 
-    /**
-     * Show the form for creating a new product.
-     */
     public function create(): Response
     {
         $this->authorize('create', Product::class);
@@ -41,9 +38,6 @@ class ProductController extends Controller
         return Inertia::render('Products/Create');
     }
 
-    /**
-     * Store a newly created product in storage.
-     */
     public function store(ProductFormRequest $request): RedirectResponse
     {
         $this->authorize('create', Product::class);
@@ -57,9 +51,6 @@ class ProductController extends Controller
         return redirect()->route('products.show', $product->id)->with('success', 'Product created successfully.');
     }
 
-    /**
-     * Display the specified product (publicly accessible).
-     */
     public function show(Product $product): Response
     {
         $product = $this->productService->getProduct($product->id);
@@ -69,9 +60,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified product.
-     */
     public function edit(Product $product): Response
     {
         $this->authorize('update', $product);
@@ -81,9 +69,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified product in storage.
-     */
     public function update(ProductFormRequest $request, Product $product): RedirectResponse
     {
         $this->authorize('update', $product);
@@ -97,9 +82,6 @@ class ProductController extends Controller
             ->with('success', 'Product updated successfully.');
     }
 
-    /**
-     * Remove the specified product from storage.
-     */
     public function destroy(Product $product): RedirectResponse
     {
         $this->authorize('delete', $product);
