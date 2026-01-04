@@ -4,6 +4,7 @@ namespace ModulesShoppingComplex\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\Carbon;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -39,6 +40,7 @@ class User extends Authenticatable
         'google_id',
         'bio',
         'business_name',
+        'email_verified_at',
     ];
 
     /** {@inheritdoc} */
@@ -99,5 +101,13 @@ class User extends Authenticatable
     public function media()
     {
         return $this->morphMany(Media::class, 'model');
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
     }
 }
