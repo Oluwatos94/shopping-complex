@@ -2,7 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\AuthController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+
+// Authentication Routes (guest only with rate limiting)
+Route::middleware(['guest', 'throttle:guest'])->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:writes');
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:writes');
+});
+
+// Authenticated User Routes
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/user', [AuthController::class, 'user'])->name('user');
+});
 
 // Landing page - moderate rate limiting
 Route::middleware(['throttle:guest'])->group(function () {
