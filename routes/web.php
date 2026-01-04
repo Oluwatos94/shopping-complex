@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use ModulesShoppingComplex\Http\Controllers\AuthController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Http\Controllers\SocialAuthController;
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
@@ -11,6 +12,14 @@ Route::middleware(['guest', 'throttle:guest'])->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:writes');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:writes');
+
+    // Social Authentication - Redirect
+    Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+});
+
+// Social Authentication - Callback (no guest middleware to allow login)
+Route::middleware(['throttle:guest'])->group(function () {
+    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 // Authenticated User Routes

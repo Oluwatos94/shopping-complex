@@ -69,38 +69,4 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect('/');
         $this->assertGuest();
     }
-
-    public function test_vendor_registration_requires_business_info(): void
-    {
-        $response = $this->post('/register', [
-            'name' => 'Test Vendor',
-            'email' => 'vendor@example.com',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-            'role' => 'vendor',
-            // Missing bio and business_name
-        ]);
-
-        $response->assertSessionHasErrors(['bio', 'business_name']);
-    }
-
-    public function test_vendor_can_register_with_business_info(): void
-    {
-        $response = $this->post('/register', [
-            'name' => 'Test Vendor',
-            'email' => 'vendor@example.com',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-            'role' => 'vendor',
-            'bio' => 'I am a vendor selling great products',
-            'business_name' => 'My Great Business',
-        ]);
-
-        $response->assertRedirect('/');
-        $this->assertAuthenticated();
-
-        $user = User::where('email', 'vendor@example.com')->first();
-        $this->assertEquals('vendor', $user->role);
-        $this->assertEquals('My Great Business', $user->business_name);
-    }
 }

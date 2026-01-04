@@ -53,6 +53,22 @@ class UserRepository
     }
 
     /**
+     * Find a user by Google ID
+     *
+     * @param  array<string>  $relations
+     */
+    public function findByGoogleId(string $googleId, array $relations = []): ?User
+    {
+        $query = User::query()->where('google_id', $googleId);
+
+        if (! empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->first();
+    }
+
+    /**
      * Find users by role
      *
      * @param  string  $role  Role: 'customer', 'vendor', or 'admin'

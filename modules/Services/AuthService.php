@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
 
@@ -49,5 +50,49 @@ class AuthService
     public function verifyEmail(int $userId): User
     {
         return $this->userRepository->verifyEmail($userId);
+    }
+
+    /**
+     * Handle social login (Google, Facebook, etc.)
+     *
+     * This method will:
+     * 1. Check if user exists with the provider ID
+     * 2. If not, check if user exists with the email
+     * 3. If user exists with email, link the social account
+     * 4. If user doesn't exist, create a new user
+     */
+    public function handleSocialLogin(
+        string $provider,
+        string $providerId,
+        string $email,
+        string $name,
+        ?string $avatar = null
+    ): User {
+        $user = $this->userRepository->findByGoogleId($providerId);
+
+        if ($user) {
+            return $user;
+        }
+
+        $user = $this->userRepository->findByEmail($email);
+
+        if ($user) {
+            // Link the social account to existing user
+            $this->userRepository->update($user->id, [
+                'google_id' => $providerId,
+                'email_verified_at' => now(), // Auto-verify email for social login
+            ]);
+
+            return $user->fresh();
+        }
+
+        return $this->userRepository->create([
+            'name' => $name,
+            'email' => $email,
+            'google_id' => $providerId,
+            'role' => 'customer',
+            'email_verified_at' => now(),
+            'password' => Str::random(32),
+        ]);
     }
 }
