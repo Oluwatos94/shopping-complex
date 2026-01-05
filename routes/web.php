@@ -2,9 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use ModulesShoppingComplex\Http\Controllers\AuthController;
+use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
+use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
+use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
+use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
-use ModulesShoppingComplex\Http\Controllers\SocialAuthController;
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
@@ -12,6 +14,12 @@ Route::middleware(['guest', 'throttle:guest'])->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:writes');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:writes');
+
+    // Password Reset Routes
+    Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
     // Social Authentication - Redirect
     Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');

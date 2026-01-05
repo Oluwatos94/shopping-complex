@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ModulesShoppingComplex\Services;
+namespace ModulesShoppingComplex\Services\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
