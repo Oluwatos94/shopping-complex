@@ -22,7 +22,8 @@ class AuthenticationTest extends TestCase
             'role' => 'customer',
         ]);
 
-        $response->assertRedirect('/');
+        $response->assertRedirect('/email/verify');
+        $response->assertSessionHas('status');
         $this->assertAuthenticated();
     }
 

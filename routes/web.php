@@ -6,6 +6,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
+use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 
 // Authentication Routes (guest only with rate limiting)
@@ -34,6 +35,15 @@ Route::middleware(['throttle:guest'])->group(function () {
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/user', [AuthController::class, 'user'])->name('user');
+
+    // Email Verification Routes
+    Route::get('/email/verify', [VerifyEmailController::class, 'notice'])->name('verification.notice');
+    Route::post('/email/verification-notification', [VerifyEmailController::class, 'resend'])->name('verification.send');
+});
+
+// Email Verification (signed URL)
+Route::middleware(['auth', 'signed'])->group(function () {
+    Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verify'])->name('verification.verify');
 });
 
 // Landing page - moderate rate limiting
