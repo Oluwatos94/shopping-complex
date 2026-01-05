@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ModulesShoppingComplex\Http\Controllers;
+namespace ModulesShoppingComplex\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\LoginRequest;
 use ModulesShoppingComplex\Http\Requests\RegisterRequest;
-use ModulesShoppingComplex\Services\AuthService;
+use ModulesShoppingComplex\Services\Auth\AuthService;
 
 class AuthController extends Controller
 {

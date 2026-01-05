@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace ModulesShoppingComplex\Http\Controllers;
+namespace ModulesShoppingComplex\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use ModulesShoppingComplex\Services\AuthService;
+use ModulesShoppingComplex\Services\Auth\AuthService;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
 class SocialAuthController extends Controller
