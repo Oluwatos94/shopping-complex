@@ -13,11 +13,13 @@ use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\LoginRequest;
 use ModulesShoppingComplex\Http\Requests\RegisterRequest;
 use ModulesShoppingComplex\Services\Auth\AuthService;
+use ModulesShoppingComplex\Services\Auth\EmailVerificationService;
 
 class AuthController extends Controller
 {
     public function __construct(
-        private readonly AuthService $authService
+        private readonly AuthService $authService,
+        private readonly EmailVerificationService $emailVerificationService
     ) {}
 
     /**
@@ -57,9 +59,12 @@ class AuthController extends Controller
 
         $user = $this->authService->register($validated);
 
+        $this->emailVerificationService->sendVerificationEmail($user);
+
         $request->session()->regenerate();
 
-        return redirect('/')->with('success', 'Registration successful! Welcome to our platform.');
+        return redirect('/email/verify')
+            ->with('status', 'Registration successful! Please verify your email address.');
     }
 
     /**
