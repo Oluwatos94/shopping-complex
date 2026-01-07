@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Policies\ProductPolicy;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use ModulesShoppingComplex\Models\Product;
 
 class AuthServiceProvider extends ServiceProvider
