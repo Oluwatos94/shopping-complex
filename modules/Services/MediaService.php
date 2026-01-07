@@ -6,10 +6,12 @@ namespace ModulesShoppingComplex\Services;
 
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Repositories\MediaRepository;
 
@@ -20,7 +22,7 @@ class MediaService
     public function __construct(
         private readonly MediaRepository $mediaRepository
     ) {
-        $this->imageManager = new ImageManager(new Driver());
+        $this->imageManager = new ImageManager(new Driver);
     }
 
     /**
@@ -64,8 +66,8 @@ class MediaService
                 ];
             } catch (\Exception $e) {
                 // Cleanup: Delete the uploaded file since DB insert failed
-                if (Storage::disk('public')->exists($path)) {
-                    Storage::disk('public')->delete($path);
+                if (Storage::disk(config('media.storage_disk'))->exists($path)) {
+                    Storage::disk(config('media.storage_disk'))->delete($path);
                 }
 
                 throw $e;
@@ -126,8 +128,8 @@ class MediaService
             $media = $this->mediaRepository->find($mediaId);
 
             // Delete file from storage
-            if (Storage::disk('public')->exists($media->url)) {
-                Storage::disk('public')->delete($media->url);
+            if (Storage::disk(config('media.storage_disk'))->exists($media->url)) {
+                Storage::disk(config('media.storage_disk'))->delete($media->url);
             }
 
             // Delete database record
@@ -135,6 +137,12 @@ class MediaService
 
             return true;
         } catch (\Exception $e) {
+            Log::error('Failed to delete media', [
+                'media_id' => $mediaId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return false;
         }
     }
@@ -149,8 +157,8 @@ class MediaService
 
             foreach ($mediaItems as $media) {
                 // Delete file from storage
-                if (Storage::disk('public')->exists($media->url)) {
-                    Storage::disk('public')->delete($media->url);
+                if (Storage::disk(config('media.storage_disk'))->exists($media->url)) {
+                    Storage::disk(config('media.storage_disk'))->delete($media->url);
                 }
             }
 
@@ -174,15 +182,24 @@ class MediaService
         int $modelId,
         string $type = 'image'
     ): array {
-        // Upload new images first
-        $result = $this->uploadMultipleImages($files, $modelType, $modelId, $type);
+        return DB::transaction(function () use ($files, $modelType, $modelId, $type) {
+            // Get IDs of old media before uploading new ones
+            $oldMediaIds = $this->mediaRepository->getForModel($modelType, $modelId)
+                ->pluck('id')
+                ->toArray();
 
-        // Only delete old images if upload succeeded
-        if ($result['success']) {
-            $this->deleteAllMediaForModel($modelType, $modelId);
-        }
+            // Upload new images
+            $result = $this->uploadMultipleImages($files, $modelType, $modelId, $type);
 
-        return $result;
+            // Only delete old images if upload succeeded
+            if ($result['success'] && ! empty($oldMediaIds)) {
+                foreach ($oldMediaIds as $mediaId) {
+                    $this->deleteMedia($mediaId);
+                }
+            }
+
+            return $result;
+        });
     }
 
     /**
@@ -237,7 +254,6 @@ class MediaService
      */
     private function optimizeAndSave(UploadedFile $file, string $filename): string
     {
-        // Read and optimize image
         $image = $this->imageManager->read($file->getRealPath());
 
         // Resize if image is larger than max dimensions
@@ -257,15 +273,14 @@ class MediaService
 
         // Ensure directory exists
         $directory = dirname($filename);
-        if (! Storage::disk('public')->exists($directory)) {
-            Storage::disk('public')->makeDirectory($directory);
+        if (! Storage::disk(config('media.storage_disk'))->exists($directory)) {
+            Storage::disk(config('media.storage_disk'))->makeDirectory($directory);
         }
 
-        // Store to disk
-        $stored = Storage::disk('public')->put($filename, (string) $encoded);
+        $stored = Storage::disk(config('media.storage_disk'))->put($filename, (string) $encoded);
 
         if (! $stored) {
-            throw new \Exception('Failed to store image to disk');
+            throw new Exception('Failed to store image to disk');
         }
 
         return $filename;
@@ -276,18 +291,6 @@ class MediaService
      */
     public function getMediaUrl(Media $media): string
     {
-        return asset('storage/' . $media->url);
-    }
-
-    /**
-     * Get all media URLs for a model
-     *
-     * @return array<string>
-     */
-    public function getMediaUrlsForModel(string $modelType, int $modelId): array
-    {
-        $mediaItems = $this->mediaRepository->getForModel($modelType, $modelId);
-
-        return $mediaItems->map(fn (Media $media) => $this->getMediaUrl($media))->toArray();
+        return asset('storage/'.$media->url);
     }
 }

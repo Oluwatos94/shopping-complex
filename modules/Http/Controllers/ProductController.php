@@ -13,6 +13,7 @@ use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\ImageUploadRequest;
 use ModulesShoppingComplex\Http\Requests\ProductFormRequest;
 use ModulesShoppingComplex\Models\Category;
+use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
@@ -174,12 +175,12 @@ class ProductController extends Controller
     /**
      * Format media collection for JSON response
      *
-     * @param  iterable<Media>  $media
-     * @return array<array<string, mixed>>
+     * @param  iterable<int, Media>  $media
+     * @return array<int, array<string, mixed>>
      */
     private function formatMediaResponse(iterable $media, bool $includeType = false): array
     {
-        return collect($media)->map(function ($mediaItem) use ($includeType) {
+        return collect($media)->map(function (Media $mediaItem) use ($includeType) {
             $data = [
                 'id' => $mediaItem->id,
                 'url' => $this->mediaService->getMediaUrl($mediaItem),

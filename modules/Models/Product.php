@@ -22,6 +22,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \ModulesShoppingComplex\Models\Media> $media
  */
 class Product extends Model
 {

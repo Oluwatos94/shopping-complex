@@ -69,42 +69,6 @@ class MediaRepository
     }
 
     /**
-     * Create multiple media records
-     *
-     * @param  array<array<string, mixed>>  $dataArray
-     * @return Collection<int, Media>
-     */
-    public function createMultiple(array $dataArray): Collection
-    {
-        return DB::transaction(function () use ($dataArray) {
-            if (empty($dataArray)) {
-                return collect([]);
-            }
-
-            // Add timestamps to all records
-            $now = now();
-            $dataArray = array_map(fn ($data) => array_merge($data, [
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]), $dataArray);
-
-            // Bulk insert all records at once
-            Media::insert($dataArray);
-
-            // Fetch and return the created records
-            // We can identify them by created_at timestamp and model_id
-            $modelIds = array_unique(array_column($dataArray, 'model_id'));
-            $modelTypes = array_unique(array_column($dataArray, 'model_type'));
-
-            return Media::query()
-                ->where('created_at', $now)
-                ->whereIn('model_id', $modelIds)
-                ->whereIn('model_type', $modelTypes)
-                ->get();
-        });
-    }
-
-    /**
      * Delete a media record
      *
      * @throws ModelNotFoundException
