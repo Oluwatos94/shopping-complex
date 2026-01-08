@@ -20,6 +20,8 @@ return new class extends Migration
             $table->decimal('total', 10, 2);
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
             $table->timestamps();
+
+            $table->index(['customer_id', 'vendor_id'], 'orders_customer_vendor_index');
         });
     }
 
