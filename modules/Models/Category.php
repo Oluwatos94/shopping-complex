@@ -3,6 +3,7 @@
 namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
+use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
@@ -25,6 +26,14 @@ class Category extends Model
         'description',
         'slug',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): CategoryFactory
+    {
+        return CategoryFactory::new();
+    }
 
     public function products()
     {

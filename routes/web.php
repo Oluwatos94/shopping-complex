@@ -63,6 +63,7 @@ Route::middleware(['throttle:products'])->group(function () {
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::get('/products/{product}/images', [ProductController::class, 'getImages'])->name('products.images.index');
 });
 
 // Write operations with stricter rate limiting
@@ -71,4 +72,8 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::patch('/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Product Image Management
+    Route::post('/products/{product}/images', [ProductController::class, 'uploadImages'])->name('products.images.upload');
+    Route::delete('/products/{product}/images/{mediaId}', [ProductController::class, 'deleteImage'])->name('products.images.delete');
 });
