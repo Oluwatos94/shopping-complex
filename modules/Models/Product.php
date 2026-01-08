@@ -63,21 +63,9 @@ class Product extends Model
         return $this->morphMany(Media::class, 'model');
     }
 
-    public function orders()
-    {
-        return $this->belongsToMany(Order::class, 'order_items')
-            ->withPivot('quantity', 'price')
-            ->withTimestamps();
-    }
-
     public function reviews()
     {
         return $this->hasMany(Review::class);
-    }
-
-    public function basket()
-    {
-        return $this->hasMany(CustomerBasket::class);
     }
 
     public function wishlist()
