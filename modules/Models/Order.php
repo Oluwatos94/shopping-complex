@@ -3,6 +3,7 @@
 namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
+use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
@@ -11,7 +12,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int $id
  * @property int $customer_id
  * @property int $vendor_id
- * @property int|null $status_id
+ * @property string $status
  * @property float $total
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
@@ -24,9 +25,17 @@ class Order extends Model
     protected $fillable = [
         'customer_id',
         'vendor_id',
-        'status_id',
+        'status',
         'total',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): OrderFactory
+    {
+        return OrderFactory::new();
+    }
 
     public function customer()
     {

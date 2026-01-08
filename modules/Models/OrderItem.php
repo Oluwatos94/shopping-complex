@@ -3,6 +3,7 @@
 namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
+use Database\Factories\OrderItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
@@ -27,6 +28,14 @@ class OrderItem extends Model
         'quantity',
         'price',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): OrderItemFactory
+    {
+        return OrderItemFactory::new();
+    }
 
     public function order()
     {
