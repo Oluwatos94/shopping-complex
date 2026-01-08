@@ -68,16 +68,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Product::class, 'vendor_id');
     }
 
-    public function ordersAsCustomer()
-    {
-        return $this->hasMany(Order::class, 'customer_id');
-    }
-
-    public function ordersAsVendor()
-    {
-        return $this->hasMany(Order::class, 'vendor_id');
-    }
-
     public function reviews()
     {
         return $this->hasMany(Review::class, 'customer_id');
@@ -86,11 +76,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function notifications()
     {
         return $this->hasMany(Notification::class);
-    }
-
-    public function basket()
-    {
-        return $this->hasMany(CustomerBasket::class);
     }
 
     public function wishlist()
