@@ -21,7 +21,7 @@ function Register() {
                 {/* Left Half - Full width background, hidden on mobile */}
                 <div className="hidden md:flex absolute inset-0 bg-white/10 backdrop-blur-md p-8 lg:p-12 flex-col justify-end pb-16">
                     <div className="mb-10">
-                        <h1 className="text-3xl lg:text-5xl font-semibold text-white mb-4">
+                        <h1 className="text-3xl lg:text-5xl font-serif font-medium text-white mb-4">
                             Let's Get Started
                         </h1>
                         <p className="text-white/90 text-lg lg:text-2xl leading-relaxed max-w-md">
@@ -32,10 +32,10 @@ function Register() {
                 </div>
 
                 {/* Right Half - Sign up form (overlays the left half) */}
-                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-center gap-6 lg:gap-8">
+                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-center gap-4 sm:gap-5 lg:gap-6 overflow-y-auto">
                     {/* Header - aligned to top center */}
                     <div className="text-center">
-                        <h2 className="text-2xl lg:text-3xl font-semibold text-white mb-2">
+                        <h2 className="text-2xl lg:text-3xl font-serif font-medium text-white mb-2">
                             Let's get started
                         </h2>
                         <p className="text-white/80 text-base">
@@ -43,33 +43,38 @@ function Register() {
                         </p>
                     </div>
 
-                    <form className="space-y-5">
+                    <form className="space-y-4">
                         {/* Email Input */}
                         <div>
+                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                                Email
+                            </label>
                             <input
                                 type="email"
-                                placeholder="Email"
                                 className="w-full px-4 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
                             />
                         </div>
 
                         {/* Password Input */}
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Password"
-                                className="w-full px-4 py-3 pr-12 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                                aria-label={
-                                    showPassword
-                                        ? "Hide password"
-                                        : "Show password"
-                                }
-                            >
+                        <div>
+                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="w-full px-4 py-3 pr-12 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                                    aria-label={
+                                        showPassword
+                                            ? "Hide password"
+                                            : "Show password"
+                                    }
+                                >
                                 {showPassword ? (
                                     <svg
                                         className="w-5 h-5"
@@ -105,28 +110,32 @@ function Register() {
                                         />
                                     </svg>
                                 )}
-                            </button>
+                                </button>
+                            </div>
                         </div>
 
                         {/* Confirm Password Input */}
-                        <div className="relative">
-                            <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm Password"
-                                className="w-full px-4 py-3 pr-12 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-                            />
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowConfirmPassword(!showConfirmPassword)
-                                }
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                                aria-label={
-                                    showConfirmPassword
-                                        ? "Hide password"
-                                        : "Show password"
-                                }
-                            >
+                        <div>
+                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                                Confirm Password
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    className="w-full px-4 py-3 pr-12 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowConfirmPassword(!showConfirmPassword)
+                                    }
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                                    aria-label={
+                                        showConfirmPassword
+                                            ? "Hide password"
+                                            : "Show password"
+                                    }
+                                >
                                 {showConfirmPassword ? (
                                     <svg
                                         className="w-5 h-5"
@@ -162,7 +171,8 @@ function Register() {
                                         />
                                     </svg>
                                 )}
-                            </button>
+                                </button>
+                            </div>
                         </div>
 
                         {/* Create Account Button */}
@@ -178,7 +188,7 @@ function Register() {
                         Already have an account?{" "}
                         <Link
                             href="/login"
-                            className="font-semibold underline hover:text-white/80 transition-colors"
+                            className="font-semibold text-[#272518] hover:text-white/80 transition-colors"
                         >
                             Sign in
                         </Link>
