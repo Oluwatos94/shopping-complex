@@ -32,7 +32,7 @@ function Login() {
                 </div>
 
                 {/* Right Half - Sign up form (overlays the left half) */}
-                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-evenly lg:justify-between">
+                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-center gap-6 lg:gap-8">
                     {/* Header - aligned to top center */}
                     <div className="text-center">
                         <h2 className="text-2xl lg:text-3xl font-semibold text-white mb-2">
@@ -174,7 +174,7 @@ function Login() {
                         </button>
 
                         {/* Sign Up Link */}
-                        <p className="text-white text-center mt-3 lg:mt-2">
+                        <p className="text-white text-center mt-2 lg:mt-1">
                             Don't have an account?{" "}
                             <Link
                                 href="/register"
