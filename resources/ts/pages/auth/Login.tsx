@@ -3,7 +3,7 @@ import { useState } from "react";
 
 function Login() {
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     return (
         <div className="h-screen w-full fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
@@ -109,7 +109,7 @@ function Login() {
                         </div>
 
                         {/* Confirm Password Input */}
-                        <div className="relative">
+                        {/* <div className="relative">
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="Confirm Password"
@@ -163,7 +163,7 @@ function Login() {
                                     </svg>
                                 )}
                             </button>
-                        </div>
+                        </div> */}
 
                         {/* Sign In Button */}
                         <button
