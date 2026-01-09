@@ -32,9 +32,9 @@ function Register() {
                 </div>
 
                 {/* Right Half - Sign up form (overlays the left half) */}
-                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col">
+                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-center gap-6 lg:gap-8">
                     {/* Header - aligned to top center */}
-                    <div className="text-center mb-8">
+                    <div className="text-center">
                         <h2 className="text-2xl lg:text-3xl font-semibold text-white mb-2">
                             Let's get started
                         </h2>
@@ -43,7 +43,7 @@ function Register() {
                         </p>
                     </div>
 
-                    <form className="space-y-5 flex-1 flex flex-col justify-center">
+                    <form className="space-y-5">
                         {/* Email Input */}
                         <div>
                             <input
@@ -168,14 +168,13 @@ function Register() {
                         {/* Create Account Button */}
                         <button
                             type="submit"
-                            className="w-full py-3 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-6"
+                            className="w-full py-3 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-4"
                         >
                             Create account
                         </button>
-                    </form>
 
-                    {/* Sign In Link */}
-                    <p className="text-white text-center mt-6">
+                        {/* Sign In Link */}
+                        <p className="text-white text-center mt-2 lg:mt-1">
                         Already have an account?{" "}
                         <Link
                             href="/login"
@@ -183,10 +182,14 @@ function Register() {
                         >
                             Sign in
                         </Link>
-                    </p>
+                        </p>
+                    </form>
 
                     {/* Social Sign In */}
-                    <div className="mt-8">
+                    <div>
+                        <p className="text-white text-center mb-4">
+                            Or Sign Up With
+                        </p>
                         <div className="flex items-center justify-center gap-4">
                             {/* Google */}
                             <button
