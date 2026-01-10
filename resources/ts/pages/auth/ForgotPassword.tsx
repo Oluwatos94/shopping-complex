@@ -1,6 +1,15 @@
-import { Link } from "@inertiajs/react";
+import { Link , useForm, usePage } from "@inertiajs/react";
 
 function ForgotPassword() {
+  const { flash } = usePage().props as any;
+  const { data, setData, post, processing, errors } = useForm({
+      email: "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      post("/password/email");
+  };
     return (
         <div className="h-screen w-full fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
             {/* Background Image */}
@@ -35,31 +44,56 @@ function ForgotPassword() {
                         </p>
                     </div>
 
-                    <form className="space-y-5 flex-1 flex flex-col justify-center gap-6 lg:gap-8">
+                    {/* Success Message */}
+                    {flash?.status && (
+                        <div className="bg-green-500/20 border border-green-400 text-green-300 px-4 py-3 rounded-lg mb-4 text-center">
+                            {flash.status}
+                        </div>
+                    )}
+
+                    <form
+                        className="space-y-5 flex-1 flex flex-col justify-center gap-6 lg:gap-8"
+                        onSubmit={handleSubmit}
+                    >
                         {/* Email Input */}
                         <div>
                             <label className="block text-white text-xl font-serif font-medium mb-2 text-left">
                                 Email
-                            </label> 
+                            </label>
                             <input
                                 type="email"
-                                className="w-full px-4 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                                value={data.email}
+                                onChange={(e) =>
+                                    setData("email", e.target.value)
+                                }
+                                disabled={processing}
+                                className={`w-full px-4 py-3 bg-transparent border rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    errors.email
+                                        ? "border-red-400 focus:ring-red-400/50"
+                                        : "border-white focus:ring-white/50"
+                                }`}
                             />
+                            {errors.email && (
+                                <p className="text-red-400 text-sm mt-1">
+                                    {errors.email}
+                                </p>
+                            )}
                         </div>
 
                         {/* Send Email Button */}
                         <button
                             type="submit"
-                            className="w-full py-3 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-6"
+                            disabled={processing}
+                            className="w-full py-3 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Send Email
+                            {processing ? 'Sending...' : 'Send Email'}
                         </button>
 
                         {/* Sign In Link */}
                         <p className="text-white text-center mt-1">
                             <Link
                                 href="/login"
-                                className="font-semibold hover:text-white/80 transition-colors"
+                                className={`font-semibold transition-colors ${processing ? 'pointer-events-none opacity-50' : 'hover:text-white/80'}`}
                             >
                                 ← Back to Login
                             </Link>
