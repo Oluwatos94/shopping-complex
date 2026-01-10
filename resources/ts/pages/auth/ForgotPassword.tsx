@@ -17,7 +17,7 @@ function ForgotPassword() {
                 {/* Left Half - Full width background, hidden on mobile */}
                 <div className="hidden md:flex absolute inset-0 bg-white/10 backdrop-blur-md p-8 lg:p-12 flex-col justify-end pb-16">
                     <div className="mb-10">
-                        <h1 className="text-3xl lg:text-5xl font-semibold text-white mb-4">
+                        <h1 className="text-3xl lg:text-5xl font-serif font-semibold text-white mb-4">
                             Shopping Complex
                         </h1>
                     </div>
@@ -27,7 +27,7 @@ function ForgotPassword() {
                 <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col">
                     {/* Header - aligned to top center */}
                     <div className="text-center mb-8">
-                        <h2 className="text-2xl lg:text-3xl font-semibold text-white mb-2">
+                        <h2 className="text-2xl lg:text-3xl font-serif font-medium text-white mb-2">
                             Forget Password?
                         </h2>
                         <p className="text-white/80 text-base">
@@ -38,9 +38,11 @@ function ForgotPassword() {
                     <form className="space-y-5 flex-1 flex flex-col justify-center gap-6 lg:gap-8">
                         {/* Email Input */}
                         <div>
+                            <label className="block text-white text-xl font-serif font-medium mb-2 text-left">
+                                Email
+                            </label> 
                             <input
                                 type="email"
-                                placeholder="example@gmail.com"
                                 className="w-full px-4 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
                             />
                         </div>
