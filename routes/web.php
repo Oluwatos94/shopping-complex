@@ -8,6 +8,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Http\Controllers\VendorController;
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
@@ -57,6 +58,11 @@ Route::middleware(['throttle:guest'])->group(function () {
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+});
+
+// Public Vendor Routes (accessible to everyone with product-specific rate limiting)
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
 });
 
 // Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)

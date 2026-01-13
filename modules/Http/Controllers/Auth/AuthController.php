@@ -19,7 +19,8 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService,
-        private readonly EmailVerificationService $emailVerificationService
+        // Temporarily unused for testing - will be used when email verification is re-enabled
+        private readonly EmailVerificationService $emailVerificationService // @phpstan-ignore-line
     ) {}
 
     /**
@@ -27,7 +28,7 @@ class AuthController extends Controller
      */
     public function showLoginForm(): Response
     {
-        return Inertia::render('Auth/Login');
+        return Inertia::render('auth/Login');
     }
 
     /**
@@ -47,7 +48,7 @@ class AuthController extends Controller
      */
     public function showRegisterForm(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('auth/Register');
     }
 
     /**
@@ -55,16 +56,24 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        // ORIGINAL IMPLEMENTATION - Commented out for testing
+        // $validated = $request->validated();
+        // $user = $this->authService->register($validated);
+        // $this->emailVerificationService->sendVerificationEmail($user);
+        // $request->session()->regenerate();
+        // return redirect('/email/verify')
+        //     ->with('status', 'Registration successful! Please verify your email address.');
 
+        // TEMPORARY TESTING IMPLEMENTATION - Auto-login after registration
+        $validated = $request->validated();
         $user = $this->authService->register($validated);
 
-        $this->emailVerificationService->sendVerificationEmail($user);
-
+        // Auto-login the user for testing purposes
+        auth()->login($user);
         $request->session()->regenerate();
 
-        return redirect('/email/verify')
-            ->with('status', 'Registration successful! Please verify your email address.');
+        return redirect('/')
+            ->with('success', 'Registration successful! You are now logged in.');
     }
 
     /**

@@ -43,7 +43,7 @@ const VendorCallToAction: React.FC = () => {
                                 <div>
                                     <h4 className="font-semibold text-white text-lg mb-1">No Follower Barriers</h4>
                                     <p className="text-primary-light">
-                                        Unlike Instagram, TikTok, Facebook, or X—your reach isn't limited by followers or engagement
+                                        Your visibility is not limited by followers or engagement
                                     </p>
                                 </div>
                             </div>

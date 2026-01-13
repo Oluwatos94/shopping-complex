@@ -30,12 +30,23 @@ function Register() {
             {/* Modal Container */}
             <div className="relative z-10 w-full max-w-7xl h-[85vh] rounded-2xl overflow-hidden border border-white/50">
                 {/* Left Half - Full width background, hidden on mobile */}
-                <div className="hidden md:flex absolute inset-0 bg-white/10 backdrop-blur-md p-8 lg:p-12 flex-col justify-end pb-16">
+                <div className="hidden md:flex absolute inset-0 bg-white/10 backdrop-blur-md p-8 lg:p-12 flex-col justify-between">
+                    {/* Logo at top */}
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="/logo/dark-mode-logo.svg"
+                            alt="Shopping Complex Logo"
+                            className="h-16 w-auto"
+                        />
+                        <h2 className="text-2xl font-bold text-white">Shopping Complex</h2>
+                    </div>
+
+                    {/* Content at bottom */}
                     <div className="mb-10">
                         <h1 className="text-3xl lg:text-5xl font-serif font-medium text-white mb-4">
                             Let's Get Started
                         </h1>
-                        <p className="text-white/90 text-lg lg:text-2xl leading-relaxed max-w-md">
+                        <p className="text-white/90 text-lg lg:text-xl leading-relaxed max-w-md">
                             Join us and enjoy seamless shopping, exclusive
                             offers, and easy access to your favorite stores.
                         </p>
@@ -43,21 +54,34 @@ function Register() {
                 </div>
 
                 {/* Right Half - Sign up form (overlays the left half) */}
-                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-12 rounded-l-2xl flex flex-col justify-center gap-4 sm:gap-5 lg:gap-6 overflow-y-auto">
-                    {/* Header - aligned to top center */}
-                    <div className="text-center">
-                        <h2 className="text-2xl lg:text-3xl font-serif font-medium text-white mb-2">
-                            Let's get started
-                        </h2>
-                        <p className="text-white/80 text-base">
-                            Register Your Account
-                        </p>
-                    </div>
+                <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-[#43442F]/60 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-l-2xl flex items-center justify-center overflow-hidden">
+                    <div className="w-full max-w-md space-y-4">
+                        {/* Header - aligned to top center */}
+                        <div className="text-center mb-4">
+                            <h2 className="text-2xl lg:text-3xl font-serif font-medium text-white mb-2">
+                                Create an account
+                            </h2>
+                            <p className="text-white/80 text-base">
+                                Join thousands of shoppers discovering nearby vendors
+                            </p>
+                        </div>
 
-                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        <form className="space-y-3.5" onSubmit={handleSubmit}>
+                        {/* Global error messages */}
+                        {Object.keys(errors).length > 0 && (
+                            <div className="bg-red-500/20 border border-red-400 text-red-300 px-4 py-3 rounded-lg">
+                                <p className="font-semibold mb-1">Please fix the following errors:</p>
+                                <ul className="list-disc list-inside text-sm">
+                                    {Object.values(errors).map((error, index) => (
+                                        <li key={index}>{error}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Email Input */}
                         <div>
-                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                            <label className="block text-white text-sm font-medium mb-1.5 text-left">
                                 Email
                             </label>
                             <input
@@ -67,17 +91,20 @@ function Register() {
                                     setData("email", e.target.value)
                                 }
                                 disabled={processing}
-                                className={`w-full px-4 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                className={`w-full px-4 py-2.5 bg-transparent border rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                     errors.email
-                                        ? "border-red-500"
+                                        ? "border-red-400"
                                         : "border-white"
                                 }`}
                             />
+                            {errors.email && (
+                                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                            )}
                         </div>
 
                         {/* Password Input */}
                         <div>
-                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                            <label className="block text-white text-sm font-medium mb-1.5 text-left">
                                 Password
                             </label>
                             <div className="relative">
@@ -88,17 +115,12 @@ function Register() {
                                         setData("password", e.target.value)
                                     }
                                     disabled={processing}
-                                    className={`w-full px-4 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                                        errors.email
-                                            ? "border-red-500"
+                                    className={`w-full px-4 py-2.5 pr-12 bg-transparent border rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        errors.password
+                                            ? "border-red-400"
                                             : "border-white"
                                     }`}
                                 />
-                                {errors.password && (
-                                    <p className="text-red-400 text-sm mt-1">
-                                        {errors.password}
-                                    </p>
-                                )}
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -148,11 +170,16 @@ function Register() {
                                     )}
                                 </button>
                             </div>
+                            {errors.password && (
+                                <p className="text-red-400 text-sm mt-1">
+                                    {errors.password}
+                                </p>
+                            )}
                         </div>
 
                         {/* Confirm Password Input */}
                         <div>
-                            <label className="block text-white text-lg font-serif font-medium mb-2 text-left">
+                            <label className="block text-white text-sm font-medium mb-1.5 text-left">
                                 Confirm Password
                             </label>
                             <div className="relative">
@@ -167,7 +194,11 @@ function Register() {
                                         setData("password_confirmation", e.target.value)
                                     }
                                     disabled={processing}
-                                    className="w-full px-4 py-3 pr-12 bg-transparent border border-white rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={`w-full px-4 py-2.5 pr-12 bg-transparent border rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        errors.password_confirmation
+                                            ? "border-red-400"
+                                            : "border-white"
+                                    }`}
                                 />
                                 <button
                                     type="button"
@@ -220,13 +251,18 @@ function Register() {
                                     )}
                                 </button>
                             </div>
+                            {errors.password_confirmation && (
+                                <p className="text-red-400 text-sm mt-1">
+                                    {errors.password_confirmation}
+                                </p>
+                            )}
                         </div>
 
                         {/* Create Account Button */}
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full py-3 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-2.5 bg-[#272518] text-white font-semibold rounded-3xl hover:bg-[#272518]/90 transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -257,7 +293,7 @@ function Register() {
                         </button>
 
                         {/* Sign In Link */}
-                        <p className="text-white text-center mt-2 lg:mt-1">
+                        <p className="text-white text-center mt-1 text-sm">
                             Already have an account?{" "}
                             <Link
                                 href="/login"
@@ -270,7 +306,7 @@ function Register() {
 
                     {/* Social Sign In */}
                     <div>
-                        <p className="text-white text-center mb-4">
+                        <p className="text-white text-center mb-3 text-sm">
                             Or Sign Up With
                         </p>
                         <div className="flex items-center justify-center gap-4">
@@ -331,6 +367,7 @@ function Register() {
                                 </svg>
                             </button>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

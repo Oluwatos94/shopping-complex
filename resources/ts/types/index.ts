@@ -7,6 +7,8 @@ export * from './user';
 
 export * from './product';
 
+export * from './vendor';
+
 export * from './common';
 
 export * from './landing';
