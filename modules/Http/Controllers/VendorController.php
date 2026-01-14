@@ -23,7 +23,7 @@ class VendorController extends Controller
 
         // Transform vendor data for frontend to match TypeScript interfaces
         $transformedVendors = $vendors->through(function ($vendor) {
-            $profileImage = $vendor->media->first()->file_path ?? null;
+            $profileImage = $vendor->media->first()?->file_path;
 
             return [
                 // BaseUser fields

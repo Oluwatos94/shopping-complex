@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { PaginatedVendors, VendorFilters, UserLocation } from '@/types';
+import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from '@/types';
 import { VendorGrid } from '@/components/Vendors';
 import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
 
@@ -15,7 +15,7 @@ interface VendorListingProps {
 export default function VendorListing({ vendors, filters, auth }: VendorListingProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [radius, setRadius] = useState(filters.radius || 5);
-    const [sortBy, setSortBy] = useState(filters.sort_by || 'distance');
+    const [sortBy, setSortBy] = useState<VendorSortOption>(filters.sort_by || 'distance');
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
@@ -53,7 +53,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
     };
 
     // Handle search with filters
-    const handleSearch = (additionalFilters: Partial<VendorFilters> = {}) => {
+    const handleSearch = useCallback((additionalFilters: Partial<VendorFilters> & { page?: number } = {}) => {
         router.get(
             '/vendors',
             {
@@ -69,7 +69,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                 preserveScroll: true,
             }
         );
-    };
+    }, [searchQuery, radius, sortBy, userLocation]);
 
     // Auto-request location on mount
     useEffect(() => {
@@ -81,7 +81,8 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                 longitude: filters.longitude,
             });
         }
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters.latitude, filters.longitude]);
 
     return (
         <AuthenticatedLayout user={auth?.user}>
@@ -162,7 +163,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                                 <select
                                     id="sort"
                                     value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value as any)}
+                                    onChange={(e) => setSortBy(e.target.value as VendorSortOption)}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D49F89] focus:border-[#D49F89] transition-all duration-200 shadow-sm hover:border-gray-400 bg-white"
                                 >
                                     <option value="distance">Distance</option>
@@ -276,7 +277,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                             {[...Array(vendors.last_page)].map((_, i) => (
                                 <button
                                     key={i}
-                                    onClick={() => handleSearch({ ...filters, page: i + 1 } as any)}
+                                    onClick={() => handleSearch({ page: i + 1 })}
                                     className={`px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-sm ${
                                         vendors.current_page === i + 1
                                             ? 'bg-[#D49F89] text-[#272518] shadow-md hover:bg-[#c48f79]'

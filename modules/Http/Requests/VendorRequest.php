@@ -53,6 +53,7 @@ class VendorRequest extends BaseFormRequest
             'search' => $this->input('search'),
             'sort_by' => $this->input('sort_by', 'distance'),
             'verified_only' => $this->boolean('verified_only', false),
+            'page' => $this->input('page', 1),
         ];
     }
 }

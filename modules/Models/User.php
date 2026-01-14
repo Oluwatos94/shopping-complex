@@ -25,6 +25,14 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property string|null $session_id
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Review> $reviews
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CustomerWishlist> $wishlist
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
+ * @property-read Address|null $address
+ * @property-read int|null $products_count
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
