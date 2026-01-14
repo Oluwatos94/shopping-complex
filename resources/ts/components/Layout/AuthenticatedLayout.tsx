@@ -4,7 +4,7 @@ import { User } from '@/types';
 
 export interface AuthenticatedLayoutProps {
     children: ReactNode;
-    user: User;
+    user?: User | null;
     title?: string;
     description?: string;
     className?: string;
@@ -26,21 +26,38 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
 
             <div className="min-h-screen bg-gray-100">
                 {/* Top Navigation Bar */}
-                <nav className="bg-white shadow-sm">
-                    <div className="container mx-auto px-4 py-4">
+                <nav className="bg-white shadow-sm border-b border-gray-200">
+                    <div className="container mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <h1 className="text-xl font-bold text-primary-dark">
+                            <div className="flex items-center space-x-3">
+                                {/* Logo */}
+                                <img
+                                    src="/logo/dark-mode-logo.svg"
+                                    alt="Shopping Complex"
+                                    className="h-10 w-auto"
+                                />
+                                <h1 className="text-xl font-bold text-gray-900">
                                     Shopping Complex
                                 </h1>
                             </div>
 
                             {/* User Menu */}
                             <div className="flex items-center space-x-4">
-                                <span className="text-sm text-gray-600">
-                                    Welcome, {user.name}
-                                </span>
-                                {/* User dropdown menu will go here */}
+                                {user ? (
+                                    <>
+                                        <span className="text-sm text-gray-600">
+                                            Welcome, <span className="font-medium text-gray-900">{user.name}</span>
+                                        </span>
+                                        {/* User dropdown menu will go here */}
+                                    </>
+                                ) : (
+                                    <a
+                                        href="/login"
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                                    >
+                                        Sign In
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>

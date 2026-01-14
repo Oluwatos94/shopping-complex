@@ -15,10 +15,12 @@ const Header: React.FC = () => {
         <header className="bg-primary-dark shadow-md sticky top-0 z-50">
             <nav className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
-                    <Link href="/" className="flex items-center space-x-2">
-                        <div className="bg-primary-olive text-white font-bold text-2xl px-4 py-2 rounded-lg">
-                            SC
-                        </div>
+                    <Link href="/" className="flex items-center space-x-3">
+                        <img
+                            src="/logo/dark-mode-logo.svg"
+                            alt="Shopping Complex Logo"
+                            className="h-12 w-auto"
+                        />
                         <span className="text-primary-light font-bold text-xl hidden sm:block">
                             Shopping Complex
                         </span>

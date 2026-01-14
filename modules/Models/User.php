@@ -25,6 +25,14 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property string|null $session_id
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Review> $reviews
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CustomerWishlist> $wishlist
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
+ * @property-read Address|null $address
+ * @property-read int|null $products_count
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -63,26 +71,41 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Address::class);
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function products()
     {
         return $this->hasMany(Product::class, 'vendor_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function reviews()
     {
         return $this->hasMany(Review::class, 'customer_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function notifications()
     {
         return $this->hasMany(Notification::class);
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function wishlist()
     {
         return $this->hasMany(CustomerWishlist::class);
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
     public function media()
     {
         return $this->morphMany(Media::class, 'model');
