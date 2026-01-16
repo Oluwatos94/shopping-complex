@@ -25,7 +25,6 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property string|null $session_id
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
- *
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Review> $reviews
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
