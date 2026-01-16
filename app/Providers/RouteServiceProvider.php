@@ -119,5 +119,17 @@ class RouteServiceProvider extends ServiceProvider
                     ], 429, $headers);
                 });
         });
+
+        // Notification actions - prevent abuse of mark-all-read and bulk operations
+        RateLimiter::for('notifications', function (Request $request) {
+            return Limit::perMinute(30)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function (array $headers) {
+                    return response()->json([
+                        'message' => 'Too many notification actions. Please slow down.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429, $headers);
+                });
+        });
     }
 }

@@ -7,6 +7,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
+use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 
@@ -82,4 +83,18 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     // Product Image Management
     Route::post('/products/{product}/images', [ProductController::class, 'uploadImages'])->name('products.images.upload');
     Route::delete('/products/{product}/images/{mediaId}', [ProductController::class, 'deleteImage'])->name('products.images.delete');
+});
+
+Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {
+    Route::patch('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+});
+
+// Notification Inertia Pages
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/notifications/preferences', [NotificationController::class, 'preferencesPage'])->name('notifications.preferences');
+    Route::post('/notifications/preferences/{type}', [NotificationController::class, 'updatePreference'])
+        ->where('type', 'message_received|vendor_contact_request|product_updated|system_alert')
+        ->name('notifications.preferences.update');
 });
