@@ -131,5 +131,21 @@ class RouteServiceProvider extends ServiceProvider
                     ], 429, $headers);
                 });
         });
+
+        // Chat actions - rate limit for messaging
+        RateLimiter::for('chat', function (Request $request) {
+            return [
+                // Burst limit: 5 messages per second
+                Limit::perSecond(5)->by($request->user()?->id ?: $request->ip()),
+                // Sustained limit: 60 messages per minute
+                Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()),
+            ];
+        });
+
+        // Typing indicator - more lenient rate limit
+        RateLimiter::for('typing', function (Request $request) {
+            return Limit::perSecond(2)
+                ->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

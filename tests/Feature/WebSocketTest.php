@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use Tests\TestCase;
@@ -162,10 +162,16 @@ class WebSocketTest extends TestCase
 
     public function test_users_can_authorize_for_chat_channel_if_participants(): void
     {
+        // Create a conversation between customer and vendor
+        $conversation = Conversation::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
         // Customer should be able to authorize
         $response = $this->actingAs($this->customer)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->customer->id}.{$this->vendor->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
@@ -174,7 +180,7 @@ class WebSocketTest extends TestCase
         // Vendor should be able to authorize
         $response = $this->actingAs($this->vendor)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->customer->id}.{$this->vendor->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
@@ -183,9 +189,16 @@ class WebSocketTest extends TestCase
 
     public function test_users_cannot_authorize_for_chat_channel_if_not_participants(): void
     {
+        // Create a conversation between customer and vendor
+        $conversation = Conversation::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        // Other vendor should not be able to authorize
         $response = $this->actingAs($this->otherVendor)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->customer->id}.{$this->vendor->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
@@ -200,9 +213,16 @@ class WebSocketTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->customer)
+        // Create a conversation where the customer is a participant
+        $conversation = Conversation::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        // Other customer should not be able to access this conversation
+        $response = $this->actingAs($otherCustomer)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->customer->id}.{$otherCustomer->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
@@ -211,9 +231,16 @@ class WebSocketTest extends TestCase
 
     public function test_vendors_cannot_chat_with_each_other(): void
     {
-        $response = $this->actingAs($this->vendor)
+        // Create a conversation with vendor as participant
+        $conversation = Conversation::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        // Other vendor should not be able to access this conversation
+        $response = $this->actingAs($this->otherVendor)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->vendor->id}.{$this->otherVendor->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
@@ -228,10 +255,16 @@ class WebSocketTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        // Customer tries to chat with vendor they never ordered from
-        $response = $this->actingAs($this->customer)
+        // Create a conversation between customer and vendor
+        $conversation = Conversation::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        // Random vendor (not participant) tries to access the conversation
+        $response = $this->actingAs($randomVendor)
             ->postJson('/broadcasting/auth', [
-                'channel_name' => "private-chat.{$this->customer->id}.{$randomVendor->id}",
+                'channel_name' => "private-conversation.{$conversation->id}",
                 'socket_id' => '123.456',
             ]);
 
