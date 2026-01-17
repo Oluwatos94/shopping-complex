@@ -7,6 +7,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
+use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
@@ -97,4 +98,27 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::post('/notifications/preferences/{type}', [NotificationController::class, 'updatePreference'])
         ->where('type', 'message_received|vendor_contact_request|product_updated|system_alert')
         ->name('notifications.preferences.update');
+});
+
+// Chat API Routes
+Route::middleware(['auth', 'throttle:chat'])->prefix('api/chat')->group(function () {
+    Route::get('/conversations', [ChatController::class, 'index'])->name('chat.conversations');
+    Route::post('/conversations', [ChatController::class, 'store'])->name('chat.conversations.store');
+    Route::get('/conversations/{conversation}', [ChatController::class, 'show'])->name('chat.conversations.show');
+    Route::get('/conversations/{conversation}/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('chat.messages.send');
+    Route::patch('/conversations/{conversation}/messages/read', [ChatController::class, 'markAsRead'])->name('chat.messages.read');
+    Route::get('/conversations/{conversation}/messages/poll', [ChatController::class, 'pollMessages'])->name('chat.messages.poll');
+    Route::get('/unread-count', [ChatController::class, 'unreadCount'])->name('chat.unread');
+});
+
+// Typing indicator with separate rate limit
+Route::middleware(['auth', 'throttle:typing'])->prefix('api/chat')->group(function () {
+    Route::post('/conversations/{conversation}/typing', [ChatController::class, 'typing'])->name('chat.typing');
+});
+
+// Chat Inertia Pages
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/chat', [ChatController::class, 'chatPage'])->name('chat.index');
+    Route::get('/chat/{conversation}', [ChatController::class, 'conversationPage'])->name('chat.conversation');
 });
