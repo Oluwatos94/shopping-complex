@@ -63,11 +63,6 @@ class Product extends Model
         return $this->morphMany(Media::class, 'model');
     }
 
-    public function reviews()
-    {
-        return $this->hasMany(Review::class);
-    }
-
     public function wishlist()
     {
         return $this->hasMany(CustomerWishlist::class);

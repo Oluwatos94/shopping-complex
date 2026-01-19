@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
@@ -79,11 +80,33 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Reviews written by this user (as customer).
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function reviews()
     {
         return $this->hasMany(Review::class, 'customer_id');
+    }
+
+    /**
+     * Reviews received by this user (as vendor).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function receivedReviews()
+    {
+        return $this->hasMany(Review::class, 'vendor_id');
+    }
+
+    /**
+     * Get approved reviews received by this vendor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function approvedReviews()
+    {
+        return $this->receivedReviews()->where('status', ReviewStatusEnum::APPROVED);
     }
 
     /**
