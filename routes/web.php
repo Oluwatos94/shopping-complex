@@ -10,6 +10,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Http\Controllers\ReviewController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 
 // Authentication Routes (guest only with rate limiting)
@@ -121,4 +122,34 @@ Route::middleware(['auth', 'throttle:typing'])->prefix('api/chat')->group(functi
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/chat', [ChatController::class, 'chatPage'])->name('chat.index');
     Route::get('/chat/{conversation}', [ChatController::class, 'conversationPage'])->name('chat.conversation');
+});
+
+// Review Routes - Public (view vendor reviews)
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/vendors/{vendorId}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/vendors/{vendorId}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
+});
+
+// Review Routes - Authenticated
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/vendors/{vendorId}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+    Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my');
+    Route::get('/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
+    Route::get('/vendor/reviews', [ReviewController::class, 'vendorReviews'])->name('vendor.reviews');
+});
+
+// Review Write Operations
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
+    Route::delete('/reviews/{review}/vote', [ReviewController::class, 'removeVote'])->name('reviews.vote.remove');
+    Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
+});
+
+// Review Moderation Routes - Admin only
+Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function () {
+    Route::get('/reviews/pending', [ReviewController::class, 'pending'])->name('admin.reviews.pending');
+    Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
 });
