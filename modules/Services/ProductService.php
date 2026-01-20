@@ -24,7 +24,7 @@ final readonly class ProductService
      * - ?filter[name]=laptop
      * - ?filter[is_active]=1
      * - ?sort=-price
-     * - ?include=vendor,reviews
+     * - ?include=vendor,category,media
      */
     public function index(int $perPage = 15): LengthAwarePaginator
     {
@@ -41,7 +41,6 @@ final readonly class ProductService
         return $this->productRepository->find($id, [
             'vendor',
             'category',
-            'reviews',
             'media',
         ]);
     }
@@ -102,7 +101,6 @@ final readonly class ProductService
     {
         return $this->productRepository->getByVendor($vendorId, [
             'category',
-            'reviews',
             'media',
         ]);
     }
@@ -117,7 +115,6 @@ final readonly class ProductService
         return $this->productRepository->getActive([
             'vendor',
             'category',
-            'reviews',
             'media',
         ]);
     }
