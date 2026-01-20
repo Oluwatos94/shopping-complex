@@ -17,12 +17,14 @@ use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
+use ModulesShoppingComplex\Services\ReviewService;
 
 class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $productService,
-        private readonly MediaService $mediaService
+        private readonly MediaService $mediaService,
+        private readonly ReviewService $reviewService
     ) {}
 
     public function index(): Response
@@ -59,9 +61,65 @@ class ProductController extends Controller
     public function show(Product $product): Response
     {
         $product = $this->productService->getProduct($product->id);
+        $vendor = $product->vendor;
+        $vendor->load('media');
+
+        $vendorStats = $this->reviewService->getVendorRatingStats($vendor->id);
+        $reviewPage = (int) request()->query('review_page', 1);
+        $vendorReviews = $this->reviewService->getVendorReviews($vendor->id, 5);
+
+        // Get related products from the same category (excluding current product)
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->with(['vendor', 'media'])
+            ->limit(8)
+            ->get();
+
+        // Transform product images for frontend
+        $productData = $product->toArray();
+        $productData['images'] = $product->media->map(fn ($media) => [
+            'id' => $media->id,
+            'url' => $this->mediaService->getMediaUrl($media),
+            'type' => $media->type,
+        ])->values()->all();
+
+        // Transform vendor data
+        $vendorData = [
+            'id' => $vendor->id,
+            'name' => $vendor->name,
+            'email' => $vendor->email,
+            'email_verified_at' => $vendor->email_verified_at,
+            'created_at' => $vendor->created_at,
+            'updated_at' => $vendor->updated_at,
+            'role' => 'vendor',
+            'business_name' => $vendor->business_name ?? $vendor->name,
+            'business_description' => $vendor->bio,
+            'business_logo' => $vendor->media->where('type', 'avatar')->first()?->url,
+            'rating' => $vendorStats['average'],
+            'total_sales' => 0,
+            'products_count' => $vendor->products()->count(),
+            'is_verified' => $vendor->email_verified_at !== null,
+            'is_online' => false,
+        ];
+
+        // Transform reviews for frontend
+        $reviewsData = [
+            'reviews' => $vendorReviews->items(),
+            'meta' => [
+                'current_page' => $vendorReviews->currentPage(),
+                'last_page' => $vendorReviews->lastPage(),
+                'per_page' => $vendorReviews->perPage(),
+                'total' => $vendorReviews->total(),
+            ],
+        ];
 
         return Inertia::render('Products/Show', [
-            'product' => $product,
+            'product' => $productData,
+            'vendor' => $vendorData,
+            'vendor_stats' => $vendorStats,
+            'vendor_reviews' => $reviewsData,
+            'related_products' => $relatedProducts,
         ]);
     }
 

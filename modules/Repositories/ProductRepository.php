@@ -39,7 +39,6 @@ class ProductRepository extends BasePageRepository
             ->allowedIncludes([
                 'vendor',
                 'category',
-                'reviews',
                 'media',
             ])
             ->defaultSort('-created_at')

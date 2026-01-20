@@ -64,7 +64,7 @@ export interface Category {
 }
 
 /**
- * Product review
+ * Product review (legacy - kept for compatibility)
  */
 export interface Review {
     id: number;
@@ -81,6 +81,59 @@ export interface Review {
         id: number;
         name: string;
         profile_image?: string;
+    };
+}
+
+/**
+ * Vendor review - reviews for vendor services
+ */
+export interface VendorReview {
+    id: number;
+    customer_id: number;
+    vendor_id: number;
+    conversation_id?: number;
+    rating: number; // 1-5
+    title?: string;
+    comment?: string;
+    status: 'pending' | 'approved' | 'rejected';
+    helpful_count: number;
+    not_helpful_count: number;
+    vendor_response?: string;
+    vendor_responded_at?: string;
+    created_at: string;
+    updated_at: string;
+    customer?: {
+        id: number;
+        name: string;
+        profile_image?: string;
+    };
+}
+
+/**
+ * Vendor rating statistics
+ */
+export interface VendorRatingStats {
+    average: number;
+    count: number;
+    distribution: {
+        1: number;
+        2: number;
+        3: number;
+        4: number;
+        5: number;
+    };
+}
+
+/**
+ * Paginated vendor reviews
+ */
+export interface PaginatedVendorReviews {
+    reviews: VendorReview[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
     };
 }
 
