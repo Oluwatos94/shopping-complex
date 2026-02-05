@@ -8,7 +8,9 @@ use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Models\VendorOnboarding;
 
 class VendorRepository extends BasePageRepository
 {
@@ -82,13 +84,19 @@ class VendorRepository extends BasePageRepository
      */
     public function getStats(int $vendorId): array
     {
-        $vendor = $this->find($vendorId);
+        $vendor = User::query()
+            ->where('id', $vendorId)
+            ->where('role', 'vendor')
+            ->withCount(['products', 'products as active_products_count' => fn ($q) => $q->where('is_active', true)])
+            ->withCount('reviews')
+            ->withAvg('reviews', 'rating')
+            ->firstOrFail();
 
         return [
-            'total_products' => $vendor->products()->count(),
-            'active_products' => $vendor->products()->where('is_active', true)->count(),
-            'total_reviews' => $vendor->reviews()->count(),
-            'avg_rating' => $vendor->reviews()->avg('rating') ?? 0,
+            'total_products' => $vendor->products_count,
+            'active_products' => $vendor->active_products_count,
+            'total_reviews' => $vendor->reviews_count,
+            'avg_rating' => $vendor->reviews_avg_rating ?? 0,
         ];
     }
 
@@ -131,5 +139,66 @@ class VendorRepository extends BasePageRepository
         }
 
         return $query->get();
+    }
+
+    /**
+     * Find onboarding by user ID.
+     */
+    public function findOnboardingByUserId(int $userId): ?VendorOnboarding
+    {
+        return VendorOnboarding::where('user_id', $userId)->first();
+    }
+
+    /**
+     * Create or update onboarding record for a user.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function updateOrCreateOnboarding(int $userId, array $data): VendorOnboarding
+    {
+        return VendorOnboarding::updateOrCreate(
+            ['user_id' => $userId],
+            $data
+        );
+    }
+
+    /**
+     * Update an onboarding record.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function updateOnboarding(VendorOnboarding $onboarding, array $data): VendorOnboarding
+    {
+        $onboarding->update($data);
+
+        return $onboarding;
+    }
+
+    /**
+     * Get onboardings pending review for admin.
+     *
+     * @param  array<string>  $relations
+     */
+    public function getPendingOnboardings(int $perPage = 20, array $relations = []): LengthAwarePaginator
+    {
+        $query = VendorOnboarding::query()
+            ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
+            ->orderBy('created_at', 'asc');
+
+        if (! empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Check if user has an approved onboarding.
+     */
+    public function hasApprovedOnboarding(int $userId): bool
+    {
+        return VendorOnboarding::where('user_id', $userId)
+            ->where('status', VendorOnboardingStatusEnum::APPROVED)
+            ->exists();
     }
 }

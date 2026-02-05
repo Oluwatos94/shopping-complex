@@ -153,3 +153,14 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function ()
     Route::get('/reviews/pending', [ReviewController::class, 'pending'])->name('admin.reviews.pending');
     Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
 });
+
+// Vendor Onboarding Routes
+Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/onboarding', [VendorController::class, 'onboarding'])->name('vendor.onboarding');
+    Route::get('/onboarding/success', [VendorController::class, 'onboardingSuccess'])->name('vendor.onboarding.success');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
+    Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
+    Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
+});

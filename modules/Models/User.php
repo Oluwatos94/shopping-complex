@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
@@ -32,7 +33,11 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, CustomerWishlist> $wishlist
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
  * @property-read Address|null $address
+ * @property-read VendorOnboarding|null $vendorOnboarding
  * @property-read int|null $products_count
+ * @property-read int|null $active_products_count
+ * @property-read int|null $reviews_count
+ * @property-read float|null $reviews_avg_rating
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -69,6 +74,26 @@ class User extends Authenticatable implements MustVerifyEmail
     public function address()
     {
         return $this->hasOne(Address::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function vendorOnboarding()
+    {
+        return $this->hasOne(VendorOnboarding::class);
+    }
+
+    /**
+     * Check if vendor has completed verification (approved onboarding).
+     */
+    public function isVendorVerified(): bool
+    {
+        if ($this->role !== 'vendor') {
+            return false;
+        }
+
+        return $this->vendorOnboarding?->status === VendorOnboardingStatusEnum::APPROVED;
     }
 
     /**
