@@ -108,7 +108,7 @@ class ProductSeeder extends Seeder
             // Add vendor logo only if not exists
             if ($vendor->media()->where('type', 'avatar')->doesntExist()) {
                 Media::create([
-                    'url' => 'https://ui-avatars.com/api/?name=' . urlencode($data['business_name']) . '&background=86885e&color=fff&size=200',
+                    'url' => 'https://ui-avatars.com/api/?name='.urlencode($data['business_name']).'&background=86885e&color=fff&size=200',
                     'type' => 'avatar',
                     'model_id' => $vendor->id,
                     'model_type' => User::class,
@@ -205,7 +205,7 @@ class ProductSeeder extends Seeder
                         'vendor_id' => $vendor->id,
                         'category_id' => $category->id,
                         'name' => $productData['name'],
-                        'slug' => Str::slug($productData['name']) . '-' . Str::random(5),
+                        'slug' => Str::slug($productData['name']).'-'.Str::random(5),
                         'description' => $productData['description'],
                         'price' => $productData['price'],
                         'stock' => $productData['stock'],
@@ -216,7 +216,7 @@ class ProductSeeder extends Seeder
                     $imageCount = rand(2, 5);
                     for ($i = 0; $i < $imageCount; $i++) {
                         Media::create([
-                            'url' => 'https://picsum.photos/seed/' . $productData['image_id'] . $i . '/800/800',
+                            'url' => 'https://picsum.photos/seed/'.$productData['image_id'].$i.'/800/800',
                             'type' => $i === 0 ? 'primary' : 'gallery',
                             'model_id' => $product->id,
                             'model_type' => Product::class,
@@ -310,10 +310,10 @@ class ProductSeeder extends Seeder
         }
 
         $this->command->info('Seeded: Admin user (admin@example.com / password)');
-        $this->command->info('Seeded: ' . count($customers) . ' customers');
-        $this->command->info('Seeded: ' . count($vendors) . ' vendors');
-        $this->command->info('Seeded: ' . count($createdProducts) . ' products with images');
-        $this->command->info('Seeded: ' . count($conversations) . ' conversations');
+        $this->command->info('Seeded: '.count($customers).' customers');
+        $this->command->info('Seeded: '.count($vendors).' vendors');
+        $this->command->info('Seeded: '.count($createdProducts).' products with images');
+        $this->command->info('Seeded: '.count($conversations).' conversations');
         $this->command->info('Seeded: Vendor reviews');
     }
 

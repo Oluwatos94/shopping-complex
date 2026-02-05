@@ -37,8 +37,12 @@ class ProductPolicy
      */
     public function create(User $user): bool
     {
-        // Only vendors and admins can create products
-        return in_array($user->role, ['vendor', 'admin']);
+        // Admins can always create products
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'vendor' && $this->isVendorVerified($user);
     }
 
     /**
@@ -51,8 +55,9 @@ class ProductPolicy
             return true;
         }
 
-        // Vendors can only update their own products
-        return $user->role === 'vendor' && $product->vendor_id === $user->id;
+        return $user->role === 'vendor'
+            && $product->vendor_id === $user->id
+            && $this->isVendorVerified($user);
     }
 
     /**
@@ -65,8 +70,9 @@ class ProductPolicy
             return true;
         }
 
-        // Vendors can only delete their own products
-        return $user->role === 'vendor' && $product->vendor_id === $user->id;
+        return $user->role === 'vendor'
+            && $product->vendor_id === $user->id
+            && $this->isVendorVerified($user);
     }
 
     /**
@@ -85,5 +91,13 @@ class ProductPolicy
     {
         // Only admins can force delete
         return $user->role === 'admin';
+    }
+
+    /**
+     * Check if the vendor has completed verification (approved onboarding).
+     */
+    private function isVendorVerified(User $user): bool
+    {
+        return $user->isVendorVerified();
     }
 }
