@@ -26,6 +26,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['vendor_id', 'is_active', 'created_at'], 'idx_products_vendor_active_created');
+            $table->index(['category_id', 'is_active', 'created_at'], 'idx_products_category_active_created');
         });
     }
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\ImageUploadRequest;
@@ -30,7 +31,8 @@ class ProductController extends Controller
     public function index(): Response
     {
         $products = $this->productService->index(perPage: 20);
-        $categories = Category::withCount('products')->get();
+        $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
+        );
 
         return Inertia::render('Products/Index', [
             'products' => $products,
@@ -62,10 +64,14 @@ class ProductController extends Controller
     {
         $product = $this->productService->getProduct($product->id);
         $vendor = $product->vendor;
-        $vendor->load('media');
+
+        // Load vendor relationships and counts in one go (media already loaded via getProduct)
+        if (! $vendor->relationLoaded('media')) {
+            $vendor->load('media');
+        }
+        $vendor->loadCount('products');
 
         $vendorStats = $this->reviewService->getVendorRatingStats($vendor->id);
-        $reviewPage = (int) request()->query('review_page', 1);
         $vendorReviews = $this->reviewService->getVendorReviews($vendor->id, 5);
 
         // Get related products from the same category (excluding current product)
@@ -85,6 +91,7 @@ class ProductController extends Controller
         ])->values()->all();
 
         // Transform vendor data
+        $avatarMedia = $vendor->media->where('type', 'avatar')->first();
         $vendorData = [
             'id' => $vendor->id,
             'name' => $vendor->name,
@@ -95,10 +102,10 @@ class ProductController extends Controller
             'role' => 'vendor',
             'business_name' => $vendor->business_name ?? $vendor->name,
             'business_description' => $vendor->bio,
-            'business_logo' => $vendor->media->where('type', 'avatar')->first()?->url,
+            'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
             'rating' => $vendorStats['average'],
             'total_sales' => 0,
-            'products_count' => $vendor->products()->count(),
+            'products_count' => $vendor->products_count ?? 0,
             'is_verified' => $vendor->email_verified_at !== null,
             'is_online' => false,
         ];

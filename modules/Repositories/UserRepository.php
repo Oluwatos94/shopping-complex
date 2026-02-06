@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use ModulesShoppingComplex\Models\User;
 
 class UserRepository
@@ -149,7 +150,7 @@ class UserRepository
         $validRoles = ['customer', 'vendor', 'admin'];
 
         if (! in_array($role, $validRoles)) {
-            throw new \InvalidArgumentException("Invalid role: {$role}. Must be one of: ".implode(', ', $validRoles));
+            throw new InvalidArgumentException("Invalid role: {$role}. Must be one of: ".implode(', ', $validRoles));
         }
 
         return DB::transaction(function () use ($id, $role) {
@@ -193,7 +194,7 @@ class UserRepository
             }
 
             if ($user->email_verified_at !== null) {
-                return $user; // Already verified
+                return $user;
             }
 
             $user->update(['email_verified_at' => now()]);
@@ -313,5 +314,50 @@ class UserRepository
             'vendor' => $counts['vendor'] ?? 0,
             'admin' => $counts['admin'] ?? 0,
         ];
+    }
+
+    /**
+     * Check if a user is following a vendor.
+     */
+    public function isFollowing(int $followerId, int $vendorId): bool
+    {
+        return DB::table('vendor_followers')
+            ->where('follower_id', $followerId)
+            ->where('vendor_id', $vendorId)
+            ->exists();
+    }
+
+    /**
+     * Follow a vendor.
+     */
+    public function followVendor(int $followerId, int $vendorId): bool
+    {
+        return DB::table('vendor_followers')->insertOrIgnore([
+            'follower_id' => $followerId,
+            'vendor_id' => $vendorId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]) > 0;
+    }
+
+    /**
+     * Unfollow a vendor.
+     */
+    public function unfollowVendor(int $followerId, int $vendorId): bool
+    {
+        return DB::table('vendor_followers')
+            ->where('follower_id', $followerId)
+            ->where('vendor_id', $vendorId)
+            ->delete() > 0;
+    }
+
+    /**
+     * Get followers count for a vendor.
+     */
+    public function getFollowersCount(int $vendorId): int
+    {
+        return DB::table('vendor_followers')
+            ->where('vendor_id', $vendorId)
+            ->count();
     }
 }

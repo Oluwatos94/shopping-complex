@@ -9,20 +9,32 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
 use ModulesShoppingComplex\Http\Requests\SaveOnboardingRequest;
 use ModulesShoppingComplex\Http\Requests\SubmitOnboardingRequest;
+use ModulesShoppingComplex\Http\Requests\UploadProductRequest;
+use ModulesShoppingComplex\Http\Requests\VendorRegisterRequest;
 use ModulesShoppingComplex\Http\Requests\VendorRequest;
 use ModulesShoppingComplex\Models\Category;
+use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Repositories\UserRepository;
+use ModulesShoppingComplex\Services\MediaService;
+use ModulesShoppingComplex\Services\ReviewService;
 use ModulesShoppingComplex\Services\VendorService;
 
 class VendorController extends Controller
 {
     public function __construct(
-        private readonly VendorService $vendorService
+        private readonly VendorService $vendorService,
+        private readonly ReviewService $reviewService,
+        private readonly MediaService $mediaService,
+        private readonly UserRepository $userRepository
     ) {}
 
     public function index(VendorRequest $request): Response
@@ -30,7 +42,6 @@ class VendorController extends Controller
         $filters = $request->getFilters();
         $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 12);
 
-        // Transform vendor data for frontend to match TypeScript interfaces
         $transformedVendors = $vendors->through(function ($vendor) {
             $profileImage = $vendor->media->first()?->file_path;
 
@@ -50,7 +61,7 @@ class VendorController extends Controller
                 'business_logo' => $profileImage,
                 'rating' => 4.5, // Placeholder - will come from reviews table
                 'total_sales' => 0, // Placeholder - not tracking sales yet
-                'products_count' => $vendor->products_count ?? $vendor->products->count(),
+                'products_count' => $vendor->products_count ?? 0,
                 'is_verified' => $vendor->email_verified_at !== null,
                 'is_online' => true, // Placeholder - will be real-time WebSocket status
 
@@ -76,6 +87,21 @@ class VendorController extends Controller
     }
 
     /**
+     * Generate a base64 data URL for a private document file.
+     */
+    private function getSecureDocumentUrl(string $path): ?string
+    {
+        if (! Storage::disk('local')->exists($path)) {
+            return null;
+        }
+
+        $mimeType = mime_content_type(Storage::disk('local')->path($path)) ?: 'application/octet-stream';
+        $content = Storage::disk('local')->get($path);
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($content);
+    }
+
+    /**
      * Format distance for display
      */
     private function formatDistance(float $distanceKm): string
@@ -87,6 +113,135 @@ class VendorController extends Controller
         return round($distanceKm, 1).' km';
     }
 
+    public function register(): Response|RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'vendor') {
+            return redirect()->route('vendor.show', $user->id);
+        }
+
+        $categories = Cache::remember('vendor_register_categories', 3600, fn () => Category::select('id', 'name', 'slug')->orderBy('name')->get()
+        );
+
+        return Inertia::render('Vendor/Register', [
+            'categories' => $categories,
+        ]);
+    }
+
+    public function storeRegistration(VendorRegisterRequest $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $vendor = $this->vendorService->registerAsVendor(
+            $user,
+            $request->only(['business_name', 'bio', 'category_id']),
+            $request->file('avatar')
+        );
+
+        return redirect()->route('vendor.show', $vendor->id)
+            ->with('success', 'Welcome! Your vendor profile has been created.');
+    }
+
+    public function show(int $vendorId): Response
+    {
+        $vendor = $this->findVendorById($vendorId);
+
+        $products = Product::where('vendor_id', $vendorId)
+            ->where('is_active', true)
+            ->with(['media', 'vendor'])
+            ->latest()
+            ->paginate(12);
+
+        $products->through(function ($product) {
+            $product->images = $product->media->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => $this->mediaService->getMediaUrl($media),
+                'is_primary' => true,
+            ])->values()->all();
+
+            return $product;
+        });
+
+        $ratingStats = $this->reviewService->getVendorRatingStats($vendorId);
+
+        $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+
+        $authUser = Auth::user();
+        $isOwner = $authUser && $authUser->id === $vendor->id;
+        $followersCount = $this->userRepository->getFollowersCount($vendorId);
+        $isFollowing = $authUser && ! $isOwner
+            ? $this->userRepository->isFollowing($authUser->id, $vendorId)
+            : false;
+
+        return Inertia::render('Vendor/Profile', [
+            'vendor' => [
+                'id' => $vendor->id,
+                'name' => $vendor->name,
+                'email' => $vendor->email,
+                'business_name' => $vendor->business_name ?? $vendor->name,
+                'business_description' => $vendor->bio,
+                'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+                'is_verified' => $vendor->isVendorVerified(),
+                'created_at' => $vendor->created_at->toISOString(),
+            ],
+            'products' => $products,
+            'stats' => [
+                'products_count' => $vendor->active_products_count ?? 0,
+                'reviews_count' => $ratingStats['count'],
+                'average_rating' => $ratingStats['average'],
+                'followers_count' => $followersCount,
+            ],
+            'isOwner' => $isOwner,
+            'isFollowing' => $isFollowing,
+        ]);
+    }
+
+    public function uploadProduct(UploadProductRequest $request): JsonResponse
+    {
+        // TODO: Re-enable after admin panel is built
+        // $this->authorize('create', Product::class);
+
+        $user = Auth::user();
+
+        $product = DB::transaction(function () use ($user, $request) {
+            $product = Product::create([
+                'name' => $request->input('name'),
+                'slug' => Str::slug($request->input('name')).'-'.uniqid(),
+                'description' => $request->input('name', ''),
+                'price' => $request->input('price'),
+                'vendor_id' => $user->id,
+                'category_id' => $user->category_id,
+                'stock' => 0,
+                'is_active' => true,
+            ]);
+
+            $this->mediaService->uploadImage(
+                file: $request->file('image'),
+                modelType: Product::class,
+                modelId: $product->id,
+                type: 'product_image'
+            );
+
+            return $product;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product uploaded successfully.',
+            'product_id' => $product->id,
+        ]);
+    }
+
+    private function findVendorById(int $vendorId): User
+    {
+        return User::where('id', $vendorId)
+            ->where('role', 'vendor')
+            ->with(['media', 'vendorOnboarding'])
+            ->withCount(['products as active_products_count' => fn ($q) => $q->where('is_active', true)])
+            ->firstOrFail();
+    }
+
     /**
      * Show vendor onboarding form.
      */
@@ -94,7 +249,6 @@ class VendorController extends Controller
     {
         $user = Auth::user();
 
-        // Only vendors can access onboarding (verification)
         if ($user->role !== 'vendor') {
             return redirect()->route('home')
                 ->with('error', 'Only vendors can access the verification process.');
@@ -102,18 +256,15 @@ class VendorController extends Controller
 
         $onboarding = $this->vendorService->getOnboarding($user->id);
 
-        // If already verified, redirect to products page
         if ($onboarding?->isApproved()) {
             return redirect()->route('products.index')
                 ->with('info', 'Your vendor account is already verified.');
         }
 
-        // If pending review, show status page
         if ($onboarding?->isPendingReview()) {
             return redirect()->route('vendor.onboarding.success');
         }
 
-        // Cache categories since they rarely change
         $categories = Cache::remember('vendor_onboarding_categories', 3600, fn () => Category::select('id', 'name', 'slug')->orderBy('name')->get()
         );
 
@@ -131,13 +282,13 @@ class VendorController extends Controller
                     'government_issued_id' => null,
                     'proof_of_address' => null,
                     'certificate_of_incorporation_preview' => $onboarding->certificate_of_incorporation
-                        ? Storage::url($onboarding->certificate_of_incorporation)
+                        ? $this->getSecureDocumentUrl($onboarding->certificate_of_incorporation)
                         : null,
                     'government_issued_id_preview' => $onboarding->government_issued_id
-                        ? Storage::url($onboarding->government_issued_id)
+                        ? $this->getSecureDocumentUrl($onboarding->government_issued_id)
                         : null,
                     'proof_of_address_preview' => $onboarding->proof_of_address
-                        ? Storage::url($onboarding->proof_of_address)
+                        ? $this->getSecureDocumentUrl($onboarding->proof_of_address)
                         : null,
                 ],
                 'bank_details' => [
@@ -157,9 +308,6 @@ class VendorController extends Controller
         ]);
     }
 
-    /**
-     * Save onboarding progress (draft).
-     */
     public function saveOnboarding(SaveOnboardingRequest $request): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
@@ -179,9 +327,6 @@ class VendorController extends Controller
         return redirect()->route('home')->with('success', 'Your progress has been saved.');
     }
 
-    /**
-     * Submit onboarding for review.
-     */
     public function submitOnboarding(SubmitOnboardingRequest $request): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
@@ -212,11 +357,21 @@ class VendorController extends Controller
             ->with('success', 'Your vendor application has been submitted for review.');
     }
 
-    /**
-     * Show onboarding success page.
-     */
     public function onboardingSuccess(): Response
     {
         return Inertia::render('Vendor/OnboardingSuccess');
+    }
+
+    public function toggleFollow(int $vendorId): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ($user->id === $vendorId) {
+            return response()->json(['error' => 'You cannot follow yourself'], 400);
+        }
+
+        $result = $this->vendorService->toggleFollow($user->id, $vendorId);
+
+        return response()->json($result);
     }
 }

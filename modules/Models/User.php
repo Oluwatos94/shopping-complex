@@ -24,7 +24,9 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property string|null $google_id
  * @property string|null $bio
  * @property string|null $business_name
+ * @property int|null $category_id
  * @property string|null $session_id
+ * @property-read Category|null $category
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
@@ -53,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_id',
         'bio',
         'business_name',
+        'category_id',
         'email_verified_at',
     ];
 
@@ -60,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'google_id',
     ];
 
     /** {@inheritdoc} */
@@ -74,6 +78,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function address()
     {
         return $this->hasOne(Address::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**
@@ -156,6 +168,28 @@ class User extends Authenticatable implements MustVerifyEmail
     public function media()
     {
         return $this->morphMany(Media::class, 'model');
+    }
+
+    /**
+     * Users who follow this vendor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'vendor_followers', 'vendor_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Vendors this user is following.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'vendor_followers', 'follower_id', 'vendor_id')
+            ->withTimestamps();
     }
 
     /**
