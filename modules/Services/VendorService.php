@@ -11,13 +11,44 @@ use Illuminate\Support\Facades\Storage;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Repositories\VendorRepository;
 
 final readonly class VendorService
 {
     public function __construct(
-        private VendorRepository $vendorRepository
+        private VendorRepository $vendorRepository,
+        private UserRepository $userRepository,
+        private MediaService $mediaService
     ) {}
+
+    /**
+     * Register a customer as a vendor.
+     *
+     * @param  array{business_name: string, bio: string, category_id: int}  $data
+     */
+    public function registerAsVendor(User $user, array $data, ?UploadedFile $avatar = null): User
+    {
+        return DB::transaction(function () use ($user, $data, $avatar) {
+            $user->update([
+                'role' => 'vendor',
+                'business_name' => $data['business_name'],
+                'bio' => $data['bio'],
+                'category_id' => $data['category_id'],
+            ]);
+
+            if ($avatar) {
+                $this->mediaService->uploadImage(
+                    file: $avatar,
+                    modelType: User::class,
+                    modelId: $user->id,
+                    type: 'avatar'
+                );
+            }
+
+            return $user->fresh();
+        });
+    }
 
     /**
      * Get nearby vendors with pagination and filtering
@@ -162,6 +193,27 @@ final readonly class VendorService
     }
 
     /**
+     * Toggle follow/unfollow for a vendor.
+     *
+     * @return array{following: bool, followers_count: int}
+     */
+    public function toggleFollow(int $followerId, int $vendorId): array
+    {
+        $isFollowing = $this->userRepository->isFollowing($followerId, $vendorId);
+
+        if ($isFollowing) {
+            $this->userRepository->unfollowVendor($followerId, $vendorId);
+        } else {
+            $this->userRepository->followVendor($followerId, $vendorId);
+        }
+
+        return [
+            'following' => ! $isFollowing,
+            'followers_count' => $this->userRepository->getFollowersCount($vendorId),
+        ];
+    }
+
+    /**
      * Build onboarding data array from business info and bank details.
      * Filters out empty values to avoid overwriting with nulls.
      *
@@ -208,10 +260,10 @@ final readonly class VendorService
             if (isset($files[$field]) && $files[$field] instanceof UploadedFile) {
                 // Delete old file if exists
                 if ($onboarding->$field) {
-                    Storage::disk('public')->delete($onboarding->$field);
+                    Storage::disk('local')->delete($onboarding->$field);
                 }
 
-                $path = $files[$field]->store("vendor-onboarding/{$onboarding->user_id}", 'public');
+                $path = $files[$field]->store("vendor-onboarding/{$onboarding->user_id}", 'local');
                 $updates[$field] = $path;
             }
         }

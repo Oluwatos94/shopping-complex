@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\ReviewVote;
@@ -72,40 +73,42 @@ final readonly class ReviewService
         ?string $title = null,
         ?string $comment = null
     ): Review {
-        // Prevent self-review
         if ($customer->id === $vendorId) {
-            throw new \InvalidArgumentException('You cannot review yourself.');
+            throw new InvalidArgumentException('You cannot review yourself.');
         }
 
-        // Get conversation in one query (also validates interaction)
-        $conversation = DB::table('conversations')
-            ->where('customer_id', $customer->id)
-            ->where('vendor_id', $vendorId)
-            ->first(['id']);
+        return DB::transaction(function () use ($customer, $vendorId, $rating, $title, $comment) {
+            $conversation = DB::table('conversations')
+                ->where('customer_id', $customer->id)
+                ->where('vendor_id', $vendorId)
+                ->first(['id']);
 
-        if (! $conversation) {
-            throw new \InvalidArgumentException('You must have interacted with this vendor before leaving a review.');
-        }
+            if (! $conversation) {
+                throw new InvalidArgumentException('You must have interacted with this vendor before leaving a review.');
+            }
 
-        // Check for existing review
-        if ($this->reviewRepository->findByCustomerAndVendor($customer->id, $vendorId)) {
-            throw new \InvalidArgumentException('You have already reviewed this vendor.');
-        }
+            $existingReview = Review::withTrashed()
+                ->where('customer_id', $customer->id)
+                ->where('vendor_id', $vendorId)
+                ->lockForUpdate()
+                ->first();
 
-        return $this->reviewRepository->create([
-            'customer_id' => $customer->id,
-            'vendor_id' => $vendorId,
-            'conversation_id' => $conversation->id,
-            'rating' => $rating,
-            'title' => $title,
-            'comment' => $comment,
-            'status' => ReviewStatusEnum::PENDING,
-        ]);
+            if ($existingReview) {
+                throw new InvalidArgumentException('You have already reviewed this vendor.');
+            }
+
+            return $this->reviewRepository->create([
+                'customer_id' => $customer->id,
+                'vendor_id' => $vendorId,
+                'conversation_id' => $conversation->id,
+                'rating' => $rating,
+                'title' => $title,
+                'comment' => $comment,
+                'status' => ReviewStatusEnum::PENDING,
+            ]);
+        });
     }
 
-    /**
-     * Update an existing review.
-     */
     public function updateReview(
         Review $review,
         int $rating,
@@ -120,17 +123,11 @@ final readonly class ReviewService
         ]);
     }
 
-    /**
-     * Delete a review.
-     */
     public function deleteReview(Review $review): bool
     {
         return $this->reviewRepository->delete($review);
     }
 
-    /**
-     * Moderate a review (approve or reject).
-     */
     public function moderateReview(Review $review, User $moderator, ReviewStatusEnum $status, ?string $notes = null): Review
     {
         return $this->reviewRepository->update($review, [
@@ -149,18 +146,18 @@ final readonly class ReviewService
         ]);
     }
 
-    /**
-     * Vote on a review (helpful/not helpful).
-     */
     public function voteOnReview(Review $review, User $user, bool $isHelpful): ReviewVote
     {
         return DB::transaction(function () use ($review, $user, $isHelpful) {
-            $existingVote = $review->getUserVote($user->id);
+            Review::where('id', $review->id)->lockForUpdate()->first();
+
+            $existingVote = ReviewVote::where('review_id', $review->id)
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->first();
 
             if ($existingVote) {
-                // Update existing vote if different
                 if ($existingVote->is_helpful !== $isHelpful) {
-                    // Adjust counts
                     if ($existingVote->is_helpful) {
                         $this->reviewRepository->decrementHelpfulCount($review->id);
                         $this->reviewRepository->incrementNotHelpfulCount($review->id);
@@ -175,14 +172,12 @@ final readonly class ReviewService
                 return $existingVote;
             }
 
-            // Create new vote
             $vote = ReviewVote::create([
                 'review_id' => $review->id,
                 'user_id' => $user->id,
                 'is_helpful' => $isHelpful,
             ]);
 
-            // Update counts
             if ($isHelpful) {
                 $this->reviewRepository->incrementHelpfulCount($review->id);
             } else {
@@ -193,19 +188,20 @@ final readonly class ReviewService
         });
     }
 
-    /**
-     * Remove a vote from a review.
-     */
     public function removeVote(Review $review, User $user): bool
     {
         return DB::transaction(function () use ($review, $user) {
-            $vote = $review->getUserVote($user->id);
+            Review::where('id', $review->id)->lockForUpdate()->first();
+
+            $vote = ReviewVote::where('review_id', $review->id)
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->first();
 
             if (! $vote) {
                 return false;
             }
 
-            // Adjust counts
             if ($vote->is_helpful) {
                 $this->reviewRepository->decrementHelpfulCount($review->id);
             } else {
@@ -223,22 +219,11 @@ final readonly class ReviewService
      */
     public function getVendorRatingStats(int $vendorId): array
     {
-        $stats = $this->reviewRepository->getVendorRatingStats($vendorId);
-        $distribution = $this->reviewRepository->getVendorRatingDistribution($vendorId);
-
-        return [
-            'average' => $stats['average'],
-            'count' => $stats['count'],
-            'distribution' => $distribution,
-        ];
+        return $this->reviewRepository->getVendorRatingStatsWithDistribution($vendorId);
     }
 
-    /**
-     * Check if customer can review a vendor.
-     */
     public function canCustomerReviewVendor(int $customerId, int $vendorId): bool
     {
-        // Must have interacted with vendor
         if (! $this->reviewRepository->hasCustomerInteractedWithVendor($customerId, $vendorId)) {
             return false;
         }
@@ -251,9 +236,6 @@ final readonly class ReviewService
         return true;
     }
 
-    /**
-     * Get a review by ID.
-     */
     public function getReview(int $id): ?Review
     {
         return $this->reviewRepository->find($id, ['customer', 'vendor', 'conversation']);
@@ -267,9 +249,6 @@ final readonly class ReviewService
         return $this->reviewRepository->findByCustomerAndVendor($customerId, $vendorId) !== null;
     }
 
-    /**
-     * Check if a vendor exists.
-     */
     public function vendorExists(int $vendorId): bool
     {
         return $this->reviewRepository->vendorExists($vendorId);

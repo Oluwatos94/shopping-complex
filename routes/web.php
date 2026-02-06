@@ -66,6 +66,7 @@ Route::middleware(['throttle:products'])->group(function () {
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
+    Route::get('/vendors/{vendorId}', [VendorController::class, 'show'])->name('vendor.show');
 });
 
 // Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)
@@ -154,13 +155,21 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function ()
     Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
 });
 
-// Vendor Onboarding Routes
+// Vendor Registration & Onboarding Routes
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/register', [VendorController::class, 'register'])->name('vendor.register');
     Route::get('/onboarding', [VendorController::class, 'onboarding'])->name('vendor.onboarding');
     Route::get('/onboarding/success', [VendorController::class, 'onboardingSuccess'])->name('vendor.onboarding.success');
 });
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
+    Route::post('/register', [VendorController::class, 'storeRegistration'])->name('vendor.register.store');
+    Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
     Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
     Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
+});
+
+// Vendor follow toggle
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::post('/vendors/{vendorId}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
 });

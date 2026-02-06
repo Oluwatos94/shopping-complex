@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { NavigationLink } from '@/types/landing';
 
+interface PageProps {
+    auth?: {
+        user?: {
+            id: number;
+            name: string;
+            email: string;
+        } | null;
+    };
+}
+
 const Header: React.FC = () => {
+    const { auth } = usePage<PageProps>().props;
+    const user = auth?.user;
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navLinks: NavigationLink[] = [
@@ -10,6 +22,10 @@ const Header: React.FC = () => {
         { label: 'Explore Products', href: '/products' },
         { label: 'Become a Vendor', href: '/vendor/register' },
     ];
+
+    const handleSignOut = () => {
+        router.post('/logout');
+    };
 
     return (
         <header className="bg-primary-dark shadow-md sticky top-0 z-50">
@@ -36,12 +52,21 @@ const Header: React.FC = () => {
                                 {link.label}
                             </Link>
                         ))}
-                        <Link
-                            href="/login"
-                            className="bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium"
-                        >
-                            Login
-                        </Link>
+                        {user ? (
+                            <button
+                                onClick={handleSignOut}
+                                className="bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium"
+                            >
+                                Sign Out
+                            </button>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium"
+                            >
+                                Login
+                            </Link>
+                        )}
                     </div>
 
                     <button
@@ -84,12 +109,21 @@ const Header: React.FC = () => {
                                 {link.label}
                             </Link>
                         ))}
-                        <Link
-                            href="/login"
-                            className="block bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium text-center"
-                        >
-                            Login
-                        </Link>
+                        {user ? (
+                            <button
+                                onClick={handleSignOut}
+                                className="block w-full bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium text-center"
+                            >
+                                Sign Out
+                            </button>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="block bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium text-center"
+                            >
+                                Login
+                            </Link>
+                        )}
                     </div>
                 )}
             </nav>

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Services;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Models\Product;
@@ -57,7 +57,17 @@ final readonly class ProductService
             $data['slug'] = $this->generateUniqueSlug($data['name']);
         }
 
-        return $this->productRepository->create($data);
+        try {
+            return $this->productRepository->create($data);
+        } catch (QueryException $e) {
+            if (isset($data['name']) && str_contains($e->getMessage(), 'Duplicate entry')) {
+                $data['slug'] = $this->generateUniqueSlug($data['name']);
+
+                return $this->productRepository->create($data);
+            }
+
+            throw $e;
+        }
     }
 
     /**
@@ -94,62 +104,39 @@ final readonly class ProductService
 
     /**
      * Get products by vendor
-     *
-     * @return Collection<int, Product>
      */
-    public function getVendorProducts(int $vendorId): Collection
+    public function getVendorProducts(int $vendorId, int $perPage = 20): LengthAwarePaginator
     {
         return $this->productRepository->getByVendor($vendorId, [
             'category',
             'media',
-        ]);
+        ], $perPage);
     }
 
     /**
      * Get active products
-     *
-     * @return Collection<int, Product>
      */
-    public function getActiveProducts(): Collection
+    public function getActiveProducts(int $perPage = 20): LengthAwarePaginator
     {
         return $this->productRepository->getActive([
             'vendor',
             'category',
             'media',
-        ]);
+        ], $perPage);
     }
 
     /**
      * Search products
-     *
-     * @return Collection<int, Product>
      */
-    public function searchProducts(string $searchTerm): Collection
+    public function searchProducts(string $searchTerm, int $perPage = 20): LengthAwarePaginator
     {
         return $this->productRepository->search($searchTerm, [
             'vendor',
             'category',
             'media',
-        ]);
+        ], $perPage);
     }
 
-    /**
-     * Update product stock
-     *
-     * @throws ModelNotFoundException
-     */
-    public function updateStock(int $id, int $quantity): Product
-    {
-        if ($quantity < 0) {
-            throw new \InvalidArgumentException('Stock quantity cannot be negative.');
-        }
-
-        return $this->productRepository->updateStock($id, $quantity);
-    }
-
-    /**
-     * Generate unique slug
-     */
     private function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
         $slug = Str::slug($name);

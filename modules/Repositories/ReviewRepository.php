@@ -115,32 +115,13 @@ class ReviewRepository extends BasePageRepository
     }
 
     /**
-     * Get vendor's average rating from approved reviews.
+     * Get vendor's rating stats and distribution in a single query.
      *
-     * @return array{average: float, count: int}
+     * @return array{average: float, count: int, distribution: array<int, int>}
      */
-    public function getVendorRatingStats(int $vendorId): array
+    public function getVendorRatingStatsWithDistribution(int $vendorId): array
     {
-        $stats = Review::query()
-            ->where('vendor_id', $vendorId)
-            ->where('status', ReviewStatusEnum::APPROVED)
-            ->selectRaw('AVG(rating) as average, COUNT(*) as count')
-            ->first();
-
-        return [
-            'average' => round((float) ($stats->average ?? 0), 2),
-            'count' => (int) ($stats->count ?? 0),
-        ];
-    }
-
-    /**
-     * Get rating distribution for a vendor.
-     *
-     * @return array<int, int>
-     */
-    public function getVendorRatingDistribution(int $vendorId): array
-    {
-        $distribution = Review::query()
+        $rows = Review::query()
             ->where('vendor_id', $vendorId)
             ->where('status', ReviewStatusEnum::APPROVED)
             ->selectRaw('rating, COUNT(*) as count')
@@ -148,13 +129,20 @@ class ReviewRepository extends BasePageRepository
             ->pluck('count', 'rating')
             ->toArray();
 
-        // Ensure all ratings 1-5 are present
-        $result = [];
+        $totalCount = array_sum($rows);
+        $weightedSum = 0;
+        $distribution = [];
+
         for ($i = 1; $i <= 5; $i++) {
-            $result[$i] = $distribution[$i] ?? 0;
+            $distribution[$i] = $rows[$i] ?? 0;
+            $weightedSum += $i * $distribution[$i];
         }
 
-        return $result;
+        return [
+            'average' => $totalCount > 0 ? round($weightedSum / $totalCount, 2) : 0.0,
+            'count' => $totalCount,
+            'distribution' => $distribution,
+        ];
     }
 
     public function hasCustomerInteractedWithVendor(int $customerId, int $vendorId): bool

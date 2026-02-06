@@ -27,7 +27,7 @@ class VendorRepository extends BasePageRepository
         $search = $filters['search'] ?? null;
         $sortBy = $filters['sort_by'] ?? 'distance';
 
-        $query = User::query()->where('role', 'vendor')->with(['products', 'media']);
+        $query = User::query()->where('role', 'vendor')->withCount('products')->with('media');
 
         // If GPS coordinates are provided, calculate distance using Haversine formula
         // if ($latitude && $longitude) {
@@ -54,9 +54,10 @@ class VendorRepository extends BasePageRepository
         // }
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('business_name', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%");
+            $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+            $query->where(function ($q) use ($escapedSearch) {
+                $q->where('business_name', 'like', "%{$escapedSearch}%")
+                    ->orWhere('name', 'like', "%{$escapedSearch}%");
             });
         }
 
