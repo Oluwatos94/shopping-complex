@@ -222,8 +222,9 @@ class ChatController extends Controller
         $conversation->load(['customer', 'vendor', 'product']);
         $messages = $this->chatService->getMessages($conversation, 50);
 
-        // Mark messages as read when viewing the conversation
         $this->chatService->markMessagesAsRead($conversation, $request->user());
+
+        $conversations = $this->chatService->getConversations($request->user(), 20);
 
         return Inertia::render('Chat/Conversation', [
             'conversation' => $conversation,
@@ -233,6 +234,7 @@ class ChatController extends Controller
                 'last_page' => $messages->lastPage(),
                 'total' => $messages->total(),
             ],
+            'conversations' => $conversations->items(),
         ]);
     }
 }

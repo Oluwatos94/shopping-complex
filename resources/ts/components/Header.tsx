@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 import { NavigationLink } from '@/types/landing';
 
 interface PageProps {
+    [key: string]: unknown;
     auth?: {
         user?: {
             id: number;
