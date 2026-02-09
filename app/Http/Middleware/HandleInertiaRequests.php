@@ -44,14 +44,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
-            'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->role,
-                ] : null,
-            ],
+            'auth' => fn () => $this->getAuthData($request),
             'notifications' => fn () => $this->getNotificationData($request)['notifications'],
             'unread_notifications_count' => fn () => $this->getNotificationData($request)['unread_count'],
             'flash' => [
@@ -59,6 +52,35 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
         ]);
+    }
+
+    /**
+     * Get authenticated user data including avatar for vendors.
+     *
+     * @return array{user: array<string, mixed>|null}
+     */
+    private function getAuthData(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return ['user' => null];
+        }
+
+        $data = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+        ];
+
+        if ($user->role === 'vendor') {
+            $data['business_name'] = $user->business_name;
+            $avatar = $user->media()->where('type', 'avatar')->first();
+            $data['business_logo'] = $avatar ? asset('storage/'.$avatar->url) : null;
+        }
+
+        return ['user' => $data];
     }
 
     /**
