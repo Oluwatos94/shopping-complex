@@ -10,6 +10,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 
@@ -167,6 +168,17 @@ Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function
     Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
     Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
     Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
+});
+
+// User Profile Routes
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
 });
 
 // Vendor follow toggle
