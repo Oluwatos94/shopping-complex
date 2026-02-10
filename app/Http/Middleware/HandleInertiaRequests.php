@@ -67,17 +67,19 @@ class HandleInertiaRequests extends Middleware
             return ['user' => null];
         }
 
+        $avatar = $user->media()->where('type', 'avatar')->first();
+
         $data = [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'avatar' => $avatar ? asset('storage/'.$avatar->url) : null,
         ];
 
         if ($user->role === 'vendor') {
             $data['business_name'] = $user->business_name;
-            $avatar = $user->media()->where('type', 'avatar')->first();
-            $data['business_logo'] = $avatar ? asset('storage/'.$avatar->url) : null;
+            $data['business_logo'] = $data['avatar'];
         }
 
         return ['user' => $data];
