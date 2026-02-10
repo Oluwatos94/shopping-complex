@@ -32,7 +32,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
                             <div className="flex items-center space-x-3">
                                 {/* Logo */}
                                 <img
-                                    src="/logo/dark-mode-logo.svg"
+                                    src="/logo/dark-mode-2.svg"
                                     alt="Shopping Complex"
                                     className="h-10 w-auto"
                                 />

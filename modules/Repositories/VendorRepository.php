@@ -8,6 +8,7 @@ use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -27,31 +28,31 @@ class VendorRepository extends BasePageRepository
         $search = $filters['search'] ?? null;
         $sortBy = $filters['sort_by'] ?? 'distance';
 
+        $addressTable = Address::getTableName();
         $query = User::query()->where('role', 'vendor')->withCount('products')->with('media');
 
-        // If GPS coordinates are provided, calculate distance using Haversine formula
-        // if ($latitude && $longitude) {
-        //     $query->selectRaw(
-        //         'users.*,
-        //         (6371 * acos(
-        //             cos(radians(?)) *
-        //             cos(radians(COALESCE(latitude, 0))) *
-        //             cos(radians(COALESCE(longitude, 0)) - radians(?)) +
-        //             sin(radians(?)) *
-        //             sin(radians(COALESCE(latitude, 0)))
-        //         )) AS distance_km',
-        //         [$latitude, $longitude, $latitude]
-        //     );
+        // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
+        $haversine = "(6371 * acos(
+            cos(radians(?)) *
+            cos(radians(COALESCE({$addressTable}.latitude, 0))) *
+            cos(radians(COALESCE({$addressTable}.longitude, 0)) - radians(?)) +
+            sin(radians(?)) *
+            sin(radians(COALESCE({$addressTable}.latitude, 0)))
+        ))";
 
-        //     // Only include vendors within radius
-        //     if ($radius) {
-        //         $query->havingRaw('distance_km <= ?', [$radius]);
-        //     }
-        // } else {
-        //     // Fallback when no location provided
-        //     $query->select('users.*')
-        //         ->selectRaw('0 as distance_km');
-        // }
+        if ($latitude && $longitude) {
+            $query->leftJoin($addressTable, 'users.id', '=', "{$addressTable}.user_id")
+                ->selectRaw("users.*, {$haversine} AS distance_km", [$latitude, $longitude, $latitude]);
+
+            // Only include vendors within radius
+            if ($radius) {
+                $query->whereRaw("{$haversine} <= ?", [$latitude, $longitude, $latitude, $radius]);
+            }
+        } else {
+            // Fallback when no location provided
+            $query->select('users.*')
+                ->selectRaw('0 as distance_km');
+        }
 
         if ($search) {
             $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
