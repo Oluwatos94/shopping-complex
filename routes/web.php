@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
@@ -179,6 +180,11 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+});
+
+// Vendor Analytics
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/vendor/analytics', [AnalyticsController::class, 'index'])->name('vendor.analytics');
 });
 
 // Vendor follow toggle
