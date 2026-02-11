@@ -24,6 +24,7 @@ use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
+use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ReviewService;
 use ModulesShoppingComplex\Services\VendorService;
@@ -34,7 +35,8 @@ class VendorController extends Controller
         private readonly VendorService $vendorService,
         private readonly ReviewService $reviewService,
         private readonly MediaService $mediaService,
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
+        private readonly AnalyticsService $analyticsService
     ) {}
 
     public function index(VendorRequest $request): Response
@@ -173,6 +175,11 @@ class VendorController extends Controller
         $isFollowing = $authUser && ! $isOwner
             ? $this->userRepository->isFollowing($authUser->id, $vendorId)
             : false;
+
+        // Record profile view (skip if vendor viewing own profile)
+        if (! $isOwner) {
+            $this->analyticsService->recordProfileView($vendorId, $authUser?->id, request()->ip());
+        }
 
         return Inertia::render('Vendor/Profile', [
             'vendor' => [

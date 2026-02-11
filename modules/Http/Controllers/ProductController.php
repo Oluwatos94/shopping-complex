@@ -16,6 +16,7 @@ use ModulesShoppingComplex\Http\Requests\ProductFormRequest;
 use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
 use ModulesShoppingComplex\Services\ReviewService;
@@ -25,7 +26,8 @@ class ProductController extends Controller
     public function __construct(
         private readonly ProductService $productService,
         private readonly MediaService $mediaService,
-        private readonly ReviewService $reviewService
+        private readonly ReviewService $reviewService,
+        private readonly AnalyticsService $analyticsService
     ) {}
 
     public function index(): Response
@@ -64,6 +66,12 @@ class ProductController extends Controller
     {
         $product = $this->productService->getProduct($product->id);
         $vendor = $product->vendor;
+
+        // Record product view (skip if vendor viewing own product)
+        $authUser = Auth::user();
+        if (! $authUser || $authUser->id !== $vendor->id) {
+            $this->analyticsService->recordProductView($product->id, $vendor->id, $authUser?->id, request()->ip());
+        }
 
         // Load vendor relationships and counts in one go (media already loaded via getProduct)
         if (! $vendor->relationLoaded('media')) {
