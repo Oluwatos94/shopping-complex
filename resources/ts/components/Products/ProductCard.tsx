@@ -38,27 +38,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                             Featured
                         </span>
                     )}
-                    {/* {product.stock === 0 && (
-                        <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                            Out of Stock
-                        </span>
-                    )} */}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                        className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            // Add to wishlist logic
-                        }}
-                        aria-label="Add to wishlist"
-                    >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
@@ -115,13 +94,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                         </span>
                     )}
                 </div>
-
-                {/* Stock Status */}
-                {product.stock > 0 && product.stock <= 10 && (
-                    <p className="text-xs text-orange-600 mt-2">
-                        Only {product.stock} left in stock
-                    </p>
-                )}
             </div>
         </Link>
     );

@@ -20,6 +20,7 @@ class ProductRepository extends BasePageRepository
     public function list(int $perPage = 15): LengthAwarePaginator
     {
         return QueryBuilder::for(Product::class)
+            ->with(['media', 'vendor'])
             ->allowedFilters([
                 AllowedFilter::exact('vendor_id'),
                 AllowedFilter::exact('category_id'),
@@ -36,9 +37,7 @@ class ProductRepository extends BasePageRepository
                 'created_at',
             ])
             ->allowedIncludes([
-                'vendor',
                 'category',
-                'media',
             ])
             ->defaultSort('-created_at')
             ->paginate($perPage)

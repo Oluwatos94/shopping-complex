@@ -36,6 +36,16 @@ class ProductController extends Controller
         $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
         );
 
+        $products->through(function ($product) {
+            $product->images = $product->media->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => $this->mediaService->getMediaUrl($media),
+                'is_primary' => true,
+            ])->values()->all();
+
+            return $product;
+        });
+
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
