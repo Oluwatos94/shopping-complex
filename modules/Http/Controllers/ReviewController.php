@@ -15,6 +15,7 @@ use ModulesShoppingComplex\Http\Requests\VendorResponseRequest;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\UserEnum;
 use ModulesShoppingComplex\Models\Review;
+use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\ReviewService;
 
 class ReviewController extends Controller
@@ -24,41 +25,45 @@ class ReviewController extends Controller
     ) {}
 
     /**
-     * GET /vendors/{vendorId}/reviews
+     * GET /vendors/{vendorSlug}/reviews
      * Get public reviews for a vendor.
      */
-    public function index(int $vendorId, Request $request): JsonResponse
+    public function index(string $vendorSlug, Request $request): JsonResponse
     {
-        if (! $this->reviewService->vendorExists($vendorId)) {
+        $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
+
+        if (! $vendor) {
             return response()->json(['message' => 'Vendor not found.'], 404);
         }
 
         $perPage = $this->getPerPage($request);
-        $reviews = $this->reviewService->getVendorReviews($vendorId, $perPage);
+        $reviews = $this->reviewService->getVendorReviews($vendor->id, $perPage);
 
         return $this->paginatedResponse($reviews, 'reviews');
     }
 
     /**
-     * GET /vendors/{vendorId}/reviews/stats
+     * GET /vendors/{vendorSlug}/reviews/stats
      * Get rating statistics for a vendor.
      */
-    public function stats(int $vendorId): JsonResponse
+    public function stats(string $vendorSlug): JsonResponse
     {
-        if (! $this->reviewService->vendorExists($vendorId)) {
+        $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
+
+        if (! $vendor) {
             return response()->json(['message' => 'Vendor not found.'], 404);
         }
 
-        $stats = $this->reviewService->getVendorRatingStats($vendorId);
+        $stats = $this->reviewService->getVendorRatingStats($vendor->id);
 
         return response()->json($stats);
     }
 
     /**
-     * GET /vendors/{vendorId}/reviews/can-review
+     * GET /vendors/{vendorSlug}/reviews/can-review
      * Check if current user can review the vendor.
      */
-    public function canReview(int $vendorId, Request $request): JsonResponse
+    public function canReview(string $vendorSlug, Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -69,8 +74,9 @@ class ReviewController extends Controller
             ]);
         }
 
-        $canReview = $this->reviewService->canCustomerReviewVendor($user->id, $vendorId);
-        $hasReviewed = $this->reviewService->hasReviewedVendor($user->id, $vendorId);
+        $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->firstOrFail();
+        $canReview = $this->reviewService->canCustomerReviewVendor($user->id, $vendor->id);
+        $hasReviewed = $this->reviewService->hasReviewedVendor($user->id, $vendor->id);
 
         $reason = null;
         if (! $canReview) {

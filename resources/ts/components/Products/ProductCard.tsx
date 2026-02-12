@@ -15,7 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     return (
         <Link
-            href={`/products/${product.id}`}
+            href={`/products/${product.slug}`}
             className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
         >
             {/* Product Image */}
@@ -26,7 +26,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {hasDiscount && salePrice && (
                         <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
@@ -43,19 +42,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             {/* Product Info */}
             <div className="p-4">
-                {/* Vendor Name */}
                 {product.vendor && (
                     <p className="text-xs text-gray-500 mb-1">
                         {product.vendor.business_name || product.vendor.name}
                     </p>
                 )}
 
-                {/* Product Name */}
                 <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-olive transition-colors">
                     {product.name}
                 </h3>
 
-                {/* Rating */}
                 {product.reviews_count && product.reviews_count > 0 && (
                     <div className="flex items-center gap-2 mb-2">
                         <div className="flex items-center">
@@ -77,7 +73,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                 )}
 
-                {/* Price */}
                 <div className="flex items-baseline gap-2">
                     {hasDiscount && salePrice ? (
                         <>

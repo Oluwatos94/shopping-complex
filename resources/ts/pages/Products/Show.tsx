@@ -45,12 +45,10 @@ export default function ProductShow({
 
     breadcrumbItems.push({ label: product.name });
 
-    // Handle message vendor
     const handleMessageVendor = useCallback(() => {
         if (!auth?.user) {
-            // Redirect to login if not authenticated
             router.visit('/login', {
-                data: { redirect: `/products/${product.id}` },
+                data: { redirect: `/products/${product.slug}` },
             });
             return;
         }
@@ -59,12 +57,11 @@ export default function ProductShow({
         setIsMessageModalOpen(true);
         // You could also redirect directly to chat:
         // router.visit(`/chat?vendor=${vendor.id}`);
-    }, [auth, product.id, vendor.id]);
+    }, [auth, product.slug, vendor.id]);
 
-    // Handle review page change
     const handleReviewPageChange = useCallback((page: number) => {
         router.get(
-            `/products/${product.id}`,
+            `/products/${product.slug}`,
             { review_page: page },
             {
                 preserveState: true,

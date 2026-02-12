@@ -69,11 +69,13 @@ class ProductController extends Controller
 
         $product = $this->productService->createProduct($validated);
 
-        return redirect()->route('products.show', $product->id)->with('success', 'Product created successfully.');
+        return redirect()->route('products.show', $product->slug)->with('success', 'Product created successfully.');
     }
 
     public function show(Product $product): Response
     {
+        abort_unless($product->is_active, 404);
+
         $product = $this->productService->getProduct($product->id);
         $vendor = $product->vendor;
 
@@ -166,7 +168,7 @@ class ProductController extends Controller
         $this->productService->updateProduct($product->id, $validated);
 
         return redirect()
-            ->route('products.show', $product->id)
+            ->route('products.show', $product->slug)
             ->with('success', 'Product updated successfully.');
     }
 

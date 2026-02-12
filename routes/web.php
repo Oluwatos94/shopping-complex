@@ -68,7 +68,7 @@ Route::middleware(['throttle:products'])->group(function () {
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
-    Route::get('/vendors/{vendorId}', [VendorController::class, 'show'])->name('vendor.show');
+    Route::get('/vendors/{vendorSlug}', [VendorController::class, 'show'])->name('vendor.show');
 });
 
 // Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)
@@ -129,13 +129,13 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
 
 // Review Routes - Public (view vendor reviews)
 Route::middleware(['throttle:products'])->group(function () {
-    Route::get('/vendors/{vendorId}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('/vendors/{vendorId}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
+    Route::get('/vendors/{vendorSlug}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/vendors/{vendorSlug}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
 });
 
 // Review Routes - Authenticated
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
-    Route::get('/vendors/{vendorId}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+    Route::get('/vendors/{vendorSlug}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
     Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my');
     Route::get('/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
     Route::get('/vendor/reviews', [ReviewController::class, 'vendorReviews'])->name('vendor.reviews');
@@ -189,5 +189,5 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
 
 // Vendor follow toggle
 Route::middleware(['auth', 'throttle:writes'])->group(function () {
-    Route::post('/vendors/{vendorId}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
+    Route::post('/vendors/{vendorSlug}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
 });

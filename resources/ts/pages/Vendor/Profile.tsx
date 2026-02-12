@@ -229,7 +229,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
             ?.split('=')[1];
 
         try {
-            const res = await fetch(`/vendors/${vendor.id}/follow`, {
+            const res = await fetch(`/vendors/${vendor.slug}/follow`, {
                 method: 'POST',
                 headers: {
                     'X-XSRF-TOKEN': xsrfToken ? decodeURIComponent(xsrfToken) : '',
@@ -255,7 +255,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
 
             <div className="min-h-screen bg-gray-50">
                 {/* Sidebar - only for vendor owner */}
-                {isOwner && <VendorSidebar vendorId={vendor.id} businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
+                {isOwner && <VendorSidebar vendorSlug={vendor.slug} businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
 
                 {/* Main Content */}
                 <div className={isOwner ? 'ml-[100px]' : ''}>
@@ -413,7 +413,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                     return (
                                         <Link
                                             key={product.id}
-                                            href={`/products/${product.id}`}
+                                            href={`/products/${product.slug}`}
                                             className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                         >
                                             <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -473,7 +473,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                 {Array.from({ length: products.last_page }, (_, i) => i + 1).map((page) => (
                                     <Link
                                         key={page}
-                                        href={`/vendors/${vendor.id}?page=${page}`}
+                                        href={`/vendors/${vendor.slug}?page=${page}`}
                                         className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                                             page === products.current_page
                                                 ? 'bg-primary-olive text-white'

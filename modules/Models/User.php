@@ -17,6 +17,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int|null $role_id
  * @property string $role
  * @property string $name
+ * @property string|null $slug
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string|null $password
@@ -48,6 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /** {@inheritdoc} */
     protected $fillable = [
         'name',
+        'slug',
         'email',
         'password',
         'role',

@@ -8,6 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -33,6 +34,7 @@ final readonly class VendorService
             $user->update([
                 'role' => 'vendor',
                 'business_name' => $data['business_name'],
+                'slug' => Str::slug($data['business_name']) . '-' . uniqid(),
                 'bio' => $data['bio'],
                 'category_id' => $data['category_id'],
             ]);

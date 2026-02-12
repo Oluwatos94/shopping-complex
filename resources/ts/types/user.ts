@@ -3,6 +3,7 @@
  */
 export interface BaseUser {
     id: number;
+    slug?: string;
     name: string;
     email: string;
     email_verified_at: string | null;

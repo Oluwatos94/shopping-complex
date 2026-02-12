@@ -50,6 +50,7 @@ class VendorController extends Controller
             return [
                 // BaseUser fields
                 'id' => $vendor->id,
+                'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
                 'email_verified_at' => $vendor->email_verified_at?->toISOString(),
@@ -120,7 +121,7 @@ class VendorController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'vendor') {
-            return redirect()->route('vendor.show', $user->id);
+            return redirect()->route('vendor.show', $user->slug);
         }
 
         $categories = Cache::remember('vendor_register_categories', 3600, fn () => Category::select('id', 'name', 'slug')->orderBy('name')->get()
@@ -141,13 +142,14 @@ class VendorController extends Controller
             $request->file('avatar')
         );
 
-        return redirect()->route('vendor.show', $vendor->id)
+        return redirect()->route('vendor.show', $vendor->slug)
             ->with('success', 'Welcome! Your vendor profile has been created.');
     }
 
-    public function show(int $vendorId): Response
+    public function show(string $vendorSlug): Response
     {
-        $vendor = $this->findVendorById($vendorId);
+        $vendor = $this->findVendorBySlug($vendorSlug);
+        $vendorId = $vendor->id;
 
         $products = Product::where('vendor_id', $vendorId)
             ->where('is_active', true)
@@ -184,6 +186,7 @@ class VendorController extends Controller
         return Inertia::render('Vendor/Profile', [
             'vendor' => [
                 'id' => $vendor->id,
+                'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
                 'business_name' => $vendor->business_name ?? $vendor->name,
@@ -240,9 +243,9 @@ class VendorController extends Controller
         ]);
     }
 
-    private function findVendorById(int $vendorId): User
+    private function findVendorBySlug(string $slug): User
     {
-        return User::where('id', $vendorId)
+        return User::where('slug', $slug)
             ->where('role', 'vendor')
             ->with(['media', 'vendorOnboarding'])
             ->withCount(['products as active_products_count' => fn ($q) => $q->where('is_active', true)])
@@ -369,15 +372,16 @@ class VendorController extends Controller
         return Inertia::render('Vendor/OnboardingSuccess');
     }
 
-    public function toggleFollow(int $vendorId): JsonResponse
+    public function toggleFollow(string $vendorSlug): JsonResponse
     {
         $user = Auth::user();
+        $vendor = $this->findVendorBySlug($vendorSlug);
 
-        if ($user->id === $vendorId) {
+        if ($user->id === $vendor->id) {
             return response()->json(['error' => 'You cannot follow yourself'], 400);
         }
 
-        $result = $this->vendorService->toggleFollow($user->id, $vendorId);
+        $result = $this->vendorService->toggleFollow($user->id, $vendor->id);
 
         return response()->json($result);
     }

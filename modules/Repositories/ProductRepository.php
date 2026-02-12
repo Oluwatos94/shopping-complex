@@ -19,12 +19,10 @@ class ProductRepository extends BasePageRepository
      */
     public function list(int $perPage = 15): LengthAwarePaginator
     {
-        return QueryBuilder::for(Product::class)
+        return QueryBuilder::for(Product::where('is_active', true))
             ->with(['media', 'vendor'])
             ->allowedFilters([
-                AllowedFilter::exact('vendor_id'),
                 AllowedFilter::exact('category_id'),
-                AllowedFilter::exact('is_active'),
                 AllowedFilter::partial('name'),
                 AllowedFilter::partial('description'),
             ])

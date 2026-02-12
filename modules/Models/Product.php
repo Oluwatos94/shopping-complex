@@ -80,4 +80,12 @@ class Product extends Model
     {
         return $this->hasMany(CustomerWishlist::class);
     }
+
+    /**
+     * Use slug for route model binding instead of numeric ID.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }
