@@ -26,7 +26,7 @@ php artisan migrate
 
 Check the [Issues](https://github.com/your-org/shopping-complex/issues) page for tasks to contribute to. Issues are labeled by:
 - **Difficulty**: good-first-issue, ⭐⭐, ⭐⭐⭐, etc.
-- **Type**: backend, frontend, API, UI, etc.
+- **Type**: backend, frontend, Inertia, UI, etc.
 - **Phase**: Phase 1-5
 
 ## 🔀 Contribution Workflow

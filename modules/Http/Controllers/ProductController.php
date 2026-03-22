@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\ImageUploadRequest;
@@ -15,20 +16,25 @@ use ModulesShoppingComplex\Http\Requests\ProductFormRequest;
 use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
+use ModulesShoppingComplex\Services\ReviewService;
 
 class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $productService,
-        private readonly MediaService $mediaService
+        private readonly MediaService $mediaService,
+        private readonly ReviewService $reviewService,
+        private readonly AnalyticsService $analyticsService
     ) {}
 
     public function index(): Response
     {
         $products = $this->productService->index(perPage: 20);
-        $categories = Category::withCount('products')->get();
+        $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
+        );
 
         return Inertia::render('Products/Index', [
             'products' => $products,
@@ -59,9 +65,76 @@ class ProductController extends Controller
     public function show(Product $product): Response
     {
         $product = $this->productService->getProduct($product->id);
+        $vendor = $product->vendor;
+
+        // Record product view (skip if vendor viewing own product)
+        $authUser = Auth::user();
+        if (! $authUser || $authUser->id !== $vendor->id) {
+            $this->analyticsService->recordProductView($product->id, $vendor->id, $authUser?->id, request()->ip());
+        }
+
+        // Load vendor relationships and counts in one go (media already loaded via getProduct)
+        if (! $vendor->relationLoaded('media')) {
+            $vendor->load('media');
+        }
+        $vendor->loadCount('products');
+
+        $vendorStats = $this->reviewService->getVendorRatingStats($vendor->id);
+        $vendorReviews = $this->reviewService->getVendorReviews($vendor->id, 5);
+
+        // Get related products from the same category (excluding current product)
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->with(['vendor', 'media'])
+            ->limit(8)
+            ->get();
+
+        // Transform product images for frontend
+        $productData = $product->toArray();
+        $productData['images'] = $product->media->map(fn ($media) => [
+            'id' => $media->id,
+            'url' => $this->mediaService->getMediaUrl($media),
+            'type' => $media->type,
+        ])->values()->all();
+
+        // Transform vendor data
+        $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+        $vendorData = [
+            'id' => $vendor->id,
+            'name' => $vendor->name,
+            'email' => $vendor->email,
+            'email_verified_at' => $vendor->email_verified_at,
+            'created_at' => $vendor->created_at,
+            'updated_at' => $vendor->updated_at,
+            'role' => 'vendor',
+            'business_name' => $vendor->business_name ?? $vendor->name,
+            'business_description' => $vendor->bio,
+            'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+            'rating' => $vendorStats['average'],
+            'total_sales' => 0,
+            'products_count' => $vendor->products_count ?? 0,
+            'is_verified' => $vendor->email_verified_at !== null,
+            'is_online' => false,
+        ];
+
+        // Transform reviews for frontend
+        $reviewsData = [
+            'reviews' => $vendorReviews->items(),
+            'meta' => [
+                'current_page' => $vendorReviews->currentPage(),
+                'last_page' => $vendorReviews->lastPage(),
+                'per_page' => $vendorReviews->perPage(),
+                'total' => $vendorReviews->total(),
+            ],
+        ];
 
         return Inertia::render('Products/Show', [
-            'product' => $product,
+            'product' => $productData,
+            'vendor' => $vendorData,
+            'vendor_stats' => $vendorStats,
+            'vendor_reviews' => $reviewsData,
+            'related_products' => $relatedProducts,
         ]);
     }
 
