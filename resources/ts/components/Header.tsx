@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { NavigationLink } from '@/types/landing';
+import { NotificationBell } from '@/components/Notifications/NotificationBell';
 
 interface PageProps {
     [key: string]: unknown;
@@ -34,7 +35,6 @@ const Header: React.FC = () => {
         router.post('/logout');
     };
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -51,6 +51,7 @@ const Header: React.FC = () => {
         <header className="bg-primary-dark shadow-md sticky top-0 z-50">
             <nav className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
+                    {/* Logo */}
                     <Link href="/" className="flex items-center space-x-3">
                         <img
                             src="/logo/dark-mode-logo.svg"
@@ -62,6 +63,7 @@ const Header: React.FC = () => {
                         </span>
                     </Link>
 
+                    {/* Desktop nav */}
                     <div className="hidden md:flex items-center space-x-8">
                         {navLinks.map((link) => (
                             <Link
@@ -72,57 +74,64 @@ const Header: React.FC = () => {
                                 {link.label}
                             </Link>
                         ))}
+
                         {user ? (
-                            <div className="relative" ref={dropdownRef}>
-                                <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="flex items-center focus:outline-none"
-                                >
-                                    {user.avatar ? (
-                                        <img
-                                            src={user.avatar}
-                                            alt={user.name}
-                                            className="w-9 h-9 rounded-full object-cover border-2 border-primary-light/30 hover:border-primary-peach transition-colors"
-                                        />
-                                    ) : (
-                                        <div className="w-9 h-9 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30 hover:border-primary-peach transition-colors">
-                                            <span className="text-white text-sm font-bold">
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </span>
+                            <div className="flex items-center gap-3">
+                                {/* Notification bell — logged-in only */}
+                                <NotificationBell />
+
+                                {/* Avatar + dropdown */}
+                                <div className="relative" ref={dropdownRef}>
+                                    <button
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="flex items-center focus:outline-none"
+                                    >
+                                        {user.avatar ? (
+                                            <img
+                                                src={user.avatar}
+                                                alt={user.name}
+                                                className="w-9 h-9 rounded-full object-cover border-2 border-primary-light/30 hover:border-primary-peach transition-colors"
+                                            />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30 hover:border-primary-peach transition-colors">
+                                                <span className="text-white text-sm font-bold">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </button>
+
+                                    {isDropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                                            <div className="px-4 py-2 border-b border-gray-100">
+                                                <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                                                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                                            </div>
+                                            <Link
+                                                href={profileLink}
+                                                onClick={() => setIsDropdownOpen(false)}
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                View Profile
+                                            </Link>
+                                            <Link
+                                                href="/profile"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Account Settings
+                                            </Link>
+                                            <div className="border-t border-gray-100">
+                                                <button
+                                                    onClick={handleSignOut}
+                                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                >
+                                                    Sign Out
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
-                                </button>
-
-                                {isDropdownOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                                        <div className="px-4 py-2 border-b border-gray-100">
-                                            <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                                            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                        </div>
-                                        <Link
-                                            href={profileLink}
-                                            onClick={() => setIsDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        >
-                                            View Profile
-                                        </Link>
-                                        <Link
-                                            href="/profile"
-                                            onClick={() => setIsDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        >
-                                            Account Settings
-                                        </Link>
-                                        <div className="border-t border-gray-100">
-                                            <button
-                                                onClick={handleSignOut}
-                                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         ) : (
                             <Link
@@ -134,51 +143,45 @@ const Header: React.FC = () => {
                         )}
                     </div>
 
+                    {/* Mobile right-side controls */}
                     <div className="md:hidden flex items-center gap-3">
                         {user && (
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="focus:outline-none"
-                            >
-                                {user.avatar ? (
-                                    <img
-                                        src={user.avatar}
-                                        alt={user.name}
-                                        className="w-8 h-8 rounded-full object-cover border-2 border-primary-light/30"
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30">
-                                        <span className="text-white text-xs font-bold">
-                                            {user.name.charAt(0).toUpperCase()}
-                                        </span>
-                                    </div>
-                                )}
-                            </button>
+                            <>
+                                {/* Notification bell — logged-in only */}
+                                <NotificationBell />
+
+                                {/* Avatar button */}
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="focus:outline-none"
+                                >
+                                    {user.avatar ? (
+                                        <img
+                                            src={user.avatar}
+                                            alt={user.name}
+                                            className="w-8 h-8 rounded-full object-cover border-2 border-primary-light/30"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30">
+                                            <span className="text-white text-xs font-bold">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                    )}
+                                </button>
+                            </>
                         )}
+
+                        {/* Hamburger */}
                         <button
                             className="text-primary-light"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         >
-                            <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 {isMobileMenuOpen ? (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 ) : (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 )}
                             </svg>
                         </button>
