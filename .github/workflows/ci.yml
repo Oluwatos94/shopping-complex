@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  lint:
+    name: Lint (Laravel Pint) — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ matrix.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ matrix.os }}-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Laravel Pint (lint check)
+        run: vendor/bin/pint --test
+
+  phpstan:
+    name: PHPStan (Static Analysis) — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ matrix.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ matrix.os }}-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+
+  php-analysis:
+    name: PHP Analysis (Larastan Report) — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo
+          coverage: none
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ matrix.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ matrix.os }}-
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ matrix.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ matrix.os }}-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Generate PHP analysis report (Larastan)
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=json > phpstan-report.json || true
+
+      - name: Upload PHP analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpstan-analysis-report-${{ matrix.os }}
+          path: phpstan-report.json
+          retention-days: 14
+
+      - name: Fail if analysis found errors
+        run: |
+          python3 -c "
+          import sys, json
+          with open('phpstan-report.json') as f:
+              d = json.load(f)
+          error_count = d['totals']['file_errors']
+          print(f'PHPStan found {error_count} error(s)')
+          if error_count > 0:
+              for path, data in d.get('files', {}).items():
+                  for msg in data.get('messages', []):
+                      print(f\"{path}:{msg['line']}: {msg['message']}\")
+              sys.exit(1)
+          "
