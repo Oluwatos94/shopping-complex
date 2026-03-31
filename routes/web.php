@@ -2,12 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
+use ModulesShoppingComplex\Http\Controllers\ChatController;
+use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Http\Controllers\ProfileController;
+use ModulesShoppingComplex\Http\Controllers\ReviewController;
+use ModulesShoppingComplex\Http\Controllers\VendorController;
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
@@ -59,6 +65,12 @@ Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 });
 
+// Public Vendor Routes (accessible to everyone with product-specific rate limiting)
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
+    Route::get('/vendors/{vendorSlug}', [VendorController::class, 'show'])->name('vendor.show');
+});
+
 // Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
@@ -76,4 +88,106 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     // Product Image Management
     Route::post('/products/{product}/images', [ProductController::class, 'uploadImages'])->name('products.images.upload');
     Route::delete('/products/{product}/images/{mediaId}', [ProductController::class, 'deleteImage'])->name('products.images.delete');
+});
+
+Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {
+    Route::patch('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+});
+
+// Notification Inertia Pages
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/notifications/preferences', [NotificationController::class, 'preferencesPage'])->name('notifications.preferences');
+    Route::post('/notifications/preferences/{type}', [NotificationController::class, 'updatePreference'])
+        ->where('type', 'message_received|vendor_contact_request|product_updated|system_alert')
+        ->name('notifications.preferences.update');
+});
+
+// Chat API Routes
+Route::middleware(['auth', 'throttle:chat'])->prefix('api/chat')->group(function () {
+    Route::get('/conversations', [ChatController::class, 'index'])->name('chat.conversations');
+    Route::post('/conversations', [ChatController::class, 'store'])->name('chat.conversations.store');
+    Route::get('/conversations/{conversation}', [ChatController::class, 'show'])->name('chat.conversations.show');
+    Route::get('/conversations/{conversation}/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('chat.messages.send');
+    Route::patch('/conversations/{conversation}/messages/read', [ChatController::class, 'markAsRead'])->name('chat.messages.read');
+    Route::get('/conversations/{conversation}/messages/poll', [ChatController::class, 'pollMessages'])->name('chat.messages.poll');
+    Route::get('/unread-count', [ChatController::class, 'unreadCount'])->name('chat.unread');
+});
+
+// Typing indicator with separate rate limit
+Route::middleware(['auth', 'throttle:typing'])->prefix('api/chat')->group(function () {
+    Route::post('/conversations/{conversation}/typing', [ChatController::class, 'typing'])->name('chat.typing');
+});
+
+// Chat Inertia Pages
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/chat', [ChatController::class, 'chatPage'])->name('chat.index');
+    Route::get('/chat/{conversation}', [ChatController::class, 'conversationPage'])->name('chat.conversation');
+});
+
+// Review Routes - Public (view vendor reviews)
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/vendors/{vendorSlug}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/vendors/{vendorSlug}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
+});
+
+// Review Routes - Authenticated
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/vendors/{vendorSlug}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+    Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my');
+    Route::get('/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
+    Route::get('/vendor/reviews', [ReviewController::class, 'vendorReviews'])->name('vendor.reviews');
+});
+
+// Review Write Operations
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
+    Route::delete('/reviews/{review}/vote', [ReviewController::class, 'removeVote'])->name('reviews.vote.remove');
+    Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
+});
+
+// Review Moderation Routes - Admin only
+Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function () {
+    Route::get('/reviews/pending', [ReviewController::class, 'pending'])->name('admin.reviews.pending');
+    Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
+});
+
+// Vendor Registration & Onboarding Routes
+Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/register', [VendorController::class, 'register'])->name('vendor.register');
+    Route::get('/onboarding', [VendorController::class, 'onboarding'])->name('vendor.onboarding');
+    Route::get('/onboarding/success', [VendorController::class, 'onboardingSuccess'])->name('vendor.onboarding.success');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
+    Route::post('/register', [VendorController::class, 'storeRegistration'])->name('vendor.register.store');
+    Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
+    Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
+    Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
+});
+
+// User Profile Routes
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+});
+
+// Vendor Analytics
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/vendor/analytics', [AnalyticsController::class, 'index'])->name('vendor.analytics');
+});
+
+// Vendor follow toggle
+Route::middleware(['auth', 'throttle:writes'])->group(function () {
+    Route::post('/vendors/{vendorSlug}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
 });

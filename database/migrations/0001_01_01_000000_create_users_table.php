@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Models\Enums\UserEnum;
 use ModulesShoppingComplex\Models\User;
 
 return new class extends Migration
@@ -15,13 +16,15 @@ return new class extends Migration
         Schema::create(User::getTableName(), function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug')->nullable()->unique();
             $table->string('email')->unique();
             $table->string('password');
-            $table->enum('role', ['customer', 'vendor', 'admin'])->default('customer');
+            $table->enum('role', UserEnum::values());
             $table->string('phone')->nullable();
             $table->string('google_id')->nullable();
             $table->text('bio')->nullable(); // Vendor description
-            $table->string('business_name')->nullable(); // Vendor-specific
+            $table->string('business_name')->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->rememberToken();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
@@ -41,6 +44,17 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        Schema::create('vendor_followers', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('follower_id');
+            $table->timestamps();
+
+            $table->unique(['vendor_id', 'follower_id']);
+            $table->index('vendor_id');
+            $table->index('follower_id');
+        });
     }
 
     /**
@@ -48,6 +62,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('vendor_followers');
         Schema::dropIfExists(User::getTableName());
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Repositories;
 
 use App\Repositories\BasePageRepository;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -20,11 +19,10 @@ class ProductRepository extends BasePageRepository
      */
     public function list(int $perPage = 15): LengthAwarePaginator
     {
-        return QueryBuilder::for(Product::class)
+        return QueryBuilder::for(Product::where('is_active', true))
+            ->with(['media', 'vendor'])
             ->allowedFilters([
-                AllowedFilter::exact('vendor_id'),
                 AllowedFilter::exact('category_id'),
-                AllowedFilter::exact('is_active'),
                 AllowedFilter::partial('name'),
                 AllowedFilter::partial('description'),
             ])
@@ -37,10 +35,7 @@ class ProductRepository extends BasePageRepository
                 'created_at',
             ])
             ->allowedIncludes([
-                'vendor',
                 'category',
-                'reviews',
-                'media',
             ])
             ->defaultSort('-created_at')
             ->paginate($perPage)
@@ -94,9 +89,8 @@ class ProductRepository extends BasePageRepository
      * Get products by vendor
      *
      * @param  array<string>  $relations
-     * @return Collection<int, Product>
      */
-    public function getByVendor(int $vendorId, array $relations = []): Collection
+    public function getByVendor(int $vendorId, array $relations = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = Product::query()->where('vendor_id', $vendorId);
 
@@ -104,16 +98,15 @@ class ProductRepository extends BasePageRepository
             $query->with($relations);
         }
 
-        return $query->get();
+        return $query->paginate($perPage);
     }
 
     /**
      * Get active products
      *
      * @param  array<string>  $relations
-     * @return Collection<int, Product>
      */
-    public function getActive(array $relations = []): Collection
+    public function getActive(array $relations = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = Product::query()->where('is_active', true);
 
@@ -121,49 +114,34 @@ class ProductRepository extends BasePageRepository
             $query->with($relations);
         }
 
-        return $query->get();
+        return $query->paginate($perPage);
     }
 
     /**
      * Search products by name or description
      *
      * @param  array<string>  $relations
-     * @return Collection<int, Product>
      */
-    public function search(string $searchTerm, array $relations = []): Collection
+    public function search(string $searchTerm, array $relations = [], int $perPage = 20): LengthAwarePaginator
     {
         $searchTerm = trim($searchTerm);
+        $escapedTerm = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
 
         if (empty($searchTerm)) {
-            return new Collection;
+            return new LengthAwarePaginator([], 0, $perPage);
         }
 
         $query = Product::query()
-            ->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                    ->orWhere('description', 'like', "%{$searchTerm}%");
+            ->where(function ($q) use ($escapedTerm) {
+                $q->where('name', 'like', "%{$escapedTerm}%")
+                    ->orWhere('description', 'like', "%{$escapedTerm}%");
             });
 
         if (! empty($relations)) {
             $query->with($relations);
         }
 
-        return $query->get();
-    }
-
-    /**
-     * Update product stock
-     *
-     * @throws ModelNotFoundException
-     */
-    public function updateStock(int $id, int $quantity): Product
-    {
-        return DB::transaction(function () use ($id, $quantity) {
-            $product = $this->find($id);
-            $product->update(['stock' => $quantity]);
-
-            return $product;
-        });
+        return $query->paginate($perPage);
     }
 
     /**

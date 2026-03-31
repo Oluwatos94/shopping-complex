@@ -4,8 +4,11 @@ namespace ModulesShoppingComplex\Models;
 
 use Carbon\Carbon;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
@@ -22,7 +25,8 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \ModulesShoppingComplex\Models\Media> $media
+ * @property-read User $vendor
+ * @property-read Collection<int, Media> $media
  */
 class Product extends Model
 {
@@ -48,28 +52,40 @@ class Product extends Model
         return ProductFactory::new();
     }
 
-    public function vendor()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'vendor_id');
     }
 
-    public function category()
+    /**
+     * @return BelongsTo<Category, $this>
+     */
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function media()
+    /**
+     * @return MorphMany<Media, $this>
+     */
+    public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'model');
-    }
-
-    public function reviews()
-    {
-        return $this->hasMany(Review::class);
     }
 
     public function wishlist()
     {
         return $this->hasMany(CustomerWishlist::class);
+    }
+
+    /**
+     * Use slug for route model binding instead of numeric ID.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }
