@@ -1,36 +1,26 @@
 FROM php:8.2-cli
 
-# Install system dependencies + ImageMagick + build tools for pecl
+# Use the reliable PHP extension installer
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     zip \
     unzip \
-    autoconf \
-    gcc \
-    g++ \
-    make \
-    imagemagick \
-    libmagickwand-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libxml2-dev \
-    libzip-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN pecl install imagick-3.7.0 \
-    && docker-php-ext-enable imagick \
-    && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        mbstring \
-        xml \
-        ctype \
-        fileinfo \
-        zip \
-        bcmath
+# Install PHP extensions (handles all system deps automatically)
+RUN install-php-extensions \
+    imagick \
+    pdo_mysql \
+    mbstring \
+    xml \
+    ctype \
+    fileinfo \
+    zip \
+    bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
