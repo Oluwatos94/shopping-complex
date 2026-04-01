@@ -1,11 +1,16 @@
 FROM php:8.2-cli
 
-# Install system dependencies + ImageMagick
+# Install system dependencies + ImageMagick + build tools for pecl
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     zip \
     unzip \
+    autoconf \
+    gcc \
+    g++ \
+    make \
+    imagemagick \
     libmagickwand-dev \
     libpng-dev \
     libjpeg-dev \
@@ -15,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN pecl install imagick \
+RUN pecl install imagick-3.7.0 \
     && docker-php-ext-enable imagick \
     && docker-php-ext-install \
         pdo \
