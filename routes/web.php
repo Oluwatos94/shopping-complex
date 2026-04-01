@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
@@ -149,6 +150,19 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
     Route::delete('/reviews/{review}/vote', [ReviewController::class, 'removeVote'])->name('reviews.vote.remove');
     Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
+});
+
+// Admin Dashboard Routes
+Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'stats'])->name('admin.dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
+});
+
+Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
+    Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
+    Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
 });
 
 // Review Moderation Routes - Admin only

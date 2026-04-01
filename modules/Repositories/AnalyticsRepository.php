@@ -25,7 +25,7 @@ class AnalyticsRepository extends BasePageRepository
     /**
      * Get chat contacts grouped by date.
      *
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function getChatContactsByDate(int $vendorId, Carbon $startDate, Carbon $endDate): Collection
     {
@@ -52,7 +52,7 @@ class AnalyticsRepository extends BasePageRepository
     /**
      * Get profile views grouped by date.
      *
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function getProfileViewsByDate(int $vendorId, Carbon $startDate, Carbon $endDate): Collection
     {
@@ -79,7 +79,7 @@ class AnalyticsRepository extends BasePageRepository
     /**
      * Get top viewed products for a vendor in a date range.
      *
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function getTopViewedProducts(int $vendorId, Carbon $startDate, Carbon $endDate, int $limit = 10): Collection
     {
