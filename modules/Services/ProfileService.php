@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
 
@@ -24,6 +25,7 @@ final readonly class ProfileService
      */
     public function getProfileData(User $user): array
     {
+        /** @var Media|null $avatar */
         $avatar = $user->media()->where('type', 'avatar')->first();
 
         $conversations = $this->chatService->getConversations($user, 5);
@@ -69,6 +71,7 @@ final readonly class ProfileService
      */
     public function updateAvatar(User $user, UploadedFile $file): array
     {
+        /** @var Media|null $existingAvatar */
         $existingAvatar = $user->media()->where('type', 'avatar')->first();
         if ($existingAvatar) {
             $this->mediaService->deleteMedia($existingAvatar->id);

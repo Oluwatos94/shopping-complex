@@ -97,7 +97,7 @@ class ProductSeeder extends Seeder
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    'slug' => Str::slug($data['business_name']) . '-' . uniqid(),
+                    'slug' => Str::slug($data['business_name']).'-'.uniqid(),
                     'password' => Hash::make('password'),
                     'role' => 'vendor',
                     'business_name' => $data['business_name'],

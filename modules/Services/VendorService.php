@@ -34,7 +34,7 @@ final readonly class VendorService
             $user->update([
                 'role' => 'vendor',
                 'business_name' => $data['business_name'],
-                'slug' => Str::slug($data['business_name']) . '-' . uniqid(),
+                'slug' => Str::slug($data['business_name']).'-'.uniqid(),
                 'bio' => $data['bio'],
                 'category_id' => $data['category_id'],
             ]);
