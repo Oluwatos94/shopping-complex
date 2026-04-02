@@ -22,6 +22,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property Carbon|null $email_verified_at
  * @property string|null $password
  * @property string|null $phone
+ * @property string|null $whatsapp_number
  * @property string|null $google_id
  * @property string|null $bio
  * @property string|null $business_name
@@ -54,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role',
         'phone',
+        'whatsapp_number',
         'google_id',
         'bio',
         'business_name',

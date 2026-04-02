@@ -6,6 +6,7 @@ export interface BusinessInfo {
     business_category: string;
     tax_identification_number: string;
     physical_address: string;
+    whatsapp_number: string;
 }
 
 export interface VerificationDocuments {
@@ -45,6 +46,7 @@ const initialBusinessInfo: BusinessInfo = {
     business_category: '',
     tax_identification_number: '',
     physical_address: '',
+    whatsapp_number: '',
 };
 
 const initialVerification: VerificationDocuments = {
@@ -231,6 +233,9 @@ export function useOnboarding(savedData?: Partial<OnboardingData>) {
         }
         if (!data.business_info.physical_address.trim()) {
             newErrors.physical_address = 'Physical address is required';
+        }
+        if (!data.business_info.whatsapp_number.trim()) {
+            newErrors.whatsapp_number = 'Business WhatsApp number is required';
         }
 
         setErrors(prev => ({ ...prev, business_info: newErrors }));

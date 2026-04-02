@@ -99,6 +99,10 @@ final readonly class VendorService
             $data['current_step'] = $currentStep;
             $data['status'] = VendorOnboardingStatusEnum::DRAFT;
 
+            if (! empty($businessInfo['whatsapp_number'])) {
+                $user->update(['whatsapp_number' => $businessInfo['whatsapp_number']]);
+            }
+
             $onboarding = $this->vendorRepository->updateOrCreateOnboarding($user->id, $data);
             $this->handleFileUploads($onboarding, $files);
 
@@ -142,6 +146,10 @@ final readonly class VendorService
             $data['agreed_to_terms'] = $agreedToTerms;
             $data['current_step'] = 4;
             $data['status'] = VendorOnboardingStatusEnum::PENDING_REVIEW;
+
+            if (! empty($businessInfo['whatsapp_number'])) {
+                $user->update(['whatsapp_number' => $businessInfo['whatsapp_number']]);
+            }
 
             $onboarding = $this->vendorRepository->updateOrCreateOnboarding($user->id, $data);
             $this->handleFileUploads($onboarding, $files);
@@ -301,6 +309,9 @@ final readonly class VendorService
         }
         if (empty($businessInfo['physical_address'])) {
             $errors['physical_address'] = 'Physical address is required';
+        }
+        if (empty($businessInfo['whatsapp_number'])) {
+            $errors['whatsapp_number'] = 'Business WhatsApp number is required';
         }
 
         // Bank details validation

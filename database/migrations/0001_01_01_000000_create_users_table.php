@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', UserEnum::values());
             $table->string('phone')->nullable();
+            $table->string('whatsapp_number', 15)->nullable();
             $table->string('google_id')->nullable();
             $table->text('bio')->nullable(); // Vendor description
             $table->string('business_name')->nullable();
