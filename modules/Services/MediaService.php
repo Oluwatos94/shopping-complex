@@ -23,7 +23,7 @@ class MediaService
     public function __construct(
         private readonly MediaRepository $mediaRepository
     ) {
-        $driver = extension_loaded('imagick') ? new ImagickDriver() : new GdDriver();
+        $driver = extension_loaded('imagick') ? new ImagickDriver : new GdDriver;
         $this->imageManager = new ImageManager($driver);
     }
 

@@ -29,7 +29,11 @@ class VendorRepository extends BasePageRepository
         $sortBy = $filters['sort_by'] ?? 'distance';
 
         $addressTable = Address::getTableName();
-        $query = User::query()->where('role', 'vendor')->withCount('products')->with('media');
+        $query = User::query()
+            ->where('role', 'vendor')
+            ->whereHas('vendorOnboarding', fn ($q) => $q->where('status', VendorOnboardingStatusEnum::APPROVED))
+            ->withCount('products')
+            ->with('media');
 
         // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
         $haversine = "(6371 * acos(
@@ -58,7 +62,14 @@ class VendorRepository extends BasePageRepository
             $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
             $query->where(function ($q) use ($escapedSearch) {
                 $q->where('business_name', 'like', "%{$escapedSearch}%")
-                    ->orWhere('name', 'like', "%{$escapedSearch}%");
+                    ->orWhere('name', 'like', "%{$escapedSearch}%")
+                    ->orWhereHas('products', fn ($p) => $p->where('is_active', true)
+                        ->where(fn ($p2) => $p2
+                            ->where('name', 'like', "%{$escapedSearch}%")
+                            ->orWhere('description', 'like', "%{$escapedSearch}%")
+                        )
+                    )
+                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escapedSearch}%"));
             });
         }
 
