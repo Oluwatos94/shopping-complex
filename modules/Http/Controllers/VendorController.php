@@ -286,6 +286,7 @@ class VendorController extends Controller
                     'business_category' => $onboarding->business_category ?? '',
                     'tax_identification_number' => $onboarding->tax_identification_number ?? '',
                     'physical_address' => $onboarding->physical_address ?? '',
+                    'whatsapp_number' => $user->whatsapp_number ?? '',
                 ],
                 'verification' => [
                     'certificate_of_incorporation' => null,
