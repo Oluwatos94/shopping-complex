@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
@@ -38,6 +39,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
  * @property-read Address|null $address
  * @property-read VendorOnboarding|null $vendorOnboarding
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorSubscription> $subscriptions
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -194,6 +196,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsToMany(User::class, 'vendor_followers', 'follower_id', 'vendor_id')
             ->withTimestamps();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(VendorSubscription::class, 'vendor_id');
     }
 
     /**
