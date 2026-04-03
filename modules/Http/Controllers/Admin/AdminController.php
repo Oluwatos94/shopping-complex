@@ -8,19 +8,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorOnboarding;
 use ModulesShoppingComplex\Services\AdminAnalyticsService;
+use ModulesShoppingComplex\Services\VendorService;
 
 class AdminController extends Controller
 {
     public function __construct(
-        private readonly AdminAnalyticsService $adminAnalyticsService
+        private readonly AdminAnalyticsService $adminAnalyticsService,
+        private readonly VendorService $vendorService,
     ) {}
 
     public function stats(Request $request): Response|JsonResponse
@@ -85,28 +84,10 @@ class AdminController extends Controller
 
     public function approveVendor(User $user): JsonResponse
     {
-        $approved = DB::transaction(function () use ($user) {
-            $onboarding = VendorOnboarding::where('user_id', $user->id)
-                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $onboarding) {
-                return false;
-            }
-
-            $onboarding->update([
-                'status' => VendorOnboardingStatusEnum::APPROVED,
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
-                'rejection_reason' => null,
-            ]);
-
-            return true;
-        });
-
-        if (! $approved) {
-            return response()->json(['message' => 'No pending application found for this vendor.'], 422);
+        try {
+            $this->vendorService->approveOnboarding($user, Auth::user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
         Log::info('Vendor application approved', [
@@ -123,28 +104,10 @@ class AdminController extends Controller
             'rejection_reason' => 'required|string|max:500',
         ]);
 
-        $rejected = DB::transaction(function () use ($user, $validated) {
-            $onboarding = VendorOnboarding::where('user_id', $user->id)
-                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $onboarding) {
-                return false;
-            }
-
-            $onboarding->update([
-                'status' => VendorOnboardingStatusEnum::REJECTED,
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
-                'rejection_reason' => $validated['rejection_reason'],
-            ]);
-
-            return true;
-        });
-
-        if (! $rejected) {
-            return response()->json(['message' => 'No pending application found for this vendor.'], 422);
+        try {
+            $this->vendorService->rejectOnboarding($user, Auth::user(), $validated['rejection_reason']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
         Log::info('Vendor application rejected', [

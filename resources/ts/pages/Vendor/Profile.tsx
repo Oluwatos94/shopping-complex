@@ -2,9 +2,11 @@ import { useRef, useState, useCallback, FormEvent } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Product } from '@/types/product';
 import VendorSidebar from '@/components/VendorSidebar';
+import { getCsrfToken } from '@/utils/csrf';
 
 interface VendorProfile {
     id: number;
+    slug: string;
     name: string;
     email: string;
     business_name: string;
@@ -19,6 +21,7 @@ interface VendorStats {
     reviews_count: number;
     average_rating: number;
     followers_count: number;
+    plan_product_limit: number | null;
 }
 
 interface PaginatedProducts {
@@ -37,7 +40,11 @@ interface Props {
     isFollowing: boolean;
 }
 
-function UploadProductFab({}: { vendorId: number }) {
+function UploadProductFab({ productLimit, activeProductsCount }: {
+    productLimit: number | null;
+    activeProductsCount: number;
+}) {
+    const atLimit = productLimit !== null && activeProductsCount >= productLimit;
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
@@ -74,15 +81,11 @@ function UploadProductFab({}: { vendorId: number }) {
         if (image) formData.append('image', image);
 
         setProcessing(true);
-        const xsrfToken = document.cookie
-            .split('; ')
-            .find(c => c.startsWith('XSRF-TOKEN='))
-            ?.split('=')[1];
 
         fetch('/vendor/products/upload', {
             method: 'POST',
             headers: {
-                'X-XSRF-TOKEN': xsrfToken ? decodeURIComponent(xsrfToken) : '',
+                'X-XSRF-TOKEN': getCsrfToken(),
                 'Accept': 'application/json',
             },
             body: formData,
@@ -134,6 +137,27 @@ function UploadProductFab({}: { vendorId: number }) {
                             </button>
                         </div>
 
+                        {/* Upgrade prompt — shown when the vendor has hit their plan's product limit */}
+                        {atLimit ? (
+                            <div className="text-center py-6">
+                                <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-base font-semibold text-gray-900 mb-1">Product limit reached</h3>
+                                <p className="text-sm text-gray-500 mb-5">
+                                    You've used all {productLimit} product slots on your current plan.
+                                    Upgrade to add more.
+                                </p>
+                                <Link
+                                    href="/vendor/subscription"
+                                    className="inline-block bg-primary-olive text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
+                                >
+                                    View Plans
+                                </Link>
+                            </div>
+                        ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Image Upload */}
                             <div>
@@ -207,6 +231,7 @@ function UploadProductFab({}: { vendorId: number }) {
                                 {processing ? 'Uploading...' : 'Upload Product'}
                             </button>
                         </form>
+                        )}
                     </div>
                 </div>
             )}
@@ -223,16 +248,12 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
         if (followLoading) return;
 
         setFollowLoading(true);
-        const xsrfToken = document.cookie
-            .split('; ')
-            .find(c => c.startsWith('XSRF-TOKEN='))
-            ?.split('=')[1];
 
         try {
             const res = await fetch(`/vendors/${vendor.slug}/follow`, {
                 method: 'POST',
                 headers: {
-                    'X-XSRF-TOKEN': xsrfToken ? decodeURIComponent(xsrfToken) : '',
+                    'X-XSRF-TOKEN': getCsrfToken(),
                     'Accept': 'application/json',
                 },
             });
@@ -489,7 +510,12 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                 </div>
 
                 {/* Upload Product Modal + FAB - only for owner */}
-                {isOwner && <UploadProductFab vendorId={vendor.id} />}
+                {isOwner && (
+                    <UploadProductFab
+                        productLimit={stats.plan_product_limit}
+                        activeProductsCount={stats.products_count}
+                    />
+                )}
             </div>
         </>
     );
