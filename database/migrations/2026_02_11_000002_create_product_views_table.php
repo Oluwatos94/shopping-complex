@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\ProductView;
 use ModulesShoppingComplex\Models\User;
@@ -19,6 +20,7 @@ return new class extends Migration
             $table->foreignId('vendor_id')->constrained(User::getTableName())->onDelete('cascade');
             $table->foreignId('viewer_id')->nullable()->constrained(User::getTableName())->onDelete('set null');
             $table->string('ip_address', 45)->nullable();
+            $table->enum('source', ViewSourceEnum::values())->default(ViewSourceEnum::WEB->value);
             $table->timestamps();
 
             $table->index(['vendor_id', 'created_at']);

@@ -9,6 +9,7 @@ use Database\Factories\ProfileViewFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
@@ -16,6 +17,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int $vendor_id
  * @property int|null $viewer_id
  * @property string|null $ip_address
+ * @property ViewSourceEnum $source
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property-read User $vendor
@@ -30,6 +32,12 @@ class ProfileView extends Model
         'vendor_id',
         'viewer_id',
         'ip_address',
+        'source',
+    ];
+
+    /** {@inheritdoc} */
+    protected $casts = [
+        'source' => ViewSourceEnum::class,
     ];
 
     /**
