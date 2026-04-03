@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react';
 
+interface SubscriptionInfo {
+    plan_name: string | null;
+    plan_slug: string | null;
+    expires_at: string | null;
+    days_remaining: number | null;
+    product_limit: number | null;
+}
+
 interface AnalyticsData {
     overview: {
         chat_contacts: number;
@@ -30,9 +38,10 @@ interface AnalyticsData {
         average_view_value: number;
         period: { start_date: string; end_date: string };
     };
+    subscription: SubscriptionInfo;
 }
 
-export type { AnalyticsData };
+export type { AnalyticsData, SubscriptionInfo };
 
 export function useAnalytics(initialData: AnalyticsData) {
     const [data, setData] = useState<AnalyticsData>(initialData);

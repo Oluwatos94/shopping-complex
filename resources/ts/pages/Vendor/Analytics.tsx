@@ -1,8 +1,8 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import StatCard from '@/components/Vendor/StatCard';
 import ViewsChart from '@/components/Charts/ViewsChart';
-import { useAnalytics, type AnalyticsData } from '@/hooks/useAnalytics';
+import { useAnalytics, type AnalyticsData, type SubscriptionInfo } from '@/hooks/useAnalytics';
 
 const periods = [
     { value: 'daily', label: 'Today' },
@@ -11,13 +11,109 @@ const periods = [
     { value: 'yearly', label: '1 Year' },
 ];
 
+const PLAN_BADGE_STYLES: Record<string, string> = {
+    free: 'bg-gray-100 text-gray-600',
+    basic: 'bg-blue-100 text-blue-700',
+    premium: 'bg-amber-100 text-amber-800',
+};
+
+const dateFormatter = new Intl.DateTimeFormat('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+
 function formatCurrency(value: number) {
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(value);
 }
 
+function SubscriptionStatusCard({ subscription, activeProducts }: { subscription: SubscriptionInfo; activeProducts: number }) {
+    if (!subscription.plan_slug) {
+        return null;
+    }
+
+    const isFree = subscription.plan_slug === 'free';
+    const isExpiringSoon = subscription.days_remaining !== null && subscription.days_remaining <= 7;
+    const atProductLimit = subscription.product_limit !== null && activeProducts >= subscription.product_limit;
+    const badgeStyle = PLAN_BADGE_STYLES[subscription.plan_slug] ?? 'bg-gray-100 text-gray-600';
+
+    const expiryLabel = subscription.expires_at
+        ? dateFormatter.format(new Date(subscription.expires_at))
+        : null;
+
+    return (
+        <div className={`rounded-xl border p-5 mb-8 ${isExpiringSoon ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Plan info */}
+                <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${badgeStyle}`}>
+                        {subscription.plan_name ?? 'No Plan'}
+                    </span>
+                    <div>
+                        <p className="text-sm font-medium text-gray-900">Current Plan</p>
+                        {expiryLabel && (
+                            <p className={`text-xs mt-0.5 ${isExpiringSoon ? 'text-amber-700 font-semibold' : 'text-gray-500'}`}>
+                                {isExpiringSoon
+                                    ? `Expires in ${subscription.days_remaining} day${subscription.days_remaining === 1 ? '' : 's'} — ${expiryLabel}`
+                                    : `Valid until ${expiryLabel}`}
+                            </p>
+                        )}
+                        {isFree && (
+                            <p className="text-xs text-gray-500 mt-0.5">Free plan — no expiry</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Product usage */}
+                <div className="flex items-center gap-6">
+                    {subscription.product_limit !== null && (
+                        <div className="text-center">
+                            <p className="text-xs text-gray-500 mb-1">Products used</p>
+                            <p className={`text-sm font-semibold ${atProductLimit ? 'text-red-600' : 'text-gray-900'}`}>
+                                {activeProducts} / {subscription.product_limit}
+                            </p>
+                            <div className="w-24 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${atProductLimit ? 'bg-red-500' : 'bg-primary-olive'}`}
+                                    style={{ width: `${Math.min(100, (activeProducts / subscription.product_limit) * 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CTA */}
+                    <Link
+                        href="/vendor/subscription"
+                        className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                            isFree || atProductLimit
+                                ? 'bg-primary-olive text-white hover:bg-primary-olive/90'
+                                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                        {isFree || atProductLimit ? 'Upgrade Plan' : 'Manage Plan'}
+                    </Link>
+                </div>
+            </div>
+
+            {/* Alerts */}
+            {isExpiringSoon && (
+                <p className="mt-3 text-xs text-amber-700 border-t border-amber-200 pt-3">
+                    Your plan expires soon. Renew now to avoid service interruption.
+                </p>
+            )}
+            {!isExpiringSoon && isFree && (
+                <p className="mt-3 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                    Upgrade to a paid plan for more products, higher search priority, and premium features.
+                </p>
+            )}
+            {atProductLimit && !isFree && (
+                <p className="mt-3 text-xs text-red-600 border-t border-red-100 pt-3">
+                    You have reached your product limit. Upgrade your plan to add more products.
+                </p>
+            )}
+        </div>
+    );
+}
+
 export default function Analytics(props: AnalyticsData) {
     const { data, loading, period, changePeriod } = useAnalytics(props);
-    const { overview, chatContacts, profileViews, topProducts } = data;
+    const { overview, chatContacts, profileViews, topProducts, subscription } = data;
 
     return (
         <>
@@ -53,6 +149,9 @@ export default function Analytics(props: AnalyticsData) {
                             ))}
                         </div>
                     </div>
+
+                    {/* Subscription Status Card */}
+                    <SubscriptionStatusCard subscription={subscription} activeProducts={overview.active_products} />
 
                     {/* Loading overlay */}
                     <div className={`transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>

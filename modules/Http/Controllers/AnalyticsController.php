@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Services\AnalyticsService;
+use ModulesShoppingComplex\Services\SubscriptionService;
 
 class AnalyticsController extends Controller
 {
     public function __construct(
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
+        private readonly SubscriptionService $subscriptionService,
     ) {}
 
     /**
@@ -42,11 +44,25 @@ class AnalyticsController extends Controller
         $profileViews = $this->analyticsService->getProfileViewMetrics($user->id, $startDate, $endDate);
         $topProducts = $this->analyticsService->getTopProducts($user->id, $startDate, $endDate, $limit);
 
+        $subscription = $this->subscriptionService->getVendorSubscription($user->id);
+        $isFree = $subscription?->plan->isFree() ?? false;
+        $daysRemaining = null;
+        if ($subscription !== null && ! $isFree) {
+            $daysRemaining = max(0, (int) now()->diffInDays($subscription->expires_at, false));
+        }
+
         $data = [
             'overview' => $overview,
             'chatContacts' => $chatContacts,
             'profileViews' => $profileViews,
             'topProducts' => $topProducts,
+            'subscription' => [
+                'plan_name' => $subscription?->plan->name,
+                'plan_slug' => $subscription?->plan->slug,
+                'expires_at' => ($subscription !== null && ! $isFree) ? $subscription->expires_at->toISOString() : null,
+                'days_remaining' => $daysRemaining,
+                'product_limit' => $subscription?->plan->product_limit,
+            ],
         ];
 
         // Support AJAX requests for dynamic date filtering
