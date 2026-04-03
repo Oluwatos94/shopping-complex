@@ -219,6 +219,16 @@ class VendorController extends Controller
 
         $user = Auth::user();
 
+        $subscription = $this->subscriptionService->getVendorSubscription($user->id);
+        if ($subscription !== null) {
+            $activeCount = $user->products()->where('is_active', true)->count();
+            if ($activeCount >= $subscription->plan->product_limit) {
+                return response()->json([
+                    'message' => "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.",
+                ], 422);
+            }
+        }
+
         $product = DB::transaction(function () use ($user, $request) {
             $product = Product::create([
                 'name' => $request->input('name'),

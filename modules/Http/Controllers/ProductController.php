@@ -20,6 +20,7 @@ use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
 use ModulesShoppingComplex\Services\ReviewService;
+use ModulesShoppingComplex\Services\SubscriptionService;
 
 class ProductController extends Controller
 {
@@ -27,7 +28,8 @@ class ProductController extends Controller
         private readonly ProductService $productService,
         private readonly MediaService $mediaService,
         private readonly ReviewService $reviewService,
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
+        private readonly SubscriptionService $subscriptionService,
     ) {}
 
     public function index(): Response
@@ -59,12 +61,19 @@ class ProductController extends Controller
         return Inertia::render('Products/Create');
     }
 
-    public function store(ProductFormRequest $request): RedirectResponse
+    public function store(ProductFormRequest $request): RedirectResponse|JsonResponse
     {
         $this->authorize('create', Product::class);
 
-        $validated = $request->validated();
+        if ($error = $this->checkProductLimit()) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $error], 422);
+            }
 
+            return back()->with('error', $error);
+        }
+
+        $validated = $request->validated();
         $validated['vendor_id'] = Auth::id();
 
         $product = $this->productService->createProduct($validated);
@@ -255,6 +264,28 @@ class ProductController extends Controller
             'success' => true,
             'media' => $mediaUrls,
         ]);
+    }
+
+    /**
+     * Check whether the authenticated vendor has reached their plan's product limit.
+     * Returns the error message string when at limit, or null when creation is allowed.
+     */
+    private function checkProductLimit(): ?string
+    {
+        $vendor = Auth::user();
+        $subscription = $this->subscriptionService->getVendorSubscription($vendor->id);
+
+        if ($subscription === null) {
+            return null; // No subscription found — let the policy / other guards handle access
+        }
+
+        $activeCount = $vendor->products()->where('is_active', true)->count();
+
+        if ($activeCount >= $subscription->plan->product_limit) {
+            return "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.";
+        }
+
+        return null;
     }
 
     /**
