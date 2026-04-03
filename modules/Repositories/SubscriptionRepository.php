@@ -70,4 +70,28 @@ class SubscriptionRepository
             ->with('vendor')
             ->lazy();
     }
+
+    public function findByPaymentReference(string $reference): ?VendorSubscription
+    {
+        return VendorSubscription::where('payment_reference', $reference)->first();
+    }
+
+    public function getActiveSubscriptionForUpdate(int $vendorId): ?VendorSubscription
+    {
+        return VendorSubscription::where('vendor_id', $vendorId)
+            ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
+            ->where('expires_at', '>', now())
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function cancelSubscription(VendorSubscription $subscription): void
+    {
+        $subscription->update(['status' => VendorSubscriptionStatusEnum::CANCELLED]);
+    }
+
+    public function findActivePlanBySlug(string $slug): ?SubscriptionPlan
+    {
+        return SubscriptionPlan::active()->where('slug', $slug)->first();
+    }
 }
