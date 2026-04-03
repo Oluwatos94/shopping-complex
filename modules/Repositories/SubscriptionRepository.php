@@ -97,4 +97,21 @@ class SubscriptionRepository
             ->with('vendor')
             ->lazy();
     }
+
+    /**
+     * Batch-expire subscriptions by ID.
+     * The extra status guard prevents double-expiry on concurrent runs.
+     *
+     * @param  int[]  $ids
+     */
+    public function batchExpire(array $ids): int
+    {
+        if ($ids === []) {
+            return 0;
+        }
+
+        return VendorSubscription::whereIn('id', $ids)
+            ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
+            ->update(['status' => VendorSubscriptionStatusEnum::EXPIRED]);
+    }
 }
