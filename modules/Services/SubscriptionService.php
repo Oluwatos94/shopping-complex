@@ -91,8 +91,7 @@ final readonly class SubscriptionService
             throw new \RuntimeException('Payment reference does not belong to your account.');
         }
 
-        $plan = SubscriptionPlan::where('id', $planId)->where('is_active', true)->first();
-        if ($plan === null) {
+        if ($this->subscriptionRepository->findActivePlanById($planId) === null) {
             throw new \RuntimeException('The selected plan is no longer available.');
         }
 

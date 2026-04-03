@@ -51,8 +51,9 @@ final class PaystackClient
         $url = (string) $response->json('data.authorization_url');
 
         // Guard against an open-redirect if the Paystack response is ever tampered with
-        $host = parse_url($url, PHP_URL_HOST) ?? '';
-        if (parse_url($url, PHP_URL_SCHEME) !== 'https' || ! str_ends_with($host, 'paystack.com')) {
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+        if (($parsed['scheme'] ?? '') !== 'https' || ! str_ends_with($host, 'paystack.com')) {
             Log::error('Paystack returned unexpected authorization URL', ['url' => $url]);
             throw new \RuntimeException('Invalid payment gateway response.');
         }

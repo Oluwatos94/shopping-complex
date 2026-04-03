@@ -27,6 +27,7 @@ use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ReviewService;
+use ModulesShoppingComplex\Services\SubscriptionService;
 use ModulesShoppingComplex\Services\VendorService;
 
 class VendorController extends Controller
@@ -36,7 +37,8 @@ class VendorController extends Controller
         private readonly ReviewService $reviewService,
         private readonly MediaService $mediaService,
         private readonly UserRepository $userRepository,
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
+        private readonly SubscriptionService $subscriptionService,
     ) {}
 
     public function index(VendorRequest $request): Response
@@ -201,6 +203,9 @@ class VendorController extends Controller
                 'reviews_count' => $ratingStats['count'],
                 'average_rating' => $ratingStats['average'],
                 'followers_count' => $followersCount,
+                'plan_product_limit' => $isOwner
+                    ? ($this->subscriptionService->getVendorSubscription($vendor->id)?->plan->product_limit ?? null)
+                    : null,
             ],
             'isOwner' => $isOwner,
             'isFollowing' => $isFollowing,

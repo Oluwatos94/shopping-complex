@@ -76,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'slug' => $user->slug,
             'avatar' => $avatar ? asset('storage/'.$avatar->url) : null,
         ];
 
