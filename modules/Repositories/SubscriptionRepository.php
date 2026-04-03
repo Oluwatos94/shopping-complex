@@ -13,7 +13,7 @@ use ModulesShoppingComplex\Models\VendorSubscription;
 class SubscriptionRepository
 {
     /**
-     * Get all active subscription plans.
+     * Get all active subscription plans ordered by search priority.
      */
     public function getPlans(): Collection
     {
@@ -21,15 +21,23 @@ class SubscriptionRepository
     }
 
     /**
-     * Find a subscription plan by slug.
+     * Find an active subscription plan by its slug.
      */
-    public function findPlanBySlug(string $slug): ?SubscriptionPlan
+    public function findActivePlanBySlug(string $slug): ?SubscriptionPlan
     {
         return SubscriptionPlan::active()->where('slug', $slug)->first();
     }
 
     /**
-     * Get the vendor's current active subscription with its plan.
+     * Find an active subscription plan by its ID.
+     */
+    public function findActivePlanById(int $id): ?SubscriptionPlan
+    {
+        return SubscriptionPlan::active()->where('id', $id)->first();
+    }
+
+    /**
+     * Get the vendor's current active subscription with its plan eager-loaded.
      */
     public function getActiveSubscription(int $vendorId): ?VendorSubscription
     {
@@ -41,8 +49,26 @@ class SubscriptionRepository
             ->first();
     }
 
+    public function getActiveSubscriptionForUpdate(int $vendorId): ?VendorSubscription
+    {
+        return VendorSubscription::where('vendor_id', $vendorId)
+            ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
+            ->where('expires_at', '>', now())
+            ->with('plan')
+            ->lockForUpdate()
+            ->first();
+    }
+
     /**
-     * Create a new subscription for a vendor.
+     * Find a subscription by its Paystack payment reference.
+     */
+    public function findByPaymentReference(string $reference): ?VendorSubscription
+    {
+        return VendorSubscription::where('payment_reference', $reference)->first();
+    }
+
+    /**
+     * Create a new vendor subscription record.
      *
      * @param  array<string, mixed>  $data
      */
@@ -52,37 +78,11 @@ class SubscriptionRepository
     }
 
     /**
-     * Mark a vendor's active subscription as expired.
+     * Mark a subscription as expired.
      */
     public function expireSubscription(VendorSubscription $subscription): void
     {
         $subscription->update(['status' => VendorSubscriptionStatusEnum::EXPIRED]);
-    }
-
-    /**
-     * Get all subscriptions that are past their expiry date but still marked active.
-     * Returns a lazy collection to avoid loading all records into memory at once.
-     */
-    public function getOverdueActiveSubscriptions(): LazyCollection
-    {
-        return VendorSubscription::where('status', VendorSubscriptionStatusEnum::ACTIVE)
-            ->where('expires_at', '<', now())
-            ->with('vendor')
-            ->lazy();
-    }
-
-    public function findByPaymentReference(string $reference): ?VendorSubscription
-    {
-        return VendorSubscription::where('payment_reference', $reference)->first();
-    }
-
-    public function getActiveSubscriptionForUpdate(int $vendorId): ?VendorSubscription
-    {
-        return VendorSubscription::where('vendor_id', $vendorId)
-            ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
-            ->where('expires_at', '>', now())
-            ->lockForUpdate()
-            ->first();
     }
 
     public function cancelSubscription(VendorSubscription $subscription): void
@@ -90,8 +90,11 @@ class SubscriptionRepository
         $subscription->update(['status' => VendorSubscriptionStatusEnum::CANCELLED]);
     }
 
-    public function findActivePlanBySlug(string $slug): ?SubscriptionPlan
+    public function getOverdueActiveSubscriptions(): LazyCollection
     {
-        return SubscriptionPlan::active()->where('slug', $slug)->first();
+        return VendorSubscription::where('status', VendorSubscriptionStatusEnum::ACTIVE)
+            ->where('expires_at', '<', now())
+            ->with('vendor')
+            ->lazy();
     }
 }

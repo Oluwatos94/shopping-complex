@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreignId('vendor_id')->constrained(User::getTableName())->onDelete('cascade');
             $table->foreignId('plan_id')->constrained(SubscriptionPlan::getTableName());
             $table->enum('status', VendorSubscriptionStatusEnum::values())->default(VendorSubscriptionStatusEnum::ACTIVE->value);
-            $table->timestamp('started_at');
-            $table->timestamp('expires_at');
+            $table->dateTime('started_at');
+            $table->dateTime('expires_at');
             $table->string('payment_reference')->nullable()->unique();
             $table->decimal('amount_paid', 10, 2)->nullable();
             $table->timestamps();
