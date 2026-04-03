@@ -14,7 +14,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int $id
  * @property string $name
  * @property string $slug
- * @property string $price
+ * @property float $price
  * @property int $product_limit
  * @property int $search_priority
  * @property array|null $features
@@ -54,5 +54,10 @@ class SubscriptionPlan extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    public function isFree(): bool
+    {
+        return $this->slug === 'free';
     }
 }

@@ -14,6 +14,7 @@ use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
+use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 
 // Authentication Routes (guest only with rate limiting)
@@ -199,6 +200,17 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
 // Vendor Analytics
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/vendor/analytics', [AnalyticsController::class, 'index'])->name('vendor.analytics');
+});
+
+// Vendor Subscription Routes
+Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('vendor.subscription.index');
+    Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('vendor.subscription.cancel');
+    Route::post('/subscription/{plan}', [SubscriptionController::class, 'checkout'])->name('vendor.subscription.checkout');
 });
 
 // Vendor follow toggle
