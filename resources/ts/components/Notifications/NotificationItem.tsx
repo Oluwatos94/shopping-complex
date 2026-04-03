@@ -41,9 +41,9 @@ function typeIcon(type: NotificationType) {
 const TYPE_COLORS: Record<NotificationType, string> = {
   message: "#6ee7b7",   // emerald
   mention: "#93c5fd",   // blue
-  alert: "#fca5a5",     // red
+  alert:   "#fca5a5",   // red
   success: "#86efac",   // green
-  system: "#c4b5fd",    // violet
+  system:  "#c4b5fd",   // violet
 };
 
 // ─── Relative timestamp ──────────────────────────────────────────────────────
@@ -87,124 +87,41 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   return (
     <div
       onClick={handleClick}
-      style={{
-        display: "flex",
-        gap: "12px",
-        padding: "14px 16px",
-        cursor: read ? "default" : "pointer",
-        background: read ? "transparent" : "rgba(255,255,255,0.03)",
-        borderLeft: `3px solid ${read ? "transparent" : color}`,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        transition: "background 0.15s ease",
-        position: "relative",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.background =
-          "rgba(255,255,255,0.05)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.background = read
-          ? "transparent"
-          : "rgba(255,255,255,0.03)";
-      }}
+      className={`group relative flex gap-3 px-4 py-[14px] border-b border-white/[0.06] transition-colors duration-150 ease-in-out hover:bg-white/[0.05] ${read ? "cursor-default bg-transparent" : "cursor-pointer bg-white/[0.03]"}`}
+      style={{ borderLeft: `3px solid ${read ? "transparent" : color}` }}
     >
       {/* Type icon badge */}
       <div
+        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
         style={{
-          flexShrink: 0,
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
           background: `${color}18`,
           border: `1px solid ${color}40`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           color,
-          marginTop: 2,
         }}
       >
         {typeIcon(type)}
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 8,
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: "13px",
-              fontWeight: read ? 400 : 600,
-              color: read ? "rgba(255,255,255,0.65)" : "#f1f5f9",
-              fontFamily: "'DM Mono', monospace",
-              letterSpacing: "-0.01em",
-              lineHeight: 1.3,
-              wordBreak: "break-word",
-            }}
-          >
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start gap-2">
+          <p className={`m-0 text-[13px] font-mono tracking-[-0.01em] leading-[1.3] break-words ${read ? "font-normal text-white/65" : "font-semibold text-slate-100"}`}>
             {title}
           </p>
-          <span
-            style={{
-              fontSize: "11px",
-              color: "rgba(255,255,255,0.35)",
-              whiteSpace: "nowrap",
-              fontFamily: "'DM Mono', monospace",
-              flexShrink: 0,
-            }}
-          >
+          <span className="text-[11px] text-white/35 whitespace-nowrap font-mono shrink-0">
             {relativeTime(timestamp)}
           </span>
         </div>
-        <p
-          style={{
-            margin: "4px 0 0",
-            fontSize: "12px",
-            color: "rgba(255,255,255,0.45)",
-            fontFamily: "'DM Mono', monospace",
-            lineHeight: 1.5,
-            wordBreak: "break-word",
-          }}
-        >
+        <p className="mt-1 mb-0 text-xs text-white/45 font-mono leading-[1.5] break-words">
           {body}
         </p>
       </div>
 
-      {/* Remove button */}
+      {/* Remove button — shown on row hover via group-hover */}
       <button
         onClick={handleRemove}
         title="Dismiss"
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          background: "none",
-          border: "none",
-          color: "rgba(255,255,255,0.25)",
-          cursor: "pointer",
-          padding: "2px 4px",
-          fontSize: "14px",
-          lineHeight: 1,
-          opacity: 0,
-          transition: "opacity 0.15s ease, color 0.15s ease",
-          borderRadius: 4,
-        }}
-        className="notif-remove-btn"
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color =
-            "rgba(255,255,255,0.7)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color =
-            "rgba(255,255,255,0.25)";
-        }}
+        className="absolute top-[10px] right-[10px] bg-transparent border-none text-white/25 cursor-pointer py-0.5 px-1 text-[14px] leading-none opacity-0 group-hover:opacity-100 transition-[opacity,color] duration-150 ease-in-out rounded hover:text-white/70"
       >
         ✕
       </button>
@@ -212,22 +129,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       {/* Unread dot */}
       {!read && (
         <div
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 10,
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: color,
-            boxShadow: `0 0 6px ${color}`,
-          }}
+          className="absolute top-[14px] right-[10px] w-1.5 h-1.5 rounded-full"
+          style={{ background: color, boxShadow: `0 0 6px ${color}` }}
         />
       )}
-
-      <style>{`
-        div:hover .notif-remove-btn { opacity: 1 !important; }
-      `}</style>
     </div>
   );
 };

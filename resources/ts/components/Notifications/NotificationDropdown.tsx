@@ -29,88 +29,30 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     <div
       role="dialog"
       aria-label="Notifications"
-      style={{
-        position: "absolute",
-        top: "calc(100% + 12px)",
-        right: 0,
-        width: "clamp(320px, 90vw, 400px)",
-        background: "#0f1117",
-        border: "1px solid rgba(255,255,255,0.10)",
-        borderRadius: "16px",
-        boxShadow:
-          "0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset",
-        overflow: "hidden",
-        zIndex: 9999,
-        animation: "dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-        fontFamily: "'DM Mono', monospace",
-      }}
+      className="absolute right-0 w-[clamp(320px,90vw,400px)] bg-[#0f1117] border border-white/10 rounded-2xl overflow-hidden z-[9999] font-mono shadow-[0_24px_64px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.04)_inset] animate-dropdown-in"
+      style={{ top: "calc(100% + 12px)" }}
     >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
-        @keyframes dropdownIn {
-          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .notif-scroll::-webkit-scrollbar { width: 4px; }
-        .notif-scroll::-webkit-scrollbar-track { background: transparent; }
-        .notif-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-      `}</style>
 
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 16px 12px",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 500,
-              color: "#f1f5f9",
-              letterSpacing: "-0.02em",
-            }}
-          >
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/[0.08]">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-medium text-slate-100 tracking-[-0.02em]">
             Notifications
           </span>
           {/* Connection indicator */}
           <span
             title={connected ? "Live" : "Disconnected"}
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: connected ? "#4ade80" : "#f87171",
-              boxShadow: connected ? "0 0 6px #4ade80" : "none",
-              display: "inline-block",
-            }}
+            className={`inline-block w-1.5 h-1.5 rounded-full ${connected ? "bg-green-400" : "bg-red-400"}`}
+            style={connected ? { boxShadow: "0 0 6px #4ade80" } : undefined}
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div className="flex items-center gap-1">
           {/* Sound toggle */}
           <button
             onClick={onToggleSound}
             title={soundEnabled ? "Mute notifications" : "Unmute notifications"}
-            style={{
-              background: "none",
-              border: "1px solid rgba(255,255,255,0.10)",
-              borderRadius: 8,
-              color: soundEnabled
-                ? "rgba(255,255,255,0.65)"
-                : "rgba(255,255,255,0.25)",
-              cursor: "pointer",
-              padding: "5px 8px",
-              fontSize: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              transition: "all 0.15s ease",
-            }}
+            className={`bg-transparent border border-white/10 rounded-lg cursor-pointer py-[5px] px-2 text-xs flex items-center gap-1 transition-all duration-150 ease-in-out ${soundEnabled ? "text-white/65" : "text-white/25"}`}
           >
             {soundEnabled ? (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -130,29 +72,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           {unreadCount > 0 && (
             <button
               onClick={onMarkAllAsRead}
-              style={{
-                background: "none",
-                border: "1px solid rgba(255,255,255,0.10)",
-                borderRadius: 8,
-                color: "rgba(255,255,255,0.5)",
-                cursor: "pointer",
-                padding: "5px 10px",
-                fontSize: "11px",
-                fontFamily: "'DM Mono', monospace",
-                transition: "all 0.15s ease",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "#f1f5f9";
-                (e.currentTarget as HTMLButtonElement).style.borderColor =
-                  "rgba(255,255,255,0.3)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color =
-                  "rgba(255,255,255,0.5)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor =
-                  "rgba(255,255,255,0.10)";
-              }}
+              className="bg-transparent border border-white/10 rounded-lg text-white/50 cursor-pointer py-[5px] px-[10px] text-[11px] font-mono transition-all duration-150 ease-in-out whitespace-nowrap hover:text-slate-100 hover:border-white/30"
             >
               Mark all read
             </button>
@@ -161,23 +81,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       </div>
 
       {/* Notification list */}
-      <div
-        className="notif-scroll"
-        style={{
-          maxHeight: "min(420px, 60vh)",
-          overflowY: "auto",
-        }}
-      >
+      <div className="scrollbar-thin-dark max-h-[min(420px,60vh)] overflow-y-auto">
         {notifications.length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              color: "rgba(255,255,255,0.25)",
-              fontSize: "13px",
-            }}
-          >
-            <div style={{ fontSize: "32px", marginBottom: 12 }}>🔔</div>
+          <div className="px-6 py-12 text-center text-white/25 text-[13px]">
+            <div className="text-[32px] mb-3">🔔</div>
             You're all caught up
           </div>
         ) : (
@@ -194,34 +101,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div
-          style={{
-            padding: "10px 16px",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            textAlign: "center",
-          }}
-        >
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "rgba(255,255,255,0.3)",
-              cursor: "pointer",
-              fontSize: "11px",
-              fontFamily: "'DM Mono', monospace",
-              letterSpacing: "0.04em",
-              padding: "4px 8px",
-              transition: "color 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(255,255,255,0.65)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(255,255,255,0.3)";
-            }}
-          >
+        <div className="px-4 py-[10px] border-t border-white/[0.08] text-center">
+          <button className="bg-transparent border-none text-white/30 cursor-pointer text-[11px] font-mono tracking-[0.04em] py-1 px-2 transition-colors duration-150 ease-in-out hover:text-white/65">
             View notification settings
           </button>
         </div>

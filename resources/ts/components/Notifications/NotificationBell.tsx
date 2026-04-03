@@ -67,109 +67,24 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   }, [unreadCount]);
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
-
-        @keyframes bellShake {
-          0%, 100% { transform: rotate(0deg); }
-          15%       { transform: rotate(-12deg); }
-          30%       { transform: rotate(12deg); }
-          45%       { transform: rotate(-8deg); }
-          60%       { transform: rotate(8deg); }
-          75%       { transform: rotate(-4deg); }
-          90%       { transform: rotate(4deg); }
-        }
-
-        @keyframes badgePop {
-          0%   { transform: scale(0.6); opacity: 0; }
-          60%  { transform: scale(1.15); opacity: 1; }
-          100% { transform: scale(1);   opacity: 1; }
-        }
-
-        @keyframes ripple {
-          0%   { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(2.4); opacity: 0; }
-        }
-
-        .notif-bell-btn {
-          position: relative;
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.10);
-          color: rgba(255,255,255,0.75);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-          outline: none;
-        }
-
-        .notif-bell-btn:hover {
-          background: rgba(255,255,255,0.10);
-          border-color: rgba(255,255,255,0.20);
-          color: #f1f5f9;
-        }
-
-        .notif-bell-btn[aria-expanded="true"] {
-          background: rgba(255,255,255,0.12);
-          border-color: rgba(255,255,255,0.25);
-          color: #f1f5f9;
-        }
-
-        .notif-bell-icon.shaking {
-          animation: bellShake 0.6s ease;
-        }
-
-        .notif-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          min-width: 18px;
-          height: 18px;
-          padding: 0 4px;
-          border-radius: 9px;
-          background: #ef4444;
-          color: #fff;
-          font-family: 'DM Mono', monospace;
-          font-size: 10px;
-          font-weight: 500;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid #0f1117;
-          animation: badgePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-          pointer-events: none;
-          line-height: 1;
-        }
-
-        .notif-ripple {
-          position: absolute;
-          inset: 0;
-          border-radius: 12px;
-          border: 1px solid #ef4444;
-          animation: ripple 0.6s ease-out forwards;
-          pointer-events: none;
-        }
-      `}</style>
-
-      <div ref={containerRef} style={{ position: "relative", display: "inline-flex" }}>
+    <div ref={containerRef} className="relative inline-flex">
         <button
-          className="notif-bell-btn"
+          className="relative w-10 h-10 rounded-xl bg-white/[0.06] border border-white/10 text-white/75 cursor-pointer flex items-center justify-center transition-colors duration-150 ease-in-out outline-none hover:bg-white/10 hover:border-white/20 hover:text-slate-100 aria-expanded:bg-white/[0.12] aria-expanded:border-white/25 aria-expanded:text-slate-100"
           onClick={toggle}
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
           aria-expanded={open}
           aria-haspopup="dialog"
         >
           {/* Ripple effect on new notification */}
-          {pulseKey > 0 && <span key={pulseKey} className="notif-ripple" />}
+          {pulseKey > 0 && (
+            <span
+              key={pulseKey}
+              className="absolute inset-0 rounded-xl border border-red-500 pointer-events-none animate-ripple"
+            />
+          )}
 
           {/* Bell SVG */}
           <svg
-            className={`notif-bell-icon${pulseKey > 0 ? " shaking" : ""}`}
             key={`bell-${pulseKey}`}
             width="18"
             height="18"
@@ -179,6 +94,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             strokeWidth="1.75"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className={pulseKey > 0 ? "animate-bell-shake" : undefined}
           >
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -186,7 +102,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
           {/* Badge */}
           {unreadCount > 0 && (
-            <span key={`badge-${unreadCount}`} className="notif-badge">
+            <span
+              key={`badge-${unreadCount}`}
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-medium font-mono flex items-center justify-center border-2 border-[#0f1117] pointer-events-none leading-none animate-badge-pop"
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -206,6 +125,5 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           />
         )}
       </div>
-    </>
   );
 };
