@@ -1,4 +1,5 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
+import plugin from 'tailwindcss/plugin';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -47,7 +48,50 @@ export default {
                 extrabold: '800',
                 black: '900',
             },
+            keyframes: {
+                bellShake: {
+                    '0%, 100%': { transform: 'rotate(0deg)' },
+                    '15%':      { transform: 'rotate(-12deg)' },
+                    '30%':      { transform: 'rotate(12deg)' },
+                    '45%':      { transform: 'rotate(-8deg)' },
+                    '60%':      { transform: 'rotate(8deg)' },
+                    '75%':      { transform: 'rotate(-4deg)' },
+                    '90%':      { transform: 'rotate(4deg)' },
+                },
+                badgePop: {
+                    '0%':   { transform: 'scale(0.6)', opacity: '0' },
+                    '60%':  { transform: 'scale(1.15)', opacity: '1' },
+                    '100%': { transform: 'scale(1)', opacity: '1' },
+                },
+                ripple: {
+                    '0%':   { transform: 'scale(1)', opacity: '0.6' },
+                    '100%': { transform: 'scale(2.4)', opacity: '0' },
+                },
+                dropdownIn: {
+                    from: { opacity: '0', transform: 'translateY(-8px) scale(0.97)' },
+                    to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
+                },
+            },
+            animation: {
+                'bell-shake':  'bellShake 0.6s ease',
+                'badge-pop':   'badgePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                'ripple':      'ripple 0.6s ease-out forwards',
+                'dropdown-in': 'dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            },
         },
     },
-    plugins: [],
+    plugins: [
+        plugin(({ addUtilities }) => {
+            addUtilities({
+                '.scrollbar-thin-dark': {
+                    '&::-webkit-scrollbar':       { width: '4px' },
+                    '&::-webkit-scrollbar-track': { background: 'transparent' },
+                    '&::-webkit-scrollbar-thumb': {
+                        background: 'rgba(255,255,255,0.1)',
+                        borderRadius: '4px',
+                    },
+                },
+            });
+        }),
+    ],
 };
