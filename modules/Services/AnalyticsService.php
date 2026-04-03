@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\ProductView;
 use ModulesShoppingComplex\Models\ProfileView;
 use ModulesShoppingComplex\Repositories\AnalyticsRepository;
@@ -95,7 +96,7 @@ final readonly class AnalyticsService
     /**
      * Record a profile view with deduplication (one per viewer/IP per day).
      */
-    public function recordProfileView(int $vendorId, ?int $viewerId, ?string $ipAddress): void
+    public function recordProfileView(int $vendorId, ?int $viewerId, ?string $ipAddress, ViewSourceEnum $source = ViewSourceEnum::WEB): void
     {
         try {
             $query = ProfileView::where('vendor_id', $vendorId)
@@ -112,6 +113,7 @@ final readonly class AnalyticsService
                     'vendor_id' => $vendorId,
                     'viewer_id' => $viewerId,
                     'ip_address' => $ipAddress,
+                    'source' => $source,
                 ]);
             }
         } catch (\Throwable $e) {
@@ -122,7 +124,7 @@ final readonly class AnalyticsService
     /**
      * Record a product view with deduplication (one per viewer/IP per day per product).
      */
-    public function recordProductView(int $productId, int $vendorId, ?int $viewerId, ?string $ipAddress): void
+    public function recordProductView(int $productId, int $vendorId, ?int $viewerId, ?string $ipAddress, ViewSourceEnum $source = ViewSourceEnum::WEB): void
     {
         try {
             $query = ProductView::where('product_id', $productId)
@@ -141,6 +143,7 @@ final readonly class AnalyticsService
                     'vendor_id' => $vendorId,
                     'viewer_id' => $viewerId,
                     'ip_address' => $ipAddress,
+                    'source' => $source,
                 ]);
             }
         } catch (\Throwable $e) {
