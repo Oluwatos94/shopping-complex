@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Notification;
 
 class HandleInertiaRequests extends Middleware
@@ -67,6 +68,7 @@ class HandleInertiaRequests extends Middleware
             return ['user' => null];
         }
 
+        /** @var Media|null $avatar */
         $avatar = $user->media()->where('type', 'avatar')->first();
 
         $data = [
@@ -74,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'slug' => $user->slug,
             'avatar' => $avatar ? asset('storage/'.$avatar->url) : null,
         ];
 

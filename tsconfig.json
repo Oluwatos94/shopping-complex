@@ -36,15 +36,14 @@
         "skipLibCheck": true,
 
         // Path Mapping
-        "baseUrl": ".",
         "paths": {
-            "@/*": ["resources/ts/*"],
-            "@/components/*": ["resources/ts/components/*"],
-            "@/types": ["resources/ts/types"],
-            "@/types/*": ["resources/ts/types/*"],
-            "@/layouts/*": ["resources/ts/components/Layout/*"],
-            "@/pages/*": ["resources/ts/pages/*"],
-            "@/utils/*": ["resources/ts/utils/*"]
+            "@/*": ["./resources/ts/*"],
+            "@/components/*": ["./resources/ts/components/*"],
+            "@/types": ["./resources/ts/types"],
+            "@/types/*": ["./resources/ts/types/*"],
+            "@/layouts/*": ["./resources/ts/components/Layout/*"],
+            "@/pages/*": ["./resources/ts/pages/*"],
+            "@/utils/*": ["./resources/ts/utils/*"]
         }
     },
     "include": [

@@ -46,7 +46,7 @@ class SaveOnboardingRequest extends FormRequest
             'business_info' => ['required', 'string', 'json'],
             'bank_details' => ['required', 'string', 'json'],
             'current_step' => ['required', 'integer', 'min:1', 'max:4'],
-
+            'business_info_decoded.whatsapp_number' => ['required', 'string', 'max:20'],
             'certificate_of_incorporation' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'government_issued_id' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'proof_of_address' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],

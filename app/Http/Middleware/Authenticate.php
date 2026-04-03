@@ -21,7 +21,6 @@ class Authenticate extends Middleware
             return route('ecommerce.login');
         }
 
-        // Default to admin login for admin panel routes
-        return route('admin.login');
+        return route('login');
     }
 }

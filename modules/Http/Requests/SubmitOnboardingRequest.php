@@ -51,6 +51,7 @@ class SubmitOnboardingRequest extends FormRequest
             'business_info_decoded.business_category' => ['required', 'string', 'max:255'],
             'business_info_decoded.tax_identification_number' => ['nullable', 'string', 'max:50'],
             'business_info_decoded.physical_address' => ['required', 'string', 'max:500'],
+            'business_info_decoded.whatsapp_number' => ['required', 'string', 'max:20'],
 
             'bank_details_decoded.bank_name' => ['required', 'string', 'max:255'],
             'bank_details_decoded.bank_branch' => ['required', 'string', 'max:255'],

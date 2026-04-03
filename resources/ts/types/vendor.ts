@@ -1,5 +1,30 @@
 import { Vendor } from './user';
 
+// ---------------------------------------------------------------------------
+// Subscription
+// ---------------------------------------------------------------------------
+
+export interface SubscriptionPlan {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    product_limit: number;
+    search_priority: number;
+    features: string[] | null;
+    is_active: boolean;
+}
+
+export interface VendorSubscription {
+    id: number;
+    plan_id: number;
+    status: 'active' | 'expired' | 'cancelled';
+    started_at: string;
+    expires_at: string;
+    amount_paid: number | null;
+    plan: SubscriptionPlan;
+}
+
 /**
  * Nearby Vendor type - extends Vendor with distance info
  */

@@ -27,6 +27,7 @@ use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ReviewService;
+use ModulesShoppingComplex\Services\SubscriptionService;
 use ModulesShoppingComplex\Services\VendorService;
 
 class VendorController extends Controller
@@ -36,7 +37,8 @@ class VendorController extends Controller
         private readonly ReviewService $reviewService,
         private readonly MediaService $mediaService,
         private readonly UserRepository $userRepository,
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
+        private readonly SubscriptionService $subscriptionService,
     ) {}
 
     public function index(VendorRequest $request): Response
@@ -50,6 +52,7 @@ class VendorController extends Controller
             return [
                 // BaseUser fields
                 'id' => $vendor->id,
+                'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
                 'email_verified_at' => $vendor->email_verified_at?->toISOString(),
@@ -120,7 +123,7 @@ class VendorController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'vendor') {
-            return redirect()->route('vendor.show', $user->id);
+            return redirect()->route('vendor.show', $user->slug);
         }
 
         $categories = Cache::remember('vendor_register_categories', 3600, fn () => Category::select('id', 'name', 'slug')->orderBy('name')->get()
@@ -141,13 +144,14 @@ class VendorController extends Controller
             $request->file('avatar')
         );
 
-        return redirect()->route('vendor.show', $vendor->id)
+        return redirect()->route('vendor.show', $vendor->slug)
             ->with('success', 'Welcome! Your vendor profile has been created.');
     }
 
-    public function show(int $vendorId): Response
+    public function show(string $vendorSlug): Response
     {
-        $vendor = $this->findVendorById($vendorId);
+        $vendor = $this->findVendorBySlug($vendorSlug);
+        $vendorId = $vendor->id;
 
         $products = Product::where('vendor_id', $vendorId)
             ->where('is_active', true)
@@ -184,6 +188,7 @@ class VendorController extends Controller
         return Inertia::render('Vendor/Profile', [
             'vendor' => [
                 'id' => $vendor->id,
+                'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
                 'business_name' => $vendor->business_name ?? $vendor->name,
@@ -198,6 +203,9 @@ class VendorController extends Controller
                 'reviews_count' => $ratingStats['count'],
                 'average_rating' => $ratingStats['average'],
                 'followers_count' => $followersCount,
+                'plan_product_limit' => $isOwner
+                    ? ($this->subscriptionService->getVendorSubscription($vendor->id)?->plan->product_limit ?? null)
+                    : null,
             ],
             'isOwner' => $isOwner,
             'isFollowing' => $isFollowing,
@@ -210,6 +218,16 @@ class VendorController extends Controller
         // $this->authorize('create', Product::class);
 
         $user = Auth::user();
+
+        $subscription = $this->subscriptionService->getVendorSubscription($user->id);
+        if ($subscription !== null) {
+            $activeCount = $user->products()->where('is_active', true)->count();
+            if ($activeCount >= $subscription->plan->product_limit) {
+                return response()->json([
+                    'message' => "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.",
+                ], 422);
+            }
+        }
 
         $product = DB::transaction(function () use ($user, $request) {
             $product = Product::create([
@@ -240,9 +258,9 @@ class VendorController extends Controller
         ]);
     }
 
-    private function findVendorById(int $vendorId): User
+    private function findVendorBySlug(string $slug): User
     {
-        return User::where('id', $vendorId)
+        return User::where('slug', $slug)
             ->where('role', 'vendor')
             ->with(['media', 'vendorOnboarding'])
             ->withCount(['products as active_products_count' => fn ($q) => $q->where('is_active', true)])
@@ -283,6 +301,7 @@ class VendorController extends Controller
                     'business_category' => $onboarding->business_category ?? '',
                     'tax_identification_number' => $onboarding->tax_identification_number ?? '',
                     'physical_address' => $onboarding->physical_address ?? '',
+                    'whatsapp_number' => $user->whatsapp_number ?? '',
                 ],
                 'verification' => [
                     'certificate_of_incorporation' => null,
@@ -369,15 +388,16 @@ class VendorController extends Controller
         return Inertia::render('Vendor/OnboardingSuccess');
     }
 
-    public function toggleFollow(int $vendorId): JsonResponse
+    public function toggleFollow(string $vendorSlug): JsonResponse
     {
         $user = Auth::user();
+        $vendor = $this->findVendorBySlug($vendorSlug);
 
-        if ($user->id === $vendorId) {
+        if ($user->id === $vendor->id) {
             return response()->json(['error' => 'You cannot follow yourself'], 400);
         }
 
-        $result = $this->vendorService->toggleFollow($user->id, $vendorId);
+        $result = $this->vendorService->toggleFollow($user->id, $vendor->id);
 
         return response()->json($result);
     }

@@ -11,6 +11,7 @@ interface PageProps {
             name: string;
             email: string;
             role: string;
+            slug: string;
             avatar?: string | null;
         } | null;
     };
@@ -45,7 +46,7 @@ const Header: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const profileLink = user?.role === 'vendor' ? `/vendors/${user.id}` : '/profile';
+    const profileLink = user?.role === 'vendor' ? `/vendors/${user.slug}` : '/profile';
 
     return (
         <header className="bg-primary-dark shadow-md sticky top-0 z-50">

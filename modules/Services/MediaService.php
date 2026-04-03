@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Repositories\MediaRepository;
@@ -22,7 +23,8 @@ class MediaService
     public function __construct(
         private readonly MediaRepository $mediaRepository
     ) {
-        $this->imageManager = new ImageManager(new Driver);
+        $driver = extension_loaded('imagick') ? new ImagickDriver : new GdDriver;
+        $this->imageManager = new ImageManager($driver);
     }
 
     /**

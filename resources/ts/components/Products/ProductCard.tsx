@@ -15,7 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     return (
         <Link
-            href={`/products/${product.id}`}
+            href={`/products/${product.slug}`}
             className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
         >
             {/* Product Image */}
@@ -26,7 +26,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {hasDiscount && salePrice && (
                         <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
@@ -38,45 +37,21 @@ export default function ProductCard({ product }: ProductCardProps) {
                             Featured
                         </span>
                     )}
-                    {/* {product.stock === 0 && (
-                        <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                            Out of Stock
-                        </span>
-                    )} */}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                        className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            // Add to wishlist logic
-                        }}
-                        aria-label="Add to wishlist"
-                    >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
             {/* Product Info */}
             <div className="p-4">
-                {/* Vendor Name */}
                 {product.vendor && (
                     <p className="text-xs text-gray-500 mb-1">
                         {product.vendor.business_name || product.vendor.name}
                     </p>
                 )}
 
-                {/* Product Name */}
                 <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-olive transition-colors">
                     {product.name}
                 </h3>
 
-                {/* Rating */}
                 {product.reviews_count && product.reviews_count > 0 && (
                     <div className="flex items-center gap-2 mb-2">
                         <div className="flex items-center">
@@ -98,7 +73,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                 )}
 
-                {/* Price */}
                 <div className="flex items-baseline gap-2">
                     {hasDiscount && salePrice ? (
                         <>
@@ -115,13 +89,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                         </span>
                     )}
                 </div>
-
-                {/* Stock Status */}
-                {product.stock > 0 && product.stock <= 10 && (
-                    <p className="text-xs text-orange-600 mt-2">
-                        Only {product.stock} left in stock
-                    </p>
-                )}
             </div>
         </Link>
     );

@@ -16,10 +16,12 @@ return new class extends Migration
         Schema::create(User::getTableName(), function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug')->nullable()->unique();
             $table->string('email')->unique();
             $table->string('password');
             $table->enum('role', UserEnum::values());
             $table->string('phone')->nullable();
+            $table->string('whatsapp_number', 15)->nullable();
             $table->string('google_id')->nullable();
             $table->text('bio')->nullable(); // Vendor description
             $table->string('business_name')->nullable();

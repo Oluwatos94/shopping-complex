@@ -35,7 +35,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                 </h1>
             </div>
 
-            {/* Rating Summary */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
@@ -59,7 +58,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                 </span>
             </div>
 
-            {/* Price Section */}
             <div className="border-t border-b border-gray-200 py-6">
                 <div className="flex items-baseline gap-4">
                     {hasDiscount && salePrice ? (
@@ -81,7 +79,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                     )}
                 </div>
 
-                {/* Stock Status */}
                 <div className="mt-3 flex items-center gap-2">
                     {isInStock ? (
                         <>
@@ -99,7 +96,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                 </div>
             </div>
 
-            {/* Product Description */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">
@@ -113,7 +109,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                     Sold by
                 </h3>
                 <div className="flex items-start gap-4">
-                    {/* Vendor Avatar */}
                     <div className="flex-shrink-0">
                         {vendor.business_logo ? (
                             <img
@@ -130,11 +125,10 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                         )}
                     </div>
 
-                    {/* Vendor Details */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <Link
-                                href={`/vendors/${vendor.id}`}
+                                href={`/vendors/${vendor.slug}`}
                                 className="font-semibold text-gray-900 hover:text-primary-olive transition-colors truncate"
                             >
                                 {vendor.business_name}
@@ -173,7 +167,7 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                 {/* Vendor Actions */}
                 <div className="flex gap-3 pt-2">
                     <Link
-                        href={`/vendors/${vendor.id}`}
+                        href={`/vendors/${vendor.slug}`}
                         className="flex-1 px-4 py-2.5 text-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
                     >
                         View Store

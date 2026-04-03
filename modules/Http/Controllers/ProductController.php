@@ -20,6 +20,7 @@ use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ProductService;
 use ModulesShoppingComplex\Services\ReviewService;
+use ModulesShoppingComplex\Services\SubscriptionService;
 
 class ProductController extends Controller
 {
@@ -27,7 +28,8 @@ class ProductController extends Controller
         private readonly ProductService $productService,
         private readonly MediaService $mediaService,
         private readonly ReviewService $reviewService,
-        private readonly AnalyticsService $analyticsService
+        private readonly AnalyticsService $analyticsService,
+        private readonly SubscriptionService $subscriptionService,
     ) {}
 
     public function index(): Response
@@ -35,6 +37,16 @@ class ProductController extends Controller
         $products = $this->productService->index(perPage: 20);
         $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
         );
+
+        $products->through(function ($product) {
+            $product->images = $product->media->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => $this->mediaService->getMediaUrl($media),
+                'is_primary' => true,
+            ])->values()->all();
+
+            return $product;
+        });
 
         return Inertia::render('Products/Index', [
             'products' => $products,
@@ -49,21 +61,30 @@ class ProductController extends Controller
         return Inertia::render('Products/Create');
     }
 
-    public function store(ProductFormRequest $request): RedirectResponse
+    public function store(ProductFormRequest $request): RedirectResponse|JsonResponse
     {
         $this->authorize('create', Product::class);
 
-        $validated = $request->validated();
+        if ($error = $this->checkProductLimit()) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $error], 422);
+            }
 
+            return back()->with('error', $error);
+        }
+
+        $validated = $request->validated();
         $validated['vendor_id'] = Auth::id();
 
         $product = $this->productService->createProduct($validated);
 
-        return redirect()->route('products.show', $product->id)->with('success', 'Product created successfully.');
+        return redirect()->route('products.show', $product->slug)->with('success', 'Product created successfully.');
     }
 
     public function show(Product $product): Response
     {
+        abort_unless($product->is_active, 404);
+
         $product = $this->productService->getProduct($product->id);
         $vendor = $product->vendor;
 
@@ -156,7 +177,7 @@ class ProductController extends Controller
         $this->productService->updateProduct($product->id, $validated);
 
         return redirect()
-            ->route('products.show', $product->id)
+            ->route('products.show', $product->slug)
             ->with('success', 'Product updated successfully.');
     }
 
@@ -243,6 +264,28 @@ class ProductController extends Controller
             'success' => true,
             'media' => $mediaUrls,
         ]);
+    }
+
+    /**
+     * Check whether the authenticated vendor has reached their plan's product limit.
+     * Returns the error message string when at limit, or null when creation is allowed.
+     */
+    private function checkProductLimit(): ?string
+    {
+        $vendor = Auth::user();
+        $subscription = $this->subscriptionService->getVendorSubscription($vendor->id);
+
+        if ($subscription === null) {
+            return null; // No subscription found — let the policy / other guards handle access
+        }
+
+        $activeCount = $vendor->products()->where('is_active', true)->count();
+
+        if ($activeCount >= $subscription->plan->product_limit) {
+            return "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.";
+        }
+
+        return null;
     }
 
     /**

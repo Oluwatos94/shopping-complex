@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
@@ -17,10 +18,12 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int|null $role_id
  * @property string $role
  * @property string $name
+ * @property string|null $slug
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string|null $password
  * @property string|null $phone
+ * @property string|null $whatsapp_number
  * @property string|null $google_id
  * @property string|null $bio
  * @property string|null $business_name
@@ -36,6 +39,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
  * @property-read Address|null $address
  * @property-read VendorOnboarding|null $vendorOnboarding
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorSubscription> $subscriptions
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -48,10 +52,12 @@ class User extends Authenticatable implements MustVerifyEmail
     /** {@inheritdoc} */
     protected $fillable = [
         'name',
+        'slug',
         'email',
         'password',
         'role',
         'phone',
+        'whatsapp_number',
         'google_id',
         'bio',
         'business_name',
@@ -190,6 +196,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsToMany(User::class, 'vendor_followers', 'follower_id', 'vendor_id')
             ->withTimestamps();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(VendorSubscription::class, 'vendor_id');
     }
 
     /**

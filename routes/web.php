@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
@@ -13,6 +14,7 @@ use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
+use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 
 // Authentication Routes (guest only with rate limiting)
@@ -68,7 +70,7 @@ Route::middleware(['throttle:products'])->group(function () {
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
-    Route::get('/vendors/{vendorId}', [VendorController::class, 'show'])->name('vendor.show');
+    Route::get('/vendors/{vendorSlug}', [VendorController::class, 'show'])->name('vendor.show');
 });
 
 // Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)
@@ -129,13 +131,13 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
 
 // Review Routes - Public (view vendor reviews)
 Route::middleware(['throttle:products'])->group(function () {
-    Route::get('/vendors/{vendorId}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('/vendors/{vendorId}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
+    Route::get('/vendors/{vendorSlug}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/vendors/{vendorSlug}/reviews/stats', [ReviewController::class, 'stats'])->name('reviews.stats');
 });
 
 // Review Routes - Authenticated
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
-    Route::get('/vendors/{vendorId}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+    Route::get('/vendors/{vendorSlug}/reviews/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
     Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my');
     Route::get('/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
     Route::get('/vendor/reviews', [ReviewController::class, 'vendorReviews'])->name('vendor.reviews');
@@ -149,6 +151,19 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
     Route::delete('/reviews/{review}/vote', [ReviewController::class, 'removeVote'])->name('reviews.vote.remove');
     Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
+});
+
+// Admin Dashboard Routes
+Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'stats'])->name('admin.dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
+});
+
+Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
+    Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
+    Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
 });
 
 // Review Moderation Routes - Admin only
@@ -187,7 +202,18 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/vendor/analytics', [AnalyticsController::class, 'index'])->name('vendor.analytics');
 });
 
+// Vendor Subscription Routes
+Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('vendor.subscription.index');
+    Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
+});
+
+Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('vendor.subscription.cancel');
+    Route::post('/subscription/{plan}', [SubscriptionController::class, 'checkout'])->name('vendor.subscription.checkout');
+});
+
 // Vendor follow toggle
 Route::middleware(['auth', 'throttle:writes'])->group(function () {
-    Route::post('/vendors/{vendorId}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
+    Route::post('/vendors/{vendorSlug}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
 });

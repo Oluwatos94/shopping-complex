@@ -8,6 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -19,7 +20,8 @@ final readonly class VendorService
     public function __construct(
         private VendorRepository $vendorRepository,
         private UserRepository $userRepository,
-        private MediaService $mediaService
+        private MediaService $mediaService,
+        private SubscriptionService $subscriptionService,
     ) {}
 
     /**
@@ -33,6 +35,7 @@ final readonly class VendorService
             $user->update([
                 'role' => 'vendor',
                 'business_name' => $data['business_name'],
+                'slug' => Str::slug($data['business_name']).'-'.uniqid(),
                 'bio' => $data['bio'],
                 'category_id' => $data['category_id'],
             ]);
@@ -97,6 +100,10 @@ final readonly class VendorService
             $data['current_step'] = $currentStep;
             $data['status'] = VendorOnboardingStatusEnum::DRAFT;
 
+            if (! empty($businessInfo['whatsapp_number'])) {
+                $user->update(['whatsapp_number' => $businessInfo['whatsapp_number']]);
+            }
+
             $onboarding = $this->vendorRepository->updateOrCreateOnboarding($user->id, $data);
             $this->handleFileUploads($onboarding, $files);
 
@@ -141,6 +148,10 @@ final readonly class VendorService
             $data['current_step'] = 4;
             $data['status'] = VendorOnboardingStatusEnum::PENDING_REVIEW;
 
+            if (! empty($businessInfo['whatsapp_number'])) {
+                $user->update(['whatsapp_number' => $businessInfo['whatsapp_number']]);
+            }
+
             $onboarding = $this->vendorRepository->updateOrCreateOnboarding($user->id, $data);
             $this->handleFileUploads($onboarding, $files);
 
@@ -150,30 +161,61 @@ final readonly class VendorService
 
     /**
      * Approve vendor onboarding (admin).
+     * Assigns the Free plan to the vendor on approval.
+     *
+     * @throws \RuntimeException if no pending application exists
      */
-    public function approveOnboarding(VendorOnboarding $onboarding, User $reviewer): VendorOnboarding
+    public function approveOnboarding(User $vendor, User $reviewer): VendorOnboarding
     {
-        return $this->vendorRepository->updateOnboarding($onboarding, [
-            'status' => VendorOnboardingStatusEnum::APPROVED,
-            'reviewed_by' => $reviewer->id,
-            'reviewed_at' => now(),
-        ]);
+        return DB::transaction(function () use ($vendor, $reviewer) {
+            $onboarding = VendorOnboarding::where('user_id', $vendor->id)
+                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $onboarding) {
+                throw new \RuntimeException('No pending application found for this vendor.');
+            }
+
+            $this->vendorRepository->updateOnboarding($onboarding, [
+                'status' => VendorOnboardingStatusEnum::APPROVED,
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => now(),
+                'rejection_reason' => null,
+            ]);
+
+            $this->subscriptionService->assignFreePlan($vendor->id);
+
+            return $onboarding->fresh();
+        });
     }
 
     /**
      * Reject vendor onboarding (admin).
+     *
+     * @throws \RuntimeException if no pending application exists
      */
-    public function rejectOnboarding(
-        VendorOnboarding $onboarding,
-        User $reviewer,
-        string $reason
-    ): VendorOnboarding {
-        return $this->vendorRepository->updateOnboarding($onboarding, [
-            'status' => VendorOnboardingStatusEnum::REJECTED,
-            'reviewed_by' => $reviewer->id,
-            'reviewed_at' => now(),
-            'rejection_reason' => $reason,
-        ]);
+    public function rejectOnboarding(User $vendor, User $reviewer, string $reason): VendorOnboarding
+    {
+        return DB::transaction(function () use ($vendor, $reviewer, $reason) {
+            $onboarding = VendorOnboarding::where('user_id', $vendor->id)
+                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $onboarding) {
+                throw new \RuntimeException('No pending application found for this vendor.');
+            }
+
+            $this->vendorRepository->updateOnboarding($onboarding, [
+                'status' => VendorOnboardingStatusEnum::REJECTED,
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => now(),
+                'rejection_reason' => $reason,
+            ]);
+
+            return $onboarding->fresh();
+        });
     }
 
     /**
@@ -299,6 +341,9 @@ final readonly class VendorService
         }
         if (empty($businessInfo['physical_address'])) {
             $errors['physical_address'] = 'Physical address is required';
+        }
+        if (empty($businessInfo['whatsapp_number'])) {
+            $errors['whatsapp_number'] = 'Business WhatsApp number is required';
         }
 
         // Bank details validation

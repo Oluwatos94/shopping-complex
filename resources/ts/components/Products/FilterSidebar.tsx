@@ -155,18 +155,6 @@ export default function FilterSidebar({
                     ))}
                 </div>
             </div>
-
-            {/* Stock Status */}
-            <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Availability</h3>
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        className="w-4 h-4 text-primary-olive border-gray-300 rounded focus:ring-primary-olive"
-                    />
-                    <span className="text-gray-700">In Stock Only</span>
-                </label>
-            </div>
         </div>
     );
 }

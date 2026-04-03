@@ -373,7 +373,7 @@ class AnalyticsTest extends TestCase
     public function test_vendor_profile_visit_records_profile_view(): void
     {
         $this->actingAs($this->customer)
-            ->get('/vendors/'.$this->vendor->id);
+            ->get('/vendors/'.$this->vendor->slug);
 
         $this->assertDatabaseHas('profile_views', [
             'vendor_id' => $this->vendor->id,
@@ -384,7 +384,7 @@ class AnalyticsTest extends TestCase
     public function test_vendor_viewing_own_profile_does_not_record(): void
     {
         $this->actingAs($this->vendor)
-            ->get('/vendors/'.$this->vendor->id);
+            ->get('/vendors/'.$this->vendor->slug);
 
         $this->assertDatabaseMissing('profile_views', [
             'vendor_id' => $this->vendor->id,
@@ -399,7 +399,7 @@ class AnalyticsTest extends TestCase
         ]);
 
         $this->actingAs($this->customer)
-            ->get('/products/'.$product->id);
+            ->get('/products/'.$product->slug);
 
         $this->assertDatabaseHas('product_views', [
             'product_id' => $product->id,
@@ -415,7 +415,7 @@ class AnalyticsTest extends TestCase
         ]);
 
         $this->actingAs($this->vendor)
-            ->get('/products/'.$product->id);
+            ->get('/products/'.$product->slug);
 
         $this->assertDatabaseMissing('product_views', [
             'product_id' => $product->id,
@@ -429,9 +429,9 @@ class AnalyticsTest extends TestCase
     {
         // Visit twice
         $this->actingAs($this->customer)
-            ->get('/vendors/'.$this->vendor->id);
+            ->get('/vendors/'.$this->vendor->slug);
         $this->actingAs($this->customer)
-            ->get('/vendors/'.$this->vendor->id);
+            ->get('/vendors/'.$this->vendor->slug);
 
         $count = ProfileView::where('vendor_id', $this->vendor->id)
             ->where('viewer_id', $this->customer->id)
@@ -447,9 +447,9 @@ class AnalyticsTest extends TestCase
         ]);
 
         $this->actingAs($this->customer)
-            ->get('/products/'.$product->id);
+            ->get('/products/'.$product->slug);
         $this->actingAs($this->customer)
-            ->get('/products/'.$product->id);
+            ->get('/products/'.$product->slug);
 
         $count = ProductView::where('product_id', $product->id)
             ->where('viewer_id', $this->customer->id)

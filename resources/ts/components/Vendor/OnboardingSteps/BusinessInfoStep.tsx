@@ -113,6 +113,32 @@ export default function BusinessInfoStep({ data, errors, categories, onUpdate }:
                         <p className="mt-1.5 text-sm text-red-600">{errors.physical_address}</p>
                     )}
                 </div>
+
+                {/* Business WhatsApp Number */}
+                <div>
+                    <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-900 mb-2">
+                        Business WhatsApp Number
+                    </label>
+                    <input
+                        type="tel"
+                        id="whatsapp_number"
+                        value={data.whatsapp_number}
+                        onChange={(e) => onUpdate('whatsapp_number', e.target.value)}
+                        placeholder="+2348012345678"
+                        className={`
+                            w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-400
+                            focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent
+                            transition-colors
+                            ${errors.whatsapp_number ? 'border-red-500' : 'border-gray-300'}
+                        `}
+                    />
+                    <p className="mt-1.5 text-xs text-gray-500">
+                        Buyers will be connected to this number when they find you through our WhatsApp discovery feature.
+                    </p>
+                    {errors.whatsapp_number && (
+                        <p className="mt-1.5 text-sm text-red-600">{errors.whatsapp_number}</p>
+                    )}
+                </div>
             </div>
         </div>
     );
