@@ -16,6 +16,11 @@ use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
 use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
+use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
+
+// WhatsApp Webhook Routes (public — Meta servers cannot authenticate)
+Route::get('/webhook/whatsapp', [WhatsAppController::class, 'verify'])->name('whatsapp.webhook.verify');
+Route::post('/webhook/whatsapp', [WhatsAppController::class, 'receive'])->name('whatsapp.webhook.receive');
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
