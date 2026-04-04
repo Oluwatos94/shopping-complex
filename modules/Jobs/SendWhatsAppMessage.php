@@ -38,13 +38,11 @@ class SendWhatsAppMessage implements ShouldQueue
             ->post("https://graph.facebook.com/v19.0/{$phoneNumberId}/messages", $this->payload);
 
         if (! $response->successful()) {
-            Log::warning('WhatsApp message send failed', [
-                'to' => $this->to,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            $this->release(10);
+            // Throwing causes Laravel to retry with $backoff delay, exhausts $tries, then calls failed().
+            // Using $this->release() is incorrect — it re-queues without decrementing tries reliably.
+            throw new \RuntimeException(
+                "WhatsApp API error {$response->status()}: {$response->body()}"
+            );
         }
     }
 
@@ -54,7 +52,7 @@ class SendWhatsAppMessage implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('WhatsApp message permanently failed after all retries', [
-            'to' => $this->to,
+            'to' => '***'.substr($this->to, -4), // mask PII — only log last 4 digits
             'error' => $exception->getMessage(),
         ]);
     }
