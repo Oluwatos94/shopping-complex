@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,32 @@ final readonly class VendorService
     public function getNearbyVendors(array $filters, int $perPage = 12): LengthAwarePaginator
     {
         return $this->vendorRepository->findNearby($filters, $perPage);
+    }
+
+    /**
+     * Find nearby vendors matching a product name — used by the WhatsApp bot.
+     *
+     * @return Collection<int, User>
+     */
+    public function findNearbyByQuery(float $lat, float $lng, string $query, float $radiusKm = 5.0): Collection
+    {
+        return $this->getNearbyVendors([
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'radius' => $radiusKm,
+            'search' => $query,
+            'sort_by' => 'distance',
+        ], perPage: 5)->getCollection();
+    }
+
+    /**
+     * Find a vendor by ID — used by the WhatsApp bot.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getVendorById(int $vendorId): User
+    {
+        return $this->vendorRepository->find($vendorId);
     }
 
     /**
