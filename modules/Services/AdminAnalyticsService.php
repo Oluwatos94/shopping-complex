@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
+use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -83,6 +86,68 @@ final readonly class AdminAnalyticsService
         return VendorOnboarding::with('user')
             ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
             ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * Get platform-wide WhatsApp bot statistics for the admin dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPlatformBotStats(): array
+    {
+        $activeStatus = VendorSubscriptionStatusEnum::ACTIVE->value;
+        $startOfMonth = now()->startOfMonth();
+
+        $eventCounts = DB::table('whatsapp_interactions')
+            ->selectRaw('event_type, COUNT(*) as total')
+            ->groupBy('event_type')
+            ->pluck('total', 'event_type');
+
+        $monthlyEventCounts = DB::table('whatsapp_interactions')
+            ->where('created_at', '>=', $startOfMonth)
+            ->selectRaw('event_type, COUNT(*) as total')
+            ->groupBy('event_type')
+            ->pluck('total', 'event_type');
+
+        $subscriptionStats = DB::table('vendor_subscriptions')
+            ->where('status', $activeStatus)
+            ->where('expires_at', '>', now())
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(amount_paid), 0) as revenue')
+            ->first();
+
+        return [
+            'total_searches' => (int) ($eventCounts[WhatsAppInteractionEventEnum::SEARCH->value] ?? 0),
+            'total_contacts_made' => (int) ($eventCounts[WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value] ?? 0),
+            'total_no_results' => (int) ($eventCounts[WhatsAppInteractionEventEnum::NO_RESULTS->value] ?? 0),
+            'searches_this_month' => (int) ($monthlyEventCounts[WhatsAppInteractionEventEnum::SEARCH->value] ?? 0),
+            'contacts_this_month' => (int) ($monthlyEventCounts[WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value] ?? 0),
+            'active_subscribed_vendors' => (int) ($subscriptionStats->count ?? 0),
+            'monthly_revenue' => round((float) ($subscriptionStats->revenue ?? 0), 2),
+        ];
+    }
+
+    /**
+     * Get paginated recent WhatsApp interactions for the bot monitor page.
+     *
+     * @return LengthAwarePaginator<\stdClass>
+     */
+    public function getRecentInteractions(int $perPage = 50): LengthAwarePaginator
+    {
+        return DB::table('whatsapp_interactions')
+            ->leftJoin('users', 'whatsapp_interactions.vendor_id', '=', 'users.id')
+            ->select([
+                'whatsapp_interactions.id',
+                'whatsapp_interactions.phone_number',
+                'whatsapp_interactions.event_type',
+                'whatsapp_interactions.search_query',
+                'whatsapp_interactions.vendor_id',
+                'users.business_name as vendor_name',
+                'whatsapp_interactions.buyer_latitude',
+                'whatsapp_interactions.buyer_longitude',
+                'whatsapp_interactions.created_at',
+            ])
+            ->orderByDesc('whatsapp_interactions.created_at')
             ->paginate($perPage);
     }
 }

@@ -152,6 +152,27 @@ final readonly class AnalyticsService
     }
 
     /**
+     * Get WhatsApp discovery metrics for the vendor analytics dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    public function getWhatsAppMetrics(int $vendorId, Carbon $startDate, Carbon $endDate): array
+    {
+        return [
+            'search_appearances' => $this->analyticsRepository->getWhatsAppSearchAppearances($vendorId, $startDate, $endDate),
+            'catalogue_views' => $this->analyticsRepository->getWhatsAppCatalogueViews($vendorId, $startDate, $endDate),
+            'contact_requests' => $this->analyticsRepository->getWhatsAppContactRequests($vendorId, $startDate, $endDate),
+            'daily_appearances' => $this->analyticsRepository->getWhatsAppSearchAppearancesByDate($vendorId, $startDate, $endDate),
+            'top_search_queries' => $this->analyticsRepository->getTopWhatsAppSearchQueries($vendorId, $startDate, $endDate),
+            'profile_views_by_source' => $this->analyticsRepository->getProfileViewsBySource($vendorId, $startDate, $endDate),
+            'period' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ],
+        ];
+    }
+
+    /**
      * Resolve period parameter to date range.
      *
      * @return array{0: Carbon, 1: Carbon}
