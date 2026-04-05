@@ -43,6 +43,7 @@ class AnalyticsController extends Controller
         $chatContacts = $this->analyticsService->getChatContactMetrics($user->id, $startDate, $endDate);
         $profileViews = $this->analyticsService->getProfileViewMetrics($user->id, $startDate, $endDate);
         $topProducts = $this->analyticsService->getTopProducts($user->id, $startDate, $endDate, $limit);
+        $whatsAppMetrics = $this->analyticsService->getWhatsAppMetrics($user->id, $startDate, $endDate);
 
         $subscription = $this->subscriptionService->getVendorSubscription($user->id);
         $isFree = $subscription?->plan->isFree() ?? false;
@@ -56,6 +57,7 @@ class AnalyticsController extends Controller
             'chatContacts' => $chatContacts,
             'profileViews' => $profileViews,
             'topProducts' => $topProducts,
+            'whatsAppMetrics' => $whatsAppMetrics,
             'subscription' => [
                 'plan_name' => $subscription?->plan->name,
                 'plan_slug' => $subscription?->plan->slug,
