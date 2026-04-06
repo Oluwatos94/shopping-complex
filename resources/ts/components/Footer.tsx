@@ -9,10 +9,12 @@ const Footer: React.FC = () => {
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                     <div>
-                        <div className="flex items-center space-x-2 mb-4">
-                            <div className="bg-primary-olive text-white font-bold text-xl px-3 py-2 rounded-lg">
-                                SC
-                            </div>
+                        <div className="flex items-center space-x-3 mb-4">
+                            <img
+                                src="/logo/dark-mode-logo.svg"
+                                alt="Shopping Complex Logo"
+                                className="h-10 w-auto"
+                            />
                             <span className="text-white font-bold text-lg">
                                 Shopping Complex
                             </span>

@@ -10,6 +10,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
+use ModulesShoppingComplex\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
@@ -63,7 +64,9 @@ Route::middleware(['auth', 'signed'])->group(function () {
 // Landing page - moderate rate limiting
 Route::middleware(['throttle:guest'])->group(function () {
     Route::get('/', function () {
-        return Inertia::render('index', []);
+        return Inertia::render('index', [
+            'platformWhatsApp' => config('services.whatsapp.platform_number', ''),
+        ]);
     });
 });
 
@@ -71,6 +74,12 @@ Route::middleware(['throttle:guest'])->group(function () {
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+});
+
+// Public Category Routes
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{id}/vendors', [CategoryController::class, 'vendors'])->name('categories.vendors');
 });
 
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
