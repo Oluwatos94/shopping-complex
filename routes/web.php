@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
@@ -156,6 +157,12 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
     Route::delete('/reviews/{review}/vote', [ReviewController::class, 'removeVote'])->name('reviews.vote.remove');
     Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
+});
+
+// Admin Auth Routes (guest only)
+Route::middleware(['guest', 'throttle:guest'])->prefix('admin')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:writes')->name('admin.login.post');
 });
 
 // Admin Dashboard Routes
