@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'webhook/whatsapp',
+        ]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\Admin::class,
         ]);

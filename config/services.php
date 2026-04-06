@@ -45,4 +45,18 @@ return [
         'secret_key' => env('PAYSTACK_SECRET_KEY'),
     ],
 
+    'whatsapp' => [
+        'phone_number_id'  => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'access_token'     => env('WHATSAPP_ACCESS_TOKEN'),
+        'verify_token'     => env('WHATSAPP_VERIFY_TOKEN'),
+        'app_secret'       => env('WHATSAPP_APP_SECRET'),
+        'platform_number'  => env('PLATFORM_WHATSAPP_NUMBER', ''),
+    ],
+
+    'admin' => [
+        'email'    => env('ADMIN_EMAIL', 'admin@shoppingcomplex.com'),
+        'name'     => env('ADMIN_NAME', 'Super Admin'),
+        'password' => env('ADMIN_PASSWORD', ''),
+    ],
+
 ];

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Http\Controllers\Auth\AuthController;
@@ -9,6 +10,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
+use ModulesShoppingComplex\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
@@ -16,6 +18,11 @@ use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
 use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
+use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
+
+// WhatsApp Webhook Routes (public — Meta servers cannot authenticate)
+Route::get('/webhook/whatsapp', [WhatsAppController::class, 'verify'])->name('whatsapp.webhook.verify');
+Route::post('/webhook/whatsapp', [WhatsAppController::class, 'receive'])->name('whatsapp.webhook.receive');
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
@@ -57,7 +64,9 @@ Route::middleware(['auth', 'signed'])->group(function () {
 // Landing page - moderate rate limiting
 Route::middleware(['throttle:guest'])->group(function () {
     Route::get('/', function () {
-        return Inertia::render('index', []);
+        return Inertia::render('index', [
+            'platformWhatsApp' => config('services.whatsapp.platform_number', ''),
+        ]);
     });
 });
 
@@ -65,6 +74,12 @@ Route::middleware(['throttle:guest'])->group(function () {
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+});
+
+// Public Category Routes
+Route::middleware(['throttle:products'])->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{id}/vendors', [CategoryController::class, 'vendors'])->name('categories.vendors');
 });
 
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
@@ -153,11 +168,18 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->name('reviews.respond');
 });
 
+// Admin Auth Routes (guest only)
+Route::middleware(['guest', 'throttle:guest'])->prefix('admin')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:writes')->name('admin.login.post');
+});
+
 // Admin Dashboard Routes
 Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'stats'])->name('admin.dashboard');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
+    Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
 });
 
 Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
