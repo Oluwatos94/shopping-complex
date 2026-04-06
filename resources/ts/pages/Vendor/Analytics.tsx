@@ -113,7 +113,7 @@ function SubscriptionStatusCard({ subscription, activeProducts }: { subscription
 
 export default function Analytics(props: AnalyticsData) {
     const { data, loading, period, changePeriod } = useAnalytics(props);
-    const { overview, chatContacts, profileViews, topProducts, subscription } = data;
+    const { overview, chatContacts, profileViews, topProducts, whatsAppMetrics, subscription } = data;
 
     return (
         <>
@@ -226,6 +226,115 @@ export default function Analytics(props: AnalyticsData) {
                                 title="Chat Contacts"
                                 color="#D4956A"
                             />
+                        </div>
+
+                        {/* WhatsApp Discovery */}
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 mb-4">
+                                <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.526 5.845L.057 23.882l6.198-1.625A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.374l-.36-.214-3.68.965.982-3.59-.234-.369A9.818 9.818 0 1112 21.818z"/>
+                                </svg>
+                                <h2 className="text-base font-semibold text-gray-900">WhatsApp Discovery</h2>
+                            </div>
+
+                            {/* WhatsApp stat cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                <StatCard
+                                    label="Search Appearances"
+                                    value={whatsAppMetrics.search_appearances}
+                                    icon={
+                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    }
+                                />
+                                <StatCard
+                                    label="Catalogue Views"
+                                    value={whatsAppMetrics.catalogue_views}
+                                    icon={
+                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                    }
+                                />
+                                <StatCard
+                                    label="Contact Requests"
+                                    value={whatsAppMetrics.contact_requests}
+                                    icon={
+                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                    }
+                                />
+                            </div>
+
+                            {/* WhatsApp daily appearances chart */}
+                            <div className="mb-6">
+                                <ViewsChart
+                                    data={whatsAppMetrics.daily_appearances}
+                                    title="Search Appearances Over Time"
+                                    color="#16a34a"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Top Search Queries */}
+                                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-4">Top Search Terms</h3>
+                                    {whatsAppMetrics.top_search_queries.length === 0 ? (
+                                        <p className="text-gray-400 text-sm py-8 text-center">No searches yet</p>
+                                    ) : (
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-100">
+                                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">#</th>
+                                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">Search Term</th>
+                                                    <th className="text-right py-3 px-2 text-gray-500 font-medium">Times Found</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {whatsAppMetrics.top_search_queries.map((item, idx) => (
+                                                    <tr key={item.search_query} className="border-b border-gray-50 last:border-0">
+                                                        <td className="py-3 px-2 text-gray-400">{idx + 1}</td>
+                                                        <td className="py-3 px-2 text-gray-900">{item.search_query}</td>
+                                                        <td className="py-3 px-2 text-right">
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                                                                {item.count}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+
+                                {/* Profile Views by Source */}
+                                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-4">Profile Views by Source</h3>
+                                    {whatsAppMetrics.profile_views_by_source.length === 0 ? (
+                                        <p className="text-gray-400 text-sm py-8 text-center">No views yet</p>
+                                    ) : (
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-100">
+                                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">Source</th>
+                                                    <th className="text-right py-3 px-2 text-gray-500 font-medium">Views</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {whatsAppMetrics.profile_views_by_source.map((item) => (
+                                                    <tr key={item.source} className="border-b border-gray-50 last:border-0">
+                                                        <td className="py-3 px-2 text-gray-900 capitalize">{item.source}</td>
+                                                        <td className="py-3 px-2 text-right font-medium text-gray-700">{item.count}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Top Products Table */}

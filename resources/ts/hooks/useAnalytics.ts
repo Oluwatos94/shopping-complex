@@ -8,6 +8,16 @@ interface SubscriptionInfo {
     product_limit: number | null;
 }
 
+interface WhatsAppMetrics {
+    search_appearances: number;
+    catalogue_views: number;
+    contact_requests: number;
+    daily_appearances: Array<{ date: string; count: number }>;
+    top_search_queries: Array<{ search_query: string; count: number }>;
+    profile_views_by_source: Array<{ source: string; count: number }>;
+    period: { start_date: string; end_date: string };
+}
+
 interface AnalyticsData {
     overview: {
         chat_contacts: number;
@@ -38,10 +48,11 @@ interface AnalyticsData {
         average_view_value: number;
         period: { start_date: string; end_date: string };
     };
+    whatsAppMetrics: WhatsAppMetrics;
     subscription: SubscriptionInfo;
 }
 
-export type { AnalyticsData, SubscriptionInfo };
+export type { AnalyticsData, SubscriptionInfo, WhatsAppMetrics };
 
 export function useAnalytics(initialData: AnalyticsData) {
     const [data, setData] = useState<AnalyticsData>(initialData);
