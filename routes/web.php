@@ -163,6 +163,7 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/dashboard', [AdminController::class, 'stats'])->name('admin.dashboard');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
+    Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
 });
 
 Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {

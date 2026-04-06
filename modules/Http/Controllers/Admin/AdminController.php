@@ -24,13 +24,28 @@ class AdminController extends Controller
 
     public function stats(Request $request): Response|JsonResponse
     {
-        $data = $this->adminAnalyticsService->getPlatformStats();
+        $data = [
+            ...$this->adminAnalyticsService->getPlatformStats(),
+            'botStats' => $this->adminAnalyticsService->getPlatformBotStats(),
+        ];
 
         if ($request->wantsJson()) {
             return response()->json($data);
         }
 
         return Inertia::render('Admin/Dashboard', $data);
+    }
+
+    public function botMonitor(Request $request): Response|JsonResponse
+    {
+        $perPage = min(max((int) $request->get('per_page', 50), 1), 100);
+        $data = ['interactions' => $this->adminAnalyticsService->getRecentInteractions($perPage)];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Admin/BotMonitor', $data);
     }
 
     public function users(Request $request): Response|JsonResponse
