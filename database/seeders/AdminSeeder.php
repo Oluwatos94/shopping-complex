@@ -12,9 +12,9 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = (string) env('ADMIN_EMAIL', 'admin@shoppingcomplex.com');
-        $name  = (string) env('ADMIN_NAME', 'Super Admin');
-        $password = (string) env('ADMIN_PASSWORD');
+        $email = (string) config('services.admin.email', 'admin@shoppingcomplex.com');
+        $name = (string) config('services.admin.name', 'Super Admin');
+        $password = (string) config('services.admin.password', '');
 
         if ($password === '') {
             $this->command->error('ADMIN_PASSWORD is not set in .env. Aborting.');
@@ -25,9 +25,9 @@ class AdminSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['email' => $email],
             [
-                'name'              => $name,
-                'password'          => Hash::make($password),
-                'role'              => 'admin',
+                'name' => $name,
+                'password' => Hash::make($password),
+                'role' => 'admin',
                 'email_verified_at' => now(),
             ]
         );
