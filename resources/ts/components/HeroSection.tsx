@@ -26,10 +26,10 @@ const HeroSection: React.FC<Props> = ({ platformWhatsApp }) => {
             <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-primary-light/60 rounded-full pointer-events-none hidden lg:block" />
 
             <div className="container mx-auto px-4 py-16 lg:py-0 lg:min-h-[92vh] flex items-center">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 w-full items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 w-full items-center">
 
                     {/* ── Left: Content ── */}
-                    <div className="order-2 lg:order-1">
+                    <div>
 
                         {/* Live badge */}
                         <div className="inline-flex items-center gap-2 bg-primary-olive/10 text-primary-olive border border-primary-olive/20 px-4 py-2 rounded-full text-sm font-semibold mb-6">
@@ -106,7 +106,7 @@ const HeroSection: React.FC<Props> = ({ platformWhatsApp }) => {
                     </div>
 
                     {/* ── Right: Vendor discovery widget ── */}
-                    <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
+                    <div className="flex justify-center">
                         <div className="relative w-full max-w-sm">
 
                             {/* Floating "order placed" toast */}
