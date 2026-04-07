@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PaystackClient::class, fn () => new PaystackClient(
-            config('services.paystack.secret_key', '')
+            (string) (config('services.paystack.secret_key') ?? '')
         ));
 
         $this->app->singleton(WhatsAppApiService::class);

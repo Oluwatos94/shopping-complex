@@ -14,6 +14,7 @@ use ModulesShoppingComplex\Http\Requests\LoginRequest;
 use ModulesShoppingComplex\Http\Requests\RegisterRequest;
 use ModulesShoppingComplex\Services\Auth\AuthService;
 use ModulesShoppingComplex\Services\Auth\EmailVerificationService;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthController extends Controller
 {
@@ -34,13 +35,15 @@ class AuthController extends Controller
     /**
      * Handle a login request
      */
-    public function login(LoginRequest $request): RedirectResponse
+    public function login(LoginRequest $request): SymfonyResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        $intended = $request->session()->pull('url.intended', '/');
+
+        return Inertia::location($intended);
     }
 
     /**
@@ -79,14 +82,14 @@ class AuthController extends Controller
     /**
      * Log the user out
      */
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): SymfonyResponse
     {
         $this->authService->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'You have been logged out successfully.');
+        return Inertia::location('/');
     }
 
     /**
