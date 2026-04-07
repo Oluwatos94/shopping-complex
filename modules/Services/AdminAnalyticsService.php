@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
+use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -47,6 +48,43 @@ final readonly class AdminAnalyticsService
                 'draft' => (int) ($onboardingCounts[VendorOnboardingStatusEnum::DRAFT->value] ?? 0),
             ],
         ];
+    }
+
+    /**
+     * Get paginated products for admin moderation with optional filters.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<Product>
+     */
+    public function getProducts(array $filters): LengthAwarePaginator
+    {
+        $query = Product::with(['vendor:id,name,business_name', 'category:id,name,slug', 'media']);
+
+        if (! empty($filters['search'])) {
+            $query->where('name', 'like', "%{$filters['search']}%");
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query->where('is_active', $filters['status'] === 'active');
+        }
+
+        if (! empty($filters['category'])) {
+            $query->whereHas('category', fn ($q) => $q->where('slug', $filters['category']));
+        }
+
+        $perPage = min(max((int) ($filters['per_page'] ?? 20), 1), 100);
+
+        return $query->latest()->paginate($perPage);
+    }
+
+    /**
+     * Get all categories for filter dropdowns.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Category>
+     */
+    public function getCategories(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Category::select('id', 'name', 'slug')->orderBy('name')->get();
     }
 
     /**

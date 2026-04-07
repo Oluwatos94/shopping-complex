@@ -42,7 +42,7 @@ return [
     ],
 
     'paystack' => [
-        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY', ''),
     ],
 
     'whatsapp' => [

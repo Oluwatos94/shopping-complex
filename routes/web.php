@@ -180,12 +180,16 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
     Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
+    Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
+    Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
 });
 
 Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
     Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
     Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
+    Route::post('/products/bulk-approve', [AdminController::class, 'bulkApproveProducts'])->name('admin.products.bulk-approve');
+    Route::patch('/products/{id}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
 });
 
 // Review Moderation Routes - Admin only
