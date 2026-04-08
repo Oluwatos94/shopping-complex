@@ -12,32 +12,72 @@ export type PaymentStatus =
     | 'partially_refunded';
 
 /**
- * Notification type
+ * Notification type identifiers — must match config/notifications.php keys
+ * and the broadcastAs() suffix in BaseNotificationEvent.
  */
-export interface Notification {
-    id: number;
-    user_id: number;
+export type NotificationType =
+    | 'message_received'
+    | 'vendor_contact_request'
+    | 'product_updated'
+    | 'system_alert'
+    | string; // allow future types without breaking
+
+/**
+ * Raw notification shape returned by GET /api/notifications
+ */
+export interface RawNotification {
+    id: string;
     type: NotificationType;
-    title: string;
     message: string;
-    data?: Record<string, any>;
-    read_at: string | null;
+    data: Record<string, unknown> | null;
+    read: boolean;
     created_at: string;
+    group_count: number;
+    is_grouped: boolean;
 }
 
 /**
- * Notification types
+ * Reverb broadcast event payload (broadcastWith() on BaseNotificationEvent)
  */
-export type NotificationType =
-    | 'order_placed'
-    | 'order_confirmed'
-    | 'order_shipped'
-    | 'order_delivered'
-    | 'payment_success'
-    | 'payment_failed'
-    | 'vendor_message'
-    | 'product_review'
-    | 'system_alert';
+export interface BroadcastPayload {
+    type: NotificationType;
+    message: string;
+    data?: Record<string, unknown>;
+    created_at: string;
+    id?: string;
+}
+
+/**
+ * Notification shape used by the bell, dropdown, and item components
+ */
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    timestamp: Date;
+    read: boolean;
+    actionUrl?: string;
+    groupCount?: number;
+    isGrouped?: boolean;
+}
+
+/**
+ * DB-level notification record (matches the Notification Eloquent model)
+ */
+export interface NotificationRecord {
+    id: number;
+    user_id: number;
+    type: NotificationType;
+    message: string;
+    data?: Record<string, unknown>;
+    read_at: string | null;
+    group_key?: string | null;
+    is_grouped: boolean;
+    group_count: number;
+    created_at: string;
+    updated_at: string;
+}
 
 /**
  * Laravel paginator shape (returned by ->paginate() via Inertia)
