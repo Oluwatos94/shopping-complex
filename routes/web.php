@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
@@ -11,6 +10,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\CategoryController;
+use ModulesShoppingComplex\Http\Controllers\HomeController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
@@ -63,11 +63,7 @@ Route::middleware(['auth', 'signed'])->group(function () {
 
 // Landing page - moderate rate limiting
 Route::middleware(['throttle:guest'])->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('index', [
-            'platformWhatsApp' => config('services.whatsapp.platform_number', ''),
-        ]);
-    });
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 });
 
 // Public Product Routes (accessible to everyone with product-specific rate limiting)
