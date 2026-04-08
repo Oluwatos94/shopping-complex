@@ -23,9 +23,7 @@ class WhatsAppController extends Controller
         $challenge = (string) $request->query('hub_challenge', '');
         $mode = (string) $request->query('hub_mode', '');
 
-        $configToken = trim((string) config('services.whatsapp.verify_token'), "\"' \t\n\r");
-
-        if ($mode === 'subscribe' && $verifyToken === $configToken) {
+        if ($mode === 'subscribe' && $verifyToken === config('services.whatsapp.verify_token')) {
             return response($challenge, 200);
         }
 
@@ -62,7 +60,7 @@ class WhatsAppController extends Controller
      */
     private function isValidSignature(Request $request): bool
     {
-        $appSecret = trim((string) config('services.whatsapp.app_secret'), "\"' \t\n\r");
+        $appSecret = (string) config('services.whatsapp.app_secret');
 
         if ($appSecret === '') {
             return false;
