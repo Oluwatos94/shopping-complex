@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Conversation;
+use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Models\VendorOnboarding;
 
 class ProductSeeder extends Seeder
 {
@@ -116,15 +118,27 @@ class ProductSeeder extends Seeder
                 ]);
             }
 
+            // Ensure vendor has an approved onboarding record
+            VendorOnboarding::firstOrCreate(
+                ['user_id' => $vendor->id],
+                [
+                    'legal_entity_name' => $data['business_name'],
+                    'status' => VendorOnboardingStatusEnum::APPROVED,
+                    'current_step' => 4,
+                    'agreed_to_terms' => true,
+                    'reviewed_at' => now(),
+                ]
+            );
+
             $vendors[] = $vendor;
         }
 
         // Get all categories
         $categories = Category::all()->keyBy('slug');
 
-        // Sample products with images
+        // Sample products with images — keys must match slugs in CategorySeeder
         $productsByCategory = [
-            'clothing-fashion' => [
+            'fashion-clothing' => [
                 ['name' => 'Classic Cotton T-Shirt', 'price' => 19.99, 'sale_price' => null, 'stock' => 100, 'is_featured' => true, 'description' => 'Comfortable 100% cotton t-shirt available in multiple colors. Perfect for everyday casual wear with breathable fabric that keeps you cool.', 'image_id' => 1],
                 ['name' => 'Denim Jeans', 'price' => 59.99, 'sale_price' => 49.99, 'stock' => 75, 'is_featured' => false, 'description' => 'Stylish slim-fit denim jeans with modern cut. Made from premium denim with just the right amount of stretch for comfort.', 'image_id' => 2],
                 ['name' => 'Summer Floral Dress', 'price' => 45.99, 'sale_price' => 39.99, 'stock' => 50, 'is_featured' => true, 'description' => 'Lightweight floral summer dress perfect for warm weather. Features a flattering A-line silhouette and comfortable fit.', 'image_id' => 3],
@@ -134,7 +148,7 @@ class ProductSeeder extends Seeder
                 ['name' => 'Casual Sneakers', 'price' => 69.99, 'sale_price' => 59.99, 'stock' => 0, 'is_featured' => false, 'description' => 'Comfortable casual sneakers for everyday wear. Versatile design that pairs well with jeans or shorts.', 'image_id' => 7],
                 ['name' => 'Premium Polo Shirt', 'price' => 39.99, 'sale_price' => null, 'stock' => 90, 'is_featured' => false, 'description' => 'Classic polo shirt made from premium cotton pique. Features a comfortable regular fit and ribbed collar.', 'image_id' => 8],
             ],
-            'electronics' => [
+            'electronics-repairs' => [
                 ['name' => 'Wireless Noise-Canceling Earbuds', 'price' => 129.99, 'sale_price' => 89.99, 'stock' => 120, 'is_featured' => true, 'description' => 'Premium wireless earbuds with active noise cancellation. 30-hour battery life with charging case. Crystal clear audio quality.', 'image_id' => 20],
                 ['name' => 'Premium Smartphone Case', 'price' => 29.99, 'sale_price' => 24.99, 'stock' => 200, 'is_featured' => false, 'description' => 'Durable protective case for smartphones with military-grade drop protection. Slim design with raised edges for screen protection.', 'image_id' => 21],
                 ['name' => '20000mAh Power Bank', 'price' => 49.99, 'sale_price' => 39.99, 'stock' => 150, 'is_featured' => true, 'description' => 'High-capacity portable power bank with fast charging. Charges 3 devices simultaneously with smart charging technology.', 'image_id' => 22],
@@ -142,56 +156,38 @@ class ProductSeeder extends Seeder
                 ['name' => 'Ergonomic Laptop Stand', 'price' => 44.99, 'sale_price' => 34.99, 'stock' => 5, 'is_featured' => false, 'description' => 'Adjustable aluminum laptop stand with 6 height levels. Improves posture and increases airflow for cooling.', 'image_id' => 24],
                 ['name' => 'USB-C Fast Charging Cable', 'price' => 19.99, 'sale_price' => 14.99, 'stock' => 300, 'is_featured' => false, 'description' => '100W USB-C to USB-C fast charging cable (6ft). Braided nylon construction for durability. Compatible with all USB-C devices.', 'image_id' => 25],
             ],
-            'home-garden' => [
+            'accessories-lifestyle' => [
                 ['name' => 'Decorative Throw Pillow Set', 'price' => 39.99, 'sale_price' => 29.99, 'stock' => 75, 'is_featured' => true, 'description' => 'Set of 4 premium decorative throw pillows with removable covers. Modern geometric patterns in neutral colors.', 'image_id' => 40],
                 ['name' => 'Abstract Canvas Wall Art', 'price' => 59.99, 'sale_price' => 44.99, 'stock' => 50, 'is_featured' => false, 'description' => 'Modern abstract canvas wall art with gallery-wrapped frame. Ready to hang. Dimensions: 24x36 inches.', 'image_id' => 41],
                 ['name' => '10-Piece Garden Tool Set', 'price' => 64.99, 'sale_price' => 54.99, 'stock' => 40, 'is_featured' => false, 'description' => 'Complete garden tool set with ergonomic handles. Includes trowel, cultivator, pruner, and more. Comes with carrying bag.', 'image_id' => 42],
                 ['name' => 'Modern LED Desk Lamp', 'price' => 49.99, 'sale_price' => 39.99, 'stock' => 60, 'is_featured' => true, 'description' => 'Touch-control LED desk lamp with 5 brightness levels and 3 color temperatures. USB charging port. Energy efficient.', 'image_id' => 43],
                 ['name' => 'Professional Chef Knife Set', 'price' => 99.99, 'sale_price' => 79.99, 'stock' => 45, 'is_featured' => false, 'description' => '8-piece professional kitchen knife set with wooden block. High-carbon stainless steel blades. Ergonomic handles.', 'image_id' => 44],
             ],
-            'beauty-personal-care' => [
+            'health-beauty' => [
                 ['name' => 'Hydrating Face Moisturizer', 'price' => 44.99, 'sale_price' => 34.99, 'stock' => 100, 'is_featured' => true, 'description' => 'Lightweight hydrating moisturizer for all skin types. Contains hyaluronic acid and vitamin E. Dermatologist tested.', 'image_id' => 60],
                 ['name' => 'Professional Makeup Brush Set', 'price' => 59.99, 'sale_price' => 49.99, 'stock' => 75, 'is_featured' => false, 'description' => '15-piece professional makeup brush set with vegan synthetic bristles. Includes travel case. Perfect for beginners and pros.', 'image_id' => 61],
                 ['name' => '3-in-1 Hair Styling Tool', 'price' => 99.99, 'sale_price' => 89.99, 'stock' => 50, 'is_featured' => true, 'description' => 'Versatile hair styling tool: straightener, curler, and waver. Ceramic plates with adjustable temperature. Auto shut-off.', 'image_id' => 62],
                 ['name' => 'Luxury Eau de Parfum', 'price' => 89.99, 'sale_price' => 69.99, 'stock' => 60, 'is_featured' => false, 'description' => 'Elegant floral fragrance with notes of jasmine, rose, and sandalwood. Long-lasting formula. 50ml bottle.', 'image_id' => 63],
                 ['name' => 'Complete Skincare Set', 'price' => 119.99, 'sale_price' => 99.99, 'stock' => 40, 'is_featured' => false, 'description' => '5-step skincare routine: cleanser, toner, serum, moisturizer, and eye cream. Suitable for all skin types.', 'image_id' => 64],
             ],
-            'sports-outdoors' => [
+            'services' => [
                 ['name' => 'Premium Yoga Mat', 'price' => 39.99, 'sale_price' => 29.99, 'stock' => 100, 'is_featured' => true, 'description' => 'Extra thick non-slip yoga mat with carrying strap. Eco-friendly TPE material. 6mm cushioning for joint protection.', 'image_id' => 80],
                 ['name' => 'Adjustable Dumbbell Set', 'price' => 99.99, 'sale_price' => 79.99, 'stock' => 50, 'is_featured' => true, 'description' => 'Space-saving adjustable dumbbell set (5-25 lbs each). Quick weight change system. Perfect for home workouts.', 'image_id' => 81],
                 ['name' => 'Insulated Water Bottle', 'price' => 29.99, 'sale_price' => 19.99, 'stock' => 150, 'is_featured' => false, 'description' => 'Double-wall vacuum insulated stainless steel bottle (32oz). Keeps drinks cold 24hrs or hot 12hrs. BPA-free.', 'image_id' => 82],
                 ['name' => 'Resistance Band Set', 'price' => 34.99, 'sale_price' => 24.99, 'stock' => 120, 'is_featured' => false, 'description' => '5 resistance bands with handles, door anchor, and ankle straps. Various resistance levels for full-body workouts.', 'image_id' => 83],
                 ['name' => '4-Person Camping Tent', 'price' => 169.99, 'sale_price' => 149.99, 'stock' => 3, 'is_featured' => false, 'description' => 'Waterproof 4-person dome tent with rainfly. Easy setup in minutes. Includes carrying bag and stakes.', 'image_id' => 84],
             ],
-            'books-stationery' => [
+            'books-education' => [
                 ['name' => 'Premium Notebook Set', 'price' => 19.99, 'sale_price' => 14.99, 'stock' => 200, 'is_featured' => false, 'description' => 'Pack of 3 premium hardcover notebooks with 120gsm paper. Lay-flat binding. Perfect for journaling and note-taking.', 'image_id' => 100],
                 ['name' => 'Colorful Gel Pen Collection', 'price' => 24.99, 'sale_price' => 19.99, 'stock' => 150, 'is_featured' => false, 'description' => 'Set of 24 vibrant gel pens with smooth ink flow. Includes neon, pastel, and metallic colors. Quick-drying.', 'image_id' => 101],
                 ['name' => 'Bamboo Desk Organizer', 'price' => 39.99, 'sale_price' => 29.99, 'stock' => 80, 'is_featured' => true, 'description' => 'Natural bamboo desk organizer with 8 compartments. Holds pens, phone, business cards, and more. Eco-friendly.', 'image_id' => 102],
                 ['name' => 'Complete Art Supplies Kit', 'price' => 79.99, 'sale_price' => 59.99, 'stock' => 60, 'is_featured' => false, 'description' => 'Professional art kit with colored pencils, watercolors, pastels, and sketching supplies. 100+ pieces in wooden case.', 'image_id' => 103],
             ],
-            'toys-games' => [
+            'groceries-food' => [
                 ['name' => '500-Piece Building Blocks', 'price' => 49.99, 'sale_price' => 39.99, 'stock' => 100, 'is_featured' => true, 'description' => 'Creative building blocks set with 500 pieces in various shapes and colors. Compatible with major brands. Ages 4+.', 'image_id' => 120],
                 ['name' => 'Strategy Board Game', 'price' => 39.99, 'sale_price' => 29.99, 'stock' => 75, 'is_featured' => false, 'description' => 'Award-winning family strategy game for 2-6 players. Easy to learn, challenging to master. Ages 8+. 60-90 min play time.', 'image_id' => 121],
                 ['name' => '1000-Piece Puzzle', 'price' => 29.99, 'sale_price' => 24.99, 'stock' => 90, 'is_featured' => false, 'description' => 'Beautiful landscape 1000-piece jigsaw puzzle. Premium quality pieces with anti-glare surface. Completed size: 27x20 inches.', 'image_id' => 122],
                 ['name' => 'Collectible Action Figure', 'price' => 24.99, 'sale_price' => 19.99, 'stock' => 120, 'is_featured' => false, 'description' => 'Highly detailed collectible action figure with 20 points of articulation. Includes accessories and display stand.', 'image_id' => 123],
-            ],
-            'food-beverages' => [
-                ['name' => 'Organic Coffee Beans', 'price' => 29.99, 'sale_price' => 24.99, 'stock' => 100, 'is_featured' => true, 'description' => 'Premium single-origin organic coffee beans (1lb). Medium roast with notes of chocolate and caramel. Fair trade certified.', 'image_id' => 140],
-                ['name' => 'Green Tea Variety Pack', 'price' => 24.99, 'sale_price' => 19.99, 'stock' => 150, 'is_featured' => false, 'description' => 'Assorted green tea collection with 50 sachets. Includes jasmine, matcha, sencha, and more. Individually wrapped.', 'image_id' => 141],
-                ['name' => 'Belgian Chocolate Gift Box', 'price' => 44.99, 'sale_price' => 34.99, 'stock' => 80, 'is_featured' => false, 'description' => 'Premium Belgian dark chocolate assortment in elegant gift box. 24 pieces with various fillings. Perfect for gifting.', 'image_id' => 142],
-                ['name' => 'Extra Virgin Olive Oil', 'price' => 34.99, 'sale_price' => 29.99, 'stock' => 70, 'is_featured' => false, 'description' => 'Cold-pressed extra virgin olive oil from Mediterranean olives (500ml). Rich flavor perfect for cooking and dressings.', 'image_id' => 143],
-            ],
-            'jewelry-watches' => [
-                ['name' => 'Sterling Silver Pendant Necklace', 'price' => 89.99, 'sale_price' => 79.99, 'stock' => 50, 'is_featured' => true, 'description' => '925 sterling silver pendant necklace with cubic zirconia. 18-inch chain with lobster clasp. Gift box included.', 'image_id' => 160],
-                ['name' => 'Classic Leather Watch', 'price' => 169.99, 'sale_price' => 149.99, 'stock' => 40, 'is_featured' => true, 'description' => 'Elegant analog watch with genuine leather strap. Japanese quartz movement. Water-resistant to 30m. Unisex design.', 'image_id' => 161],
-                ['name' => 'Fashion Earrings Set', 'price' => 59.99, 'sale_price' => 49.99, 'stock' => 60, 'is_featured' => false, 'description' => 'Set of 6 pairs of fashion earrings in various styles. Hypoallergenic nickel-free. Comes in velvet pouch.', 'image_id' => 162],
-                ['name' => 'Charm Bracelet', 'price' => 69.99, 'sale_price' => 59.99, 'stock' => 55, 'is_featured' => false, 'description' => 'Adjustable charm bracelet with 5 interchangeable charms. Silver-plated with anti-tarnish coating. Gift ready.', 'image_id' => 163],
-            ],
-            'automotive' => [
-                ['name' => 'Magnetic Car Phone Mount', 'price' => 29.99, 'sale_price' => 24.99, 'stock' => 100, 'is_featured' => false, 'description' => 'Universal magnetic phone mount with strong N52 magnets. 360-degree rotation. Works with all smartphones and cases.', 'image_id' => 180],
-                ['name' => 'Premium Car Air Freshener', 'price' => 14.99, 'sale_price' => 9.99, 'stock' => 200, 'is_featured' => false, 'description' => 'Long-lasting car air freshener with new car scent. Lasts up to 60 days. Adjustable fragrance intensity.', 'image_id' => 181],
-                ['name' => 'Digital Tire Pressure Gauge', 'price' => 19.99, 'sale_price' => 14.99, 'stock' => 120, 'is_featured' => true, 'description' => 'Accurate digital tire pressure gauge with LCD display. Backlit for night use. Measures PSI, BAR, KPA.', 'image_id' => 182],
-                ['name' => 'Complete Car Cleaning Kit', 'price' => 49.99, 'sale_price' => 39.99, 'stock' => 75, 'is_featured' => false, 'description' => '12-piece car cleaning kit with microfiber towels, brushes, and premium cleaning solutions. Professional results.', 'image_id' => 183],
             ],
         ];
 

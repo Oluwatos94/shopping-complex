@@ -16,9 +16,9 @@ abstract class BaseNotificationEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly User $recipient,
-        public readonly string $message,
-        public readonly array $data = []
+        public User $recipient,
+        public string $message,
+        public array $data = []
     ) {}
 
     /**

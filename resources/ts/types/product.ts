@@ -138,6 +138,19 @@ export interface PaginatedVendorReviews {
 }
 
 /**
+ * Lean product shape returned by CategoryController::products()
+ */
+export interface CategoryProduct {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    image: string | null;
+    vendor_name: string | null;
+    vendor_slug: string | null;
+}
+
+/**
  * Product filter options
  */
 export interface ProductFilters {

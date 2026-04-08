@@ -6,13 +6,16 @@ namespace ModulesShoppingComplex\Services\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
+use ModulesShoppingComplex\Services\NotificationService;
 
 class AuthService
 {
     public function __construct(
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
+        private readonly NotificationService $notificationService,
     ) {}
 
     /**
@@ -34,6 +37,22 @@ class AuthService
         Auth::login($user);
 
         return $user;
+    }
+
+    /**
+     * Send a welcome notification after login
+     */
+    public function sendWelcomeNotification(User $user, bool $isNewUser = false): void
+    {
+        $message = $isNewUser
+            ? 'Welcome to Shopping Complex, ' . $user->name . '! Your account is ready.'
+            : 'Welcome back, ' . $user->name . '! You are now logged in.';
+
+        $this->notificationService->send(new SystemAlertEvent(
+            recipient: $user,
+            message: $message,
+            alertLevel: 'info',
+        ));
     }
 
     /**

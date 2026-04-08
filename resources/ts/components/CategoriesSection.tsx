@@ -99,7 +99,7 @@ const CategoriesSection: React.FC = () => {
                         {categories.map((category) => (
                             <Link
                                 key={category.id}
-                                href={`/categories/${category.id}/vendors`}
+                                href={`/categories/${category.id}/products`}
                                 className="group relative flex-shrink-0 w-72 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
                             >
                                 {/* Image */}
