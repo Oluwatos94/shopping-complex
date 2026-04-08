@@ -31,8 +31,8 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function handle(): void
     {
-        $phoneNumberId = trim((string) config('services.whatsapp.phone_number_id'), "\"' \t\n\r");
-        $accessToken = trim((string) config('services.whatsapp.access_token'), "\"' \t\n\r");
+        $phoneNumberId = config('services.whatsapp.phone_number_id');
+        $accessToken = config('services.whatsapp.access_token');
 
         $response = Http::withToken((string) $accessToken)
             ->post("https://graph.facebook.com/v19.0/{$phoneNumberId}/messages", $this->payload);
