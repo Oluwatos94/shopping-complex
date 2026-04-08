@@ -36,18 +36,19 @@ WORKDIR /app
 
 COPY . .
 
+# Create required directories before composer install (package:discover needs bootstrap/cache)
+RUN mkdir -p bootstrap/cache \
+        storage/logs \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/framework/cache \
+    && chmod -R 775 storage bootstrap/cache
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Install and build frontend
 RUN bun install && bun run build
-
-# Ensure storage and cache directories exist with correct permissions
-RUN mkdir -p storage/logs \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/framework/cache \
-    && chmod -R 775 storage bootstrap/cache
 
 # Copy Supervisor config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
