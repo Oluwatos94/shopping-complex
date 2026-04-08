@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
 
@@ -33,10 +32,6 @@ class VendorRepository extends BasePageRepository
         $query = User::query()
             ->where('role', 'vendor')
             ->whereHas('vendorOnboarding', fn ($q) => $q->where('status', VendorOnboardingStatusEnum::APPROVED))
-            ->whereHas('subscriptions', fn ($q) => $q
-                ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
-                ->where('expires_at', '>', now())
-            )
             ->withCount('products')
             ->with('media');
 

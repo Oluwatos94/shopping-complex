@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 
 class CategoryController extends Controller
@@ -53,6 +54,37 @@ class CategoryController extends Controller
                 'slug' => $category->slug,
             ],
             'vendors' => $transformedVendors,
+        ]);
+    }
+
+    public function products(int $id): Response
+    {
+        $category = Category::findOrFail($id);
+
+        $products = Product::where('category_id', $id)
+            ->where('is_active', true)
+            ->with(['media', 'vendor'])
+            ->paginate(16);
+
+        $transformedProducts = $products->through(function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'price' => $product->price,
+                'image' => $product->media->first()?->file_path,
+                'vendor_name' => $product->vendor?->name,
+                'vendor_slug' => $product->vendor?->slug,
+            ];
+        });
+
+        return Inertia::render('Categories/Products', [
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ],
+            'products' => $transformedProducts,
         ]);
     }
 }

@@ -2,33 +2,12 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-interface Vendor {
-    id: number;
-    name: string;
-    slug: string;
-    profileImage: string | null;
-    products: { id: number; name: string; price: number }[];
-}
-
-interface PaginatedVendors {
-    data: Vendor[];
-    current_page: number;
-    last_page: number;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-}
-
-interface Category {
-    id: number;
-    name: string;
-    slug: string;
-}
+import { Category, CategoryVendor, LaravelPaginated } from '@/types';
 
 interface PageProps {
     [key: string]: unknown;
-    category: Category;
-    vendors: PaginatedVendors;
+    category: Pick<Category, 'id' | 'name' | 'slug'>;
+    vendors: LaravelPaginated<CategoryVendor>;
 }
 
 const CategoryVendors: React.FC = () => {

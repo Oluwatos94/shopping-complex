@@ -37,6 +37,17 @@ export interface NearbyVendor extends Vendor {
 }
 
 /**
+ * Lean vendor shape returned by CategoryController::vendors()
+ */
+export interface CategoryVendor {
+    id: number;
+    name: string;
+    slug: string;
+    profileImage: string | null;
+    products: { id: number; name: string; price: number }[];
+}
+
+/**
  * Vendor filters for discovery
  */
 export interface VendorFilters {

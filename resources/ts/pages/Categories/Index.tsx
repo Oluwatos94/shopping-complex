@@ -2,13 +2,7 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-interface Category {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-}
+import { Category } from '@/types';
 
 interface PageProps {
     [key: string]: unknown;
@@ -54,7 +48,7 @@ const Categories: React.FC = () => {
                                 {categories.map((category) => (
                                     <Link
                                         key={category.id}
-                                        href={`/categories/${category.id}/vendors`}
+                                        href={`/categories/${category.id}/products`}
                                         className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
                                     >
                                         <div className="relative h-64 overflow-hidden">

@@ -92,6 +92,15 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
                     <div className="mb-10">
+                        <a
+                            href="/"
+                            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
+                        >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Back to Home
+                        </a>
                         <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">
                             Discover Nearby Vendors
                         </h1>

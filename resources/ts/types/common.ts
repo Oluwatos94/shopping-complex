@@ -2,56 +2,6 @@ import { Product } from './product';
 import { Vendor, Customer } from './user';
 
 /**
- * Order type
- */
-export interface Order {
-    id: number;
-    order_number: string;
-    customer_id: number;
-    vendor_id: number;
-    status: OrderStatus;
-    payment_status: PaymentStatus;
-    total_amount: number;
-    subtotal: number;
-    tax_amount: number;
-    shipping_fee: number;
-    discount_amount: number;
-    shipping_address: string;
-    billing_address: string;
-    customer?: Customer;
-    vendor?: Vendor;
-    items: OrderItem[];
-    tracking?: OrderTracking;
-    created_at: string;
-    updated_at: string;
-}
-
-/**
- * Order item
- */
-export interface OrderItem {
-    id: number;
-    order_id: number;
-    product_id: number;
-    product: Product;
-    quantity: number;
-    price: number;
-    subtotal: number;
-}
-
-/**
- * Order status
- */
-export type OrderStatus =
-    | 'pending'
-    | 'confirmed'
-    | 'processing'
-    | 'shipped'
-    | 'delivered'
-    | 'cancelled'
-    | 'refunded';
-
-/**
  * Payment status
  */
 export type PaymentStatus =
@@ -60,20 +10,6 @@ export type PaymentStatus =
     | 'failed'
     | 'refunded'
     | 'partially_refunded';
-
-/**
- * Order tracking information
- */
-export interface OrderTracking {
-    id: number;
-    order_id: number;
-    status: OrderStatus;
-    location: string;
-    notes?: string;
-    estimated_delivery: string;
-    actual_delivery?: string;
-    updated_at: string;
-}
 
 /**
  * Notification type
@@ -102,6 +38,21 @@ export type NotificationType =
     | 'vendor_message'
     | 'product_review'
     | 'system_alert';
+
+/**
+ * Laravel paginator shape (returned by ->paginate() via Inertia)
+ */
+export interface LaravelPaginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
 
 /**
  * Pagination meta
