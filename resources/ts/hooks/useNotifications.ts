@@ -1,228 +1,201 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import Echo from '@/echo';
+import { Notification, RawNotification, BroadcastPayload, NotificationType } from '@/types';
 
-export type NotificationType =
-  | "message"
-  | "mention"
-  | "alert"
-  | "success"
-  | "system";
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  timestamp: Date;
-  read: boolean;
-  avatarUrl?: string;
-  actionUrl?: string;
-}
+export type { Notification, NotificationType };
 
 interface UseNotificationsOptions {
-  wsUrl?: string;
-  soundEnabled?: boolean;
+    userId?: number;
+    soundEnabled?: boolean;
 }
 
 interface UseNotificationsReturn {
-  notifications: Notification[];
-  unreadCount: number;
-  soundEnabled: boolean;
-  connected: boolean;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  removeNotification: (id: string) => void;
-  toggleSound: () => void;
+    notifications: Notification[];
+    unreadCount: number;
+    soundEnabled: boolean;
+    connected: boolean;
+    markAsRead: (id: string) => void;
+    markAllAsRead: () => void;
+    removeNotification: (id: string) => void;
+    toggleSound: () => void;
 }
 
-// Minimal audio beep via Web Audio API — no external assets needed
+const TYPE_TITLES: Record<string, string> = {
+    message_received:      'New Message',
+    vendor_contact_request:'Contact Request',
+    product_updated:       'Product Update',
+    system_alert:          'System Alert',
+};
+
+function titleForType(type: string): string {
+    return TYPE_TITLES[type] ?? 'Notification';
+}
+
 function playNotificationSound() {
-  try {
-    const ctx = new (window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext)();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-
-    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.3);
-  } catch {
-    // Audio not available — silently ignore
-  }
+    try {
+        const ctx = new (window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+    } catch {
+        // Audio not available — silently ignore
+    }
 }
 
-function generateId(): string {
-  return `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+function mapRaw(raw: RawNotification): Notification {
+    return {
+        id:         raw.id,
+        type:       raw.type,
+        title:      titleForType(raw.type),
+        body:       raw.message,
+        timestamp:  new Date(raw.created_at),
+        read:       raw.read,
+        groupCount: raw.group_count,
+        isGrouped:  raw.is_grouped,
+        actionUrl:  (raw.data?.action_url as string | undefined),
+    };
 }
 
-/**
- * Simulates incoming WebSocket notifications for demo purposes.
- * Replace `simulateWebSocket` with a real WebSocket connection in production:
- *
- *   const ws = new WebSocket(wsUrl);
- *   ws.onmessage = (e) => addNotification(JSON.parse(e.data));
- */
-function simulateWebSocket(
-  onMessage: (n: Notification) => void,
-  signal: AbortSignal
-) {
-  const templates: Omit<Notification, "id" | "timestamp" | "read">[] = [
-    {
-      type: "message",
-      title: "New message from Alex",
-      body: "Hey, are you available for a quick call?",
-    },
-    {
-      type: "mention",
-      title: "You were mentioned",
-      body: "@you Left a comment on the design review thread.",
-    },
-    {
-      type: "alert",
-      title: "Deployment failed",
-      body: "Production build #482 encountered an error in step 3.",
-    },
-    {
-      type: "success",
-      title: "Payment received",
-      body: "Invoice #1042 has been paid — $240.00",
-    },
-    {
-      type: "system",
-      title: "System update",
-      body: "Scheduled maintenance on Saturday 02:00–04:00 UTC.",
-    },
-  ];
-
-  let timeoutId: ReturnType<typeof setTimeout>;
-
-  function scheduleNext() {
-    if (signal.aborted) return;
-    const delay = 6000 + Math.random() * 10000;
-    timeoutId = setTimeout(() => {
-      if (signal.aborted) return;
-      const template = templates[Math.floor(Math.random() * templates.length)];
-      const message = { ...template, id: generateId(), timestamp: new Date(), read: false } as Notification;
-      onMessage(message);
-      scheduleNext();
-    }, delay);
-  }
-
-  scheduleNext();
-  return () => clearTimeout(timeoutId);
-}
-
-const SEED_NOTIFICATIONS: Notification[] = [
-  {
-    id: generateId(),
-    type: "message",
-    title: "Welcome to the platform",
-    body: "Your account is all set up and ready to go.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 3),
-    read: false,
-  },
-  {
-    id: generateId(),
-    type: "success",
-    title: "Profile updated",
-    body: "Your profile changes have been saved successfully.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 18),
-    read: false,
-  },
-  {
-    id: generateId(),
-    type: "alert",
-    title: "Login from new device",
-    body: "We noticed a login from Chrome on Windows — Lagos, NG.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    read: true,
-  },
-];
 
 export function useNotifications(
-  options: UseNotificationsOptions = {}
+    options: UseNotificationsOptions = {}
 ): UseNotificationsReturn {
-  const { wsUrl } = options;
-  const [notifications, setNotifications] =
-    useState<Notification[]>(SEED_NOTIFICATIONS);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [connected, setConnected] = useState(false);
-  const soundEnabledRef = useRef(soundEnabled);
+    const { userId } = options;
 
-  useEffect(() => {
-    soundEnabledRef.current = soundEnabled;
-  }, [soundEnabled]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [connected, setConnected]         = useState(false);
+    const [soundEnabled, setSoundEnabled]   = useState(true);
+    const soundRef = useRef(soundEnabled);
 
-  const addNotification = useCallback((n: Notification) => {
-    setNotifications((prev) => [n, ...prev].slice(0, 50));
-    if (soundEnabledRef.current) playNotificationSound();
-  }, []);
+    useEffect(() => { soundRef.current = soundEnabled; }, [soundEnabled]);
 
-  // WebSocket / simulation setup
-  useEffect(() => {
-    const controller = new AbortController();
+    useEffect(() => {
+        if (!userId) return;
 
-    if (wsUrl) {
-      // Real WebSocket path
-      const ws = new WebSocket(wsUrl);
-      ws.onopen = () => setConnected(true);
-      ws.onclose = () => setConnected(false);
-      ws.onerror = () => setConnected(false);
-      ws.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data) as Notification;
-          addNotification({ ...data, timestamp: new Date(data.timestamp) });
-        } catch {
-          /* ignore malformed messages */
+        fetch('/api/notifications', {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        })
+            .then((r) => r.json())
+            .then((data: { notifications: RawNotification[] }) => {
+                setNotifications(data.notifications.map(mapRaw));
+            })
+            .catch((err) => {
+                if (import.meta.env.DEV) console.error('[Notifications] Failed to load:', err);
+            });
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = Echo.private(`App.Models.User.${userId}`);
+
+        // Use state_change to catch all transitions reliably
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pusher = (Echo.connector as any)?.pusher;
+        const onStateChange = ({ current }: { current: string }) => {
+            setConnected(current === 'connected');
+        };
+        if (pusher) {
+            pusher.connection.bind('state_change', onStateChange);
+            setConnected(pusher.connection.state === 'connected');
         }
-      };
-      controller.signal.addEventListener("abort", () => ws.close());
-    } else {
-      // Demo simulation
-      setConnected(true);
-      // simulateWebSocket(addNotification, controller.signal);
-    }
 
-    return () => controller.abort();
-  }, [wsUrl, addNotification]);
+        const notificationTypes = [
+            'message_received',
+            'vendor_contact_request',
+            'product_updated',
+            'system_alert',
+        ];
 
-  const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  }, []);
+        notificationTypes.forEach((type) => {
+            channel.listen(`.notification.${type}`, (payload: BroadcastPayload) => {
+                const newNotif: Notification = {
+                    id:        payload.id ?? `rt_${Date.now()}`,
+                    type:      payload.type,
+                    title:     titleForType(payload.type),
+                    body:      payload.message,
+                    timestamp: new Date(payload.created_at),
+                    read:      false,
+                    actionUrl: payload.data?.action_url as string | undefined,
+                };
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
+                setNotifications((prev) => [newNotif, ...prev].slice(0, 50));
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+                if (soundRef.current) playNotificationSound();
+            });
+        });
 
-  const toggleSound = useCallback(() => {
-    setSoundEnabled((v) => !v);
-  }, []);
+        return () => {
+            if (pusher) pusher.connection.unbind('state_change', onStateChange);
+            Echo.leave(`App.Models.User.${userId}`);
+        };
+    }, [userId]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  return {
-    notifications,
-    unreadCount,
-    soundEnabled,
-    connected,
-    markAsRead,
-    markAllAsRead,
-    removeNotification,
-    toggleSound,
-  };
+    const markAsRead = useCallback((id: string) => {
+        setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        );
+
+        fetch(`/api/notifications/${id}/read`, {
+            method: 'PATCH',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': getCsrfToken() },
+            credentials: 'same-origin',
+        }).catch(() => {
+            setNotifications((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, read: false } : n))
+            );
+        });
+    }, []);
+
+    const markAllAsRead = useCallback(() => {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
+        fetch('/api/notifications/mark-all-read', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': getCsrfToken() },
+            credentials: 'same-origin',
+        }).catch(() => {});
+    }, []);
+
+    const removeNotification = useCallback((id: string) => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+        fetch(`/api/notifications/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': getCsrfToken() },
+            credentials: 'same-origin',
+        }).catch(() => {});
+    }, []);
+
+    const toggleSound = useCallback(() => setSoundEnabled((v) => !v), []);
+
+    const unreadCount = notifications.filter((n) => !n.read).length;
+
+    return {
+        notifications,
+        unreadCount,
+        soundEnabled,
+        connected,
+        markAsRead,
+        markAllAsRead,
+        removeNotification,
+        toggleSound,
+    };
+}
+
+
+function getCsrfToken(): string {
+    return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+        ?.content ?? '';
 }

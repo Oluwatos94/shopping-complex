@@ -105,6 +105,7 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
 });
 
 Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');

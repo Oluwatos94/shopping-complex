@@ -9,9 +9,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     zip \
     unzip \
+    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (handles all system deps automatically)
+# Install PHP extensions (pcntl is required by Reverb for signal handling)
 RUN install-php-extensions \
     imagick \
     pdo_mysql \
@@ -20,7 +21,9 @@ RUN install-php-extensions \
     ctype \
     fileinfo \
     zip \
-    bcmath
+    bcmath \
+    pcntl \
+    sockets
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -33,23 +36,23 @@ WORKDIR /app
 
 COPY . .
 
+# Create required directories before composer install (package:discover needs bootstrap/cache)
+RUN mkdir -p bootstrap/cache \
+        storage/logs \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/framework/cache \
+    && chmod -R 775 storage bootstrap/cache
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Install and build frontend
 RUN bun install && bun run build
 
-# Ensure storage and cache directories exist with correct permissions
-RUN mkdir -p storage/logs \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/framework/cache \
-    && chmod -R 775 storage bootstrap/cache
+# Copy Supervisor config
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 8000
 
-CMD php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache \
-    && php artisan migrate --force \
-    && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

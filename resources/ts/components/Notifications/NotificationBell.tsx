@@ -1,26 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { usePage } from "@inertiajs/react";
 import { useNotifications } from "../../hooks/useNotifications";
 import { NotificationDropdown } from "./NotificationDropdown";
 
-interface NotificationBellProps {
-  /** WebSocket URL. Omit to use the built-in demo simulation. */
-  wsUrl?: string;
+interface PageProps {
+    [key: string]: unknown;
+    auth?: { user?: { id: number } | null };
 }
 
-/**
- * NotificationBell
- *
- * Drop this component anywhere in your app's header/navbar.
- * It manages its own state via `useNotifications` and renders
- * a badge-adorned bell that opens a real-time notification panel.
- *
- * Usage:
- *   <NotificationBell />
- *   <NotificationBell wsUrl="wss://yourapp.com/ws/notifications" />
- */
-export const NotificationBell: React.FC<NotificationBellProps> = ({
-  wsUrl,
-}) => {
+export const NotificationBell: React.FC = () => {
+  const { auth } = usePage<PageProps>().props;
+  const userId = auth?.user?.id;
+
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -33,18 +24,18 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     markAllAsRead,
     removeNotification,
     toggleSound,
-  } = useNotifications({ wsUrl });
+  } = useNotifications({ userId });
 
   const toggle = useCallback(() => setOpen((v) => !v), []);
   const close = useCallback(() => setOpen(false), []);
 
-  // Close on outside click or Escape
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         close();
       }
     }
+    
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") close();
     }
