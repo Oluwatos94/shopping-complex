@@ -47,6 +47,16 @@ RUN mkdir -p bootstrap/cache \
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
+# Build args — Railway must pass these at build time so Vite can bake them into the JS bundle
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY
+ENV VITE_REVERB_HOST=$VITE_REVERB_HOST
+ENV VITE_REVERB_PORT=$VITE_REVERB_PORT
+ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
+
 # Install and build frontend
 RUN bun install && bun run build
 
