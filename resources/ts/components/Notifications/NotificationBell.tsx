@@ -19,7 +19,6 @@ export const NotificationBell: React.FC = () => {
     notifications,
     unreadCount,
     soundEnabled,
-    connected,
     markAsRead,
     markAllAsRead,
     removeNotification,
@@ -107,7 +106,6 @@ export const NotificationBell: React.FC = () => {
           <NotificationDropdown
             notifications={notifications}
             soundEnabled={soundEnabled}
-            connected={connected}
             onMarkAsRead={markAsRead}
             onMarkAllAsRead={markAllAsRead}
             onRemove={removeNotification}
