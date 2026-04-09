@@ -53,6 +53,6 @@ RUN bun install && bun run build
 # Copy Supervisor config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-EXPOSE 8000
+EXPOSE ${PORT:-8000}
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
