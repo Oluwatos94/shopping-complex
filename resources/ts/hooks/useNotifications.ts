@@ -106,8 +106,12 @@ export function useNotifications(
             setConnected(current === 'connected');
         };
         if (pusher) {
-            pusher.connection.bind('state_change', onStateChange);
+            // Set current state first, then bind so we don't miss a transition
             setConnected(pusher.connection.state === 'connected');
+            pusher.connection.bind('state_change', onStateChange);
+            pusher.connection.bind('connected', () => setConnected(true));
+            pusher.connection.bind('disconnected', () => setConnected(false));
+            pusher.connection.bind('failed', () => setConnected(false));
         }
 
         const notificationTypes = [
@@ -136,7 +140,12 @@ export function useNotifications(
         });
 
         return () => {
-            if (pusher) pusher.connection.unbind('state_change', onStateChange);
+            if (pusher) {
+                pusher.connection.unbind('state_change', onStateChange);
+                pusher.connection.unbind('connected');
+                pusher.connection.unbind('disconnected');
+                pusher.connection.unbind('failed');
+            }
             Echo.leave(`App.Models.User.${userId}`);
         };
     }, [userId]);
@@ -151,6 +160,12 @@ export function useNotifications(
             method: 'PATCH',
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': getCsrfToken() },
             credentials: 'same-origin',
+        }).then((r) => {
+            if (!r.ok) {
+                setNotifications((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, read: false } : n))
+                );
+            }
         }).catch(() => {
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id ? { ...n, read: false } : n))

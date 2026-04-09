@@ -5,7 +5,6 @@ import { NotificationItem } from "./NotificationItem";
 interface NotificationDropdownProps {
   notifications: Notification[];
   soundEnabled: boolean;
-  connected: boolean;
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onRemove: (id: string) => void;
@@ -16,7 +15,6 @@ interface NotificationDropdownProps {
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   notifications,
   soundEnabled,
-  connected,
   onMarkAsRead,
   onMarkAllAsRead,
   onRemove,
@@ -50,11 +48,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             <span className="text-sm font-semibold text-primary-dark tracking-wide">
               Notifications
             </span>
-            <span
-              title={connected ? "Live" : "Disconnected"}
-              className={`inline-block w-2 h-2 rounded-full ${connected ? "bg-green-400" : "bg-red-400"}`}
-              style={connected ? { boxShadow: "0 0 6px #4ade80" } : undefined}
-            />
           </div>
 
           <div className="flex items-center gap-2">

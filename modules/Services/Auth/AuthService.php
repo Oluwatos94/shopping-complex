@@ -10,6 +10,7 @@ use ModulesShoppingComplex\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Services\NotificationService;
+use ModulesShoppingComplex\Models\Notification;
 
 class AuthService
 {
@@ -44,6 +45,16 @@ class AuthService
      */
     public function sendWelcomeNotification(User $user, bool $isNewUser = false): void
     {
+        $alreadySent = Notification::query()
+            ->where('user_id', $user->id)
+            ->where('group_key', 'system_alerts')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->exists();
+
+        if ($alreadySent) {
+            return;
+        }
+
         $message = $isNewUser
             ? 'Welcome to Shopping Complex, ' . $user->name . '! Your account is ready.'
             : 'Welcome back, ' . $user->name . '! You are now logged in.';
