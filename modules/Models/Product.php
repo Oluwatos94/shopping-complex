@@ -42,6 +42,8 @@ class Product extends Model
         'slug',
         'stock',
         'is_active',
+        'pay_on_delivery',
+        'is_returnable',
     ];
 
     /**
