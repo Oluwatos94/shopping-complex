@@ -24,6 +24,8 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->boolean('pay_on_delivery')->default(false);
+            $table->boolean('is_returnable')->default(false);
             $table->timestamps();
             $table->softDeletes();
 

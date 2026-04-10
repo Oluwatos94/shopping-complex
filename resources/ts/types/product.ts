@@ -15,6 +15,8 @@ export interface Product {
     stock: number;
     is_active: boolean;
     is_featured: boolean;
+    pay_on_delivery: boolean;
+    is_returnable: boolean;
     images?: ProductImage[];
     vendor?: Vendor;
     category?: Category;

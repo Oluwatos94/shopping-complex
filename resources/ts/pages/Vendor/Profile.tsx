@@ -1,36 +1,10 @@
-import { useRef, useState, useCallback, FormEvent } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import { Product } from '@/types/product';
+import { useState, useCallback } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { PaginatedProducts } from '@/types/product';
+import { VendorProfile, VendorStats } from '@/types/vendor';
 import VendorSidebar from '@/components/VendorSidebar';
 import { getCsrfToken } from '@/utils/csrf';
-
-interface VendorProfile {
-    id: number;
-    slug: string;
-    name: string;
-    email: string;
-    business_name: string;
-    business_description?: string;
-    business_logo?: string;
-    is_verified: boolean;
-    created_at: string;
-}
-
-interface VendorStats {
-    products_count: number;
-    reviews_count: number;
-    average_rating: number;
-    followers_count: number;
-    plan_product_limit: number | null;
-}
-
-interface PaginatedProducts {
-    data: Product[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
+import UploadProductFab from './partials/UploadProductFab';
 
 interface Props {
     vendor: VendorProfile;
@@ -38,205 +12,6 @@ interface Props {
     stats: VendorStats;
     isOwner: boolean;
     isFollowing: boolean;
-}
-
-function UploadProductFab({ productLimit, activeProductsCount }: {
-    productLimit: number | null;
-    activeProductsCount: number;
-}) {
-    const atLimit = productLimit !== null && activeProductsCount >= productLimit;
-    const [open, setOpen] = useState(false);
-    const [name, setName] = useState('');
-    const [price, setPrice] = useState('');
-    const [image, setImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [processing, setProcessing] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImage(file);
-            setImagePreview(URL.createObjectURL(file));
-        }
-    }, []);
-
-    const reset = useCallback(() => {
-        setName('');
-        setPrice('');
-        setImage(null);
-        if (imagePreview) URL.revokeObjectURL(imagePreview);
-        setImagePreview(null);
-        setErrors({});
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    }, [imagePreview]);
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('price', price);
-        if (image) formData.append('image', image);
-
-        setProcessing(true);
-
-        fetch('/vendor/products/upload', {
-            method: 'POST',
-            headers: {
-                'X-XSRF-TOKEN': getCsrfToken(),
-                'Accept': 'application/json',
-            },
-            body: formData,
-        })
-            .then(async (res) => {
-                const data = await res.json();
-                if (!res.ok) {
-                    setErrors(data.errors || { image: data.message || 'Upload failed.' });
-                    return;
-                }
-                reset();
-                setOpen(false);
-                router.reload({ only: ['products', 'stats'] });
-            })
-            .catch(() => setErrors({ image: 'Something went wrong.' }))
-            .finally(() => setProcessing(false));
-    };
-
-    return (
-        <>
-            {/* FAB */}
-            <button
-                onClick={() => setOpen(true)}
-                className="fixed bottom-8 right-8 w-14 h-14 bg-primary-olive text-white rounded-full shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center z-50 group"
-            >
-                <svg className="w-7 h-7 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="absolute right-full mr-3 bg-primary-dark text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    Add Product
-                </span>
-            </button>
-
-            {/* Modal */}
-            {open && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => { if (!processing) { setOpen(false); reset(); } }} />
-                    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-lg font-serif font-bold text-primary-dark">Add Product</h2>
-                            <button
-                                onClick={() => { setOpen(false); reset(); }}
-                                className="text-gray-400 hover:text-gray-600"
-                                disabled={processing}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Upgrade prompt — shown when the vendor has hit their plan's product limit */}
-                        {atLimit ? (
-                            <div className="text-center py-6">
-                                <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-base font-semibold text-gray-900 mb-1">Product limit reached</h3>
-                                <p className="text-sm text-gray-500 mb-5">
-                                    You've used all {productLimit} product slots on your current plan.
-                                    Upgrade to add more.
-                                </p>
-                                <Link
-                                    href="/vendor/subscription"
-                                    className="inline-block bg-primary-olive text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
-                                >
-                                    View Plans
-                                </Link>
-                            </div>
-                        ) : (
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Image Upload */}
-                            <div>
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`w-full aspect-square max-h-48 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors ${
-                                        errors.image ? 'border-red-300' : 'border-gray-300 hover:border-primary-olive'
-                                    }`}
-                                >
-                                    {imagePreview ? (
-                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="text-center py-8">
-                                            <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <p className="text-sm text-gray-500">Click to upload image</p>
-                                            <p className="text-xs text-gray-400 mt-1">JPG, PNG or WebP. Max 5MB</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept=".jpg,.jpeg,.png,.webp"
-                                    onChange={handleImageChange}
-                                    className="sr-only"
-                                />
-                                {errors.image && <p className="text-sm text-red-600 mt-1">{errors.image}</p>}
-                            </div>
-
-                            {/* Title */}
-                            <div>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Product title"
-                                    className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 ${
-                                        errors.name ? 'border-red-300' : 'border-gray-300'
-                                    }`}
-                                />
-                                {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
-                            </div>
-
-                            {/* Price */}
-                            <div>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={price}
-                                        onChange={(e) => setPrice(e.target.value)}
-                                        placeholder="0.00"
-                                        className={`w-full rounded-lg border pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 ${
-                                            errors.price ? 'border-red-300' : 'border-gray-300'
-                                        }`}
-                                    />
-                                </div>
-                                {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
-                            </div>
-
-                            {/* Submit */}
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="w-full bg-primary-olive text-white py-3 rounded-lg font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {processing ? 'Uploading...' : 'Upload Product'}
-                            </button>
-                        </form>
-                        )}
-                    </div>
-                </div>
-            )}
-        </>
-    );
 }
 
 export default function VendorProfilePage({ vendor, products, stats, isOwner, isFollowing: initialIsFollowing }: Props) {
@@ -279,7 +54,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                 {isOwner && <VendorSidebar vendorSlug={vendor.slug} businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
 
                 {/* Main Content */}
-                <div className={isOwner ? 'ml-[100px]' : ''}>
+                <div className={isOwner ? 'md:ml-[100px]' : ''}>
                     {/* Cover / Header Area */}
                     <div className="bg-gradient-to-br from-primary-dark via-primary-brown to-primary-dark">
                         {/* Top Nav (only for visitors) */}
@@ -457,15 +232,15 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                                     {hasDiscount && salePrice ? (
                                                         <div className="flex items-baseline gap-1">
                                                             <span className="text-sm font-bold text-gray-900">
-                                                                ${salePrice.toFixed(2)}
+                                                                ₦{salePrice.toLocaleString()}
                                                             </span>
                                                             <span className="text-xs text-gray-400 line-through">
-                                                                ${price.toFixed(2)}
+                                                                ₦{price.toLocaleString()}
                                                             </span>
                                                         </div>
                                                     ) : (
                                                         <span className="text-sm font-bold text-gray-900">
-                                                            ${price.toFixed(2)}
+                                                            ₦{price.toLocaleString()}
                                                         </span>
                                                     )}
                                                 </div>

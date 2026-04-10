@@ -77,15 +77,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                     {hasDiscount && salePrice ? (
                         <>
                             <span className="text-lg font-bold text-gray-900">
-                                ${salePrice.toFixed(2)}
+                                ₦{salePrice.toLocaleString()}
                             </span>
                             <span className="text-sm text-gray-500 line-through">
-                                ${price.toFixed(2)}
+                                ₦{price.toLocaleString()}
                             </span>
                         </>
                     ) : (
                         <span className="text-lg font-bold text-gray-900">
-                            ${price.toFixed(2)}
+                            ₦{price.toLocaleString()}
                         </span>
                     )}
                 </div>

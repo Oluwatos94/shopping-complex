@@ -212,7 +212,7 @@ export default function SubscriptionIndex({ plans, currentSubscription, products
             <Head title="Subscription Plans" />
             <VendorSidebar />
 
-            <main className="ml-[100px] min-h-screen bg-gray-50">
+            <main className="md:ml-[100px] min-h-screen bg-gray-50">
                 <div className="max-w-5xl mx-auto px-6 py-8">
                     <div className="mb-8">
                         <h1 className="text-2xl font-bold text-gray-900">Subscription Plans</h1>

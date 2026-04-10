@@ -212,7 +212,7 @@ class VendorController extends Controller
         ]);
     }
 
-    public function uploadProduct(UploadProductRequest $request): JsonResponse
+    public function uploadProduct(UploadProductRequest $request): RedirectResponse
     {
         // TODO: Re-enable after admin panel is built
         // $this->authorize('create', Product::class);
@@ -223,9 +223,9 @@ class VendorController extends Controller
         if ($subscription !== null) {
             $activeCount = $user->products()->where('is_active', true)->count();
             if ($activeCount >= $subscription->plan->product_limit) {
-                return response()->json([
+                return redirect()->back()->withErrors([
                     'message' => "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.",
-                ], 422);
+                ]);
             }
         }
 
@@ -233,12 +233,14 @@ class VendorController extends Controller
             $product = Product::create([
                 'name' => $request->input('name'),
                 'slug' => Str::slug($request->input('name')).'-'.uniqid(),
-                'description' => $request->input('name', ''),
+                'description' => $request->input('description'),
                 'price' => $request->input('price'),
                 'vendor_id' => $user->id,
                 'category_id' => $user->category_id,
                 'stock' => 0,
                 'is_active' => true,
+                'pay_on_delivery' => $request->boolean('pay_on_delivery'),
+                'is_returnable' => $request->boolean('is_returnable'),
             ]);
 
             $this->mediaService->uploadImage(
@@ -251,11 +253,7 @@ class VendorController extends Controller
             return $product;
         });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product uploaded successfully.',
-            'product_id' => $product->id,
-        ]);
+        return redirect()->back()->with('success', 'Product uploaded successfully.');
     }
 
     private function findVendorBySlug(string $slug): User

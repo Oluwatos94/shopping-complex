@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use ModulesShoppingComplex\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Http\Requests\LoginRequest;
 use ModulesShoppingComplex\Http\Requests\RegisterRequest;
 use ModulesShoppingComplex\Services\Auth\AuthService;
@@ -22,7 +21,7 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService,
-        private readonly NotificationService $notificationService,
+        private readonly NotificationService $notificationService, // @phpstan-ignore-line
         // Temporarily unused for testing - will be used when email verification is re-enabled
         private readonly EmailVerificationService $emailVerificationService // @phpstan-ignore-line
     ) {}
