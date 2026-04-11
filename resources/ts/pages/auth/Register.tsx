@@ -1,14 +1,23 @@
 import { useForm, router } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import PasswordRequirement from "@/components/Forms/PasswordRequirement";
 
 function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordTouched, setPasswordTouched] = useState(false);
     const { data, setData, post, processing, errors } = useForm({
         email: "",
         password: "",
         password_confirmation: "",
     });
+
+    const passwordRules = useMemo(() => ({
+        minLength:   data.password.length >= 8,
+        hasUpper:    /[A-Z]/.test(data.password),
+        hasNumber:   /\d/.test(data.password),
+        hasSymbol:   /[^a-zA-Z0-9]/.test(data.password),
+    }), [data.password]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,17 +69,6 @@ function Register() {
                     <p className="text-gray-500 text-sm text-center mb-6 leading-relaxed">
                         Join us and enjoy seamless shopping, exclusive offers, and easy access to your favorite stores.
                     </p>
-
-                    {/* Error messages */}
-                    {Object.keys(errors).length > 0 && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm">
-                            <ul className="space-y-1">
-                                {Object.values(errors).map((error, index) => (
-                                    <li key={index}>{error}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
 
                     {/* Google Sign Up */}
                     <a
@@ -134,6 +132,7 @@ function Register() {
                                     placeholder="Create a password"
                                     value={data.password}
                                     onChange={(e) => setData("password", e.target.value)}
+                                    onFocus={() => setPasswordTouched(true)}
                                     disabled={processing}
                                     className={`w-full pl-10 pr-12 py-3 bg-white border rounded-xl text-primary-dark text-sm placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-olive/30 focus:border-primary-olive transition-all disabled:opacity-50 ${errors.password ? "border-red-300" : "border-gray-200"}`}
                                 />
@@ -155,6 +154,14 @@ function Register() {
                                 </button>
                             </div>
                             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                            {passwordTouched && !errors.password && (
+                                <ul className="mt-2 space-y-1 pl-1">
+                                    <PasswordRequirement met={passwordRules.minLength} label="At least 8 characters" />
+                                    <PasswordRequirement met={passwordRules.hasUpper}  label="At least one uppercase letter" />
+                                    <PasswordRequirement met={passwordRules.hasNumber} label="At least one number" />
+                                    <PasswordRequirement met={passwordRules.hasSymbol} label="At least one special character (!@#$...)" />
+                                </ul>
+                            )}
                         </div>
 
                         {/* Confirm Password */}
