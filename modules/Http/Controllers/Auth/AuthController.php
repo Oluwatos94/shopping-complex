@@ -22,8 +22,7 @@ class AuthController extends Controller
     public function __construct(
         private readonly AuthService $authService,
         private readonly NotificationService $notificationService, // @phpstan-ignore-line
-        // Temporarily unused for testing - will be used when email verification is re-enabled
-        private readonly EmailVerificationService $emailVerificationService // @phpstan-ignore-line
+        private readonly EmailVerificationService $emailVerificationService
     ) {}
 
     /**
@@ -43,7 +42,13 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        $this->authService->sendWelcomeNotification($request->user());
+        $user = $request->user();
+
+        if (! $user->hasVerifiedEmail()) {
+            return Inertia::location('/email/verify');
+        }
+
+        $this->authService->sendWelcomeNotification($user);
 
         $intended = $request->session()->pull('url.intended', '/');
 
@@ -63,26 +68,14 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): RedirectResponse
     {
-        // ORIGINAL IMPLEMENTATION - Commented out for testing
-        // $validated = $request->validated();
-        // $user = $this->authService->register($validated);
-        // $this->emailVerificationService->sendVerificationEmail($user);
-        // $request->session()->regenerate();
-        // return redirect('/email/verify')
-        //     ->with('status', 'Registration successful! Please verify your email address.');
-
-        // TEMPORARY TESTING IMPLEMENTATION - Auto-login after registration
         $validated = $request->validated();
         $user = $this->authService->register($validated);
 
-        // Auto-login the user for testing purposes
-        auth()->login($user);
+        $this->emailVerificationService->sendVerificationEmail($user);
         $request->session()->regenerate();
 
-        $this->authService->sendWelcomeNotification($user, isNewUser: true);
-
-        return redirect('/')
-            ->with('success', 'Registration successful! You are now logged in.');
+        return redirect('/email/verify')
+            ->with('status', 'Registration successful! Please check your email to verify your account.');
     }
 
     /**
