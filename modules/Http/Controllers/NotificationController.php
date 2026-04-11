@@ -26,20 +26,20 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user          = $request->user();
+        $user = $request->user();
         $notifications = $this->notificationService->getRecentNotifications($user, 20);
-        $unreadCount   = $this->notificationService->getUnreadCount($user);
+        $unreadCount = $this->notificationService->getUnreadCount($user);
 
         return response()->json([
             'notifications' => $notifications->map(fn ($n) => [
-                'id'          => (string) $n->id,
-                'type'        => $n->type,
-                'message'     => $n->message,
-                'data'        => $n->data,
-                'read'        => $n->read_at !== null,
-                'created_at'  => $n->created_at->toISOString(),
+                'id' => (string) $n->id,
+                'type' => $n->type,
+                'message' => $n->message,
+                'data' => $n->data,
+                'read' => $n->read_at !== null,
+                'created_at' => $n->created_at->toISOString(),
                 'group_count' => $n->group_count,
-                'is_grouped'  => $n->is_grouped,
+                'is_grouped' => $n->is_grouped,
             ]),
             'unread_count' => $unreadCount,
         ]);

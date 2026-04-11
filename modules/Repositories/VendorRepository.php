@@ -31,7 +31,6 @@ class VendorRepository extends BasePageRepository
         $addressTable = Address::getTableName();
         $query = User::query()
             ->where('role', 'vendor')
-            ->whereHas('vendorOnboarding', fn ($q) => $q->where('status', VendorOnboardingStatusEnum::APPROVED))
             ->withCount('products')
             ->with('media');
 

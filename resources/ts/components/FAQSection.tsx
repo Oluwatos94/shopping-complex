@@ -19,10 +19,7 @@ const faqs: FAQItem[] = [
         question: 'Is it free to shop on Shopping Complex?',
         answer: 'Yes, shopping is completely free for buyers. There are no fees to browse, contact vendors, or place orders. Vendors pay a subscription to list their products and get discovered.',
     },
-    {
-        question: 'How do I track my order?',
-        answer: 'Once a vendor confirms and dispatches your order, you will receive live updates through the platform. You can track the status from preparation all the way to delivery — similar to how you would track a ride on Uber.',
-    },
+
     {
         question: 'How do I become a vendor?',
         answer: 'Click "Become a Vendor" on the homepage, fill in your business details, and submit for review. Once approved, you can upload your products and go live immediately. The whole process takes just a few minutes.',
@@ -33,11 +30,11 @@ const faqs: FAQItem[] = [
     },
     {
         question: 'How do I contact customer support?',
-        answer: 'You can reach us through the Contact page, via email at support@shoppingcomplex.com, or by messaging our WhatsApp number. Our support team is available 24/7 to help with any issues.',
+        answer: 'You can reach us through the Contact page, via email at support.shoppingComplex@gmail.com, or by messaging our WhatsApp number. Our support team is available 24/7 to help with any issues.',
     },
     {
         question: 'Is Shopping Complex available in my city?',
-        answer: 'Shopping Complex is expanding across cities rapidly. Vendor availability depends on your location — the more vendors that register in your area, the richer the experience. If you do not see many vendors near you yet, check back soon or encourage local businesses to sign up.',
+        answer: 'Shopping Complex is expanding across cities rapidly. Vendor availability depends on your location the more vendors that register in your area, the richer the experience. If you do not see many vendors near you yet, check back soon or encourage local businesses to sign up.',
     },
 ];
 

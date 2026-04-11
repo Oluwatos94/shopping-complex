@@ -7,10 +7,10 @@ namespace ModulesShoppingComplex\Services\Auth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Events\SystemAlertEvent;
+use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Services\NotificationService;
-use ModulesShoppingComplex\Models\Notification;
 
 class AuthService
 {
@@ -56,8 +56,8 @@ class AuthService
         }
 
         $message = $isNewUser
-            ? 'Welcome to Shopping Complex, ' . $user->name . '! Your account is ready.'
-            : 'Welcome back, ' . $user->name . '! You are now logged in.';
+            ? 'Welcome to Shopping Complex, '.$user->name.'! Your account is ready.'
+            : 'Welcome back, '.$user->name.'! You are now logged in.';
 
         $this->notificationService->send(new SystemAlertEvent(
             recipient: $user,

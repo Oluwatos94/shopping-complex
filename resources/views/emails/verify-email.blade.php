@@ -1,13 +1,16 @@
 @extends('emails.layout')
 
-@section('title', 'Verify Your Email Address')
+@section('title', 'Verify Your Email — Shopping Complex')
 
 @section('content')
     <h2>Verify Your Email Address</h2>
 
-    <p>Hello {{ $user->name }},</p>
+    <p>Hello <strong>{{ $user->name }}</strong>,</p>
 
-    <p>Thank you for registering with Shopping Complex! To complete your registration and access all features, please verify your email address by clicking the button below.</p>
+    <p>
+        Thank you for joining Shopping Complex! To complete your registration and
+        access all features, please verify your email address by clicking the button below.
+    </p>
 
     <!-- Verify Button -->
     <div class="button-container">
@@ -16,14 +19,22 @@
         </a>
     </div>
 
-    <!-- Info Box -->
+    <!-- Info box -->
     <div class="info-box">
-        <p><strong>Important:</strong> This verification link will expire in 60 minutes. If the link expires, you can request a new verification email from your account dashboard.</p>
+        <p>
+            <strong>Note:</strong> This verification link expires in
+            <strong>60 minutes</strong>. If it expires, you can request a new
+            one from the sign-in page.
+        </p>
     </div>
 
-    <p>If you did not create an account with Shopping Complex, no further action is required. Your email address will not be used without verification.</p>
+    <p style="color: #888; font-size: 13px;">
+        If you did not create an account with Shopping Complex, you can safely
+        ignore this email — no action is required.
+    </p>
 
-    <!-- Link Fallback -->
+    <!-- Link fallback -->
+    <hr class="divider">
     <div class="link-fallback">
         <p>If the button above doesn't work, copy and paste this link into your browser:</p>
         <p class="link-text">{{ $verificationUrl }}</p>

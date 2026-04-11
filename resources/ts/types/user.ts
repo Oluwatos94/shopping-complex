@@ -44,6 +44,7 @@ export interface Vendor extends BaseUser {
     products_count: number;
     is_verified: boolean;
     is_online: boolean;
+    available_hours?: string | null;
     location?: VendorLocation;
 }
 

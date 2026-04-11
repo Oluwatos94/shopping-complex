@@ -28,6 +28,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property string|null $bio
  * @property string|null $business_name
  * @property int|null $category_id
+ * @property string|null $available_hours
  * @property string|null $session_id
  * @property-read Category|null $category
  * @property Carbon $created_at
@@ -62,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'bio',
         'business_name',
         'category_id',
+        'available_hours',
         'email_verified_at',
     ];
 
