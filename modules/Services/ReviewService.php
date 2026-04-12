@@ -222,6 +222,11 @@ final readonly class ReviewService
         return $this->reviewRepository->getVendorRatingStatsWithDistribution($vendorId);
     }
 
+    public function getBulkVendorRatingStats(array $vendorIds): array
+    {
+        return $this->reviewRepository->getBulkVendorRatingStats($vendorIds);
+    }
+
     public function canCustomerReviewVendor(int $customerId, int $vendorId): bool
     {
         if (! $this->reviewRepository->hasCustomerInteractedWithVendor($customerId, $vendorId)) {

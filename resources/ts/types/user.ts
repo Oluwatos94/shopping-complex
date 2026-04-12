@@ -40,7 +40,7 @@ export interface Vendor extends BaseUser {
     business_description?: string;
     business_logo?: string;
     rating: number;
-    total_sales: number;
+    reviews_count: number;
     products_count: number;
     is_verified: boolean;
     is_online: boolean;

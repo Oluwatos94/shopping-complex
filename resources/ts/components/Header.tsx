@@ -28,6 +28,7 @@ const Header: React.FC = () => {
     const navLinks: NavigationLink[] = [
         { label: 'Home', href: '/' },
         { label: 'Explore Products', href: '/products' },
+        { label: 'Vendors', href: '/vendors' },
         { label: 'Become a Vendor', href: '/vendor/register' },
     ];
 

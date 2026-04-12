@@ -46,39 +46,32 @@ class VendorController extends Controller
         $filters = $request->getFilters();
         $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 12);
 
-        $transformedVendors = $vendors->through(function ($vendor) {
-            $profileImage = $vendor->media->first()?->file_path;
+        $vendorIds = $vendors->getCollection()->pluck('id')->all();
+        $ratingStatsByVendor = $this->reviewService->getBulkVendorRatingStats($vendorIds);
+
+        $transformedVendors = $vendors->through(function ($vendor) use ($ratingStatsByVendor) {
+            $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+            $ratingStats = $ratingStatsByVendor[$vendor->id] ?? ['average' => 0.0, 'count' => 0];
 
             return [
-                // BaseUser fields
                 'id' => $vendor->id,
                 'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
-                'email_verified_at' => $vendor->email_verified_at?->toISOString(),
                 'created_at' => $vendor->created_at->toISOString(),
-                'updated_at' => $vendor->updated_at->toISOString(),
 
-                // Vendor-specific fields
                 'role' => 'vendor',
                 'business_name' => $vendor->business_name ?? $vendor->name,
                 'business_description' => $vendor->bio,
-                'business_logo' => $profileImage,
-                'rating' => 4.5, // Placeholder - will come from reviews table
-                'total_sales' => 0, // Placeholder - not tracking sales yet
+                'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+                'rating' => $ratingStats['average'],
+                'reviews_count' => $ratingStats['count'],
                 'products_count' => $vendor->products_count ?? 0,
-                'is_verified' => $vendor->email_verified_at !== null,
-                'is_online' => true, // Placeholder - will be real-time WebSocket status
+                'is_verified' => $vendor->isVendorVerified(),
+                'is_online' => true,
 
-                // NearbyVendor fields
                 'distance_km' => round($vendor->distance_km ?? 0, 2),
                 'distance_formatted' => $this->formatDistance($vendor->distance_km ?? 0),
-                'response_time_minutes' => 15, // Placeholder
-                'avg_response_time' => 15, // Placeholder
-                'reviews_count' => 0, // Placeholder
-
-                // Optional location (when GPS fields are added)
-                'location' => null, // Will be populated when GPS fields exist
             ];
         });
 
@@ -140,7 +133,7 @@ class VendorController extends Controller
 
         $vendor = $this->vendorService->registerAsVendor(
             $user,
-            $request->only(['business_name', 'bio', 'category_id']),
+            $request->only(['business_name', 'bio', 'category_id', 'whatsapp_number', 'address', 'city', 'state', 'latitude', 'longitude']),
             $request->file('avatar')
         );
 

@@ -60,10 +60,7 @@ export interface VendorSubscription {
  */
 export interface NearbyVendor extends Vendor {
     distance_km: number;
-    distance_formatted: string; // e.g., "2.3 km away"
-    response_time_minutes?: number;
-    avg_response_time?: number;
-    reviews_count?: number;
+    distance_formatted: string;
 }
 
 /**

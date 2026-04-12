@@ -180,6 +180,25 @@ export interface Media {
 }
 
 /**
+ * OpenStreetMap Nominatim address suggestion (filtered to Nigeria)
+ */
+export interface AddressSuggestion {
+    display_name: string;
+    lat: string;
+    lon: string;
+    address: {
+        road?: string;
+        neighbourhood?: string;
+        suburb?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        state?: string;
+        country?: string;
+    };
+}
+
+/**
  * Search result
  */
 export interface SearchResult {

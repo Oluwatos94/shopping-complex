@@ -7,15 +7,10 @@ import {
     BankDetailsStep,
     ReviewStep,
 } from '@/components/Vendor/OnboardingSteps';
-
-interface Category {
-    id: number;
-    name: string;
-    slug: string;
-}
+import { Category } from '@/types/product';
 
 interface OnboardingProps {
-    categories: Category[];
+    categories: Pick<Category, 'id' | 'name' | 'slug'>[];
     savedData?: Partial<OnboardingData>;
 }
 

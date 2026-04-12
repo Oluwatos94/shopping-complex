@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PaginatedProducts } from '@/types/product';
 import { VendorProfile, VendorStats } from '@/types/vendor';
 import VendorSidebar from '@/components/VendorSidebar';
 import { getCsrfToken } from '@/utils/csrf';
 import UploadProductFab from './partials/UploadProductFab';
+import MessageModal from '@/components/Chat/MessageModal';
 
 interface Props {
     vendor: VendorProfile;
@@ -15,9 +16,19 @@ interface Props {
 }
 
 export default function VendorProfilePage({ vendor, products, stats, isOwner, isFollowing: initialIsFollowing }: Props) {
+    const { auth } = usePage<{ auth: { user: { id: number; role: string } | null } }>().props;
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(stats.followers_count);
     const [followLoading, setFollowLoading] = useState(false);
+    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+
+    const handleMessage = useCallback(() => {
+        if (!auth?.user) {
+            router.visit('/login', { data: { redirect: `/vendors/${vendor.slug}` } });
+            return;
+        }
+        setIsMessageModalOpen(true);
+    }, [auth, vendor.slug]);
 
     const handleToggleFollow = useCallback(async () => {
         if (followLoading) return;
@@ -159,12 +170,14 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                         {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
                                     </button>
                                 )}
-                                <Link
-                                    href="/chat"
-                                    className="px-8 py-2 border border-primary-light text-primary-light rounded-lg font-semibold text-sm hover:bg-white/10 transition-colors"
-                                >
-                                    Message
-                                </Link>
+                                {!isOwner && (
+                                    <button
+                                        onClick={handleMessage}
+                                        className="px-8 py-2 border border-primary-light text-primary-light rounded-lg font-semibold text-sm hover:bg-white/10 transition-colors"
+                                    >
+                                        Message
+                                    </button>
+                                )}
                             </div>
 
                             {/* Bio */}
@@ -292,6 +305,14 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                     />
                 )}
             </div>
+
+            {/* Message Vendor Modal */}
+            {isMessageModalOpen && (
+                <MessageModal
+                    vendor={vendor}
+                    onClose={() => setIsMessageModalOpen(false)}
+                />
+            )}
         </>
     );
 }
