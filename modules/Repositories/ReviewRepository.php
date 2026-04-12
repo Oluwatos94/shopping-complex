@@ -145,6 +145,47 @@ class ReviewRepository extends BasePageRepository
         ];
     }
 
+    /**
+     * Get rating stats for multiple vendors in a single query.
+     *
+     * @param  array<int>  $vendorIds
+     * @return array<int, array{average: float, count: int}>
+     */
+    public function getBulkVendorRatingStats(array $vendorIds): array
+    {
+        if (empty($vendorIds)) {
+            return [];
+        }
+
+        $rows = Review::query()
+            ->whereIn('vendor_id', $vendorIds)
+            ->where('status', ReviewStatusEnum::APPROVED)
+            ->selectRaw('vendor_id, rating, COUNT(*) as count')
+            ->groupBy('vendor_id', 'rating')
+            ->get();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$row->vendor_id][$row->rating] = (int) $row->getAttribute('count');
+        }
+
+        $result = [];
+        foreach ($vendorIds as $vendorId) {
+            $ratings = $grouped[$vendorId] ?? [];
+            $totalCount = array_sum($ratings);
+            $weightedSum = 0;
+            for ($i = 1; $i <= 5; $i++) {
+                $weightedSum += $i * ($ratings[$i] ?? 0);
+            }
+            $result[$vendorId] = [
+                'average' => $totalCount > 0 ? round($weightedSum / $totalCount, 2) : 0.0,
+                'count' => $totalCount,
+            ];
+        }
+
+        return $result;
+    }
+
     public function hasCustomerInteractedWithVendor(int $customerId, int $vendorId): bool
     {
         return DB::table('conversations')

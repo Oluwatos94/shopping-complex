@@ -11,9 +11,12 @@ use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Services\MediaService;
 
 class CategoryController extends Controller
 {
+    public function __construct(private readonly MediaService $mediaService) {}
+
     public function index(): Response
     {
         $categories = Category::orderBy('name')->get(['id', 'name', 'slug', 'description']);
@@ -34,11 +37,13 @@ class CategoryController extends Controller
             ->paginate(12);
 
         $transformedVendors = $vendors->through(function ($vendor) {
+            $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+
             return [
                 'id' => $vendor->id,
                 'name' => $vendor->name,
                 'slug' => $vendor->slug,
-                'profileImage' => $vendor->media->first()?->file_path,
+                'profileImage' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
                 'products' => $vendor->products->map(fn ($p) => [
                     'id' => $p->id,
                     'name' => $p->name,
@@ -72,8 +77,8 @@ class CategoryController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'price' => $product->price,
-                'image' => $product->media->first()?->file_path,
-                'vendor_name' => $product->vendor?->name,
+                'image' => ($m = $product->media->first()) ? $this->mediaService->getMediaUrl($m) : null,
+                'vendor_name' => $product->vendor ? ($product->vendor->business_name ?? $product->vendor->name) : null,
                 'vendor_slug' => $product->vendor?->slug,
             ];
         });

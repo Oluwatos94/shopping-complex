@@ -15,9 +15,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
     const hasDiscount = salePrice && salePrice < price;
     const discountPercent = hasDiscount ? Math.round(((price - salePrice) / price) * 100) : 0;
 
-    const isInStock = product.stock > 0;
-    const isLowStock = product.stock > 0 && product.stock <= 10;
-
     return (
         <div className="space-y-6">
             {/* Product Title & Category */}
@@ -79,21 +76,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                     )}
                 </div>
 
-                <div className="mt-3 flex items-center gap-2">
-                    {isInStock ? (
-                        <>
-                            <span className="w-2.5 h-2.5 bg-green-500 rounded-full" />
-                            <span className={`text-sm ${isLowStock ? 'text-orange-600' : 'text-green-600'}`}>
-                                {isLowStock ? `Only ${product.stock} left in stock` : 'In Stock'}
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full" />
-                            <span className="text-sm text-red-600">Out of Stock</span>
-                        </>
-                    )}
-                </div>
             </div>
 
             <div>

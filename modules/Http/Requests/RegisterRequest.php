@@ -52,13 +52,13 @@ class RegisterRequest extends BaseFormRequest
     public function messages(): array
     {
         return [
-            'email.email'           => 'Please enter a valid email address.',
-            'role.in'               => 'The selected role is invalid. Must be customer, vendor, or admin.',
-            'password.min'          => 'Password must be at least 8 characters.',
-            'password.mixed_case'   => 'Password must contain at least one uppercase letter.',
-            'password.numbers'      => 'Password must contain at least one number.',
-            'password.symbols'      => 'Password must contain at least one special character.',
-            'password.confirmed'    => 'The passwords do not match.',
+            'email.email' => 'Please enter a valid email address.',
+            'role.in' => 'The selected role is invalid. Must be customer, vendor, or admin.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.mixed_case' => 'Password must contain at least one uppercase letter.',
+            'password.numbers' => 'Password must contain at least one number.',
+            'password.symbols' => 'Password must contain at least one special character.',
+            'password.confirmed' => 'The passwords do not match.',
         ];
     }
 }

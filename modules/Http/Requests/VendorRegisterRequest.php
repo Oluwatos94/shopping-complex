@@ -29,6 +29,12 @@ class VendorRegisterRequest extends FormRequest
             'bio' => ['required', 'string', 'max:1000'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'whatsapp_number' => ['required', 'string', 'max:20'],
+            'address' => ['required', 'string', 'max:500'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
         ];
     }
 
@@ -49,6 +55,13 @@ class VendorRegisterRequest extends FormRequest
             'avatar.image' => 'The avatar must be an image.',
             'avatar.mimes' => 'The avatar must be a JPG, PNG, or WebP file.',
             'avatar.max' => 'The avatar must not exceed 5MB.',
+            'whatsapp_number.required' => 'WhatsApp number is required.',
+            'city.required' => 'City is required.',
+            'state.required' => 'State is required.',
+            'latitude.required' => 'Please drop a pin on the map to set your location.',
+            'longitude.required' => 'Please drop a pin on the map to set your location.',
+            'latitude.between' => 'Invalid coordinates — please re-pin your location on the map.',
+            'longitude.between' => 'Invalid coordinates — please re-pin your location on the map.',
         ];
     }
 }

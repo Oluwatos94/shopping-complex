@@ -32,7 +32,7 @@ class VendorRepository extends BasePageRepository
         $query = User::query()
             ->where('role', 'vendor')
             ->withCount('products')
-            ->with('media');
+            ->with(['media', 'vendorOnboarding']);
 
         // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
         $haversine = "(6371 * acos(

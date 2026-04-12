@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services\Auth;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Models\Notification;
@@ -98,31 +99,32 @@ class AuthService
         string $name,
         ?string $avatar = null
     ): User {
-        $user = $this->userRepository->findByGoogleId($providerId);
+        return DB::transaction(function () use ($providerId, $email, $name) {
+            $user = $this->userRepository->findByGoogleId($providerId);
 
-        if ($user) {
-            return $user;
-        }
+            if ($user) {
+                return $user;
+            }
 
-        $user = $this->userRepository->findByEmail($email);
+            $user = $this->userRepository->findByEmail($email);
 
-        if ($user) {
-            // Link the social account to existing user
-            $this->userRepository->update($user->id, [
+            if ($user) {
+                $this->userRepository->update($user->id, [
+                    'google_id' => $providerId,
+                    'email_verified_at' => $user->email_verified_at ?? now(),
+                ]);
+
+                return $user->fresh();
+            }
+
+            return $this->userRepository->create([
+                'name' => $name,
+                'email' => $email,
                 'google_id' => $providerId,
-                'email_verified_at' => now(), // Auto-verify email for social login
+                'role' => 'customer',
+                'email_verified_at' => now(),
+                'password' => Str::random(32),
             ]);
-
-            return $user->fresh();
-        }
-
-        return $this->userRepository->create([
-            'name' => $name,
-            'email' => $email,
-            'google_id' => $providerId,
-            'role' => 'customer',
-            'email_verified_at' => now(),
-            'password' => Str::random(32),
-        ]);
+        });
     }
 }
