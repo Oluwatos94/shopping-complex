@@ -44,6 +44,8 @@ class SocialAuthController extends Controller
 
             Auth::login($user);
 
+            $this->authService->sendWelcomeNotification($user);
+
             return redirect()->intended('/')
                 ->with('success', 'Successfully logged in with Google!');
 

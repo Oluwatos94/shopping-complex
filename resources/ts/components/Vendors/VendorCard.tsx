@@ -115,7 +115,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
 
                 {/* Contact Button */}
                 <Link
-                    href={`/vendors/${vendor.slug}/contact`}
+                    href={`/vendors/${vendor.slug}`}
                     className="w-full bg-[#D49F89] hover:bg-[#c48f79] text-[#272518] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-sm"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

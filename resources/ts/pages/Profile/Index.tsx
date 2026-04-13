@@ -2,29 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import EditProfile from '@/components/Profile/EditProfile';
 import ChangePassword from '@/components/Profile/ChangePassword';
-
-interface ConversationUser {
-    id: number;
-    name: string;
-    business_name?: string;
-}
-
-interface ConversationMessage {
-    id: number;
-    content: string;
-    created_at: string;
-}
-
-interface Conversation {
-    id: number;
-    customer_id: number;
-    vendor_id: number;
-    customer: ConversationUser;
-    vendor: ConversationUser;
-    messages?: ConversationMessage[];
-    unread_count: number;
-    last_message_at: string | null;
-}
+import { Conversation } from '@/types/chat';
 
 interface UserData {
     id: number;
@@ -81,7 +59,7 @@ export default function ProfileIndex() {
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}
 
-                <div className={isVendor ? 'ml-[100px]' : ''}>
+                <div className={isVendor ? 'md:ml-[100px]' : ''}>
                     {/* Header */}
                     <div className="bg-primary-dark py-8">
                         <div className="max-w-3xl mx-auto px-4">

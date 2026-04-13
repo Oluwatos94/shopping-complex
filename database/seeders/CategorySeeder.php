@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use ModulesShoppingComplex\Models\Category;
+use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
@@ -14,61 +14,27 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+        // These IDs match the image map used on the frontend (cat1.jpg … cat8.jpg).
         $categories = [
-            [
-                'name' => 'Clothing & Fashion',
-                'slug' => 'clothing-fashion',
-                'description' => 'Trendy clothes, shoes, and accessories for men, women, and kids',
-            ],
-            [
-                'name' => 'Electronics',
-                'slug' => 'electronics',
-                'description' => 'Latest gadgets, phones, laptops, and electronic accessories',
-            ],
-            [
-                'name' => 'Home & Garden',
-                'slug' => 'home-garden',
-                'description' => 'Furniture, decor, kitchen items, and gardening supplies',
-            ],
-            [
-                'name' => 'Beauty & Personal Care',
-                'slug' => 'beauty-personal-care',
-                'description' => 'Cosmetics, skincare, haircare, and wellness products',
-            ],
-            [
-                'name' => 'Sports & Outdoors',
-                'slug' => 'sports-outdoors',
-                'description' => 'Fitness equipment, outdoor gear, and sporting goods',
-            ],
-            [
-                'name' => 'Books & Stationery',
-                'slug' => 'books-stationery',
-                'description' => 'Books, office supplies, art materials, and educational items',
-            ],
-            [
-                'name' => 'Toys & Games',
-                'slug' => 'toys-games',
-                'description' => 'Fun toys, board games, and entertainment for all ages',
-            ],
-            [
-                'name' => 'Food & Beverages',
-                'slug' => 'food-beverages',
-                'description' => 'Groceries, snacks, drinks, and gourmet food items',
-            ],
-            [
-                'name' => 'Jewelry & Watches',
-                'slug' => 'jewelry-watches',
-                'description' => 'Fine jewelry, fashion accessories, and timepieces',
-            ],
-            [
-                'name' => 'Automotive',
-                'slug' => 'automotive',
-                'description' => 'Car accessories, tools, and automotive parts',
-            ],
+            ['id' => 1, 'name' => 'Services',                 'slug' => 'services',               'description' => 'Professional and home services from trusted local providers'],
+            ['id' => 2, 'name' => 'Books & Education',        'slug' => 'books-education',         'description' => 'Books, stationery, courses, and educational materials'],
+            ['id' => 4, 'name' => 'Groceries & Food',         'slug' => 'groceries-food',          'description' => 'Fresh produce, packaged goods, snacks, and beverages'],
+            ['id' => 5, 'name' => 'Health & Beauty',          'slug' => 'health-beauty',           'description' => 'Cosmetics, skincare, haircare, and wellness products'],
+            ['id' => 6, 'name' => 'Accessories & Lifestyle',  'slug' => 'accessories-lifestyle',   'description' => 'Jewellery, bags, watches, and everyday lifestyle items'],
+            ['id' => 7, 'name' => 'Electronics & Repairs',    'slug' => 'electronics-repairs',     'description' => 'Gadgets, phones, laptops, and repair services'],
+            ['id' => 8, 'name' => 'Fashion & Clothing',       'slug' => 'fashion-clothing',        'description' => 'Clothes, shoes, and accessories for men, women, and kids'],
         ];
 
+        $now = now()->toDateTimeString();
+
         foreach ($categories as $category) {
-            Category::create($category);
+            DB::table('categories')->updateOrInsert(
+                ['id' => $category['id']],
+                array_merge($category, ['created_at' => $now, 'updated_at' => $now]),
+            );
         }
+
+        // Reset the auto-increment so new categories don't collide.
+        DB::statement('ALTER TABLE categories AUTO_INCREMENT = 9');
     }
 }

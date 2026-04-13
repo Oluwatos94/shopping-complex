@@ -23,10 +23,12 @@ const Header: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const mobileDropdownRef = useRef<HTMLDivElement>(null);
 
     const navLinks: NavigationLink[] = [
         { label: 'Home', href: '/' },
         { label: 'Explore Products', href: '/products' },
+        { label: 'Vendors', href: '/vendors' },
         { label: 'Become a Vendor', href: '/vendor/register' },
     ];
 
@@ -38,7 +40,9 @@ const Header: React.FC = () => {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+            const inDesktop = dropdownRef.current?.contains(e.target as Node);
+            const inMobile = mobileDropdownRef.current?.contains(e.target as Node);
+            if (!inDesktop && !inMobile) {
                 setIsDropdownOpen(false);
             }
         };
@@ -108,13 +112,15 @@ const Header: React.FC = () => {
                                                 <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
                                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                                             </div>
-                                            <Link
-                                                href={profileLink}
-                                                onClick={() => setIsDropdownOpen(false)}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                View Profile
-                                            </Link>
+                                            {user.role === 'vendor' && (
+                                                <Link
+                                                    href={profileLink}
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    View Profile
+                                                </Link>
+                                            )}
                                             <Link
                                                 href="/profile"
                                                 onClick={() => setIsDropdownOpen(false)}
@@ -152,24 +158,60 @@ const Header: React.FC = () => {
                                 <NotificationBell />
 
                                 {/* Avatar button */}
-                                <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="focus:outline-none"
-                                >
-                                    {user.avatar ? (
-                                        <img
-                                            src={user.avatar}
-                                            alt={user.name}
-                                            className="w-8 h-8 rounded-full object-cover border-2 border-primary-light/30"
-                                        />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30">
-                                            <span className="text-white text-xs font-bold">
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </span>
+                                <div ref={mobileDropdownRef} className="relative">
+                                    <button
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="focus:outline-none"
+                                    >
+                                        {user.avatar ? (
+                                            <img
+                                                src={user.avatar}
+                                                alt={user.name}
+                                                className="w-8 h-8 rounded-full object-cover border-2 border-primary-light/30"
+                                            />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30">
+                                                <span className="text-white text-xs font-bold">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </button>
+
+                                    {/* Mobile dropdown panel — inside same ref wrapper */}
+                                    {isDropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                                            <div className="px-4 py-2 border-b border-gray-100">
+                                                <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                                                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                                            </div>
+                                            {user.role === 'vendor' && (
+                                                <Link
+                                                    href={profileLink}
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    View Profile
+                                                </Link>
+                                            )}
+                                            <Link
+                                                href="/profile"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Account Settings
+                                            </Link>
+                                            <div className="border-t border-gray-100">
+                                                <button
+                                                    onClick={handleSignOut}
+                                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                >
+                                                    Sign Out
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
-                                </button>
+                                </div>
                             </>
                         )}
 
@@ -189,37 +231,6 @@ const Header: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile avatar dropdown */}
-                {isDropdownOpen && user && (
-                    <div className="md:hidden mt-3 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                        <div className="px-4 py-2 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                        </div>
-                        <Link
-                            href={profileLink}
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            View Profile
-                        </Link>
-                        <Link
-                            href="/profile"
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Account Settings
-                        </Link>
-                        <div className="border-t border-gray-100">
-                            <button
-                                onClick={handleSignOut}
-                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                                Sign Out
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Mobile nav links */}
                 {isMobileMenuOpen && (

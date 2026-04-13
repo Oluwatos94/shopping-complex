@@ -7,7 +7,7 @@ interface RelatedProductsProps {
     title?: string;
 }
 
-export default function RelatedProducts({ products, title = 'You May Also Like' }: RelatedProductsProps) {
+export default function RelatedProducts({ products, title = 'Related Products' }: RelatedProductsProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
@@ -191,13 +191,6 @@ function RelatedProductCard({ product }: { product: Product }) {
                             </span>
                         )}
                     </div>
-
-                    {/* Stock Warning */}
-                    {product.stock > 0 && product.stock <= 5 && (
-                        <p className="text-xs text-orange-600 mt-2">
-                            Only {product.stock} left
-                        </p>
-                    )}
                 </div>
             </div>
         </Link>

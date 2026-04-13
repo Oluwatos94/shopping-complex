@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services\Auth;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Events\SystemAlertEvent;
+use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
+use ModulesShoppingComplex\Services\NotificationService;
 
 class AuthService
 {
     public function __construct(
-        private readonly UserRepository $userRepository
+        private readonly UserRepository $userRepository,
+        private readonly NotificationService $notificationService,
     ) {}
 
     /**
@@ -34,6 +39,32 @@ class AuthService
         Auth::login($user);
 
         return $user;
+    }
+
+    /**
+     * Send a welcome notification after login
+     */
+    public function sendWelcomeNotification(User $user, bool $isNewUser = false): void
+    {
+        $alreadySent = Notification::query()
+            ->where('user_id', $user->id)
+            ->where('group_key', 'system_alerts')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->exists();
+
+        if ($alreadySent) {
+            return;
+        }
+
+        $message = $isNewUser
+            ? 'Welcome to Shopping Complex, '.$user->name.'! Your account is ready.'
+            : 'Welcome back, '.$user->name.'! You are now logged in.';
+
+        $this->notificationService->send(new SystemAlertEvent(
+            recipient: $user,
+            message: $message,
+            alertLevel: 'info',
+        ));
     }
 
     /**
@@ -68,31 +99,32 @@ class AuthService
         string $name,
         ?string $avatar = null
     ): User {
-        $user = $this->userRepository->findByGoogleId($providerId);
+        return DB::transaction(function () use ($providerId, $email, $name) {
+            $user = $this->userRepository->findByGoogleId($providerId);
 
-        if ($user) {
-            return $user;
-        }
+            if ($user) {
+                return $user;
+            }
 
-        $user = $this->userRepository->findByEmail($email);
+            $user = $this->userRepository->findByEmail($email);
 
-        if ($user) {
-            // Link the social account to existing user
-            $this->userRepository->update($user->id, [
+            if ($user) {
+                $this->userRepository->update($user->id, [
+                    'google_id' => $providerId,
+                    'email_verified_at' => $user->email_verified_at ?? now(),
+                ]);
+
+                return $user->fresh();
+            }
+
+            return $this->userRepository->create([
+                'name' => $name,
+                'email' => $email,
                 'google_id' => $providerId,
-                'email_verified_at' => now(), // Auto-verify email for social login
+                'role' => 'customer',
+                'email_verified_at' => now(),
+                'password' => Str::random(32),
             ]);
-
-            return $user->fresh();
-        }
-
-        return $this->userRepository->create([
-            'name' => $name,
-            'email' => $email,
-            'google_id' => $providerId,
-            'role' => 'customer',
-            'email_verified_at' => now(),
-            'password' => Str::random(32),
-        ]);
+        });
     }
 }

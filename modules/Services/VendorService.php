@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
@@ -28,7 +29,7 @@ final readonly class VendorService
     /**
      * Register a customer as a vendor.
      *
-     * @param  array{business_name: string, bio: string, category_id: int}  $data
+     * @param  array{business_name: string, bio: string, category_id: int, whatsapp_number: string, address: string, city: string, state: string, latitude: string|float, longitude: string|float}  $data
      */
     public function registerAsVendor(User $user, array $data, ?UploadedFile $avatar = null): User
     {
@@ -39,7 +40,20 @@ final readonly class VendorService
                 'slug' => Str::slug($data['business_name']).'-'.uniqid(),
                 'bio' => $data['bio'],
                 'category_id' => $data['category_id'],
+                'whatsapp_number' => $data['whatsapp_number'],
             ]);
+
+            Address::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'street' => $data['address'],
+                    'city' => $data['city'],
+                    'state' => $data['state'],
+                    'country' => 'Nigeria',
+                    'latitude' => $data['latitude'],
+                    'longitude' => $data['longitude'],
+                ]
+            );
 
             if ($avatar) {
                 $this->mediaService->uploadImage(

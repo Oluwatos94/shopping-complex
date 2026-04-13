@@ -45,15 +45,6 @@ export default function VendorSidebar({ vendorSlug, businessName, businessLogo }
             ),
         },
         {
-            label: 'Catalogue',
-            href: '/products',
-            icon: (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-            ),
-        },
-        {
             label: 'Chat',
             href: '/chat',
             icon: (
@@ -93,7 +84,9 @@ export default function VendorSidebar({ vendorSlug, businessName, businessLogo }
     ];
 
     return (
-        <aside className="fixed left-0 top-0 bottom-0 w-[100px] bg-gray-100 border-r border-gray-200 flex flex-col items-center py-6 z-40">
+        <>
+        {/* Desktop sidebar — hidden on mobile */}
+        <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[100px] bg-gray-100 border-r border-gray-200 flex-col items-center py-6 z-40">
             {/* Logo */}
             <Link href="/" className="mb-8">
                 <img
@@ -140,5 +133,36 @@ export default function VendorSidebar({ vendorSlug, businessName, businessLogo }
                 <span className="text-[10px] font-medium text-primary-brown">Profile</span>
             </Link>
         </aside>
+
+        {/* Mobile bottom nav bar */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-100 border-t border-gray-200 flex items-center justify-around py-2 z-40">
+            {items.slice(0, 5).map((item) => (
+                <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-primary-brown hover:text-primary-olive transition-colors"
+                >
+                    <span className="w-5 h-5">{item.icon}</span>
+                    <span className="text-[9px] font-medium">{item.label}</span>
+                </Link>
+            ))}
+            {/* Profile */}
+            <Link
+                href={slug ? `/vendors/${slug}` : '#'}
+                className="flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-primary-brown hover:text-primary-olive transition-colors"
+            >
+                <div className="w-5 h-5 rounded-full overflow-hidden border border-primary-olive">
+                    {logo ? (
+                        <img src={logo} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full bg-primary-olive flex items-center justify-center">
+                            <span className="text-white text-[8px] font-bold">{name.charAt(0).toUpperCase()}</span>
+                        </div>
+                    )}
+                </div>
+                <span className="text-[9px] font-medium">Profile</span>
+            </Link>
+        </nav>
+        </>
     );
 }

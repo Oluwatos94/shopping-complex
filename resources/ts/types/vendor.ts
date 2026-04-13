@@ -1,6 +1,36 @@
 import { Vendor } from './user';
 
 // ---------------------------------------------------------------------------
+// Vendor Profile page
+// ---------------------------------------------------------------------------
+
+/**
+ * Lean vendor shape returned by VendorController::show()
+ */
+export interface VendorProfile {
+    id: number;
+    slug: string;
+    name: string;
+    email: string;
+    business_name: string;
+    business_description?: string;
+    business_logo?: string;
+    is_verified: boolean;
+    created_at: string;
+}
+
+/**
+ * Stats aggregates returned alongside the vendor profile page
+ */
+export interface VendorStats {
+    products_count: number;
+    reviews_count: number;
+    average_rating: number;
+    followers_count: number;
+    plan_product_limit: number | null;
+}
+
+// ---------------------------------------------------------------------------
 // Subscription
 // ---------------------------------------------------------------------------
 
@@ -30,10 +60,18 @@ export interface VendorSubscription {
  */
 export interface NearbyVendor extends Vendor {
     distance_km: number;
-    distance_formatted: string; // e.g., "2.3 km away"
-    response_time_minutes?: number;
-    avg_response_time?: number;
-    reviews_count?: number;
+    distance_formatted: string;
+}
+
+/**
+ * Lean vendor shape returned by CategoryController::vendors()
+ */
+export interface CategoryVendor {
+    id: number;
+    name: string;
+    slug: string;
+    profileImage: string | null;
+    products: { id: number; name: string; price: number }[];
 }
 
 /**

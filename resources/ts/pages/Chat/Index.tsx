@@ -31,7 +31,7 @@ export default function ChatIndex({ conversations, auth }: Props) {
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}
 
-                <div className={`flex h-screen ${isVendor ? 'ml-[100px]' : ''}`}>
+                <div className={`flex h-screen ${isVendor ? 'md:ml-[100px]' : ''}`}>
                     {/* Conversation List */}
                     <div className="w-full lg:w-[350px] lg:flex-shrink-0 lg:border-r lg:border-gray-200">
                         <ConversationList

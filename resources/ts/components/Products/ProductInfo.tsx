@@ -15,9 +15,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
     const hasDiscount = salePrice && salePrice < price;
     const discountPercent = hasDiscount ? Math.round(((price - salePrice) / price) * 100) : 0;
 
-    const isInStock = product.stock > 0;
-    const isLowStock = product.stock > 0 && product.stock <= 10;
-
     return (
         <div className="space-y-6">
             {/* Product Title & Category */}
@@ -63,10 +60,10 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                     {hasDiscount && salePrice ? (
                         <>
                             <span className="text-3xl font-bold text-gray-900">
-                                ${salePrice.toFixed(2)}
+                                ₦{salePrice.toLocaleString()}
                             </span>
                             <span className="text-xl text-gray-500 line-through">
-                                ${price.toFixed(2)}
+                                ₦{price.toLocaleString()}
                             </span>
                             <span className="bg-red-100 text-red-700 text-sm font-semibold px-3 py-1 rounded-full">
                                 Save {discountPercent}%
@@ -74,26 +71,11 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                         </>
                     ) : (
                         <span className="text-3xl font-bold text-gray-900">
-                            ${price.toFixed(2)}
+                            ₦{price.toLocaleString()}
                         </span>
                     )}
                 </div>
 
-                <div className="mt-3 flex items-center gap-2">
-                    {isInStock ? (
-                        <>
-                            <span className="w-2.5 h-2.5 bg-green-500 rounded-full" />
-                            <span className={`text-sm ${isLowStock ? 'text-orange-600' : 'text-green-600'}`}>
-                                {isLowStock ? `Only ${product.stock} left in stock` : 'In Stock'}
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full" />
-                            <span className="text-sm text-red-600">Out of Stock</span>
-                        </>
-                    )}
-                </div>
             </div>
 
             <div>
@@ -150,8 +132,6 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                             </div>
                             <span className="text-gray-300">|</span>
                             <span>{vendor.products_count} products</span>
-                            <span className="text-gray-300">|</span>
-                            <span>{vendor.total_sales} sales</span>
                         </div>
 
                         {/* Online Status */}
@@ -187,6 +167,7 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
 
             {/* Product Features */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                {/* Shipping / Pay on Delivery */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,21 +175,21 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                         </svg>
                     </div>
                     <div className="text-sm">
-                        <p className="font-medium text-gray-900">Free Shipping</p>
-                        <p className="text-gray-500">On orders over $50</p>
+                        {product.pay_on_delivery ? (
+                            <>
+                                <p className="font-medium text-gray-900">Pay on Delivery</p>
+                                <p className="text-gray-500">Pay when you receive</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-medium text-gray-900">Pickup / Arrange Shipping</p>
+                                <p className="text-gray-500">Contact vendor to arrange</p>
+                            </>
+                        )}
                     </div>
                 </div>
-                <div className="flex items-center gap-3 text-gray-600">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                    </div>
-                    <div className="text-sm">
-                        <p className="font-medium text-gray-900">Secure Payment</p>
-                        <p className="text-gray-500">100% secure checkout</p>
-                    </div>
-                </div>
+
+                {/* Returns */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,10 +197,21 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                         </svg>
                     </div>
                     <div className="text-sm">
-                        <p className="font-medium text-gray-900">Easy Returns</p>
-                        <p className="text-gray-500">30-day return policy</p>
+                        {product.is_returnable ? (
+                            <>
+                                <p className="font-medium text-gray-900">Easy Returns</p>
+                                <p className="text-gray-500">Returns accepted</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-medium text-gray-900">No Returns</p>
+                                <p className="text-gray-500">All sales are final</p>
+                            </>
+                        )}
                     </div>
                 </div>
+
+                {/* Support / Available Hours */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,8 +219,8 @@ export default function ProductInfo({ product, vendor, vendorStats, onMessageVen
                         </svg>
                     </div>
                     <div className="text-sm">
-                        <p className="font-medium text-gray-900">24/7 Support</p>
-                        <p className="text-gray-500">Contact anytime</p>
+                        <p className="font-medium text-gray-900">Vendor Support</p>
+                        <p className="text-gray-500">{vendor.available_hours ?? 'Contact vendor'}</p>
                     </div>
                 </div>
             </div>

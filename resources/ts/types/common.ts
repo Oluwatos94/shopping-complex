@@ -2,56 +2,6 @@ import { Product } from './product';
 import { Vendor, Customer } from './user';
 
 /**
- * Order type
- */
-export interface Order {
-    id: number;
-    order_number: string;
-    customer_id: number;
-    vendor_id: number;
-    status: OrderStatus;
-    payment_status: PaymentStatus;
-    total_amount: number;
-    subtotal: number;
-    tax_amount: number;
-    shipping_fee: number;
-    discount_amount: number;
-    shipping_address: string;
-    billing_address: string;
-    customer?: Customer;
-    vendor?: Vendor;
-    items: OrderItem[];
-    tracking?: OrderTracking;
-    created_at: string;
-    updated_at: string;
-}
-
-/**
- * Order item
- */
-export interface OrderItem {
-    id: number;
-    order_id: number;
-    product_id: number;
-    product: Product;
-    quantity: number;
-    price: number;
-    subtotal: number;
-}
-
-/**
- * Order status
- */
-export type OrderStatus =
-    | 'pending'
-    | 'confirmed'
-    | 'processing'
-    | 'shipped'
-    | 'delivered'
-    | 'cancelled'
-    | 'refunded';
-
-/**
  * Payment status
  */
 export type PaymentStatus =
@@ -62,46 +12,87 @@ export type PaymentStatus =
     | 'partially_refunded';
 
 /**
- * Order tracking information
+ * Notification type identifiers — must match config/notifications.php keys
+ * and the broadcastAs() suffix in BaseNotificationEvent.
  */
-export interface OrderTracking {
+export type NotificationType =
+    | 'message_received'
+    | 'vendor_contact_request'
+    | 'product_updated'
+    | 'system_alert'
+    | string; // allow future types without breaking
+
+/**
+ * Raw notification shape returned by GET /api/notifications
+ */
+export interface RawNotification {
+    id: string;
+    type: NotificationType;
+    message: string;
+    data: Record<string, unknown> | null;
+    read: boolean;
+    created_at: string;
+    group_count: number;
+    is_grouped: boolean;
+}
+
+/**
+ * Reverb broadcast event payload (broadcastWith() on BaseNotificationEvent)
+ */
+export interface BroadcastPayload {
+    type: NotificationType;
+    message: string;
+    data?: Record<string, unknown>;
+    created_at: string;
+    id?: string;
+}
+
+/**
+ * Notification shape used by the bell, dropdown, and item components
+ */
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    timestamp: Date;
+    read: boolean;
+    actionUrl?: string;
+    groupCount?: number;
+    isGrouped?: boolean;
+}
+
+/**
+ * DB-level notification record (matches the Notification Eloquent model)
+ */
+export interface NotificationRecord {
     id: number;
-    order_id: number;
-    status: OrderStatus;
-    location: string;
-    notes?: string;
-    estimated_delivery: string;
-    actual_delivery?: string;
+    user_id: number;
+    type: NotificationType;
+    message: string;
+    data?: Record<string, unknown>;
+    read_at: string | null;
+    group_key?: string | null;
+    is_grouped: boolean;
+    group_count: number;
+    created_at: string;
     updated_at: string;
 }
 
 /**
- * Notification type
+ * Laravel paginator shape (returned by ->paginate() via Inertia)
  */
-export interface Notification {
-    id: number;
-    user_id: number;
-    type: NotificationType;
-    title: string;
-    message: string;
-    data?: Record<string, any>;
-    read_at: string | null;
-    created_at: string;
+export interface LaravelPaginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    next_page_url: string | null;
+    prev_page_url: string | null;
 }
-
-/**
- * Notification types
- */
-export type NotificationType =
-    | 'order_placed'
-    | 'order_confirmed'
-    | 'order_shipped'
-    | 'order_delivered'
-    | 'payment_success'
-    | 'payment_failed'
-    | 'vendor_message'
-    | 'product_review'
-    | 'system_alert';
 
 /**
  * Pagination meta
@@ -186,6 +177,25 @@ export interface Media {
     url: string;
     thumbnail_url?: string;
     created_at: string;
+}
+
+/**
+ * OpenStreetMap Nominatim address suggestion (filtered to Nigeria)
+ */
+export interface AddressSuggestion {
+    display_name: string;
+    lat: string;
+    lon: string;
+    address: {
+        road?: string;
+        neighbourhood?: string;
+        suburb?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        state?: string;
+        country?: string;
+    };
 }
 
 /**

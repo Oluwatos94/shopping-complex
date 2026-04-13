@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
@@ -12,6 +11,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
+use ModulesShoppingComplex\Http\Controllers\HomeController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
@@ -63,11 +63,7 @@ Route::middleware(['auth', 'signed'])->group(function () {
 
 // Landing page - moderate rate limiting
 Route::middleware(['throttle:guest'])->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('index', [
-            'platformWhatsApp' => config('services.whatsapp.platform_number', ''),
-        ]);
-    });
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 });
 
 // Public Product Routes (accessible to everyone with product-specific rate limiting)
@@ -80,6 +76,7 @@ Route::middleware(['throttle:products'])->group(function () {
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::get('/categories/{id}/vendors', [CategoryController::class, 'vendors'])->name('categories.vendors');
+    Route::get('/categories/{id}/products', [CategoryController::class, 'products'])->name('categories.products');
 });
 
 // Public Vendor Routes (accessible to everyone with product-specific rate limiting)
@@ -108,6 +105,7 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
 });
 
 Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');

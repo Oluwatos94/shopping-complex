@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
 
@@ -32,13 +31,8 @@ class VendorRepository extends BasePageRepository
         $addressTable = Address::getTableName();
         $query = User::query()
             ->where('role', 'vendor')
-            ->whereHas('vendorOnboarding', fn ($q) => $q->where('status', VendorOnboardingStatusEnum::APPROVED))
-            ->whereHas('subscriptions', fn ($q) => $q
-                ->where('status', VendorSubscriptionStatusEnum::ACTIVE)
-                ->where('expires_at', '>', now())
-            )
             ->withCount('products')
-            ->with('media');
+            ->with(['media', 'vendorOnboarding']);
 
         // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
         $haversine = "(6371 * acos(

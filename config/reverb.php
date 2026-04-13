@@ -30,7 +30,7 @@ return [
 
         'reverb' => [
             'host' => env('REVERB_SERVER_HOST', '0.0.0.0'),
-            'port' => env('REVERB_SERVER_PORT', 8080),
+            'port' => env('REVERB_SERVER_PORT', 8090),
             'path' => env('REVERB_SERVER_PATH', ''),
             'hostname' => env('REVERB_HOST'),
             'options' => [
@@ -95,7 +95,7 @@ return [
                     ? explode(',', env('REVERB_ALLOWED_ORIGINS'))
                     : (env('APP_ENV') === 'production'
                         ? [env('APP_URL', 'https://shopping-complex.com')]
-                        : ['http://localhost', 'http://localhost:3000']),
+                        : ['http://localhost', 'http://localhost:8000', 'http://localhost:5173', 'http://127.0.0.1:8000', 'http://127.0.0.1:5173']),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 // SECURITY: Rate limiting - max connections per app

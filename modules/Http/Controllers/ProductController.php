@@ -123,19 +123,16 @@ class ProductController extends Controller
         $avatarMedia = $vendor->media->where('type', 'avatar')->first();
         $vendorData = [
             'id' => $vendor->id,
+            'slug' => $vendor->slug,
             'name' => $vendor->name,
-            'email' => $vendor->email,
-            'email_verified_at' => $vendor->email_verified_at,
-            'created_at' => $vendor->created_at,
-            'updated_at' => $vendor->updated_at,
             'role' => 'vendor',
             'business_name' => $vendor->business_name ?? $vendor->name,
             'business_description' => $vendor->bio,
             'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+            'available_hours' => $vendor->available_hours,
             'rating' => $vendorStats['average'],
-            'total_sales' => 0,
             'products_count' => $vendor->products_count ?? 0,
-            'is_verified' => $vendor->email_verified_at !== null,
+            'is_verified' => $vendor->isVendorVerified(),
             'is_online' => false,
         ];
 
@@ -150,12 +147,34 @@ class ProductController extends Controller
             ],
         ];
 
+        $relatedProductsData = $relatedProducts->map(function ($related) {
+            $image = $related->media->first();
+            $vendorAvatar = $related->vendor !== null ? $related->vendor->media->where('type', 'avatar')->first() : null;
+
+            $imageUrl = $image ? $this->mediaService->getMediaUrl($image) : null;
+
+            return [
+                'id' => $related->id,
+                'name' => $related->name,
+                'slug' => $related->slug,
+                'price' => $related->price,
+                'images' => $imageUrl ? [['url' => $imageUrl, 'is_primary' => true]] : [],
+                'vendor' => $related->vendor ? [
+                    'id' => $related->vendor->id,
+                    'slug' => $related->vendor->slug,
+                    'name' => $related->vendor->name,
+                    'business_name' => $related->vendor->business_name ?? $related->vendor->name,
+                    'business_logo' => $vendorAvatar ? $this->mediaService->getMediaUrl($vendorAvatar) : null,
+                ] : null,
+            ];
+        });
+
         return Inertia::render('Products/Show', [
             'product' => $productData,
             'vendor' => $vendorData,
             'vendor_stats' => $vendorStats,
             'vendor_reviews' => $reviewsData,
-            'related_products' => $relatedProducts,
+            'related_products' => $relatedProductsData,
         ]);
     }
 

@@ -26,6 +26,7 @@ return new class extends Migration
             $table->text('bio')->nullable(); // Vendor description
             $table->string('business_name')->nullable();
             $table->unsignedBigInteger('category_id')->nullable();
+            $table->string('available_hours')->nullable();
             $table->rememberToken();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();

@@ -1,52 +1,53 @@
 import React, { useCallback } from "react";
-import { Notification, NotificationType } from "../../hooks/useNotifications";
+import { Notification, NotificationType } from "@/types";
 
-// ─── Icon helpers ────────────────────────────────────────────────────────────
 
-function typeIcon(type: NotificationType) {
-  const icons: Record<NotificationType, React.ReactElement> = {
-    message: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-    mention: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="4" />
-        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
-      </svg>
-    ),
-    alert: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-        <line x1="12" y1="9" x2="12" y2="13" />
-        <line x1="12" y1="17" x2="12.01" y2="17" />
-      </svg>
-    ),
-    success: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    ),
-    system: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-      </svg>
-    ),
-  };
-  return icons[type];
-}
-
-const TYPE_COLORS: Record<NotificationType, string> = {
-  message: "#6ee7b7",   // emerald
-  mention: "#93c5fd",   // blue
-  alert:   "#fca5a5",   // red
-  success: "#86efac",   // green
-  system:  "#c4b5fd",   // violet
+const TYPE_ICONS: Record<string, React.ReactElement> = {
+  message_received: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  vendor_contact_request: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  product_updated: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  ),
+  system_alert: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
 };
 
-// ─── Relative timestamp ──────────────────────────────────────────────────────
+const TYPE_COLORS: Record<string, string> = {
+  message_received:       "#d49f89",  // peach
+  vendor_contact_request: "#86885e",  // olive
+  product_updated:        "#cacfca",  // light
+  system_alert:           "#ffffff",  // white
+};
+
+const DEFAULT_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+  </svg>
+);
+
+function typeIcon(type: NotificationType): React.ReactElement {
+  return TYPE_ICONS[type] ?? DEFAULT_ICON;
+}
+
 
 function relativeTime(date: Date): string {
   const delta = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -56,7 +57,6 @@ function relativeTime(date: Date): string {
   return `${Math.floor(delta / 86400)}d ago`;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
 
 interface NotificationItemProps {
   notification: Notification;
@@ -87,15 +87,15 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   return (
     <div
       onClick={handleClick}
-      className={`group relative flex gap-3 px-4 py-[14px] border-b border-white/[0.06] transition-colors duration-150 ease-in-out hover:bg-white/[0.05] ${read ? "cursor-default bg-transparent" : "cursor-pointer bg-white/[0.03]"}`}
+      className={`group relative flex gap-3 px-4 py-3.5 border-b border-gray-100 transition-colors duration-150 ease-in-out hover:bg-gray-50 ${read ? "cursor-default" : "cursor-pointer bg-blue-50/40"}`}
       style={{ borderLeft: `3px solid ${read ? "transparent" : color}` }}
     >
       {/* Type icon badge */}
       <div
         className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
         style={{
-          background: `${color}18`,
-          border: `1px solid ${color}40`,
+          background: `${color}20`,
+          border: `1px solid ${color}50`,
           color,
         }}
       >
@@ -103,34 +103,33 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pr-4">
         <div className="flex justify-between items-start gap-2">
-          <p className={`m-0 text-[13px] font-mono tracking-[-0.01em] leading-[1.3] break-words ${read ? "font-normal text-white/65" : "font-semibold text-slate-100"}`}>
+          <p className={`m-0 text-sm leading-snug break-words ${read ? "font-normal text-gray-400" : "font-semibold text-gray-800"}`}>
             {title}
           </p>
-          <span className="text-[11px] text-white/35 whitespace-nowrap font-mono shrink-0">
+          <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
             {relativeTime(timestamp)}
           </span>
         </div>
-        <p className="mt-1 mb-0 text-xs text-white/45 font-mono leading-[1.5] break-words">
+        <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words">
           {body}
         </p>
       </div>
 
-      {/* Remove button — shown on row hover via group-hover */}
       <button
         onClick={handleRemove}
         title="Dismiss"
-        className="absolute top-[10px] right-[10px] bg-transparent border-none text-white/25 cursor-pointer py-0.5 px-1 text-[14px] leading-none opacity-0 group-hover:opacity-100 transition-[opacity,color] duration-150 ease-in-out rounded hover:text-white/70"
+        className="absolute top-2.5 right-2.5 bg-transparent border-none text-gray-300 cursor-pointer p-1 leading-none opacity-0 group-hover:opacity-100 transition-[opacity,color] duration-150 rounded hover:text-primary-peach"
       >
         ✕
       </button>
 
-      {/* Unread dot */}
+      {/* Unread dot — hidden when remove button is visible on hover */}
       {!read && (
         <div
-          className="absolute top-[14px] right-[10px] w-1.5 h-1.5 rounded-full"
-          style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+          className="absolute top-3.5 right-3 w-1.5 h-1.5 rounded-full group-hover:opacity-0 transition-opacity"
+          style={{ background: color }}
         />
       )}
     </div>

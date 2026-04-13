@@ -15,6 +15,8 @@ export interface Product {
     stock: number;
     is_active: boolean;
     is_featured: boolean;
+    pay_on_delivery: boolean;
+    is_returnable: boolean;
     images?: ProductImage[];
     vendor?: Vendor;
     category?: Category;
@@ -135,6 +137,19 @@ export interface PaginatedVendorReviews {
         per_page: number;
         total: number;
     };
+}
+
+/**
+ * Lean product shape returned by CategoryController::products()
+ */
+export interface CategoryProduct {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    image: string | null;
+    vendor_name: string | null;
+    vendor_slug: string | null;
 }
 
 /**

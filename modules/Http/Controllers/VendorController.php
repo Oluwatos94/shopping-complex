@@ -46,39 +46,32 @@ class VendorController extends Controller
         $filters = $request->getFilters();
         $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 12);
 
-        $transformedVendors = $vendors->through(function ($vendor) {
-            $profileImage = $vendor->media->first()?->file_path;
+        $vendorIds = $vendors->getCollection()->pluck('id')->all();
+        $ratingStatsByVendor = $this->reviewService->getBulkVendorRatingStats($vendorIds);
+
+        $transformedVendors = $vendors->through(function ($vendor) use ($ratingStatsByVendor) {
+            $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+            $ratingStats = $ratingStatsByVendor[$vendor->id] ?? ['average' => 0.0, 'count' => 0];
 
             return [
-                // BaseUser fields
                 'id' => $vendor->id,
                 'slug' => $vendor->slug,
                 'name' => $vendor->name,
                 'email' => $vendor->email,
-                'email_verified_at' => $vendor->email_verified_at?->toISOString(),
                 'created_at' => $vendor->created_at->toISOString(),
-                'updated_at' => $vendor->updated_at->toISOString(),
 
-                // Vendor-specific fields
                 'role' => 'vendor',
                 'business_name' => $vendor->business_name ?? $vendor->name,
                 'business_description' => $vendor->bio,
-                'business_logo' => $profileImage,
-                'rating' => 4.5, // Placeholder - will come from reviews table
-                'total_sales' => 0, // Placeholder - not tracking sales yet
+                'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+                'rating' => $ratingStats['average'],
+                'reviews_count' => $ratingStats['count'],
                 'products_count' => $vendor->products_count ?? 0,
-                'is_verified' => $vendor->email_verified_at !== null,
-                'is_online' => true, // Placeholder - will be real-time WebSocket status
+                'is_verified' => $vendor->isVendorVerified(),
+                'is_online' => true,
 
-                // NearbyVendor fields
                 'distance_km' => round($vendor->distance_km ?? 0, 2),
                 'distance_formatted' => $this->formatDistance($vendor->distance_km ?? 0),
-                'response_time_minutes' => 15, // Placeholder
-                'avg_response_time' => 15, // Placeholder
-                'reviews_count' => 0, // Placeholder
-
-                // Optional location (when GPS fields are added)
-                'location' => null, // Will be populated when GPS fields exist
             ];
         });
 
@@ -140,7 +133,7 @@ class VendorController extends Controller
 
         $vendor = $this->vendorService->registerAsVendor(
             $user,
-            $request->only(['business_name', 'bio', 'category_id']),
+            $request->only(['business_name', 'bio', 'category_id', 'whatsapp_number', 'address', 'city', 'state', 'latitude', 'longitude']),
             $request->file('avatar')
         );
 
@@ -212,7 +205,7 @@ class VendorController extends Controller
         ]);
     }
 
-    public function uploadProduct(UploadProductRequest $request): JsonResponse
+    public function uploadProduct(UploadProductRequest $request): RedirectResponse
     {
         // TODO: Re-enable after admin panel is built
         // $this->authorize('create', Product::class);
@@ -223,9 +216,9 @@ class VendorController extends Controller
         if ($subscription !== null) {
             $activeCount = $user->products()->where('is_active', true)->count();
             if ($activeCount >= $subscription->plan->product_limit) {
-                return response()->json([
+                return redirect()->back()->withErrors([
                     'message' => "You have reached the product limit for your {$subscription->plan->name} plan. Upgrade to add more products.",
-                ], 422);
+                ]);
             }
         }
 
@@ -233,12 +226,14 @@ class VendorController extends Controller
             $product = Product::create([
                 'name' => $request->input('name'),
                 'slug' => Str::slug($request->input('name')).'-'.uniqid(),
-                'description' => $request->input('name', ''),
+                'description' => $request->input('description'),
                 'price' => $request->input('price'),
                 'vendor_id' => $user->id,
                 'category_id' => $user->category_id,
                 'stock' => 0,
                 'is_active' => true,
+                'pay_on_delivery' => $request->boolean('pay_on_delivery'),
+                'is_returnable' => $request->boolean('is_returnable'),
             ]);
 
             $this->mediaService->uploadImage(
@@ -251,11 +246,7 @@ class VendorController extends Controller
             return $product;
         });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product uploaded successfully.',
-            'product_id' => $product->id,
-        ]);
+        return redirect()->back()->with('success', 'Product uploaded successfully.');
     }
 
     private function findVendorBySlug(string $slug): User
