@@ -101,6 +101,22 @@ export interface VendorLocation {
 }
 
 /**
+ * Admin user listing row (id, name, email, role, created_at + optional business_name for vendors)
+ */
+export type AdminUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'created_at'> & {
+    business_name?: string | null;
+};
+
+/**
+ * Summary stats shown on the admin users page
+ */
+export interface UserSummary {
+    users: { total: number; admins: number; vendors: number; customers: number };
+    vendors: { approved: number; pending_review: number; rejected: number; draft: number };
+    products: { total: number };
+}
+
+/**
  * User authentication state
  */
 export interface AuthUser {
