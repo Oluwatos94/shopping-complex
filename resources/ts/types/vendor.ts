@@ -1,6 +1,7 @@
 import { Vendor } from './user';
 
 // ---------------------------------------------------------------------------
+<<<<<<< Updated upstream
 // Vendor Profile page
 // ---------------------------------------------------------------------------
 
@@ -28,6 +29,43 @@ export interface VendorStats {
     average_rating: number;
     followers_count: number;
     plan_product_limit: number | null;
+=======
+// Admin — Vendor Applications
+// ---------------------------------------------------------------------------
+
+/**
+ * Minimal user shape embedded in a vendor KYC application.
+ * Reuses Vendor base fields; business_name is nullable here since it may
+ * not have been set yet at application time.
+ */
+export type VendorApplicationUser = Pick<Vendor, 'id' | 'name' | 'email'> & {
+    business_name?: string | null;
+};
+
+/**
+ * Full KYC / onboarding application submitted by a prospective vendor.
+ */
+export interface VendorApplication {
+    id: number;
+    user_id: number;
+    user: VendorApplicationUser;
+    legal_entity_name: string | null;
+    business_category: string | null;
+    tax_identification_number: string | null;
+    physical_address: string | null;
+    bank_name: string | null;
+    bank_branch: string | null;
+    account_number: string | null;
+    certificate_of_incorporation: string | null;
+    government_issued_id: string | null;
+    proof_of_address: string | null;
+    status: string;
+    current_step: number;
+    agreed_to_terms: boolean;
+    rejection_reason: string | null;
+    created_at: string;
+    reviewed_at: string | null;
+>>>>>>> Stashed changes
 }
 
 // ---------------------------------------------------------------------------
