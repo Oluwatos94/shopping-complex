@@ -42,7 +42,11 @@ return [
     ],
 
     'paystack' => [
-        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY', ''),
+    ],
+
+    'geoapify' => [
+        'key' => env('GEOAPIFY_KEY'),
     ],
 
     'whatsapp' => [

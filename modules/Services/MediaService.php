@@ -293,6 +293,6 @@ class MediaService
      */
     public function getMediaUrl(Media $media): string
     {
-        return asset('storage/'.$media->url);
+        return Storage::disk(config('media.storage_disk'))->url($media->url);
     }
 }

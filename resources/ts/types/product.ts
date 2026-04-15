@@ -1,6 +1,58 @@
 import { Vendor } from './user';
 
 /**
+ * Admin product (used in admin product listing)
+ */
+export interface AdminProduct {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    stock: number;
+    is_active: boolean;
+    created_at: string;
+    vendor: (Pick<Vendor, 'id' | 'name'> & { business_name: string | null }) | null;
+    category: Pick<Category, 'id' | 'name' | 'slug'> | null;
+    media: Pick<ProductImage, 'url'>[];
+}
+
+/**
+ * Admin product list view mode
+ */
+export type ViewMode = 'grid' | 'list';
+
+/**
+ * Admin product moderation status
+ */
+export type ProductStatus = 'pending' | 'active' | 'flagged';
+
+/**
+ * Filter overrides for admin product listing
+ */
+export type FilterOverrides = {
+    status?: string;
+    category?: string;
+    search?: string;
+    sortBy?: string;
+    page?: number;
+};
+
+/**
+ * Shared props for ProductCard and ProductRow components
+ */
+export type ProductActionProps = {
+    product: AdminProduct;
+    status: ProductStatus;
+    selected: boolean;
+    onToggleSelect: (id: number) => void;
+    onApprove: (id: number) => void;
+    onDeactivate: (id: number) => void;
+    onFlag: (product: AdminProduct) => void;
+    onUnflag: (id: number) => void;
+    processing: number | null;
+};
+
+/**
  * Product type
  */
 export interface Product {
@@ -179,14 +231,20 @@ export type ProductSortOption =
     | 'popular';
 
 /**
- * Paginated product response
+ * Generic paginated response wrapper
  */
-export interface PaginatedProducts {
-    data: Product[];
+export interface Paginated<T> {
+    data: T[];
     current_page: number;
     last_page: number;
     per_page: number;
     total: number;
+}
+
+/**
+ * Paginated product response
+ */
+export interface PaginatedProducts extends Paginated<Product> {
     from: number;
     to: number;
 }

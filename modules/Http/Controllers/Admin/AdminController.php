@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\AdminAnalyticsService;
 use ModulesShoppingComplex\Services\VendorService;
@@ -36,6 +37,52 @@ class AdminController extends Controller
         return Inertia::render('Admin/Dashboard', $data);
     }
 
+    public function products(Request $request): Response|JsonResponse
+    {
+        $filters = $request->only(['search', 'status', 'category', 'per_page']);
+        $data = [
+            'products'     => $this->adminAnalyticsService->getProducts($filters),
+            'categories'   => $this->adminAnalyticsService->getCategories(),
+            'totalPending' => Product::where('is_active', false)->count(),
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Admin/Products', $data);
+    }
+
+    public function updateProduct(Request $request, int $id): JsonResponse
+    {
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $product->update($validated);
+
+        return response()->json(['message' => 'Product updated.', 'product' => $product]);
+    }
+
+    public function bulkApproveProducts(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'   => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+        ]);
+
+        Product::whereIn('id', $validated['ids'])->update(['is_active' => true]);
+
+        return response()->json(['message' => count($validated['ids']) . ' products approved.']);
+    }
+
+    public function settings(): Response
+    {
+        return Inertia::render('Admin/Settings');
+    }
+
     public function botMonitor(Request $request): Response|JsonResponse
     {
         $perPage = min(max((int) $request->get('per_page', 50), 1), 100);
@@ -51,7 +98,10 @@ class AdminController extends Controller
     public function users(Request $request): Response|JsonResponse
     {
         $filters = $request->only(['role', 'search', 'per_page']);
-        $data = ['users' => $this->adminAnalyticsService->getUserList($filters)];
+        $data = [
+            'users'   => $this->adminAnalyticsService->getUserList($filters),
+            'summary' => $this->adminAnalyticsService->getPlatformStats(),
+        ];
 
         if ($request->wantsJson()) {
             return response()->json($data);

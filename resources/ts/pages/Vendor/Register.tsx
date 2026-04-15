@@ -1,6 +1,11 @@
 import { useRef, useState, useCallback, useEffect, FormEvent } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Category } from '@/types/product';
+
+interface PageProps {
+    [key: string]: unknown;
+    geoapify_key?: string;
+}
 
 interface Props {
     categories: Pick<Category, 'id' | 'name' | 'slug'>[];
@@ -29,6 +34,7 @@ interface SelectedAddress {
 }
 
 export default function VendorRegister({ categories }: Props) {
+    const { geoapify_key: geoapifyKey } = usePage<PageProps>().props;
     const [businessName, setBusinessName] = useState('');
     const [bio, setBio] = useState('');
     const [categoryId, setCategoryId] = useState('');
@@ -77,7 +83,7 @@ export default function VendorRegister({ categories }: Props) {
         debounceRef.current = setTimeout(async () => {
             setAddressLoading(true);
             try {
-                const apiKey = import.meta.env.VITE_GEOAPIFY_KEY as string;
+                const apiKey = geoapifyKey;
                 const params = new URLSearchParams({
                     text: query,
                     'filter[countrycode]': 'ng',
