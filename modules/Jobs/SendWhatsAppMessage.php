@@ -35,11 +35,9 @@ class SendWhatsAppMessage implements ShouldQueue
         $accessToken = config('services.whatsapp.access_token');
 
         $response = Http::withToken((string) $accessToken)
-            ->post("https://graph.facebook.com/v19.0/{$phoneNumberId}/messages", $this->payload);
+            ->post("https://graph.facebook.com/v25.0/{$phoneNumberId}/messages", $this->payload);
 
         if (! $response->successful()) {
-            // Throwing causes Laravel to retry with $backoff delay, exhausts $tries, then calls failed().
-            // Using $this->release() is incorrect — it re-queues without decrementing tries reliably.
             throw new \RuntimeException(
                 "WhatsApp API error {$response->status()}: {$response->body()}"
             );
