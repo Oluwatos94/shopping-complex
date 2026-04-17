@@ -17,67 +17,20 @@ const VendorCallToAction: React.FC = () => {
                         </h2>
 
                         <p className="text-lg text-primary-brown mb-8 leading-relaxed">
-                            Register as a vendor and get access to unlimited potential customers in your area.
+                            Register as a vendor and get access to customers in your area.
                             No barriers. No limits. Just real customers looking for your products right now.
                         </p>
 
-                        <div className="space-y-4 mb-8">
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-olive/10 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-olive" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-primary-dark text-lg mb-1">Location-Based Discovery</h4>
-                                    <p className="text-primary-brown">
-                                        Get found by customers near you instantly when your location is on—just like Uber or Bolt
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-olive/10 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-olive" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-primary-dark text-lg mb-1">No Follower Barriers</h4>
-                                    <p className="text-primary-brown">
-                                        Your visibility is not limited by followers or engagement
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-olive/10 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-olive" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-primary-dark text-lg mb-1">Unlimited Potential</h4>
-                                    <p className="text-primary-brown">
-                                        Connect with every customer searching in your area—no caps, no algorithms holding you back
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-row gap-3">
                             <Link
                                 href="/vendor/register"
-                                className="inline-flex items-center justify-center bg-primary-olive text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-peach transition-all duration-300 transform hover:scale-105 shadow-lg"
+                                className="flex-1 inline-flex items-center justify-center bg-primary-olive text-white px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-peach transition-all duration-300 shadow-lg"
                             >
                                 Register as Vendor
-                                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
                             </Link>
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="inline-flex items-center justify-center bg-transparent border-2 border-primary-olive text-primary-olive px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-olive hover:text-white transition-all duration-300"
+                                className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-primary-olive text-primary-olive px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-olive hover:text-white transition-all duration-300"
                             >
                                 Learn More
                             </button>
@@ -136,7 +89,7 @@ const VendorCallToAction: React.FC = () => {
                             {
                                 step: 1,
                                 title: 'Create Your Account',
-                                desc: 'Register on Shopping Complex and choose the Vendor account type. Fill in your business details — name, category, and location.',
+                                desc: 'Register on Shopping Complex and click "Become a Vendor". Fill in your business details name, category, and location.',
                             },
                             {
                                 step: 2,
@@ -146,12 +99,12 @@ const VendorCallToAction: React.FC = () => {
                             {
                                 step: 3,
                                 title: 'Go Live & Get Discovered',
-                                desc: 'Toggle your availability to "Online" and start appearing in searches for customers near you — just like a driver going online on Uber. No followers needed; proximity does the work.',
+                                desc: 'Toggle your availability to "Online" and start appearing in searches for customers near you. No followers needed; proximity does the work.',
                             },
                             {
                                 step: 4,
-                                title: 'Receive Orders & Chat with Customers',
-                                desc: 'Get notified instantly when a customer contacts you. Chat directly, confirm orders, negotiate, and arrange delivery — all within the platform.',
+                                title: 'Chat with Customers',
+                                desc: 'Get notified instantly when a customer contacts you. Chat directly on whatsapp or within the platform, negotiate, and arrange delivery.',
                             },
                             {
                                 step: 5,

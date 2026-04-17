@@ -6,7 +6,7 @@ const BuyerCallToAction: React.FC = () => {
 
     return (
         <>
-        <section className="py-16 lg:py-20 bg-gradient-to-br from-primary-dark to-primary-brown">
+        <section className="py-16 lg:py-20 bg-gradient-to-br from-[#fdf5ef] to-[#f5f0e8]">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     {/* Image Side */}
@@ -17,94 +17,50 @@ const BuyerCallToAction: React.FC = () => {
                                 alt="Shopping experience"
                                 className="w-full h-auto object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary-peach/20 to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/30 to-transparent"></div>
                         </div>
 
                         {/* Floating Stats */}
-                        <div className="hidden sm:block absolute -bottom-6 -right-6 bg-primary-dark/80 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl p-6 max-w-xs">
+                        <div className="hidden sm:block absolute -bottom-6 -right-6 bg-white rounded-xl shadow-2xl border border-primary-peach/20 p-6 max-w-xs">
                             <div className="flex items-center space-x-4">
-                                <div className="bg-primary-peach/20 p-3 rounded-lg">
+                                <div className="bg-primary-peach/15 p-3 rounded-lg">
                                     <svg className="w-8 h-8 text-primary-peach" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <div className="text-2xl font-bold text-white">Best Deals</div>
-                                    <div className="text-sm text-primary-light">Save up to 50%</div>
+                                    <div className="text-2xl font-bold text-primary-dark">Best Deals</div>
+                                    <div className="text-sm text-primary-brown">Save up to 50%</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Content Side - Buyers */}
-                    <div className="text-white">
-                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                            Discover Local Vendors{' '}
-                            <span className="text-primary-peach">Near You</span>
+                    <div>
+                        <span className="inline-block bg-primary-peach/20 text-primary-brown text-sm font-semibold px-4 py-1.5 rounded-full mb-5">
+                            For Buyers
+                        </span>
+                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-dark mb-6">
+                            Discover Vendors{' '}
+                            <span className="text-primary-brown">Near You</span>
                         </h2>
 
-                        <p className="text-lg text-primary-light mb-8 leading-relaxed">
-                            Shop from verified local vendors in your area. Get exactly what you need,
+                        <p className="text-lg text-primary-brown mb-8 leading-relaxed">
+                            Shop from vendors in your area. Get exactly what you need,
                             delivered fast. Real-time connection, real-time delivery.
                         </p>
 
-                        <div className="space-y-4 mb-8">
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-peach/20 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-peach" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-white text-lg mb-1">Find Vendors Instantly</h4>
-                                    <p className="text-primary-light">
-                                        See available vendors near you in real-time. No waiting, no searching—just instant connections
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-peach/20 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-peach" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-white text-lg mb-1">Chat Directly with Vendors</h4>
-                                    <p className="text-primary-light">
-                                        Message vendors, ask questions, negotiate prices—all in real-time before you buy
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-4">
-                                <div className="bg-primary-peach/20 p-3 rounded-lg mt-1 flex-shrink-0">
-                                    <svg className="w-6 h-6 text-primary-peach" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-white text-lg mb-1">Track Your Order Live</h4>
-                                    <p className="text-primary-light">
-                                        Watch your order from preparation to delivery with live updates every step of the way
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-row gap-3">
                             <Link
                                 href="/products"
-                                className="inline-flex items-center justify-center bg-primary-peach text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-olive transition-all duration-300 transform hover:scale-105 shadow-lg"
+                                className="flex-1 inline-flex items-center justify-center bg-primary-dark text-white px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-brown transition-all duration-300 shadow-lg"
                             >
                                 Start Shopping
-                                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
                             </Link>
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="inline-flex items-center justify-center bg-transparent border-2 border-primary-light text-primary-light px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-light hover:text-primary-dark transition-all duration-300"
+                                className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-primary-dark text-primary-dark px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-dark hover:text-white transition-all duration-300"
                             >
                                 Learn More
                             </button>
@@ -168,17 +124,7 @@ const BuyerCallToAction: React.FC = () => {
                             {
                                 step: 3,
                                 title: 'Chat Directly with the Vendor',
-                                desc: 'Use the in-app chat to ask questions, confirm availability, negotiate prices, or request customisation — all in real-time before you commit.',
-                            },
-                            {
-                                step: 4,
-                                title: 'Place Your Order',
-                                desc: 'Confirm your order with the vendor. Arrange delivery or pickup details through the chat. You stay in control throughout the process.',
-                            },
-                            {
-                                step: 5,
-                                title: 'Track Your Delivery',
-                                desc: 'Once your order is on its way, track it live. Get updates at every stage — preparation, dispatch, and arrival — so you always know what\'s happening.',
+                                desc: 'Use the in-app chat or WhatsApp to ask questions, confirm availability, negotiate prices.',
                             },
                         ].map(({ step, title, desc }) => (
                             <div key={step} className="flex gap-4">

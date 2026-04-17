@@ -24,6 +24,10 @@ use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
 Route::get('/webhook/whatsapp', [WhatsAppController::class, 'verify'])->name('whatsapp.webhook.verify');
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'receive'])->name('whatsapp.webhook.receive');
 
+// Static pages
+Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');
+Route::get('/terms', fn () => inertia('Terms'))->name('terms');
+
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
