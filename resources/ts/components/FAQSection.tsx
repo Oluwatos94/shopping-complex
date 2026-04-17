@@ -98,27 +98,112 @@ const FAQSection: React.FC = () => {
                 </div>
             </section>
 
-            {/* Community Banner */}
-            <section className="bg-gradient-to-r from-primary-olive to-primary-brown pt-16 lg:pt-20 pb-16 lg:pb-20">
-                <div className="container mx-auto px-4 text-center text-white">
-                    <h3 className="text-3xl font-bold mb-4">Join Our Growing Community</h3>
-                    <p className="text-primary-light text-lg mb-8 max-w-2xl mx-auto">
-                        Over 10,000 customers trust Shopping Complex for their shopping needs.
-                        Experience the future of shopping today.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
-                            <div className="text-3xl font-bold">4.8/5</div>
-                            <div className="text-sm text-primary-light">Average Rating</div>
+            {/* Community Section — redesigned */}
+            <section className="bg-primary-dark overflow-hidden relative pt-16 lg:pt-20 pb-16 lg:pb-20">
+                {/* Decorative blobs */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-primary-olive/10 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary-peach/8 rounded-full -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+                        {/* Left: text + stats + CTAs */}
+                        <div>
+                            <span className="inline-block bg-primary-olive/20 text-primary-light text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
+                                Our Community
+                            </span>
+                            <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
+                                Join a Thriving<br />
+                                <span className="text-primary-peach">Local Community</span>
+                            </h3>
+                            <p className="text-primary-light text-lg mb-10 leading-relaxed">
+                                Thousands of buyers and vendors are already connecting in real-time.
+                                Be part of a platform built around local commerce.
+                            </p>
+
+                            {/* Stats — vertical list style, not boxes */}
+                            <div className="space-y-5 mb-10">
+                                {[
+                                    { value: '10,000+', label: 'Active shoppers discovering local vendors', color: 'text-primary-peach' },
+                                    { value: '500+',    label: 'Verified vendors listed across multiple cities', color: 'text-primary-olive' },
+                                    { value: '4.8 / 5', label: 'Average platform rating from real customers', color: 'text-yellow-400' },
+                                ].map(({ value, label, color }) => (
+                                    <div key={value} className="flex items-center gap-4">
+                                        <span className={`text-3xl font-black ${color} leading-none w-28 flex-shrink-0`}>{value}</span>
+                                        <span className="text-primary-light text-sm leading-snug border-l border-white/10 pl-4">{label}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* CTAs */}
+                            <div className="flex flex-row gap-3">
+                                <Link
+                                    href="/vendor/register"
+                                    className="flex-1 inline-flex items-center justify-center bg-primary-olive text-white px-4 py-3.5 sm:px-7 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary-peach transition-colors duration-300 shadow-lg"
+                                >
+                                    Become a Vendor
+                                </Link>
+                                <Link
+                                    href="/products"
+                                    className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-white/30 text-white px-4 py-3.5 sm:px-7 rounded-lg text-sm sm:text-base font-semibold hover:border-white hover:bg-white/10 transition-all duration-300"
+                                >
+                                    Start Shopping
+                                </Link>
+                            </div>
                         </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
-                            <div className="text-3xl font-bold">98%</div>
-                            <div className="text-sm text-primary-light">Satisfaction Rate</div>
+
+                        {/* Right: activity cards */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                {
+                                    icon: (
+                                        <svg className="w-6 h-6 text-primary-peach" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    ),
+                                    value: '10,000+',
+                                    label: 'Active Shoppers',
+                                },
+                                {
+                                    icon: (
+                                        <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                    ),
+                                    value: '500+',
+                                    label: 'Verified Vendors',
+                                },
+                                {
+                                    icon: (
+                                        <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    ),
+                                    value: '4.8 / 5',
+                                    label: 'Average Rating',
+                                },
+                                {
+                                    icon: (
+                                        <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    ),
+                                    value: '24 / 7',
+                                    label: 'Customer Support',
+                                },
+                            ].map(({ icon, value, label }) => (
+                                <div key={label} className="bg-white/8 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                        {icon}
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-black text-white">{value}</div>
+                                        <div className="text-sm text-primary-light mt-0.5">{label}</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
-                            <div className="text-3xl font-bold">24/7</div>
-                            <div className="text-sm text-primary-light">Customer Support</div>
-                        </div>
+
                     </div>
                 </div>
             </section>
