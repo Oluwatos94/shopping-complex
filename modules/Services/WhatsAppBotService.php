@@ -72,6 +72,7 @@ final readonly class WhatsAppBotService
             match ($session->state) {
                 WhatsAppSessionStateEnum::IDLE => $this->handleIdle($session, $messageType, $messageBody),
                 WhatsAppSessionStateEnum::AWAITING_LOCATION => $this->handleAwaitingLocation($session, $messageType, $message),
+                WhatsAppSessionStateEnum::AWAITING_EXPAND_CHOICE => $this->handleAwaitingExpandChoice($session, $messageType, $messageBody),
                 WhatsAppSessionStateEnum::SHOWING_VENDORS => $this->handleShowingVendors($session, $messageType, $messageBody),
                 WhatsAppSessionStateEnum::SHOWING_PRODUCTS => $this->handleShowingProducts($session, $messageType, $messageBody),
             };
@@ -148,17 +149,25 @@ final readonly class WhatsAppBotService
                 'buyer_longitude' => $lng,
             ]);
 
-            $this->sessionRepository->resetSession($session);
+            $session->data = [
+                'query' => $query,
+                'buyer_lat' => $lat,
+                'buyer_lng' => $lng,
+                'searched_radius' => 5,
+            ];
+            $session->state = WhatsAppSessionStateEnum::AWAITING_EXPAND_CHOICE;
+            $this->sessionRepository->save($session);
+
             $this->apiService->sendText(
                 $session->phone_number,
-                "No vendors found nearby for \"{$query}\". Try a different product name or type MENU to start over."
+                "No vendors found within 5 km for \"{$query}\".\n\nWant to expand the search?\n• Reply *10*, *20*, *50*, or *100* for a wider km range\n• Reply *ANY* to see all available vendors selling this product\n• Type MENU to start a new search"
             );
 
             return;
         }
 
         // Build summaries to cache in session (avoids re-querying for BACK)
-        $vendorSummaries = $vendors->values()->map(fn (User $vendor, int $index) => [
+        $vendorSummaries = $vendors->values()->map(fn (User $vendor) => [
             'id' => $vendor->id,
             'name' => $vendor->business_name ?? $vendor->name,
             'distance' => isset($vendor->distance_km) ? number_format((float) $vendor->distance_km, 1).' km away' : '',
@@ -195,6 +204,100 @@ final readonly class WhatsAppBotService
                 source: ViewSourceEnum::WHATSAPP,
             );
         }
+
+        $this->sendVendorList($session->phone_number, $vendorSummaries, $query);
+    }
+
+    private function handleAwaitingExpandChoice(WhatsAppSession $session, string $messageType, mixed $messageBody): void
+    {
+        $text = is_string($messageBody) ? strtoupper(trim($messageBody)) : '';
+        $query = (string) data_get($session->data, 'query', '');
+        $lat = (float) data_get($session->data, 'buyer_lat', 0);
+        $lng = (float) data_get($session->data, 'buyer_lng', 0);
+
+        if ($query === '') {
+            $this->sessionRepository->resetSession($session);
+            $this->apiService->sendText($session->phone_number, 'Session expired. Type MENU to start a new search.');
+
+            return;
+        }
+
+        if ($text === 'ANY') {
+            $vendors = $this->vendorService->findByQuery($query);
+
+            if ($vendors->isEmpty()) {
+                $this->sessionRepository->resetSession($session);
+                $this->apiService->sendText(
+                    $session->phone_number,
+                    "No vendors found selling \"{$query}\" anywhere on the platform right now. Try a different product name or type MENU to start over."
+                );
+
+                return;
+            }
+
+            $vendorSummaries = $vendors->values()->map(fn (User $vendor) => [
+                'id' => $vendor->id,
+                'name' => $vendor->business_name ?? $vendor->name,
+                'distance' => '',
+                'products' => ($vendor->active_products_count ?? 0).' products',
+            ])->all();
+
+            $session->data = array_merge($session->data ?? [], ['vendor_summaries' => $vendorSummaries]);
+            $session->state = WhatsAppSessionStateEnum::SHOWING_VENDORS;
+            $this->sessionRepository->save($session);
+
+            $this->sendVendorList($session->phone_number, $vendorSummaries, $query, locationless: true);
+
+            return;
+        }
+
+        $allowedRadii = [10, 20, 50, 100];
+        $radius = is_numeric($text) ? (int) $text : null;
+
+        if ($radius === null || ! in_array($radius, $allowedRadii, true)) {
+            $this->apiService->sendText(
+                $session->phone_number,
+                "Please reply with *10*, *20*, *50*, or *100* (km) to expand the search, or *ANY* to see all vendors, or MENU to start over."
+            );
+
+            return;
+        }
+
+        $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, (float) $radius);
+
+        if ($vendors->isEmpty()) {
+            $session->data = array_merge($session->data ?? [], ['searched_radius' => $radius]);
+            $this->sessionRepository->save($session);
+
+            $this->apiService->sendText(
+                $session->phone_number,
+                "Still no vendors found within {$radius} km for \"{$query}\".\n\n• Reply *ANY* to see all vendors selling this product\n• Or try a larger range: ".implode(', ', array_filter($allowedRadii, fn ($r) => $r > $radius))."\n• Type MENU to start over"
+            );
+
+            return;
+        }
+
+        $vendorSummaries = $vendors->values()->map(fn (User $vendor) => [
+            'id' => $vendor->id,
+            'name' => $vendor->business_name ?? $vendor->name,
+            'distance' => isset($vendor->distance_km) ? number_format((float) $vendor->distance_km, 1).' km away' : '',
+            'products' => ($vendor->active_products_count ?? 0).' products',
+        ])->all();
+
+        $now = now()->toDateTimeString();
+        WhatsAppInteraction::insert($vendors->map(fn (User $vendor) => [
+            'phone_number' => $session->phone_number,
+            'event_type' => WhatsAppInteractionEventEnum::VENDOR_VIEWED->value,
+            'search_query' => $query,
+            'vendor_id' => $vendor->id,
+            'buyer_latitude' => $lat ?: null,
+            'buyer_longitude' => $lng ?: null,
+            'created_at' => $now,
+        ])->all());
+
+        $session->data = array_merge($session->data ?? [], ['vendor_summaries' => $vendorSummaries]);
+        $session->state = WhatsAppSessionStateEnum::SHOWING_VENDORS;
+        $this->sessionRepository->save($session);
 
         $this->sendVendorList($session->phone_number, $vendorSummaries, $query);
     }
@@ -435,14 +538,15 @@ final readonly class WhatsAppBotService
     /**
      * @param  array<int, array<string, mixed>>  $summaries
      */
-    private function sendVendorList(string $to, array $summaries, string $query): void
+    private function sendVendorList(string $to, array $summaries, string $query, bool $locationless = false): void
     {
         $count = count($summaries);
         $label = $query !== '' ? "matching \"{$query}\"" : 'nearby';
+        $header = $locationless ? 'Available Vendors' : 'Nearby Vendors';
 
         $this->apiService->sendList(
             to: $to,
-            header: 'Nearby Vendors',
+            header: $header,
             body: "Found {$count} vendor(s) {$label}. Select one to view their products:",
             rows: array_map(fn (array $summary, int $index) => [
                 'id' => (string) ($index + 1),
@@ -488,7 +592,7 @@ final readonly class WhatsAppBotService
 
     private function helpMessage(): string
     {
-        return "Available commands:\n\n• Type a product name to search\n• CONTACT — get vendor's WhatsApp number\n• NEXT — see more products\n• PREV — previous page\n• BACK — return to vendor list\n• MENU — start a new search\n• HELP — show this message";
+        return "Available commands:\n\n• Type a product name to search\n• 10, 20, 50, 100 — expand search radius (km) when no vendors found\n• ANY — show all vendors selling the product regardless of location\n• CONTACT — get vendor's WhatsApp number\n• NEXT — see more products\n• PREV — previous page\n• BACK — return to vendor list\n• MENU — start a new search\n• HELP — show this message";
     }
 
     private function productsHelpMessage(): string

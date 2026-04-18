@@ -12,6 +12,7 @@ enum WhatsAppSessionStateEnum: string
 
     case IDLE = 'idle';
     case AWAITING_LOCATION = 'awaiting_location';
+    case AWAITING_EXPAND_CHOICE = 'awaiting_expand_choice';
     case SHOWING_VENDORS = 'showing_vendors';
     case SHOWING_PRODUCTS = 'showing_products';
 }
