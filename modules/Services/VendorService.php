@@ -95,6 +95,19 @@ final readonly class VendorService
     }
 
     /**
+     * Find vendors matching a product name anywhere — used by the WhatsApp bot when no nearby vendors exist.
+     *
+     * @return Collection<int, User>
+     */
+    public function findByQuery(string $query, int $limit = 5): Collection
+    {
+        return $this->getNearbyVendors([
+            'search' => $query,
+            'sort_by' => 'newest',
+        ], perPage: $limit)->getCollection();
+    }
+
+    /**
      * Find a vendor by ID — used by the WhatsApp bot.
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException

@@ -41,20 +41,13 @@ class WhatsAppController extends Controller
      */
     public function receive(Request $request): Response
     {
-        \Illuminate\Support\Facades\Log::info('WhatsApp webhook received', [
-            'has_signature' => $request->hasHeader('X-Hub-Signature-256'),
-            'object' => $request->input('object'),
-        ]);
-
         if (! $this->isValidSignature($request)) {
-            \Illuminate\Support\Facades\Log::warning('WhatsApp webhook signature failed');
             return response('Forbidden', 403);
         }
 
         $payload = $request->all();
 
         if (($payload['object'] ?? '') === 'whatsapp_business_account') {
-            \Illuminate\Support\Facades\Log::info('WhatsApp dispatching job');
             ProcessWhatsAppWebhook::dispatch($payload);
         }
 
