@@ -257,7 +257,7 @@ final readonly class WhatsAppBotService
         if ($radius === null || ! in_array($radius, $allowedRadii, true)) {
             $this->apiService->sendText(
                 $session->phone_number,
-                "Please reply with *10*, *20*, *50*, or *100* (km) to expand the search, or *ANY* to see all vendors, or MENU to start over."
+                'Please reply with *10*, *20*, *50*, or *100* (km) to expand the search, or *ANY* to see all vendors, or MENU to start over.'
             );
 
             return;

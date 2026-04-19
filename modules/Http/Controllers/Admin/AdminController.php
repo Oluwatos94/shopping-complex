@@ -7,12 +7,14 @@ namespace ModulesShoppingComplex\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Models\VendorOnboarding;
 use ModulesShoppingComplex\Services\AdminAnalyticsService;
 use ModulesShoppingComplex\Services\VendorService;
 
@@ -37,47 +39,6 @@ class AdminController extends Controller
         return Inertia::render('Admin/Dashboard', $data);
     }
 
-    public function products(Request $request): Response|JsonResponse
-    {
-        $filters = $request->only(['search', 'status', 'category', 'per_page']);
-        $data = [
-            'products'     => $this->adminAnalyticsService->getProducts($filters),
-            'categories'   => $this->adminAnalyticsService->getCategories(),
-            'totalPending' => Product::where('is_active', false)->count(),
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json($data);
-        }
-
-        return Inertia::render('Admin/Products', $data);
-    }
-
-    public function updateProduct(Request $request, int $id): JsonResponse
-    {
-        $product = Product::findOrFail($id);
-
-        $validated = $request->validate([
-            'is_active' => 'required|boolean',
-        ]);
-
-        $product->update($validated);
-
-        return response()->json(['message' => 'Product updated.', 'product' => $product]);
-    }
-
-    public function bulkApproveProducts(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'integer|exists:products,id',
-        ]);
-
-        Product::whereIn('id', $validated['ids'])->update(['is_active' => true]);
-
-        return response()->json(['message' => count($validated['ids']) . ' products approved.']);
-    }
-
     public function settings(): Response
     {
         return Inertia::render('Admin/Settings');
@@ -99,7 +60,7 @@ class AdminController extends Controller
     {
         $filters = $request->only(['role', 'search', 'per_page']);
         $data = [
-            'users'   => $this->adminAnalyticsService->getUserList($filters),
+            'users' => $this->adminAnalyticsService->getUserList($filters),
             'summary' => $this->adminAnalyticsService->getPlatformStats(),
         ];
 
@@ -135,10 +96,36 @@ class AdminController extends Controller
         ]);
     }
 
+    public function viewVendorDocument(User $user, string $field): HttpResponse|\Illuminate\Http\RedirectResponse
+    {
+        $allowed = ['certificate_of_incorporation', 'government_issued_id', 'proof_of_address'];
+        abort_if(! in_array($field, $allowed, true), 404);
+
+        $onboarding = VendorOnboarding::where('user_id', $user->id)->firstOrFail();
+        $path = $onboarding->$field;
+
+        abort_if(! $path, 404);
+
+        abort_if(! Storage::disk('local')->exists($path), 404);
+
+        $mimeType = mime_content_type(Storage::disk('local')->path($path)) ?: 'application/octet-stream';
+
+        return response(Storage::disk('local')->get($path), 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="'.basename($path).'"',
+        ]);
+    }
+
     public function pendingVendors(Request $request): Response|JsonResponse
     {
         $perPage = min(max((int) $request->get('per_page', 20), 1), 100);
-        $data = ['vendors' => $this->adminAnalyticsService->getPendingVendors($perPage)];
+        $status = (string) $request->get('status', 'pending_review');
+        $vendors = $this->adminAnalyticsService->getPendingVendors($perPage, $status);
+
+        $data = [
+            'vendors' => $vendors,
+            'activeStatus' => $status,
+        ];
 
         if ($request->wantsJson()) {
             return response()->json($data);
@@ -147,12 +134,12 @@ class AdminController extends Controller
         return Inertia::render('Admin/Vendors', $data);
     }
 
-    public function approveVendor(User $user): JsonResponse
+    public function approveVendor(User $user): \Illuminate\Http\RedirectResponse
     {
         try {
             $this->vendorService->approveOnboarding($user, Auth::user());
         } catch (\RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return back()->with('error', $e->getMessage());
         }
 
         Log::info('Vendor application approved', [
@@ -160,10 +147,10 @@ class AdminController extends Controller
             'approved_by' => Auth::id(),
         ]);
 
-        return response()->json(['message' => 'Vendor approved successfully.']);
+        return back()->with('success', 'Vendor approved successfully.');
     }
 
-    public function rejectVendor(Request $request, User $user): JsonResponse
+    public function rejectVendor(Request $request, User $user): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => 'required|string|max:500',
@@ -172,7 +159,7 @@ class AdminController extends Controller
         try {
             $this->vendorService->rejectOnboarding($user, Auth::user(), $validated['rejection_reason']);
         } catch (\RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return back()->with('error', $e->getMessage());
         }
 
         Log::info('Vendor application rejected', [
@@ -181,6 +168,6 @@ class AdminController extends Controller
             'reason' => $validated['rejection_reason'],
         ]);
 
-        return response()->json(['message' => 'Vendor rejected successfully.']);
+        return back()->with('success', 'Vendor rejected successfully.');
     }
 }

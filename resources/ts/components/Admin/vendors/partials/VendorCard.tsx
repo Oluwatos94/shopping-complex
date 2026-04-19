@@ -22,6 +22,14 @@ export default function VendorCard({
     ].filter(Boolean);
 
     const isProcessing = processing === vendor.user_id;
+    const isApproved = vendor.status === 'approved';
+    const isRejected = vendor.status === 'rejected';
+
+    const statusBadge = isApproved
+        ? { label: 'Approved', className: 'bg-emerald-50 text-emerald-700' }
+        : isRejected
+        ? { label: 'Rejected', className: 'bg-red-50 text-red-600' }
+        : { label: vendor.current_step >= 4 ? 'Complete' : `Step ${vendor.current_step}/4`, className: 'bg-primary-brown/10 text-primary-brown' };
 
     return (
         <div
@@ -35,14 +43,8 @@ export default function VendorCard({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
-                <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        vendor.current_step >= 4
-                            ? 'bg-primary-brown/10 text-primary-brown'
-                            : 'bg-gray-100 text-gray-500'
-                    }`}
-                >
-                    {vendor.current_step >= 4 ? 'Complete' : `Step ${vendor.current_step}/4`}
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusBadge.className}`}>
+                    {statusBadge.label}
                 </span>
             </div>
 
@@ -85,26 +87,46 @@ export default function VendorCard({
             )}
 
             {/* Actions */}
-            <div
-                className="flex gap-2"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <button
-                    disabled={isProcessing}
-                    onClick={() => onApprove(vendor)}
-                    className="flex-1 py-3 rounded-lg bg-primary-olive text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isProcessing ? 'Processing…' : 'Approve'}
-                </button>
-                <button
-                    disabled={isProcessing}
-                    onClick={() => onReject(vendor)}
-                    className="px-4 py-3 rounded-lg bg-gray-100 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                {isApproved ? (
+                    <button
+                        disabled={isProcessing}
+                        onClick={() => onReject(vendor)}
+                        className="flex-1 py-3 rounded-lg bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        {isProcessing ? 'Processing…' : 'Revoke / Reject'}
+                    </button>
+                ) : isRejected ? (
+                    <button
+                        disabled={isProcessing}
+                        onClick={() => onApprove(vendor)}
+                        className="flex-1 py-3 rounded-lg bg-primary-olive text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isProcessing ? 'Processing…' : 'Re-approve'}
+                    </button>
+                ) : (
+                    <>
+                        <button
+                            disabled={isProcessing}
+                            onClick={() => onApprove(vendor)}
+                            className="flex-1 py-3 rounded-lg bg-primary-olive text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isProcessing ? 'Processing…' : 'Approve'}
+                        </button>
+                        <button
+                            disabled={isProcessing}
+                            onClick={() => onReject(vendor)}
+                            className="px-4 py-3 rounded-lg bg-gray-100 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

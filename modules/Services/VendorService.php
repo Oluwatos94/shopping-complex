@@ -223,12 +223,11 @@ final readonly class VendorService
     {
         return DB::transaction(function () use ($vendor, $reviewer) {
             $onboarding = VendorOnboarding::where('user_id', $vendor->id)
-                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
                 ->lockForUpdate()
                 ->first();
 
             if (! $onboarding) {
-                throw new \RuntimeException('No pending application found for this vendor.');
+                throw new \RuntimeException('No application found for this vendor.');
             }
 
             $this->vendorRepository->updateOnboarding($onboarding, [
@@ -253,12 +252,11 @@ final readonly class VendorService
     {
         return DB::transaction(function () use ($vendor, $reviewer, $reason) {
             $onboarding = VendorOnboarding::where('user_id', $vendor->id)
-                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
                 ->lockForUpdate()
                 ->first();
 
             if (! $onboarding) {
-                throw new \RuntimeException('No pending application found for this vendor.');
+                throw new \RuntimeException('No application found for this vendor.');
             }
 
             $this->vendorRepository->updateOnboarding($onboarding, [
