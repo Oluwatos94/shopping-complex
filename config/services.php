@@ -57,6 +57,11 @@ return [
         'platform_number' => env('PLATFORM_WHATSAPP_NUMBER', ''),
     ],
 
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
+    ],
+
     'admin' => [
         'email' => env('ADMIN_EMAIL', 'admin@shoppingcomplex.com'),
         'name' => env('ADMIN_NAME', 'Super Admin'),

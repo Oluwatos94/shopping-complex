@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Anthropic\Client as AnthropicClient;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use ModulesShoppingComplex\Services\PaystackClient;
@@ -19,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
         ));
 
         $this->app->singleton(WhatsAppApiService::class);
+
+        $this->app->singleton(AnthropicClient::class, fn () => \Anthropic::factory()
+            ->withApiKey((string) config('services.anthropic.api_key'))
+            ->make()
+        );
     }
 
     /**
