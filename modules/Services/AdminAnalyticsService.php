@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
-use ModulesShoppingComplex\Models\Category;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
 
@@ -38,9 +36,6 @@ final readonly class AdminAnalyticsService
                 'vendors' => (int) ($userCounts['vendor'] ?? 0),
                 'customers' => (int) ($userCounts['customer'] ?? 0),
             ],
-            'products' => [
-                'total' => Product::count(),
-            ],
             'vendors' => [
                 'approved' => (int) ($onboardingCounts[VendorOnboardingStatusEnum::APPROVED->value] ?? 0),
                 'pending_review' => (int) ($onboardingCounts[VendorOnboardingStatusEnum::PENDING_REVIEW->value] ?? 0),
@@ -48,43 +43,6 @@ final readonly class AdminAnalyticsService
                 'draft' => (int) ($onboardingCounts[VendorOnboardingStatusEnum::DRAFT->value] ?? 0),
             ],
         ];
-    }
-
-    /**
-     * Get paginated products for admin moderation with optional filters.
-     *
-     * @param  array<string, mixed>  $filters
-     * @return LengthAwarePaginator<Product>
-     */
-    public function getProducts(array $filters): LengthAwarePaginator
-    {
-        $query = Product::with(['vendor:id,name,business_name', 'category:id,name,slug', 'media']);
-
-        if (! empty($filters['search'])) {
-            $query->where('name', 'like', "%{$filters['search']}%");
-        }
-
-        if (isset($filters['status']) && $filters['status'] !== '') {
-            $query->where('is_active', $filters['status'] === 'active');
-        }
-
-        if (! empty($filters['category'])) {
-            $query->whereHas('category', fn ($q) => $q->where('slug', $filters['category']));
-        }
-
-        $perPage = min(max((int) ($filters['per_page'] ?? 20), 1), 100);
-
-        return $query->latest()->paginate($perPage);
-    }
-
-    /**
-     * Get all categories for filter dropdowns.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection<int, Category>
-     */
-    public function getCategories(): \Illuminate\Database\Eloquent\Collection
-    {
-        return Category::select('id', 'name', 'slug')->orderBy('name')->get();
     }
 
     /**
@@ -119,10 +77,13 @@ final readonly class AdminAnalyticsService
      *
      * @return LengthAwarePaginator<VendorOnboarding>
      */
-    public function getPendingVendors(int $perPage = 20): LengthAwarePaginator
+    public function getPendingVendors(int $perPage = 20, string $status = 'pending_review'): LengthAwarePaginator
     {
+        $allowed = VendorOnboardingStatusEnum::values();
+        $status = in_array($status, $allowed, true) ? $status : VendorOnboardingStatusEnum::PENDING_REVIEW->value;
+
         return VendorOnboarding::with('user')
-            ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
+            ->where('status', $status)
             ->latest()
             ->paginate($perPage);
     }

@@ -21,10 +21,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(WhatsAppApiService::class);
 
-        $this->app->singleton(AnthropicClient::class, fn () => \Anthropic::factory()
-            ->withApiKey((string) config('services.anthropic.api_key'))
-            ->make()
-        );
+        $this->app->singleton(AnthropicClient::class, fn () => new AnthropicClient(
+            apiKey: (string) config('services.anthropic.api_key'),
+        ));
     }
 
     /**

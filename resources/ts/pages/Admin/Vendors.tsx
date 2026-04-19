@@ -9,12 +9,23 @@ import RejectModal from '@/components/Admin/vendors/partials/RejectModal';
 
 interface Props {
     vendors: Paginated<VendorApplication>;
+    activeStatus: string;
 }
 
-export default function Vendors({ vendors }: Props) {
+export default function Vendors({ vendors, activeStatus }: Props) {
     const [selectedVendor, setSelectedVendor] = useState<VendorApplication | null>(null);
     const [rejectingVendor, setRejectingVendor] = useState<VendorApplication | null>(null);
     const [processing, setProcessing] = useState<number | null>(null);
+
+    const filterTabs = [
+        { label: 'Pending', value: 'pending_review' },
+        { label: 'Approved', value: 'approved' },
+        { label: 'Rejected', value: 'rejected' },
+    ];
+
+    const switchTab = (status: string) => {
+        router.get('/admin/vendors/pending', { status }, { preserveScroll: false });
+    };
 
     const handleApprove = (vendor: VendorApplication) => {
         setProcessing(vendor.user_id);
@@ -50,7 +61,7 @@ export default function Vendors({ vendors }: Props) {
     };
 
     const goToPage = (page: number) => {
-        router.get('/admin/vendors/pending', { page }, { preserveScroll: true });
+        router.get('/admin/vendors/pending', { page, status: activeStatus }, { preserveScroll: true });
     };
 
     const pendingCount = vendors.total;
@@ -77,15 +88,19 @@ export default function Vendors({ vendors }: Props) {
                         </h2>
                     </div>
                     <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
-                        <button className="px-5 py-2 rounded-lg bg-primary-olive text-white font-bold text-sm transition-all shadow-md shadow-primary-olive/20">
-                            Pending
-                        </button>
-                        <button className="px-5 py-2 rounded-lg text-gray-500 font-medium text-sm hover:bg-white transition-all">
-                            Approved
-                        </button>
-                        <button className="px-5 py-2 rounded-lg text-gray-500 font-medium text-sm hover:bg-white transition-all">
-                            Rejected
-                        </button>
+                        {filterTabs.map(tab => (
+                            <button
+                                key={tab.value}
+                                onClick={() => switchTab(tab.value)}
+                                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    activeStatus === tab.value
+                                        ? 'bg-primary-olive text-white font-bold shadow-md shadow-primary-olive/20'
+                                        : 'text-gray-500 hover:bg-white'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 

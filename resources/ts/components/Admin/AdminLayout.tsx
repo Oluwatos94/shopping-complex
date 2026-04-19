@@ -1,9 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface SharedProps {
     auth?: {
         user?: { name: string; role: string } | null;
+    };
+    flash?: {
+        success?: string | null;
+        error?: string | null;
     };
     [key: string]: unknown;
 }
@@ -18,7 +22,23 @@ interface NavItem {
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const page = usePage<SharedProps>();
     const user = page.props.auth?.user;
+    const flash = page.props.flash;
     const pathname = page.url.split('?')[0];
+
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setToast({ message: flash.success, type: 'success' });
+            const t = setTimeout(() => setToast(null), 4000);
+            return () => clearTimeout(t);
+        }
+        if (flash?.error) {
+            setToast({ message: flash.error, type: 'error' });
+            const t = setTimeout(() => setToast(null), 5000);
+            return () => clearTimeout(t);
+        }
+    }, [flash?.success, flash?.error]);
 
     const navItems: NavItem[] = [
         {
@@ -48,16 +68,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             icon: (
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'Products',
-            href: '/admin/products',
-            match: '/admin/products',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             ),
         },
@@ -180,6 +190,34 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <main className="ml-64 pt-24 px-8 pb-12 min-h-screen">
                 {children}
             </main>
+
+            {/* Flash Toast */}
+            {toast && (
+                <div
+                    style={{ animation: 'slideUp 0.3s ease-out' }}
+                    className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-sm font-semibold ${
+                        toast.type === 'success'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-red-600 text-white'
+                    }`}
+                >
+                    {toast.type === 'success' ? (
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    )}
+                    {toast.message}
+                    <button onClick={() => setToast(null)} className="ml-2 opacity-70 hover:opacity-100 transition-opacity">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

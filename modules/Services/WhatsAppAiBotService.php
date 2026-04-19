@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services;
 
 use Anthropic\Client as AnthropicClient;
-use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\User;
@@ -44,7 +43,8 @@ final readonly class WhatsAppAiBotService
         $userText = $this->extractUserText($messageType, $messageBody, $message);
 
         if ($userText === null) {
-            $this->apiService->sendText($from, "I can only read text messages and locations right now. What product are you looking for?");
+            $this->apiService->sendText($from, 'I can only read text messages and locations right now. What product are you looking for?');
+
             return;
         }
 
@@ -83,13 +83,15 @@ final readonly class WhatsAppAiBotService
         $tools = $this->defineTools();
         $messages = $this->buildMessages($history);
 
-        $response = $this->claude->messages()->create([
-            'model' => config('services.anthropic.model'),
-            'max_tokens' => 1024,
-            'system' => $this->systemPrompt(),
-            'tools' => $tools,
-            'messages' => $messages,
-        ]);
+        $model = (string) config('services.anthropic.model');
+
+        $response = $this->claude->messages->create(
+            maxTokens: 1024,
+            messages: $messages,
+            model: $model,
+            system: $this->systemPrompt(),
+            tools: $tools,
+        );
 
         // Agentic loop: keep going while Claude wants to use tools
         while ($response->stopReason === 'tool_use') {
@@ -113,13 +115,13 @@ final readonly class WhatsAppAiBotService
             $messages[] = ['role' => 'assistant', 'content' => $assistantContent];
             $messages[] = ['role' => 'user', 'content' => $toolResults];
 
-            $response = $this->claude->messages()->create([
-                'model' => config('services.anthropic.model'),
-                'max_tokens' => 1024,
-                'system' => $this->systemPrompt(),
-                'tools' => $tools,
-                'messages' => $messages,
-            ]);
+            $response = $this->claude->messages->create(
+                maxTokens: 1024,
+                messages: $messages,
+                model: $model,
+                system: $this->systemPrompt(),
+                tools: $tools,
+            );
         }
 
         // Extract final text reply
@@ -163,20 +165,20 @@ final readonly class WhatsAppAiBotService
         }
 
         if ($vendors->isEmpty()) {
-            return "No vendors found for \"{$query}\"".($lat ? " within {$radius} km" : '').".";
+            return "No vendors found for \"{$query}\"".($lat ? " within {$radius} km" : '').'.';
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
 
         $lines = $vendors->map(fn (User $vendor) => sprintf(
-            "- ID:%d | %s | %d products%s",
+            '- ID:%d | %s | %d products%s',
             $vendor->id,
             $vendor->business_name ?? $vendor->name,
             $vendor->active_products_count ?? 0,
             isset($vendor->distance_km) ? ' | '.number_format((float) $vendor->distance_km, 1).' km away' : ''
         ))->implode("\n");
 
-        return "Found ".count($vendors)." vendor(s):\n".$lines;
+        return 'Found '.count($vendors)." vendor(s):\n".$lines;
     }
 
     /**
@@ -189,7 +191,7 @@ final readonly class WhatsAppAiBotService
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
         } catch (\Throwable) {
-            return "Vendor not found.";
+            return 'Vendor not found.';
         }
 
         $products = $vendor->products()
@@ -199,15 +201,18 @@ final readonly class WhatsAppAiBotService
             ->get();
 
         if ($products->isEmpty()) {
-            return "This vendor has no active products listed.";
+            return 'This vendor has no active products listed.';
         }
 
-        $lines = $products->map(fn ($p) => sprintf(
-            "- %s | ₦%s | %s",
-            $p->name,
-            number_format((float) $p->price, 0),
-            ((int) $p->stock) > 0 ? 'In stock' : 'Out of stock'
-        ))->implode("\n");
+        $lines = $products->map(function (\Illuminate\Database\Eloquent\Model $p) {
+            /** @var \ModulesShoppingComplex\Models\Product $p */
+            return sprintf(
+                '- %s | ₦%s | %s',
+                $p->name,
+                number_format((float) $p->price, 0),
+                ((int) $p->stock) > 0 ? 'In stock' : 'Out of stock'
+            );
+        })->implode("\n");
 
         return "Products from *{$vendor->business_name}*:\n".$lines;
     }
@@ -222,11 +227,11 @@ final readonly class WhatsAppAiBotService
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
         } catch (\Throwable) {
-            return "Vendor not found.";
+            return 'Vendor not found.';
         }
 
         if (empty($vendor->whatsapp_number)) {
-            return "This vendor has not set up a WhatsApp contact yet.";
+            return 'This vendor has not set up a WhatsApp contact yet.';
         }
 
         $this->interactionRepository->log([
