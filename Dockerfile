@@ -34,7 +34,8 @@ ENV PATH="/root/.bun/bin:$PATH"
 
 WORKDIR /app
 
-COPY . .
+# Copy composer files first — changes here bust only the composer cache layer
+COPY composer.json composer.lock ./
 
 # Create required directories before composer install (package:discover needs bootstrap/cache)
 RUN mkdir -p bootstrap/cache \
@@ -44,8 +45,14 @@ RUN mkdir -p bootstrap/cache \
         storage/framework/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies (cached unless composer.json/lock changes)
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Copy the rest of the application
+COPY . .
+
+# Run post-install scripts now that the full app is present
+RUN composer run-script post-autoload-dump
 
 # Build args — Railway must pass these at build time so Vite can bake them into the JS bundle
 ARG VITE_REVERB_APP_KEY
