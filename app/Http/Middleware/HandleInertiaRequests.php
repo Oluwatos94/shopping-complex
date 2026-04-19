@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 use ModulesShoppingComplex\Models\Media;
 use ModulesShoppingComplex\Models\Notification;
@@ -79,7 +80,7 @@ class HandleInertiaRequests extends Middleware
             'email' => $user->email,
             'role' => $user->role,
             'slug' => $user->slug,
-            'avatar' => $avatar ? asset('storage/'.$avatar->url) : null,
+            'avatar' => $avatar ? Storage::disk(config('media.storage_disk'))->url($avatar->url) : null,
         ];
 
         if ($user->role === 'vendor') {
