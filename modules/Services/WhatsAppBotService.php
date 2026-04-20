@@ -114,9 +114,9 @@ final readonly class WhatsAppBotService
             'search_query' => $query,
         ]);
 
-        $this->apiService->sendText(
+        $this->apiService->sendLocationRequest(
             $session->phone_number,
-            'Got it! Now please share your location so I can find vendors near you.'
+            "Got it! Tap the button below to share your *current location* (use the GPS dot — not a searched place name) so I can find vendors near you. 📍"
         );
     }
 
@@ -126,9 +126,9 @@ final readonly class WhatsAppBotService
     private function handleAwaitingLocation(WhatsAppSession $session, string $messageType, array $message): void
     {
         if ($messageType !== 'location') {
-            $this->apiService->sendText(
+            $this->apiService->sendLocationRequest(
                 $session->phone_number,
-                'Please share your location using the attachment icon in WhatsApp and selecting Location.'
+                "Please tap the button below to share your *current location* 📍\n\nMake sure to use the GPS dot (current location) — not a typed address — for the most accurate results."
             );
 
             return;
@@ -587,7 +587,7 @@ final readonly class WhatsAppBotService
 
     private function welcomeMessage(): string
     {
-        return "Welcome to Shopping Complex!\n\nTell me what product or service you're looking for and I'll find the nearest vendors for you.\n\nType HELP to see available commands.";
+        return "👋 Welcome to *Shopping Complex*!\n\nTo help you identify us easily, please save this number as *Shopping Complex* in your contacts.\n\nTell me what product or service you're looking for and I'll find the nearest vendors for you.\n\nType HELP to see available commands.";
     }
 
     private function helpMessage(): string
