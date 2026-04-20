@@ -14,7 +14,7 @@ const mockVendors = [
 
 const HeroSection: React.FC<Props> = ({ platformWhatsApp }) => {
     const whatsAppHref = platformWhatsApp
-        ? `https://wa.me/${platformWhatsApp.replace(/[^0-9]/g, '')}`
+        ? `https://wa.me/${platformWhatsApp.replace(/[^0-9]/g, '')}?text=Hi`
         : 'https://wa.me/';
 
     return (

@@ -45,6 +45,24 @@ final readonly class WhatsAppApiService
     }
 
     /**
+     * Send a location request interactive message.
+     * Renders a "Send Location" button the user can tap to share GPS coordinates.
+     */
+    public function sendLocationRequest(string $to, string $body): void
+    {
+        SendWhatsAppMessage::dispatch($to, [
+            'messaging_product' => 'whatsapp',
+            'to' => $to,
+            'type' => 'interactive',
+            'interactive' => [
+                'type' => 'location_request_message',
+                'body' => ['text' => $body],
+                'action' => ['name' => 'send_location'],
+            ],
+        ]);
+    }
+
+    /**
      * Send an interactive button message (used for BACK / MENU prompts).
      *
      * @param  array<int, array{id: string, title: string}>  $buttons
