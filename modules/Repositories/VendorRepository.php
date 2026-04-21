@@ -31,7 +31,6 @@ class VendorRepository extends BasePageRepository
         $addressTable = Address::getTableName();
         $query = User::query()
             ->where('role', 'vendor')
-            ->withCount(['products', 'products as active_products_count' => fn ($q) => $q->where('is_active', true)])
             ->with(['media', 'vendorOnboarding']);
 
         // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
@@ -52,10 +51,14 @@ class VendorRepository extends BasePageRepository
                 $query->whereRaw("{$haversine} <= ?", [$latitude, $longitude, $latitude, $radius]);
             }
         } else {
-            // Fallback when no location provided
+            // No location provided — distance is unknown
             $query->select('users.*')
-                ->selectRaw('0 as distance_km');
+                ->selectRaw('NULL as distance_km');
         }
+
+        // withCount must come AFTER select/selectRaw — calling select() replaces all columns
+        // including any subqueries withCount had already added, resulting in 0 counts.
+        $query->withCount(['products', 'products as active_products_count' => fn ($q) => $q->where('is_active', true)]);
 
         if ($search) {
             $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
