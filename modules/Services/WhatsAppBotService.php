@@ -368,7 +368,8 @@ final readonly class WhatsAppBotService
 
         $totalPages = $products->lastPage();
         $nav = $totalPages > 1 ? ' Reply NEXT for more.' : '';
-        $body = "Products from *{$vendor->business_name}* (page 1/{$totalPages}).{$nav}\nReply CONTACT for their WhatsApp number.";
+        $profileUrl = config('app.url').'/vendors/'.$vendor->slug;
+        $body = "Products from *{$vendor->business_name}* (page 1/{$totalPages}).{$nav}\nReply CONTACT for their WhatsApp number.\n\n🌐 View full profile:\n{$profileUrl}";
 
         /** @var \Illuminate\Support\Collection<int, Product> $items */
         $items = collect($products->items());
@@ -518,7 +519,8 @@ final readonly class WhatsAppBotService
             $nav[] = 'PREV';
         }
         $navText = ! empty($nav) ? ' Type '.implode(' or ', $nav).' to navigate.' : '';
-        $body = "Products from *{$vendor->business_name}* (page {$page}/{$totalPages}).{$navText}\nReply CONTACT for their WhatsApp number.";
+        $profileUrl = config('app.url').'/vendors/'.$vendor->slug;
+        $body = "Products from *{$vendor->business_name}* (page {$page}/{$totalPages}).{$navText}\nReply CONTACT for their WhatsApp number.\n\n🌐 View full profile:\n{$profileUrl}";
 
         /** @var \Illuminate\Support\Collection<int, Product> $items */
         $items = collect($products->items());
