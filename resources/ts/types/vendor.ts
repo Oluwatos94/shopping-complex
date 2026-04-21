@@ -95,8 +95,8 @@ export interface VendorSubscription {
  * Nearby Vendor type - extends Vendor with distance info
  */
 export interface NearbyVendor extends Vendor {
-    distance_km: number;
-    distance_formatted: string;
+    distance_km: number | null;
+    distance_formatted: string | null;
 }
 
 /**

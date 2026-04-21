@@ -8,10 +8,11 @@ interface VendorCardProps {
 export default function VendorCard({ vendor }: VendorCardProps) {
     const profileImage = vendor.business_logo || '/images/default-vendor.png';
 
-    // Format distance
-    const distance = vendor.distance_km < 1
-        ? `${Math.round(vendor.distance_km * 1000)}m away`
-        : `${vendor.distance_km.toFixed(1)} km away`;
+    const distance = vendor.distance_km !== null && vendor.distance_km !== undefined
+        ? vendor.distance_km < 1
+            ? `${Math.round(vendor.distance_km * 1000)}m away`
+            : `${vendor.distance_km.toFixed(1)} km away`
+        : null;
 
     // Determine status badge color
     const statusColor = vendor.is_online ? 'bg-green-500' : 'bg-gray-400';
@@ -57,18 +58,20 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                 </Link>
 
                 {/* Distance & Location */}
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2.5">
-                    <svg className="w-4 h-4 text-[#D49F89]" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium text-[#D49F89]">{distance}</span>
-                    {vendor.location?.address && (
-                        <>
-                            <span className="text-gray-400">•</span>
-                            <span className="truncate">{vendor.location.address.split(',')[0]}</span>
-                        </>
-                    )}
-                </div>
+                {(distance || vendor.location?.address) && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2.5">
+                        <svg className="w-4 h-4 text-[#D49F89]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        {distance && <span className="font-medium text-[#D49F89]">{distance}</span>}
+                        {vendor.location?.address && (
+                            <>
+                                {distance && <span className="text-gray-400">•</span>}
+                                <span className="truncate">{vendor.location.address.split(',')[0]}</span>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* Rating & Reviews */}
                 {vendor.rating && vendor.rating > 0 && (

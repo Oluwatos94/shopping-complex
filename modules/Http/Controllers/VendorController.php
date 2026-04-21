@@ -70,8 +70,8 @@ class VendorController extends Controller
                 'is_verified' => $vendor->isVendorVerified(),
                 'is_online' => true,
 
-                'distance_km' => round($vendor->distance_km ?? 0, 2),
-                'distance_formatted' => $this->formatDistance($vendor->distance_km ?? 0),
+                'distance_km' => $vendor->distance_km !== null ? round((float) $vendor->distance_km, 2) : null,
+                'distance_formatted' => $vendor->distance_km !== null ? $this->formatDistance((float) $vendor->distance_km) : null,
             ];
         });
 
