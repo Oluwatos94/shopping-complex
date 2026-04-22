@@ -25,6 +25,8 @@ class ProductRepository extends BasePageRepository
                 AllowedFilter::exact('category_id'),
                 AllowedFilter::partial('name'),
                 AllowedFilter::partial('description'),
+                AllowedFilter::callback('min_price', fn ($query, $value) => $query->where('price', '>=', (float) $value)),
+                AllowedFilter::callback('max_price', fn ($query, $value) => $query->where('price', '<=', (float) $value)),
             ])
             ->allowedSorts([
                 'id',

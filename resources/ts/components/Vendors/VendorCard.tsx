@@ -18,7 +18,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
     const statusColor = vendor.is_online ? 'bg-green-500' : 'bg-gray-400';
 
     return (
-        <div className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#D49F89]">
+        <div className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#D49F89] hover:scale-[1.02]">
             {/* Vendor Image/Logo */}
             <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img
@@ -49,7 +49,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
             </div>
 
             {/* Vendor Info */}
-            <div className="p-4">
+            <div className="p-4 pt-5">
                 {/* Business Name */}
                 <Link href={`/vendors/${vendor.slug}`}>
                     <h3 className="font-semibold text-[#272518] mb-1.5 line-clamp-1 group-hover:text-[#D49F89] transition-colors text-lg">

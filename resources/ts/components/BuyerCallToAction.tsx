@@ -144,7 +144,7 @@ const BuyerCallToAction: React.FC = () => {
                         <Link
                             href="/products"
                             onClick={() => setShowModal(false)}
-                            className="block w-full text-center bg-primary-peach text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-olive transition-colors duration-300"
+                            className="block w-full text-center bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-brown transition-colors duration-300"
                         >
                             Start Shopping Now
                         </Link>

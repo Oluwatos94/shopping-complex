@@ -15,28 +15,56 @@ function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #272518 0%, #523026 100%)" }}>
-            {/* Background image */}
-            <img
-                src="/images/Polo Park 2.jpg"
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover opacity-20"
-            />
-
-            {/* Auth Card */}
-            <div className="relative z-10 w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-
+        <div className="h-screen flex overflow-hidden">
+            {/* Left — brand image panel */}
+            <div className="hidden lg:flex lg:w-1/2 relative bg-primary-dark">
+                <img
+                    src="/images/Polo Park 2.jpg"
+                    alt="Shopping Complex"
+                    className="absolute inset-0 w-full h-full object-cover opacity-40"
+                />
+                <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
-                    <div className="flex items-center justify-center gap-2 mb-6">
-                        <img
-                            src="/logo/dark-mode-logo.svg"
-                            alt="Shopping Complex"
-                            className="h-8 w-auto"
-                            style={{ filter: "invert(1) sepia(1) saturate(0.5) hue-rotate(0deg)" }}
-                        />
-                        <span className="text-sm font-semibold text-primary-dark">Shopping Complex</span>
+                    <a href="/" className="flex items-center gap-3">
+                        <img src="/logo/dark-mode-logo.svg" alt="Shopping Complex" className="h-9 w-auto" />
+                        <span className="text-white font-bold text-lg tracking-wide">Shopping Complex</span>
+                    </a>
+
+                    {/* Tagline */}
+                    <div>
+                        <h2 className="text-4xl font-serif font-bold text-white leading-snug mb-4">
+                            Connect with vendors<br />near you, instantly.
+                        </h2>
+                        <p className="text-primary-light text-base leading-relaxed max-w-sm">
+                            Discover local vendors, browse products, and get what you need — all in one place.
+                        </p>
                     </div>
+
+                    {/* Bottom badge */}
+                    <p className="text-primary-light/60 text-sm">© {new Date().getFullYear()} Shopping Complex</p>
+                </div>
+            </div>
+
+            {/* Right — form panel */}
+            <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white">
+                {/* Mobile back button */}
+                <div className="lg:hidden w-full max-w-sm mb-6">
+                    <button
+                        type="button"
+                        onClick={() => window.history.back()}
+                        className="flex items-center gap-1.5 text-gray-500 hover:text-primary-dark text-sm transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                    </button>
+                </div>
+
+                <div className="w-full max-w-sm">
+                    {/* Heading */}
+                    <h1 className="text-2xl font-bold text-primary-dark mb-1">Welcome back</h1>
+                    <p className="text-gray-500 text-sm mb-8">Sign in to your account to continue</p>
 
                     {/* Tabs */}
                     <div className="flex bg-gray-100 rounded-full p-1 mb-6">
@@ -54,11 +82,6 @@ function Login() {
                             Sign Up
                         </button>
                     </div>
-
-                    {/* Subtitle */}
-                    <p className="text-gray-500 text-sm text-center mb-6 leading-relaxed">
-                        Sign in to access your account and discover quality vendors near you.
-                    </p>
 
                     {/* Error / Flash messages */}
                     {(errors as any).general && (
@@ -89,17 +112,14 @@ function Login() {
                     {/* Divider */}
                     <div className="flex items-center gap-3 mb-5">
                         <div className="flex-1 h-px bg-gray-200" />
-                        <span className="text-gray-400 text-xs">or</span>
+                        <span className="text-gray-400 text-xs">or sign in with email</span>
                         <div className="flex-1 h-px bg-gray-200" />
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Email */}
                         <div>
-                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">
-                                Email
-                            </label>
+                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">Email</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,11 +138,8 @@ function Login() {
                             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                         </div>
 
-                        {/* Password */}
                         <div>
-                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">
-                                Password
-                            </label>
+                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">Password</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,14 +174,12 @@ function Login() {
                             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                         </div>
 
-                        {/* Forgot password */}
                         <div className="text-right -mt-1">
                             <a href="/password/reset" className="text-primary-olive hover:text-primary-dark text-xs font-medium transition-colors">
                                 Forgot password?
                             </a>
                         </div>
 
-                        {/* Submit */}
                         <button
                             type="submit"
                             disabled={processing}
@@ -178,18 +193,15 @@ function Login() {
                                     </svg>
                                     Signing in...
                                 </span>
-                            ) : (
-                                "Continue"
-                            )}
+                            ) : "Sign In"}
                         </button>
                     </form>
 
-                    {/* Terms */}
-                    <p className="text-gray-400 text-xs text-center mt-5 leading-relaxed">
+                    <p className="text-gray-400 text-xs text-center mt-6 leading-relaxed">
                         By continuing, you agree to our{" "}
-                        <a href="#" className="text-primary-olive hover:text-primary-dark underline transition-colors">Terms of Service</a>
+                        <a href="/terms" className="text-primary-olive hover:text-primary-dark underline transition-colors">Terms of Service</a>
                         {" "}and{" "}
-                        <a href="#" className="text-primary-olive hover:text-primary-dark underline transition-colors">Privacy Policy</a>
+                        <a href="/privacy" className="text-primary-olive hover:text-primary-dark underline transition-colors">Privacy Policy</a>
                     </p>
                 </div>
             </div>

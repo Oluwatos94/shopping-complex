@@ -116,7 +116,7 @@ final readonly class WhatsAppBotService
 
         $this->apiService->sendLocationRequest(
             $session->phone_number,
-            "Got it! Tap the button below to share your *current location* (use the GPS dot — not a searched place name) so I can find vendors near you. 📍"
+            'Got it! Tap the button below to share your *current location* (use the GPS dot — not a searched place name) so I can find vendors near you. 📍'
         );
     }
 
@@ -563,10 +563,7 @@ final readonly class WhatsAppBotService
 
     private function productDescription(Product $product): string
     {
-        $price = '₦'.number_format((float) $product->price, 0);
-        $stock = ((int) $product->stock) > 0 ? 'In stock' : 'Out of stock';
-
-        return "{$price} · {$stock}";
+        return '₦'.number_format((float) $product->price, 0);
     }
 
     /**

@@ -26,7 +26,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
 
             <div className="min-h-screen bg-gray-100">
                 {/* Top Navigation Bar */}
-                <nav className="bg-white shadow-sm border-b border-gray-200">
+                <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
                     <div className="container mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
@@ -53,7 +53,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
                                 ) : (
                                     <a
                                         href="/login"
-                                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                                        className="text-sm font-semibold px-4 py-2 bg-[#272518] hover:bg-[#3a3520] text-white rounded-lg transition-colors"
                                     >
                                         Sign In
                                     </a>

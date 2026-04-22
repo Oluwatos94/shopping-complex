@@ -143,7 +143,7 @@ const Header: React.FC = () => {
                         ) : (
                             <Link
                                 href="/login"
-                                className="bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium"
+                                className="bg-primary-dark text-white px-6 py-2 rounded-lg hover:bg-primary-brown transition-colors duration-300 font-medium"
                             >
                                 Login
                             </Link>
@@ -247,7 +247,7 @@ const Header: React.FC = () => {
                         {!user && (
                             <Link
                                 href="/login"
-                                className="block bg-primary-olive text-white px-6 py-2 rounded-lg hover:bg-primary-peach transition-colors duration-300 font-medium text-center"
+                                className="block bg-primary-dark text-white px-6 py-2 rounded-lg hover:bg-primary-brown transition-colors duration-300 font-medium text-center"
                             >
                                 Login
                             </Link>

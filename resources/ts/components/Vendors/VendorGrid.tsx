@@ -9,7 +9,7 @@ interface VendorGridProps {
 export default function VendorGrid({ vendors, isLoading = false }: VendorGridProps) {
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm animate-pulse">
                         <div className="aspect-video bg-gray-200"></div>
@@ -50,7 +50,7 @@ export default function VendorGrid({ vendors, isLoading = false }: VendorGridPro
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {vendors.map((vendor) => (
                 <VendorCard key={vendor.id} vendor={vendor} />
             ))}

@@ -67,7 +67,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                 {/* Main Content */}
                 <div className={isOwner ? 'md:ml-[100px]' : ''}>
                     {/* Cover / Header Area */}
-                    <div className="bg-gradient-to-br from-primary-dark via-primary-brown to-primary-dark">
+                    <div className="bg-primary-dark">
                         {/* Top Nav (only for visitors) */}
                         {!isOwner && (
                             <div className="container mx-auto px-4 py-4">
@@ -161,10 +161,10 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                     <button
                                         onClick={handleToggleFollow}
                                         disabled={followLoading}
-                                        className={`px-8 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${
+                                        className={`px-8 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
                                             isFollowing
-                                                ? 'bg-white/10 text-primary-light border border-primary-light hover:bg-white/20'
-                                                : 'bg-primary-peach text-primary-dark hover:bg-primary-light'
+                                                ? 'bg-white/10 text-white border border-white/40 hover:bg-white/20'
+                                                : 'bg-white text-primary-dark hover:bg-white/20 hover:text-white'
                                         }`}
                                     >
                                         {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
@@ -173,7 +173,7 @@ export default function VendorProfilePage({ vendor, products, stats, isOwner, is
                                 {!isOwner && (
                                     <button
                                         onClick={handleMessage}
-                                        className="px-8 py-2 border border-primary-light text-primary-light rounded-lg font-semibold text-sm hover:bg-white/10 transition-colors"
+                                        className="px-8 py-2 border border-white/40 text-white rounded-lg font-semibold text-sm hover:bg-white/10 transition-all"
                                     >
                                         Message
                                     </button>

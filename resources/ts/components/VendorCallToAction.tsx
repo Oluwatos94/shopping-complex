@@ -24,13 +24,13 @@ const VendorCallToAction: React.FC = () => {
                         <div className="flex flex-row gap-3">
                             <Link
                                 href="/vendor/register"
-                                className="flex-1 inline-flex items-center justify-center bg-primary-olive text-white px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-peach transition-all duration-300 shadow-lg"
+                                className="flex-1 inline-flex items-center justify-center bg-primary-dark text-white px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-brown transition-all duration-300 shadow-lg"
                             >
                                 Register as Vendor
                             </Link>
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-primary-olive text-primary-olive px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-olive hover:text-white transition-all duration-300"
+                                className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-primary-dark text-primary-dark px-4 py-3.5 sm:px-8 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-primary-dark hover:text-white transition-all duration-300"
                             >
                                 Learn More
                             </button>
@@ -129,7 +129,7 @@ const VendorCallToAction: React.FC = () => {
                         <Link
                             href="/vendor/register"
                             onClick={() => setShowModal(false)}
-                            className="block w-full text-center bg-primary-olive text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-peach transition-colors duration-300"
+                            className="block w-full text-center bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-brown transition-colors duration-300"
                         >
                             Register as a Vendor
                         </Link>
