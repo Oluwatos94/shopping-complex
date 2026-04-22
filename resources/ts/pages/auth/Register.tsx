@@ -25,31 +25,59 @@ function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #272518 0%, #523026 100%)" }}>
-            {/* Background image */}
-            <img
-                src="/images/Polo Park 2.jpg"
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover opacity-20"
-            />
-
-            {/* Auth Card */}
-            <div className="relative z-10 w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-
+        <div className="h-screen flex overflow-hidden">
+            {/* Left — brand image panel */}
+            <div className="hidden lg:flex lg:w-1/2 relative bg-primary-dark">
+                <img
+                    src="/images/Polo Park 2.jpg"
+                    alt="Shopping Complex"
+                    className="absolute inset-0 w-full h-full object-cover opacity-40"
+                />
+                <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
-                    <div className="flex items-center justify-center gap-2 mb-6">
-                        <img
-                            src="/logo/dark-mode-logo.svg"
-                            alt="Shopping Complex"
-                            className="h-8 w-auto"
-                            style={{ filter: "invert(1) sepia(1) saturate(0.5) hue-rotate(0deg)" }}
-                        />
-                        <span className="text-sm font-semibold text-primary-dark">Shopping Complex</span>
+                    <a href="/" className="flex items-center gap-3">
+                        <img src="/logo/dark-mode-logo.svg" alt="Shopping Complex" className="h-9 w-auto" />
+                        <span className="text-white font-bold text-lg tracking-wide">Shopping Complex</span>
+                    </a>
+
+                    {/* Tagline */}
+                    <div>
+                        <h2 className="text-4xl font-serif font-bold text-white leading-snug mb-4">
+                            Join thousands of<br />shoppers finding<br />local vendors.
+                        </h2>
+                        <p className="text-primary-light text-base leading-relaxed max-w-sm">
+                            Create a free account and start discovering vendors near you in seconds.
+                        </p>
                     </div>
 
+                    {/* Bottom badge */}
+                    <p className="text-primary-light/60 text-sm">© {new Date().getFullYear()} Shopping Complex</p>
+                </div>
+            </div>
+
+            {/* Right — form panel */}
+            <div className="flex-1 flex flex-col justify-center items-center px-6 py-4 lg:py-12 bg-white">
+                {/* Mobile back button */}
+                <div className="lg:hidden w-full max-w-sm mb-3">
+                    <button
+                        type="button"
+                        onClick={() => window.history.back()}
+                        className="flex items-center gap-1.5 text-gray-500 hover:text-primary-dark text-sm transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                    </button>
+                </div>
+
+                <div className="w-full max-w-sm">
+                    {/* Heading */}
+                    <h1 className="text-2xl font-bold text-primary-dark mb-1">Create an account</h1>
+                    <p className="text-gray-500 text-sm mb-4 lg:mb-8">Sign up to start discovering local vendors near you</p>
+
                     {/* Tabs */}
-                    <div className="flex bg-gray-100 rounded-full p-1 mb-6">
+                    <div className="flex bg-gray-100 rounded-full p-1 mb-4 lg:mb-6">
                         <button
                             type="button"
                             onClick={() => router.visit("/login")}
@@ -65,15 +93,10 @@ function Register() {
                         </button>
                     </div>
 
-                    {/* Subtitle */}
-                    <p className="text-gray-500 text-sm text-center mb-6 leading-relaxed">
-                        Join us and enjoy seamless shopping, exclusive offers, and easy access to your favorite stores.
-                    </p>
-
                     {/* Google Sign Up */}
                     <a
                         href="/auth/google"
-                        className="flex items-center justify-center gap-3 w-full py-3 px-4 bg-white hover:bg-gray-50 border border-gray-200 text-primary-dark rounded-xl font-medium transition-all mb-5 shadow-sm"
+                        className="flex items-center justify-center gap-3 w-full py-3 px-4 bg-white hover:bg-gray-50 border border-gray-200 text-primary-dark rounded-xl font-medium transition-all mb-3 lg:mb-5 shadow-sm"
                     >
                         <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -85,19 +108,17 @@ function Register() {
                     </a>
 
                     {/* Divider */}
-                    <div className="flex items-center gap-3 mb-5">
+                    <div className="flex items-center gap-3 mb-3 lg:mb-5">
                         <div className="flex-1 h-px bg-gray-200" />
-                        <span className="text-gray-400 text-xs">or</span>
+                        <span className="text-gray-400 text-xs">or sign up with email</span>
                         <div className="flex-1 h-px bg-gray-200" />
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-4">
                         {/* Email */}
                         <div>
-                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">
-                                Email
-                            </label>
+                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">Email</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,9 +139,7 @@ function Register() {
 
                         {/* Password */}
                         <div>
-                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">
-                                Password
-                            </label>
+                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">Password</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,9 +185,7 @@ function Register() {
 
                         {/* Confirm Password */}
                         <div>
-                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">
-                                Confirm Password
-                            </label>
+                            <label className="block text-primary-dark text-xs font-semibold mb-1.5">Confirm Password</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,18 +234,15 @@ function Register() {
                                     </svg>
                                     Creating account...
                                 </span>
-                            ) : (
-                                "Continue"
-                            )}
+                            ) : "Create Account"}
                         </button>
                     </form>
 
-                    {/* Terms */}
-                    <p className="text-gray-400 text-xs text-center mt-5 leading-relaxed">
+                    <p className="text-gray-400 text-xs text-center mt-3 lg:mt-6 leading-relaxed">
                         By continuing, you agree to our{" "}
-                        <a href="#" className="text-primary-olive hover:text-primary-dark underline transition-colors">Terms of Service</a>
+                        <a href="/terms" className="text-primary-olive hover:text-primary-dark underline transition-colors">Terms of Service</a>
                         {" "}and{" "}
-                        <a href="#" className="text-primary-olive hover:text-primary-dark underline transition-colors">Privacy Policy</a>
+                        <a href="/privacy" className="text-primary-olive hover:text-primary-dark underline transition-colors">Privacy Policy</a>
                     </p>
                 </div>
             </div>

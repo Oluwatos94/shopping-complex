@@ -19,17 +19,14 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
         handleSearch,
         handleCategoryChange,
         handlePriceChange,
-        handleRatingChange,
         handleSortChange,
         clearFilters,
     } = useProducts();
 
     const sortOptions: { value: ProductSortOption; label: string }[] = [
         { value: 'newest', label: 'Newest' },
-        { value: 'popular', label: 'Most Popular' },
         { value: 'price_asc', label: 'Price: Low to High' },
         { value: 'price_desc', label: 'Price: High to Low' },
-        { value: 'rating', label: 'Highest Rated' },
         { value: 'name_asc', label: 'Name: A-Z' },
         { value: 'name_desc', label: 'Name: Z-A' },
     ];
@@ -40,7 +37,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
 
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-200">
+                <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         <a
                             href="/"
@@ -122,16 +119,14 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                     <div className="flex gap-8">
                         {/* Desktop Sidebar */}
                         <aside className="hidden lg:block w-64 flex-shrink-0">
-                            <div className="sticky top-4">
+                            <div className="sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
                                 <FilterSidebar
                                     categories={categories}
                                     selectedCategory={filters.category_id}
                                     minPrice={filters.min_price}
                                     maxPrice={filters.max_price}
-                                    selectedRating={undefined}
                                     onCategoryChange={handleCategoryChange}
                                     onPriceChange={handlePriceChange}
-                                    onRatingChange={handleRatingChange}
                                     onClearFilters={clearFilters}
                                 />
                             </div>
@@ -233,17 +228,12 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                                     selectedCategory={filters.category_id}
                                     minPrice={filters.min_price}
                                     maxPrice={filters.max_price}
-                                    selectedRating={undefined}
                                     onCategoryChange={(cat) => {
                                         handleCategoryChange(cat);
                                         setShowMobileFilters(false);
                                     }}
                                     onPriceChange={(min, max) => {
                                         handlePriceChange(min, max);
-                                        setShowMobileFilters(false);
-                                    }}
-                                    onRatingChange={(rating) => {
-                                        handleRatingChange(rating);
                                         setShowMobileFilters(false);
                                     }}
                                     onClearFilters={() => {

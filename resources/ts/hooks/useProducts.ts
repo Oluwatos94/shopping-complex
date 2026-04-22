@@ -90,12 +90,6 @@ export function useProducts() {
         updateFilters({ min_price: min, max_price: max });
     }, [updateFilters]);
 
-    const handleRatingChange = useCallback((rating?: number) => {
-        // Note: Backend needs to support min_rating filter
-        // For now, this is a placeholder
-        console.log('Rating filter:', rating);
-    }, []);
-
     const handleSortChange = useCallback((sortBy: ProductSortOption) => {
         updateFilters({ sort_by: sortBy });
     }, [updateFilters]);
@@ -122,7 +116,6 @@ export function useProducts() {
         handleSearch,
         handleCategoryChange,
         handlePriceChange,
-        handleRatingChange,
         handleSortChange,
         handleStockFilterChange,
         clearFilters,

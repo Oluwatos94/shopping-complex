@@ -146,7 +146,7 @@ const CategoriesSection: React.FC = () => {
                 <div className="text-center mt-12">
                     <Link
                         href="/categories"
-                        className="inline-flex items-center bg-primary-olive text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-peach transition-all duration-300 hover:scale-105 shadow-lg"
+                        className="inline-flex items-center bg-primary-dark text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-brown transition-all duration-300 hover:scale-105 shadow-lg"
                     >
                         View All Categories
                     </Link>

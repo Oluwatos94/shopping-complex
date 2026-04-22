@@ -56,9 +56,12 @@ class VendorRepository extends BasePageRepository
                 ->selectRaw('NULL as distance_km');
         }
 
-        // withCount must come AFTER select/selectRaw — calling select() replaces all columns
-        // including any subqueries withCount had already added, resulting in 0 counts.
+        // withCount/withAvg must come AFTER select/selectRaw to avoid being cleared
         $query->withCount(['products', 'products as active_products_count' => fn ($q) => $q->where('is_active', true)]);
+
+        if ($sortBy === 'rating') {
+            $query->withAvg('reviews', 'rating');
+        }
 
         if ($search) {
             $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
@@ -83,10 +86,9 @@ class VendorRepository extends BasePageRepository
             'distance' => $latitude && $longitude
                 ? $query->orderBy('distance_km', 'asc')
                 : $query->orderBy('created_at', 'desc'),
-            'rating' => $query->orderBy('created_at', 'desc'), // TODO: Use actual rating when reviews are implemented
-            'response_time' => $query->orderBy('created_at', 'desc'), // TODO: Add response_time field
-            'newest' => $query->orderBy('created_at', 'desc'),
-            default => $query->orderBy('created_at', 'desc'),
+            'rating' => $query->orderByDesc('reviews_avg_rating')->orderByDesc('created_at'),
+            'newest'  => $query->orderBy('created_at', 'desc'),
+            default   => $query->orderBy('created_at', 'desc'),
         };
 
         return $query->paginate($perPage)->withQueryString();

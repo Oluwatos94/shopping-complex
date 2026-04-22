@@ -139,7 +139,7 @@ const FAQSection: React.FC = () => {
                             <div className="flex flex-row gap-3">
                                 <Link
                                     href="/vendor/register"
-                                    className="flex-1 inline-flex items-center justify-center bg-primary-olive text-white px-4 py-3.5 sm:px-7 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary-peach transition-colors duration-300 shadow-lg"
+                                    className="flex-1 inline-flex items-center justify-center bg-primary-dark text-white px-4 py-3.5 sm:px-7 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary-brown transition-colors duration-300 shadow-lg"
                                 >
                                     Become a Vendor
                                 </Link>
