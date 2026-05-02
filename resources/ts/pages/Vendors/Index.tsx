@@ -147,7 +147,11 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                             {/* Radius */}
                             <select
                                 value={radius}
-                                onChange={(e) => setRadius(Number(e.target.value))}
+                                onChange={(e) => {
+                                    const newRadius = Number(e.target.value);
+                                    setRadius(newRadius);
+                                    handleSearch({ radius: newRadius });
+                                }}
                                 className="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D49F89]/30 focus:border-[#D49F89] bg-white hidden sm:block"
                             >
                                 <option value={1}>1 km</option>
@@ -160,7 +164,11 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                             {/* Sort */}
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as VendorSortOption)}
+                                onChange={(e) => {
+                                    const newSort = e.target.value as VendorSortOption;
+                                    setSortBy(newSort);
+                                    handleSearch({ sort_by: newSort });
+                                }}
                                 className="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D49F89]/30 focus:border-[#D49F89] bg-white hidden sm:block"
                             >
                                 <option value="distance">Nearest</option>
@@ -184,7 +192,11 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                         <div className="flex gap-2 mt-2 sm:hidden">
                             <select
                                 value={radius}
-                                onChange={(e) => setRadius(Number(e.target.value))}
+                                onChange={(e) => {
+                                    const newRadius = Number(e.target.value);
+                                    setRadius(newRadius);
+                                    handleSearch({ radius: newRadius });
+                                }}
                                 className="flex-1 h-9 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#D49F89] bg-white"
                             >
                                 <option value={1}>1 km</option>
@@ -195,7 +207,11 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                             </select>
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as VendorSortOption)}
+                                onChange={(e) => {
+                                    const newSort = e.target.value as VendorSortOption;
+                                    setSortBy(newSort);
+                                    handleSearch({ sort_by: newSort });
+                                }}
                                 className="flex-1 h-9 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#D49F89] bg-white"
                             >
                                 <option value="distance">Nearest</option>

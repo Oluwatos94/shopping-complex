@@ -87,8 +87,8 @@ class VendorRepository extends BasePageRepository
                 ? $query->orderBy('distance_km', 'asc')
                 : $query->orderBy('created_at', 'desc'),
             'rating' => $query->orderByDesc('reviews_avg_rating')->orderByDesc('created_at'),
-            'newest'  => $query->orderBy('created_at', 'desc'),
-            default   => $query->orderBy('created_at', 'desc'),
+            'newest' => $query->orderBy('created_at', 'desc'),
+            default => $query->orderBy('created_at', 'desc'),
         };
 
         return $query->paginate($perPage)->withQueryString();

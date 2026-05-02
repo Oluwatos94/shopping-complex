@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { PaginatedProducts, Category, ProductSortOption } from '@/types/product';
 import ProductGrid from '@/components/Products/ProductGrid';
 import FilterSidebar from '@/components/Products/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
+import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
 
 interface ProductsPageProps {
     products: PaginatedProducts;
@@ -31,29 +32,25 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
         { value: 'name_desc', label: 'Name: Z-A' },
     ];
 
+    const { auth } = usePage<{ auth: { user: any } | null }>().props;
+
     return (
-        <>
+        <AuthenticatedLayout user={(auth as any)?.user} title="Products - Shopping Complex" className="!p-0 !max-w-none">
             <Head title="Products - Shopping Complex" />
 
-            <div className="min-h-screen bg-gray-50">
-                {/* Header */}
-                <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                        <a
-                            href="/"
-                            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-800 transition-colors mb-4"
-                        >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Back to Home
-                        </a>
-                        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-4">
-                            Products
-                        </h1>
+            <div className="bg-gray-50">
+                {/* Sticky search + sort bar */}
+                <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                        <div className="flex items-center gap-3 mb-3">
+                            <h1 className="text-base font-semibold text-gray-900">Products</h1>
+                            <span className="text-sm text-gray-400 hidden sm:inline">
+                                {products.total} {products.total === 1 ? 'product' : 'products'} found
+                            </span>
+                        </div>
 
                         {/* Search and Sort */}
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             {/* Search Input */}
                             <div className="flex-1">
                                 <div className="relative">
@@ -115,7 +112,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                 </div>
 
                 {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex gap-8">
                         {/* Desktop Sidebar */}
                         <aside className="hidden lg:block w-64 flex-shrink-0">
@@ -246,6 +243,6 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                     </div>
                 )}
             </div>
-        </>
+        </AuthenticatedLayout>
     );
 }

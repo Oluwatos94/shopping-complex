@@ -83,6 +83,65 @@ class MediaService
     }
 
     /**
+     * Delete all media records (and files) for a given model
+     */
+    public function deleteMediaForModel(string $modelType, int $modelId): void
+    {
+        $mediaItems = $this->mediaRepository->getForModel($modelType, $modelId);
+        foreach ($mediaItems as $media) {
+            $this->deleteMedia($media->id);
+        }
+    }
+
+    /**
+     * Upload a video file for a model (stored directly, no image processing)
+     */
+    public function uploadVideo(
+        UploadedFile $file,
+        string $modelType,
+        int $modelId,
+        string $type = 'product_video'
+    ): array {
+        try {
+            $storagePath = config('media.storage_path', 'uploads');
+            $filename = $storagePath.'/'.Str::uuid().'.'.$file->getClientOriginalExtension();
+
+            $directory = dirname($filename);
+            if (! Storage::disk(config('media.storage_disk'))->exists($directory)) {
+                Storage::disk(config('media.storage_disk'))->makeDirectory($directory);
+            }
+
+            $stored = Storage::disk(config('media.storage_disk'))->putFileAs(
+                $directory,
+                $file,
+                basename($filename)
+            );
+
+            if (! $stored) {
+                throw new Exception('Failed to store video to disk');
+            }
+
+            try {
+                $media = $this->mediaRepository->create([
+                    'url' => $filename,
+                    'type' => $type,
+                    'model_type' => $modelType,
+                    'model_id' => $modelId,
+                ]);
+
+                return ['success' => true, 'media' => $media];
+            } catch (\Exception $e) {
+                if (Storage::disk(config('media.storage_disk'))->exists($filename)) {
+                    Storage::disk(config('media.storage_disk'))->delete($filename);
+                }
+                throw $e;
+            }
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => 'Failed to upload video: '.$e->getMessage()];
+        }
+    }
+
+    /**
      * Upload multiple images for a model
      *
      * @param  array<UploadedFile>  $files

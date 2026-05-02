@@ -23,13 +23,16 @@ class UploadProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isUpdate = $this->route('productId') !== null;
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:2000'],
             'price' => ['required', 'numeric', 'min:0'],
             'pay_on_delivery' => ['boolean'],
             'is_returnable' => ['boolean'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
+            'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:102400'],
         ];
     }
 
@@ -48,10 +51,11 @@ class UploadProductRequest extends FormRequest
             'price.required' => 'Price is required.',
             'price.numeric' => 'Price must be a number.',
             'price.min' => 'Price cannot be negative.',
-            'image.required' => 'Product image is required.',
             'image.image' => 'The file must be an image.',
             'image.mimes' => 'The image must be a JPG, PNG, or WebP file.',
             'image.max' => 'The image must not exceed 10MB.',
+            'video.mimes' => 'The video must be MP4, MOV, AVI, WebM, or MKV.',
+            'video.max' => 'The video must not exceed 100MB.',
         ];
     }
 }
