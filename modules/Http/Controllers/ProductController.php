@@ -42,6 +42,7 @@ class ProductController extends Controller
             $product->images = $product->media->map(fn ($media) => [
                 'id' => $media->id,
                 'url' => $this->mediaService->getMediaUrl($media),
+                'type' => $media->type,
                 'is_primary' => true,
             ])->values()->all();
 
@@ -101,7 +102,6 @@ class ProductController extends Controller
         $vendor->loadCount('products');
 
         $vendorStats = $this->reviewService->getVendorRatingStats($vendor->id);
-        $vendorReviews = $this->reviewService->getVendorReviews($vendor->id, 5);
 
         // Get related products from the same category (excluding current product)
         $relatedProducts = Product::where('category_id', $product->category_id)
@@ -134,17 +134,7 @@ class ProductController extends Controller
             'products_count' => $vendor->products_count ?? 0,
             'is_verified' => $vendor->isVendorVerified(),
             'is_online' => false,
-        ];
-
-        // Transform reviews for frontend
-        $reviewsData = [
-            'reviews' => $vendorReviews->items(),
-            'meta' => [
-                'current_page' => $vendorReviews->currentPage(),
-                'last_page' => $vendorReviews->lastPage(),
-                'per_page' => $vendorReviews->perPage(),
-                'total' => $vendorReviews->total(),
-            ],
+            'whatsapp_number' => $vendor->whatsapp_number ?? null,
         ];
 
         $relatedProductsData = $relatedProducts->map(function ($related) {
@@ -173,7 +163,6 @@ class ProductController extends Controller
             'product' => $productData,
             'vendor' => $vendorData,
             'vendor_stats' => $vendorStats,
-            'vendor_reviews' => $reviewsData,
             'related_products' => $relatedProductsData,
         ]);
     }

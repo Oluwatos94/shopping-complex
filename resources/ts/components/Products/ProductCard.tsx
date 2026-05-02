@@ -6,7 +6,9 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-    const primaryImage = product.images?.find((img) => img.is_primary)?.url || product.images?.[0]?.url || '/images/placeholder.png';
+    const primaryMedia = product.images?.find((img) => img.is_primary) ?? product.images?.[0];
+    const primaryImage = primaryMedia?.url ?? '/images/placeholder.png';
+    const isVideo = primaryMedia?.type === 'product_video';
 
     // Convert prices to numbers (they come as strings from Laravel)
     const price = Number(product.price);
@@ -18,13 +20,23 @@ export default function ProductCard({ product }: ProductCardProps) {
             href={`/products/${product.slug}`}
             className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
         >
-            {/* Product Image */}
+            {/* Product Media */}
             <div className="relative aspect-square overflow-hidden bg-gray-100">
-                <img
-                    src={primaryImage}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                {isVideo ? (
+                    <video
+                        src={primaryImage}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                    />
+                ) : (
+                    <img
+                        src={primaryImage}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                )}
 
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {hasDiscount && salePrice && (

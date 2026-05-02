@@ -208,6 +208,8 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
     Route::post('/register', [VendorController::class, 'storeRegistration'])->name('vendor.register.store');
     Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
+    Route::post('/products/{productId}/update', [VendorController::class, 'updateProduct'])->name('vendor.products.update');
+    Route::delete('/products/{productId}', [VendorController::class, 'deleteProduct'])->name('vendor.products.delete');
     Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
     Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
 });

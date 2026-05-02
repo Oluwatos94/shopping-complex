@@ -46,6 +46,7 @@ export interface Vendor extends BaseUser {
     is_online: boolean;
     available_hours?: string | null;
     location?: VendorLocation;
+    whatsapp_number?: string | null;
 }
 
 /**

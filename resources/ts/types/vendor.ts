@@ -17,6 +17,7 @@ export interface VendorProfile {
     business_logo?: string;
     is_verified: boolean;
     created_at: string;
+    whatsapp_number?: string | null;
 }
 
 /**

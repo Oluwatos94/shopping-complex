@@ -69,6 +69,7 @@ class VendorController extends Controller
                 'products_count' => $vendor->products_count ?? 0,
                 'is_verified' => $vendor->isVendorVerified(),
                 'is_online' => true,
+                'whatsapp_number' => $vendor->whatsapp_number ?? null,
 
                 'distance_km' => $vendor->distance_km !== null ? round((float) $vendor->distance_km, 2) : null,
                 'distance_formatted' => $vendor->distance_km !== null ? $this->formatDistance((float) $vendor->distance_km) : null,
@@ -156,6 +157,7 @@ class VendorController extends Controller
             $product->images = $product->media->map(fn ($media) => [
                 'id' => $media->id,
                 'url' => $this->mediaService->getMediaUrl($media),
+                'type' => $media->type,
                 'is_primary' => true,
             ])->values()->all();
 
@@ -178,6 +180,15 @@ class VendorController extends Controller
             $this->analyticsService->recordProfileView($vendorId, $authUser?->id, request()->ip());
         }
 
+        // Reviews
+        $vendorReviews = $this->reviewService->getVendorReviews($vendorId, 5);
+        $canReview = false;
+        $hasReviewed = false;
+        if ($authUser && $authUser->role === 'customer') {
+            $canReview = $this->reviewService->canCustomerReviewVendor($authUser->id, $vendorId);
+            $hasReviewed = $this->reviewService->hasReviewedVendor($authUser->id, $vendorId);
+        }
+
         return Inertia::render('Vendor/Profile', [
             'vendor' => [
                 'id' => $vendor->id,
@@ -189,6 +200,7 @@ class VendorController extends Controller
                 'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
                 'is_verified' => $vendor->isVendorVerified(),
                 'created_at' => $vendor->created_at->toISOString(),
+                'whatsapp_number' => $vendor->whatsapp_number ?? null,
             ],
             'products' => $products,
             'stats' => [
@@ -200,6 +212,17 @@ class VendorController extends Controller
                     ? ($this->subscriptionService->getVendorSubscription($vendor->id)?->plan->product_limit ?? null)
                     : null,
             ],
+            'vendor_reviews' => [
+                'reviews' => $vendorReviews->items(),
+                'meta' => [
+                    'current_page' => $vendorReviews->currentPage(),
+                    'last_page' => $vendorReviews->lastPage(),
+                    'per_page' => $vendorReviews->perPage(),
+                    'total' => $vendorReviews->total(),
+                ],
+            ],
+            'can_review' => $canReview,
+            'has_reviewed' => $hasReviewed,
             'isOwner' => $isOwner,
             'isFollowing' => $isFollowing,
         ]);
@@ -236,17 +259,73 @@ class VendorController extends Controller
                 'is_returnable' => $request->boolean('is_returnable'),
             ]);
 
-            $this->mediaService->uploadImage(
-                file: $request->file('image'),
-                modelType: Product::class,
-                modelId: $product->id,
-                type: 'product_image'
-            );
+            if ($request->hasFile('video')) {
+                $this->mediaService->uploadVideo(
+                    file: $request->file('video'),
+                    modelType: Product::class,
+                    modelId: $product->id,
+                    type: 'product_video'
+                );
+            } elseif ($request->hasFile('image')) {
+                $this->mediaService->uploadImage(
+                    file: $request->file('image'),
+                    modelType: Product::class,
+                    modelId: $product->id,
+                    type: 'product_image'
+                );
+            }
 
             return $product;
         });
 
         return redirect()->back()->with('success', 'Product uploaded successfully.');
+    }
+
+    public function updateProduct(UploadProductRequest $request, int $productId): RedirectResponse
+    {
+        $user = Auth::user();
+        $product = Product::where('id', $productId)->where('vendor_id', $user->id)->firstOrFail();
+
+        DB::transaction(function () use ($request, $product) {
+            $product->update([
+                'name' => $request->input('name'),
+                'description' => $request->input('description'),
+                'price' => $request->input('price'),
+                'pay_on_delivery' => $request->boolean('pay_on_delivery'),
+                'is_returnable' => $request->boolean('is_returnable'),
+            ]);
+
+            if ($request->hasFile('video')) {
+                $this->mediaService->deleteMediaForModel(Product::class, $product->id);
+                $this->mediaService->uploadVideo(
+                    file: $request->file('video'),
+                    modelType: Product::class,
+                    modelId: $product->id,
+                    type: 'product_video'
+                );
+            } elseif ($request->hasFile('image')) {
+                $this->mediaService->deleteMediaForModel(Product::class, $product->id);
+                $this->mediaService->uploadImage(
+                    file: $request->file('image'),
+                    modelType: Product::class,
+                    modelId: $product->id,
+                    type: 'product_image'
+                );
+            }
+        });
+
+        return redirect()->back()->with('success', 'Product updated successfully.');
+    }
+
+    public function deleteProduct(int $productId): RedirectResponse
+    {
+        $user = Auth::user();
+        $product = Product::where('id', $productId)->where('vendor_id', $user->id)->firstOrFail();
+
+        $this->mediaService->deleteMediaForModel(Product::class, $product->id);
+        $product->delete();
+
+        return redirect()->back()->with('success', 'Product deleted successfully.');
     }
 
     private function findVendorBySlug(string $slug): User
