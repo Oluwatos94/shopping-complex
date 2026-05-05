@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { PaginatedProducts, Category, ProductSortOption } from '@/types/product';
-import ProductGrid from '@/components/Products/ProductGrid';
-import FilterSidebar from '@/components/Products/FilterSidebar';
+import ProductGrid from '@/components/Products/partials/ProductGrid';
+import FilterSidebar from '@/components/Products/partials/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
 import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
 
@@ -43,6 +43,15 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                 <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                         <div className="flex items-center gap-3 mb-3">
+                            <button
+                                onClick={() => window.history.back()}
+                                className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600 flex-shrink-0"
+                                aria-label="Go back"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
                             <h1 className="text-base font-semibold text-gray-900">Products</h1>
                             <span className="text-sm text-gray-400 hidden sm:inline">
                                 {products.total} {products.total === 1 ? 'product' : 'products'} found
@@ -52,17 +61,17 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                         {/* Search and Sort */}
                         <div className="flex flex-col sm:flex-row gap-3">
                             {/* Search Input */}
-                            <div className="flex-1">
+                            <div className="w-full sm:w-72">
                                 <div className="relative">
                                     <input
                                         type="text"
                                         placeholder="Search products..."
                                         value={searchTerm}
                                         onChange={(e) => handleSearch(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
+                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
                                     />
                                     <svg
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -78,7 +87,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                             </div>
 
                             {/* Sort Dropdown */}
-                            <div className="sm:w-64">
+                            <div className="sm:w-52">
                                 <select
                                     value={filters.sort_by || 'newest'}
                                     onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}

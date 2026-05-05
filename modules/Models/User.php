@@ -83,7 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function address()
+    public function address(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Address::class);
     }

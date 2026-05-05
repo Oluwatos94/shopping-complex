@@ -63,14 +63,33 @@ const CategoryProducts: React.FC = () => {
                                         href={`/products/${product.slug}`}
                                         className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden border border-gray-100"
                                     >
-                                        {/* Product image */}
-                                        <div className="h-48 bg-primary-light overflow-hidden">
+                                        {/* Product media */}
+                                        <div className="h-48 bg-primary-light overflow-hidden relative">
                                             {product.image ? (
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                />
+                                                product.media_type === 'product_video' ? (
+                                                    <>
+                                                        <video
+                                                            src={product.image}
+                                                            className="w-full h-full object-cover"
+                                                            muted
+                                                            playsInline
+                                                            preload="metadata"
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M8 5v14l11-7z" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                )
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-primary-olive/10">
                                                     <svg className="w-12 h-12 text-primary-olive/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">

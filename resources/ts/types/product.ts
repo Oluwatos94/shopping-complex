@@ -201,6 +201,7 @@ export interface CategoryProduct {
     slug: string;
     price: number;
     image: string | null;
+    media_type?: string | null;
     vendor_name: string | null;
     vendor_slug: string | null;
 }

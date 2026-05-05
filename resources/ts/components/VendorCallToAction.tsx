@@ -47,11 +47,6 @@ const VendorCallToAction: React.FC = () => {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/60 to-transparent"></div>
                         </div>
-
-                        {/* Floating Badge */}
-                        <div className="hidden sm:block absolute -top-6 -left-6 bg-primary-olive text-white px-6 py-3 rounded-xl shadow-2xl font-bold text-lg">
-                            500+ Active Vendors
-                        </div>
                     </div>
                 </div>
             </div>

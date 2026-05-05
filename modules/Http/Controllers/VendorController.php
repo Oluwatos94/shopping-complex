@@ -17,9 +17,11 @@ use Inertia\Response;
 use InvalidArgumentException;
 use ModulesShoppingComplex\Http\Requests\SaveOnboardingRequest;
 use ModulesShoppingComplex\Http\Requests\SubmitOnboardingRequest;
+use ModulesShoppingComplex\Http\Requests\UpdateVendorProfileRequest;
 use ModulesShoppingComplex\Http\Requests\UploadProductRequest;
 use ModulesShoppingComplex\Http\Requests\VendorRegisterRequest;
 use ModulesShoppingComplex\Http\Requests\VendorRequest;
+use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Category;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
@@ -100,9 +102,6 @@ class VendorController extends Controller
         return 'data:'.$mimeType.';base64,'.base64_encode($content);
     }
 
-    /**
-     * Format distance for display
-     */
     private function formatDistance(float $distanceKm): string
     {
         if ($distanceKm < 1) {
@@ -201,6 +200,11 @@ class VendorController extends Controller
                 'is_verified' => $vendor->isVendorVerified(),
                 'created_at' => $vendor->created_at->toISOString(),
                 'whatsapp_number' => $vendor->whatsapp_number ?? null,
+                'address' => $vendor->address?->street,
+                'city' => $vendor->address?->city,
+                'state' => $vendor->address?->state,
+                'latitude' => $vendor->address?->latitude,
+                'longitude' => $vendor->address?->longitude,
             ],
             'products' => $products,
             'stats' => [
@@ -328,11 +332,48 @@ class VendorController extends Controller
         return redirect()->back()->with('success', 'Product deleted successfully.');
     }
 
+    public function updateProfile(UpdateVendorProfileRequest $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        DB::transaction(function () use ($user, $request) {
+            $user->update([
+                'business_name' => $request->input('business_name'),
+                'bio' => $request->input('bio'),
+                'whatsapp_number' => $request->input('whatsapp_number'),
+            ]);
+
+            Address::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'street' => $request->input('address'),
+                    'city' => $request->input('city'),
+                    'state' => $request->input('state'),
+                    'country' => 'Nigeria',
+                    'latitude' => $request->input('latitude'),
+                    'longitude' => $request->input('longitude'),
+                ]
+            );
+
+            if ($request->hasFile('avatar')) {
+                $this->mediaService->deleteMediaForModel(User::class, $user->id);
+                $this->mediaService->uploadImage(
+                    file: $request->file('avatar'),
+                    modelType: User::class,
+                    modelId: $user->id,
+                    type: 'avatar'
+                );
+            }
+        });
+
+        return redirect()->back()->with('success', 'Profile updated successfully.');
+    }
+
     private function findVendorBySlug(string $slug): User
     {
         return User::where('slug', $slug)
             ->where('role', 'vendor')
-            ->with(['media', 'vendorOnboarding'])
+            ->with(['media', 'vendorOnboarding', 'address'])
             ->withCount(['products as active_products_count' => fn ($q) => $q->where('is_active', true)])
             ->firstOrFail();
     }

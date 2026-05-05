@@ -4,7 +4,7 @@ import { Vendor } from '@/types/user';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Breadcrumb, { BreadcrumbItem } from '@/components/Products/Breadcrumb';
-import ImageGallery from '@/components/Products/ImageGallery';
+import ImageGallery from '@/components/Products/partials/ImageGallery';
 import ProductInfo from '@/components/Products/ProductInfo';
 import RelatedProducts from '@/components/Products/RelatedProducts';
 
