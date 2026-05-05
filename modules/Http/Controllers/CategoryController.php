@@ -78,6 +78,7 @@ class CategoryController extends Controller
                 'slug' => $product->slug,
                 'price' => $product->price,
                 'image' => ($m = $product->media->first()) ? $this->mediaService->getMediaUrl($m) : null,
+                'media_type' => $product->media->first()?->type,
                 'vendor_name' => $product->vendor ? ($product->vendor->business_name ?? $product->vendor->name) : null,
                 'vendor_slug' => $product->vendor?->slug,
             ];

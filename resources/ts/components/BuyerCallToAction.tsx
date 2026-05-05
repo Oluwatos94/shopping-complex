@@ -19,28 +19,10 @@ const BuyerCallToAction: React.FC = () => {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/30 to-transparent"></div>
                         </div>
-
-                        {/* Floating Stats */}
-                        <div className="hidden sm:block absolute -bottom-6 -right-6 bg-white rounded-xl shadow-2xl border border-primary-peach/20 p-6 max-w-xs">
-                            <div className="flex items-center space-x-4">
-                                <div className="bg-primary-peach/15 p-3 rounded-lg">
-                                    <svg className="w-8 h-8 text-primary-peach" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-bold text-primary-dark">Best Deals</div>
-                                    <div className="text-sm text-primary-brown">Save up to 50%</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Content Side - Buyers */}
                     <div>
-                        <span className="inline-block bg-primary-peach/20 text-primary-brown text-sm font-semibold px-4 py-1.5 rounded-full mb-5">
-                            For Buyers
-                        </span>
                         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-dark mb-6">
                             Discover Vendors{' '}
                             <span className="text-primary-brown">Near You</span>

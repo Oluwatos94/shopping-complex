@@ -106,7 +106,6 @@ export default function FilterSidebar({
                     </button>
                 </div>
             </div>
-
         </div>
     );
 }

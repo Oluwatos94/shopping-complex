@@ -207,6 +207,7 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
     Route::post('/register', [VendorController::class, 'storeRegistration'])->name('vendor.register.store');
+    Route::post('/profile/update', [VendorController::class, 'updateProfile'])->name('vendor.profile.update');
     Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
     Route::post('/products/{productId}/update', [VendorController::class, 'updateProduct'])->name('vendor.products.update');
     Route::delete('/products/{productId}', [VendorController::class, 'deleteProduct'])->name('vendor.products.delete');

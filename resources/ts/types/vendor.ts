@@ -18,6 +18,11 @@ export interface VendorProfile {
     is_verified: boolean;
     created_at: string;
     whatsapp_number?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 /**

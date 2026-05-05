@@ -23,13 +23,22 @@ export default function ProductCard({ product }: ProductCardProps) {
             {/* Product Media */}
             <div className="relative aspect-square overflow-hidden bg-gray-100">
                 {isVideo ? (
-                    <video
-                        src={primaryImage}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        preload="metadata"
-                    />
+                    <>
+                        <video
+                            src={primaryImage}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            preload="metadata"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </>
                 ) : (
                     <img
                         src={primaryImage}

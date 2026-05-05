@@ -5,6 +5,7 @@ import { VendorProfile, VendorStats } from '@/types/vendor';
 import VendorSidebar from '@/components/VendorSidebar';
 import { getCsrfToken } from '@/utils/csrf';
 import UploadProductFab from './partials/UploadProductFab';
+import EditProfileModal from './partials/EditProfileModal';
 import ReviewCard from '@/components/Vendors/ReviewCard';
 
 interface Props {
@@ -28,12 +29,13 @@ export default function VendorProfilePage({
     isOwner,
     isFollowing: initialIsFollowing,
 }: Props) {
-    const { auth } = usePage<{ auth: { user: { id: number; role: string } | null } }>().props;
+    const { auth, geoapify_key: geoapifyKey } = usePage<{ auth: { user: { id: number; role: string } | null }; geoapify_key?: string }>().props;
 
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(stats.followers_count);
     const [followLoading, setFollowLoading] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     // Review form state
     const [reviewRating, setReviewRating] = useState(0);
@@ -175,7 +177,9 @@ export default function VendorProfilePage({
                                         </svg>
                                     )}
                                 </div>
-                                <p className="text-sm text-primary-light mt-1">@{vendor.name}</p>
+                                {(vendor.city || vendor.state) && (
+                                    <p className="text-sm text-primary-light mt-1">{[vendor.city, vendor.state].filter(Boolean).join(', ')}</p>
+                                )}
                             </div>
 
                             <div className="flex justify-center gap-10 mt-6">
@@ -202,9 +206,20 @@ export default function VendorProfilePage({
 
                             <div className="flex justify-center gap-3 mt-6">
                                 {isOwner ? (
-                                    <div className="px-8 py-2 bg-primary-peach/20 text-primary-light rounded-lg font-semibold text-sm">
-                                        {followersCount} {followersCount === 1 ? 'Follower' : 'Followers'}
-                                    </div>
+                                    <>
+                                        <div className="px-8 py-2 bg-primary-peach/20 text-primary-light rounded-lg font-semibold text-sm">
+                                            {followersCount} {followersCount === 1 ? 'Follower' : 'Followers'}
+                                        </div>
+                                        <button
+                                            onClick={() => setIsEditOpen(true)}
+                                            className="px-6 py-2 bg-white/10 text-white border border-white/40 rounded-lg font-semibold text-sm hover:bg-white/20 transition-all flex items-center gap-2"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Edit Profile
+                                        </button>
+                                    </>
                                 ) : (
                                     <button
                                         onClick={handleToggleFollow}
@@ -484,6 +499,14 @@ export default function VendorProfilePage({
                     />
                 )}
             </div>
+
+            {isEditOpen && (
+                <EditProfileModal
+                    vendor={vendor}
+                    geoapifyKey={geoapifyKey}
+                    onClose={() => setIsEditOpen(false)}
+                />
+            )}
         </>
     );
 }
