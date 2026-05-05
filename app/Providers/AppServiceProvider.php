@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Anthropic\Client as AnthropicClient;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use ModulesShoppingComplex\Services\GeminiClient;
 use ModulesShoppingComplex\Services\PaystackClient;
 use ModulesShoppingComplex\Services\WhatsAppApiService;
 
@@ -21,8 +21,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(WhatsAppApiService::class);
 
-        $this->app->singleton(AnthropicClient::class, fn () => new AnthropicClient(
-            apiKey: (string) config('services.anthropic.api_key'),
+        $this->app->singleton(GeminiClient::class, fn () => new GeminiClient(
+            apiKey: (string) config('services.gemini.api_key'),
+            model: (string) config('services.gemini.model', 'gemini-2.0-flash'),
         ));
     }
 

@@ -134,13 +134,6 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                             <span>{vendor.products_count} products</span>
                         </div>
 
-                        {/* Online Status */}
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <span className={`w-2 h-2 rounded-full ${vendor.is_online ? 'bg-green-500' : 'bg-gray-400'}`} />
-                            <span className={`text-xs ${vendor.is_online ? 'text-green-600' : 'text-gray-500'}`}>
-                                {vendor.is_online ? 'Online now' : 'Offline'}
-                            </span>
-                        </div>
                     </div>
                 </div>
 
