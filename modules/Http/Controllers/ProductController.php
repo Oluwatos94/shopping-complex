@@ -148,7 +148,7 @@ class ProductController extends Controller
                 'name' => $related->name,
                 'slug' => $related->slug,
                 'price' => $related->price,
-                'images' => $imageUrl ? [['url' => $imageUrl, 'is_primary' => true]] : [],
+                'images' => $imageUrl ? [['url' => $imageUrl, 'is_primary' => true, 'type' => $image->type]] : [],
                 'vendor' => $related->vendor ? [
                     'id' => $related->vendor->id,
                     'slug' => $related->vendor->slug,

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Services;
 
-use Anthropic\Client as AnthropicClient;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\User;
@@ -25,7 +24,7 @@ final readonly class WhatsAppAiBotService
         private WhatsAppInteractionRepository $interactionRepository,
         private VendorService $vendorService,
         private AnalyticsService $analyticsService,
-        private AnthropicClient $claude,
+        private GeminiClient $gemini,
     ) {}
 
     /**
@@ -59,11 +58,10 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runClaudeWithTools($from, $history, $session, $message);
+        $reply = $this->runGeminiWithTools($from, $history, $session, $message);
 
         $history[] = ['role' => 'assistant', 'content' => $reply];
 
-        // Trim history to avoid token bloat
         if (count($history) > self::MAX_HISTORY_MESSAGES) {
             $history = array_slice($history, -self::MAX_HISTORY_MESSAGES);
         }
@@ -78,60 +76,94 @@ final readonly class WhatsAppAiBotService
      * @param  array<int, array<string, mixed>>  $history
      * @param  array<string, mixed>  $rawMessage
      */
-    private function runClaudeWithTools(string $from, array $history, WhatsAppSession $session, array $rawMessage): string
+    private function runGeminiWithTools(string $from, array $history, WhatsAppSession $session, array $rawMessage): string
     {
         $tools = $this->defineTools();
-        $messages = $this->buildMessages($history);
+        $contents = $this->buildContents($history);
 
-        $model = (string) config('services.anthropic.model');
+        $payload = [
+            'system_instruction' => ['parts' => [['text' => $this->systemPrompt()]]],
+            'contents' => $contents,
+            'tools' => [['function_declarations' => $tools]],
+        ];
 
-        $response = $this->claude->messages->create(
-            maxTokens: 1024,
-            messages: $messages,
-            model: $model,
-            system: $this->systemPrompt(),
-            tools: $tools,
-        );
+        $response = $this->gemini->generateContent($payload);
 
-        // Agentic loop: keep going while Claude wants to use tools
-        while ($response->stopReason === 'tool_use') {
-            $assistantContent = $response->content;
-            $toolResults = [];
+        // Agentic loop: keep going while Gemini wants to call a function
+        while ($this->hasFunctionCall($response)) {
+            $functionCall = $this->getFunctionCall($response);
 
-            foreach ($assistantContent as $block) {
-                if ($block->type !== 'tool_use') {
-                    continue;
-                }
+            $contents[] = [
+                'role' => 'model',
+                'parts' => [['functionCall' => $functionCall]],
+            ];
 
-                $result = $this->executeTool($block->name, (array) $block->input, $from, $session, $rawMessage);
-                $toolResults[] = [
-                    'type' => 'tool_result',
-                    'tool_use_id' => $block->id,
-                    'content' => $result,
-                ];
-            }
+            /** @var array<string, mixed> $args */
+            $args = (array) ($functionCall['args'] ?? []);
+            $result = $this->executeTool((string) $functionCall['name'], $args, $from, $session, $rawMessage);
 
-            // Feed tool results back and continue
-            $messages[] = ['role' => 'assistant', 'content' => $assistantContent];
-            $messages[] = ['role' => 'user', 'content' => $toolResults];
+            $contents[] = [
+                'role' => 'user',
+                'parts' => [['functionResponse' => [
+                    'name' => $functionCall['name'],
+                    'response' => ['result' => $result],
+                ]]],
+            ];
 
-            $response = $this->claude->messages->create(
-                maxTokens: 1024,
-                messages: $messages,
-                model: $model,
-                system: $this->systemPrompt(),
-                tools: $tools,
-            );
+            $response = $this->gemini->generateContent([
+                'system_instruction' => ['parts' => [['text' => $this->systemPrompt()]]],
+                'contents' => $contents,
+                'tools' => [['function_declarations' => $tools]],
+            ]);
         }
 
-        // Extract final text reply
-        foreach ($response->content as $block) {
-            if ($block->type === 'text') {
-                return $block->text;
+        return $this->extractText($response) ?? "Sorry, I couldn't process your request. Please try again.";
+    }
+
+    /**
+     * @param  array<string, mixed>  $response
+     */
+    private function hasFunctionCall(array $response): bool
+    {
+        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
+        foreach ($parts as $part) {
+            if (isset($part['functionCall'])) {
+                return true;
             }
         }
 
-        return "Sorry, I couldn't process your request. Please try again.";
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $response
+     * @return array<string, mixed>
+     */
+    private function getFunctionCall(array $response): array
+    {
+        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
+        foreach ($parts as $part) {
+            if (isset($part['functionCall'])) {
+                return (array) $part['functionCall'];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $response
+     */
+    private function extractText(array $response): ?string
+    {
+        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
+        foreach ($parts as $part) {
+            if (isset($part['text']) && is_string($part['text'])) {
+                return $part['text'];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -257,7 +289,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'search_vendors',
                 'description' => 'Search for vendors selling a product. Use this whenever the buyer mentions a product or service they want. If they share their location coordinates, pass them to find nearby vendors. Otherwise search all vendors.',
-                'input_schema' => [
+                'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'query' => ['type' => 'string', 'description' => 'Product or service the buyer is looking for'],
@@ -271,7 +303,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'get_vendor_products',
                 'description' => 'Get the product list for a specific vendor by their ID.',
-                'input_schema' => [
+                'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID from search results'],
@@ -282,7 +314,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'get_vendor_contact',
                 'description' => "Get a vendor's WhatsApp contact link so the buyer can chat with them directly.",
-                'input_schema' => [
+                'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID'],
@@ -297,11 +329,11 @@ final readonly class WhatsAppAiBotService
      * @param  array<int, array<string, mixed>>  $history
      * @return array<int, array<string, mixed>>
      */
-    private function buildMessages(array $history): array
+    private function buildContents(array $history): array
     {
         return array_map(fn (array $msg) => [
-            'role' => $msg['role'],
-            'content' => $msg['content'],
+            'role' => $msg['role'] === 'assistant' ? 'model' : 'user',
+            'parts' => [['text' => (string) $msg['content']]],
         ], $history);
     }
 

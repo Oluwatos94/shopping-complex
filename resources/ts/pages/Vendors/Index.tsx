@@ -18,11 +18,17 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
     const [sortBy, setSortBy] = useState<VendorSortOption>(filters.sort_by || 'distance');
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+    const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+    const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+        setNotification({ type, message });
+        setTimeout(() => setNotification(null), 5000);
+    };
 
     // Get user's current location
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
+            showNotification('error', 'Geolocation is not supported by your browser.');
             return;
         }
 
@@ -37,6 +43,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                 };
                 setUserLocation(location);
                 setIsLoadingLocation(false);
+                showNotification('success', 'Location enabled! Showing vendors near you.');
 
                 // Automatically search with new location
                 handleSearch({
@@ -46,7 +53,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
             },
             (error) => {
                 console.error('Error getting location:', error);
-                alert('Unable to retrieve your location. Please enable location services.');
+                showNotification('error', 'Unable to retrieve your location. Please enable location services in your browser settings.');
                 setIsLoadingLocation(false);
             }
         );
@@ -71,11 +78,9 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
         );
     }, [searchQuery, radius, sortBy, userLocation]);
 
-    // Auto-request location on mount
+    // Restore location from URL filters only (no auto-prompt)
     useEffect(() => {
-        if (!filters.latitude && !filters.longitude) {
-            getCurrentLocation();
-        } else if (filters.latitude && filters.longitude) {
+        if (filters.latitude && filters.longitude) {
             setUserLocation({
                 latitude: filters.latitude,
                 longitude: filters.longitude,
@@ -89,6 +94,31 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
             <Head title="Find Nearby Vendors" />
 
             <div className="bg-gray-50">
+                {/* Notification Banner */}
+                {notification && (
+                    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg max-w-sm w-full mx-4 transition-all ${
+                        notification.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' :
+                        notification.type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' :
+                        'bg-blue-50 border border-blue-200 text-blue-800'
+                    }`}>
+                        {notification.type === 'success' ? (
+                            <svg className="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
+                        <p className="text-sm font-medium flex-1">{notification.message}</p>
+                        <button onClick={() => setNotification(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
                 {/* Sticky Search Bar */}
                 <div className="sticky top-[57px] z-10 bg-white border-b border-gray-200 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -221,6 +251,28 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                         </div>
                     </div>
                 </div>
+
+                {/* Location permission banner */}
+                {!userLocation && !isLoadingLocation && (
+                    <div className="bg-primary-olive/10 border-b border-primary-olive/20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-olive/20 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <p className="flex-1 text-sm text-gray-700">
+                                <span className="font-medium">Enable location</span> to find vendors near you.
+                            </p>
+                            <button
+                                onClick={getCurrentLocation}
+                                className="flex-shrink-0 px-3 py-1.5 bg-primary-olive text-white text-xs font-semibold rounded-lg hover:bg-primary-dark transition-colors"
+                            >
+                                Enable
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Content */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
