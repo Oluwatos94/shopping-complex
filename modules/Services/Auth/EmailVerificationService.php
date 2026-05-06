@@ -69,7 +69,7 @@ class EmailVerificationService
     {
         return URL::temporarySignedRoute(
             'verification.verify',
-            now()->addMinutes(60),
+            now()->addMinutes(30),
             [
                 'id' => $user->id,
                 'hash' => sha1($user->getEmailForVerification()),
