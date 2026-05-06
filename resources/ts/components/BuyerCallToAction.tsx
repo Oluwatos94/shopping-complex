@@ -13,7 +13,7 @@ const BuyerCallToAction: React.FC = () => {
                     <div className="relative">
                         <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                             <img
-                                src="/images/shopping-image12.jpg"
+                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/shopping-image12.jpg"
                                 alt="Shopping experience"
                                 className="w-full h-auto object-cover"
                             />

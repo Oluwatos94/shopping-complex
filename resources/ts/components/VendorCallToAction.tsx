@@ -41,7 +41,7 @@ const VendorCallToAction: React.FC = () => {
                     <div className="relative order-1 lg:order-2">
                         <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                             <img
-                                src="/images/shopping-image6.jpg"
+                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/shopping-image6.jpg"
                                 alt="Vendor clothing store"
                                 className="w-full h-auto object-cover"
                             />
