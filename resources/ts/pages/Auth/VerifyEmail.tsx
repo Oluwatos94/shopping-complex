@@ -57,7 +57,7 @@ export default function VerifyEmail() {
         >
             {/* Background image */}
             <img
-                src="/images/Polo Park 2.jpg"
+                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/Polo Park 2.jpg"
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover opacity-20"
             />
