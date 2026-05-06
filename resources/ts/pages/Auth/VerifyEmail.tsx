@@ -1,4 +1,5 @@
 import { useForm, usePage, router } from '@inertiajs/react';
+import { useState, useEffect, useRef } from 'react';
 
 interface PageProps {
     [key: string]: unknown;
@@ -6,10 +7,33 @@ interface PageProps {
     auth: { user: { name: string; email: string } | null };
 }
 
+const RESEND_COOLDOWN = 60;
+
 export default function VerifyEmail() {
     const { flash, auth } = usePage<PageProps>().props;
     const status = flash?.status;
     const { post, processing } = useForm({});
+    const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startCountdown = () => {
+        setCountdown(RESEND_COOLDOWN);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current!);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    useEffect(() => {
+        startCountdown();
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, []);
 
     const handleBack = (to: string) => {
         router.post('/logout', {}, {
@@ -19,8 +43,12 @@ export default function VerifyEmail() {
 
     const handleResend = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/email/verification-notification');
+        post('/email/verification-notification', {
+            onSuccess: () => startCountdown(),
+        });
     };
+
+    const canResend = !processing && countdown === 0;
 
     return (
         <div
@@ -83,7 +111,7 @@ export default function VerifyEmail() {
 
                         <p className="text-gray-400 text-xs leading-relaxed mb-6">
                             Click the link in the email to activate your account.
-                            The link expires in <span className="text-primary-dark font-medium">60 minutes</span>.
+                            The link expires in <span className="text-primary-dark font-medium">30 minutes</span>.
                         </p>
 
                         {/* Success feedback after resend */}
@@ -103,7 +131,7 @@ export default function VerifyEmail() {
                         <form onSubmit={handleResend}>
                             <button
                                 type="submit"
-                                disabled={processing}
+                                disabled={!canResend}
                                 className="w-full py-3 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm mb-4"
                                 style={{ background: 'linear-gradient(135deg, #272518 0%, #523026 100%)' }}
                             >
@@ -115,6 +143,8 @@ export default function VerifyEmail() {
                                         </svg>
                                         Sending...
                                     </span>
+                                ) : countdown > 0 ? (
+                                    `Resend in ${countdown}s`
                                 ) : (
                                     'Resend verification email'
                                 )}
