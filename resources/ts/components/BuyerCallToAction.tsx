@@ -65,7 +65,7 @@ const BuyerCallToAction: React.FC = () => {
                     {/* Header */}
                     <div className="bg-gradient-to-r from-primary-dark to-primary-brown px-4 py-4 md:px-6 md:py-5 rounded-t-2xl flex items-center justify-between gap-3">
                         <div>
-                            <h3 className="text-lg md:text-2xl font-bold text-white">How to Shop on Shopping Complex</h3>
+                            <h3 className="text-lg md:text-2xl font-bold text-white">How to Shop on jiidaa</h3>
                             <p className="text-primary-light text-xs md:text-sm mt-1">Find and buy from local vendors easily</p>
                         </div>
                         <button

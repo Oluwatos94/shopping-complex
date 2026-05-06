@@ -65,7 +65,7 @@ const VendorCallToAction: React.FC = () => {
                     {/* Header */}
                     <div className="bg-gradient-to-r from-primary-dark to-primary-brown px-4 py-4 md:px-6 md:py-5 rounded-t-2xl flex items-center justify-between gap-3">
                         <div>
-                            <h3 className="text-lg md:text-2xl font-bold text-white">How Vendors Use Shopping Complex</h3>
+                            <h3 className="text-lg md:text-2xl font-bold text-white">How Vendors Use jiidaa</h3>
                             <p className="text-primary-light text-xs md:text-sm mt-1">Everything you need to start selling</p>
                         </div>
                         <button
@@ -84,7 +84,7 @@ const VendorCallToAction: React.FC = () => {
                             {
                                 step: 1,
                                 title: 'Create Your Account',
-                                desc: 'Register on Shopping Complex and click "Become a Vendor". Fill in your business details name, category, and location.',
+                                desc: 'Register on jiidaa and click "Become a Vendor". Fill in your business details name, category, and location.',
                             },
                             {
                                 step: 2,

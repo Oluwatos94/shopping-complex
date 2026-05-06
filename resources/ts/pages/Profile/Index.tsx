@@ -54,7 +54,7 @@ export default function ProfileIndex() {
 
     return (
         <>
-            <Head title="Profile - Shopping Complex" />
+            <Head title="Profile - jiidaa" />
 
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}

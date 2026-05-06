@@ -586,7 +586,7 @@ final readonly class WhatsAppBotService
 
     private function welcomeMessage(): string
     {
-        return "👋 Welcome to *Shopping Complex*!\n\nTo help you identify us easily, please save this number as *Shopping Complex* in your contacts.\n\nTell me what product or service you're looking for and I'll find the nearest vendors for you.\n\nType HELP to see available commands.";
+        return "👋 Welcome to *jiidaa*!\n\nTo help you identify us easily, please save this number as *jiidaa* in your contacts.\n\nTell me what product or service you're looking for and I'll find the nearest vendors for you.\n\nType HELP to see available commands.";
     }
 
     private function helpMessage(): string

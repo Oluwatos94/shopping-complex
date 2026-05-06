@@ -67,6 +67,6 @@ class NotificationEmailFallback extends Notification implements ShouldQueue
             return "New {$label} notification";
         }
 
-        return 'New notification from Shopping Complex';
+        return 'New notification from jiidaa';
     }
 }

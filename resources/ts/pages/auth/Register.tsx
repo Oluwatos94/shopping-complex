@@ -30,14 +30,14 @@ function Register() {
             <div className="hidden lg:flex lg:w-1/2 relative bg-primary-dark">
                 <img
                     src="/images/Polo Park 2.jpg"
-                    alt="Shopping Complex"
+                    alt="jiidaa"
                     className="absolute inset-0 w-full h-full object-cover opacity-40"
                 />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
                     <a href="/" className="flex items-center gap-3">
-                        <img src="/logo/dark-mode-logo.svg" alt="Shopping Complex" className="h-9 w-auto" />
-                        <span className="text-white font-bold text-lg tracking-wide">Shopping Complex</span>
+                        <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-9 w-auto" />
+                        <span className="text-white font-bold text-lg tracking-wide">jiidaa</span>
                     </a>
 
                     {/* Tagline */}
@@ -51,7 +51,7 @@ function Register() {
                     </div>
 
                     {/* Bottom badge */}
-                    <p className="text-primary-light/60 text-sm">© {new Date().getFullYear()} Shopping Complex</p>
+                    <p className="text-primary-light/60 text-sm">© {new Date().getFullYear()} jiidaa</p>
                 </div>
             </div>
 

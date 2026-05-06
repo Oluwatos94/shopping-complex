@@ -6,7 +6,7 @@ const testimonials: Testimonial[] = [
         id: 1,
         customerName: 'Sarah Johnson',
         rating: 5,
-        comment: 'Shopping Complex has completely changed how I shop! The real-time connection with vendors is incredible. I found exactly what I needed within minutes, and the delivery was super fast. Highly recommend!',
+        comment: 'jiidaa has completely changed how I shop! The real-time connection with vendors is incredible. I found exactly what I needed within minutes, and the delivery was super fast. Highly recommend!',
         date: '2 days ago',
     },
     {
@@ -20,7 +20,7 @@ const testimonials: Testimonial[] = [
         id: 3,
         customerName: 'Aisha Okonkwo',
         rating: 5,
-        comment: 'I love supporting local vendors, and Shopping Complex makes it so easy. The real-time tracking feature is just like Uber—I always know when my order will arrive. Great platform!',
+        comment: 'I love supporting local vendors, and jiidaa makes it so easy. The real-time tracking feature is just like Uber—I always know when my order will arrive. Great platform!',
         date: '2 weeks ago',
     },
     {
@@ -41,7 +41,7 @@ const testimonials: Testimonial[] = [
         id: 6,
         customerName: 'James Wilson',
         rating: 5,
-        comment: 'Shopping Complex connects me with quality vendors near me. The categorization makes it easy to find what I need, and the real-time updates keep me informed throughout the entire process.',
+        comment: 'jiidaa connects me with quality vendors near me. The categorization makes it easy to find what I need, and the real-time updates keep me informed throughout the entire process.',
         date: '1 month ago',
     },
 ];
@@ -119,7 +119,7 @@ const TestimonialsSection: React.FC = () => {
                         What Our Customers Say
                     </h2>
                     <p className="text-lg text-primary-brown max-w-2xl mx-auto">
-                        Join thousands of satisfied customers who trust Shopping Complex for their daily needs.
+                        Join thousands of satisfied customers who trust jiidaa for their daily needs.
                     </p>
                 </div>
 

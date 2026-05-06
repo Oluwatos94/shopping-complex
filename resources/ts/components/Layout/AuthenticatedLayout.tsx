@@ -13,7 +13,7 @@ export interface AuthenticatedLayoutProps {
 const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
     children,
     user,
-    title = 'Shopping Complex',
+    title = 'jiidaa',
     description = 'Your trusted marketplace connecting customers with quality vendors in real-time',
     className = '',
 }) => {
@@ -32,12 +32,12 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
                             <div className="flex items-center space-x-3">
                                 {/* Logo */}
                                 <img
-                                    src="/logo/dark-mode-2.svg"
-                                    alt="Shopping Complex"
+                                    src="/logo/jiidaa.jpeg"
+                                    alt="jiidaa"
                                     className="h-10 w-auto"
                                 />
                                 <h1 className="text-xl font-bold text-gray-900">
-                                    Shopping Complex
+                                    jiidaa
                                 </h1>
                             </div>
 

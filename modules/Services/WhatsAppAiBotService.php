@@ -340,7 +340,7 @@ final readonly class WhatsAppAiBotService
     private function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are a helpful shopping assistant for Shopping Complex, a Nigerian local vendor discovery platform. Your job is to help buyers find vendors and products near them.
+You are a helpful shopping assistant for jiidaa, a Nigerian local vendor discovery platform. Your job is to help buyers find vendors and products near them.
 
 You help buyers:
 - Find vendors selling specific products or services

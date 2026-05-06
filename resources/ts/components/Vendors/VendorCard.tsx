@@ -9,7 +9,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
     const profileImage = vendor.business_logo || '/images/default-vendor.png';
 
     const whatsAppHref = vendor.whatsapp_number
-        ? `https://wa.me/${vendor.whatsapp_number.replace(/[^0-9]/g, '')}?text=Hi, I found you on Shopping Complex`
+        ? `https://wa.me/${vendor.whatsapp_number.replace(/[^0-9]/g, '')}?text=Hi, I found you on jiidaa`
         : null;
 
     const distance = vendor.distance_km !== null && vendor.distance_km !== undefined

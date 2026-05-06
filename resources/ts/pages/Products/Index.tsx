@@ -35,8 +35,8 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     const { auth } = usePage<{ auth: { user: any } | null }>().props;
 
     return (
-        <AuthenticatedLayout user={(auth as any)?.user} title="Products - Shopping Complex" className="!p-0 !max-w-none">
-            <Head title="Products - Shopping Complex" />
+        <AuthenticatedLayout user={(auth as any)?.user} title="Products - jiidaa" className="!p-0 !max-w-none">
+            <Head title="Products - jiidaa" />
 
             <div className="bg-gray-50">
                 {/* Sticky search + sort bar */}

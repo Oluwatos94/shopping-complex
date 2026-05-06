@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 export default function OnboardingSuccess() {
     return (
         <>
-            <Head title="Application Submitted - Shopping Complex" />
+            <Head title="Application Submitted - jiidaa" />
 
             <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
                 <div className="max-w-md w-full text-center">
@@ -21,7 +21,7 @@ export default function OnboardingSuccess() {
 
                     {/* Description */}
                     <p className="text-gray-600 mb-8">
-                        Thank you for applying to become a vendor on Shopping Complex.
+                        Thank you for applying to become a vendor on jiidaa.
                         Our team will review your application and get back to you within 2-3 business days.
                     </p>
 

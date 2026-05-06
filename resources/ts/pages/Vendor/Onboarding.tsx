@@ -97,7 +97,7 @@ export default function Onboarding({ categories, savedData }: OnboardingProps) {
 
     return (
         <>
-            <Head title="Vendor Onboarding - Shopping Complex" />
+            <Head title="Vendor Onboarding - jiidaa" />
 
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
@@ -107,8 +107,8 @@ export default function Onboarding({ categories, savedData }: OnboardingProps) {
                             {/* Logo */}
                             <div className="flex items-center gap-3">
                                 <img
-                                    src="/logo/dark-mode-2.svg"
-                                    alt="Shopping Complex"
+                                    src="/logo/jiidaa.jpeg"
+                                    alt="jiidaa"
                                     className="h-10 w-auto"
                                 />
                                 <h1 className="text-xl font-semibold text-gray-900">

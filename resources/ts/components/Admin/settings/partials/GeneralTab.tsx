@@ -24,7 +24,7 @@ export default function GeneralTab() {
                             </label>
                             <input
                                 type="text"
-                                defaultValue="Shopping Complex"
+                                defaultValue="jiidaa"
                                 className="w-full bg-gray-50 border border-gray-200/60 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/20"
                             />
                         </div>

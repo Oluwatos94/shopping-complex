@@ -226,7 +226,7 @@ export default function ReviewStep({
                             rel="noopener noreferrer"
                             className="text-primary-olive hover:underline"
                         >
-                            Shopping Complex Vendor Terms & Conditions
+                            jiidaa Vendor Terms & Conditions
                         </a>
                         .
                     </span>

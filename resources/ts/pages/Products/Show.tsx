@@ -40,7 +40,7 @@ export default function ProductShow({
 
     return (
         <>
-            <Head title={`${product.name} - Shopping Complex`}>
+            <Head title={`${product.name} - jiidaa`}>
                 <meta name="description" content={product.description.substring(0, 160)} />
                 <meta property="og:title" content={product.name} />
                 <meta property="og:description" content={product.description.substring(0, 160)} />

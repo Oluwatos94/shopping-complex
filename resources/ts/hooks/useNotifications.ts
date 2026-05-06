@@ -72,6 +72,7 @@ export function useNotifications(
     const { userId } = options;
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount]     = useState(0);
     const [connected, setConnected]         = useState(false);
     const [soundEnabled, setSoundEnabled]   = useState(true);
     const soundRef = useRef(soundEnabled);
@@ -86,8 +87,9 @@ export function useNotifications(
             credentials: 'same-origin',
         })
             .then((r) => r.json())
-            .then((data: { notifications: RawNotification[] }) => {
+            .then((data: { notifications: RawNotification[]; unread_count: number }) => {
                 setNotifications(data.notifications.map(mapRaw));
+                setUnreadCount(data.unread_count);
             })
             .catch((err) => {
                 if (import.meta.env.DEV) console.error('[Notifications] Failed to load:', err);
@@ -134,6 +136,7 @@ export function useNotifications(
                 };
 
                 setNotifications((prev) => [newNotif, ...prev].slice(0, 50));
+                setUnreadCount((prev) => prev + 1);
 
                 if (soundRef.current) playNotificationSound();
             });
@@ -152,9 +155,11 @@ export function useNotifications(
 
 
     const markAsRead = useCallback((id: string) => {
-        setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-        );
+        setNotifications((prev) => {
+            const notif = prev.find((n) => n.id === id);
+            if (notif && !notif.read) setUnreadCount((c) => Math.max(0, c - 1));
+            return prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+        });
 
         fetch(`/api/notifications/${id}/read`, {
             method: 'PATCH',
@@ -165,16 +170,19 @@ export function useNotifications(
                 setNotifications((prev) =>
                     prev.map((n) => (n.id === id ? { ...n, read: false } : n))
                 );
+                setUnreadCount((c) => c + 1);
             }
         }).catch(() => {
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id ? { ...n, read: false } : n))
             );
+            setUnreadCount((c) => c + 1);
         });
     }, []);
 
     const markAllAsRead = useCallback(() => {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        setUnreadCount(0);
 
         fetch('/api/notifications/mark-all-read', {
             method: 'POST',
@@ -184,7 +192,11 @@ export function useNotifications(
     }, []);
 
     const removeNotification = useCallback((id: string) => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        setNotifications((prev) => {
+            const notif = prev.find((n) => n.id === id);
+            if (notif && !notif.read) setUnreadCount((c) => Math.max(0, c - 1));
+            return prev.filter((n) => n.id !== id);
+        });
 
         fetch(`/api/notifications/${id}`, {
             method: 'DELETE',
@@ -194,8 +206,6 @@ export function useNotifications(
     }, []);
 
     const toggleSound = useCallback(() => setSoundEnabled((v) => !v), []);
-
-    const unreadCount = notifications.filter((n) => !n.read).length;
 
     return {
         notifications,

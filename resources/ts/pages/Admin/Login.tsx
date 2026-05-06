@@ -16,7 +16,7 @@ export default function AdminLogin() {
 
     return (
         <>
-            <Head title="Admin Login — Shopping Complex" />
+            <Head title="Admin Login — jiidaa" />
 
             <div
                 className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
@@ -37,13 +37,13 @@ export default function AdminLogin() {
                         {/* Logo + Admin badge */}
                         <div className="flex flex-col items-center gap-2 mb-6">
                             <div className="flex items-center gap-2">
-                                <img
-                                    src="/logo/dark-mode-logo.svg"
-                                    alt="Shopping Complex"
+                                {/* <img
+                                    src="/logo/jiidaa.jpeg"
+                                    alt="jiidaa"
                                     className="h-7 w-auto"
                                     style={{ filter: 'invert(1) sepia(1) saturate(0.5) hue-rotate(0deg)' }}
-                                />
-                                <span className="text-sm font-semibold text-gray-900">Shopping Complex</span>
+                                /> */}
+                                <span className="text-sm font-semibold text-gray-900">jiidaa</span>
                             </div>
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wide">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -13,7 +13,7 @@ export interface BaseLayoutProps {
 
 const BaseLayout: React.FC<BaseLayoutProps> = ({
     children,
-    title = 'Shopping Complex',
+    title = 'jiidaa',
     description = 'Your trusted marketplace connecting customers with quality vendors in real-time',
     showHeader = true,
     showFooter = true,

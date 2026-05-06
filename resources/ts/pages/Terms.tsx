@@ -4,13 +4,13 @@ import { Head, Link } from '@inertiajs/react';
 const Terms: React.FC = () => {
     return (
         <>
-            <Head title="Terms of Service - Shopping Complex" />
+            <Head title="Terms of Service - jiidaa" />
             <div className="min-h-screen bg-gray-50">
                 <nav className="bg-white shadow-sm border-b border-gray-200">
                     <div className="container mx-auto px-4 py-3">
                         <Link href="/" className="flex items-center space-x-3">
-                            <img src="/logo/dark-mode-2.svg" alt="Shopping Complex" className="h-10 w-auto" />
-                            <span className="text-xl font-bold text-gray-900">Shopping Complex</span>
+                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-10 w-auto" />
+                            <span className="text-xl font-bold text-gray-900">jiidaa</span>
                         </Link>
                     </div>
                 </nav>
@@ -23,12 +23,12 @@ const Terms: React.FC = () => {
 
                         <section>
                             <h2 className="text-xl font-semibold text-primary-dark mb-3">1. Acceptance of Terms</h2>
-                            <p>By accessing or using Shopping Complex ("the platform"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
+                            <p>By accessing or using jiidaa ("the platform"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform.</p>
                         </section>
 
                         <section>
                             <h2 className="text-xl font-semibold text-primary-dark mb-3">2. Description of Service</h2>
-                            <p>Shopping Complex is a local vendor discovery platform that connects buyers with nearby vendors via web and WhatsApp. Vendors can list products and services; buyers can search, browse, and contact vendors directly.</p>
+                            <p>jiidaa is a local vendor discovery platform that connects buyers with nearby vendors via web and WhatsApp. Vendors can list products and services; buyers can search, browse, and contact vendors directly.</p>
                         </section>
 
                         <section>
@@ -47,7 +47,7 @@ const Terms: React.FC = () => {
                                 <li>Vendors must provide accurate business information, product descriptions, and pricing.</li>
                                 <li>Vendors are responsible for fulfilling orders and communicating with buyers in a timely manner.</li>
                                 <li>Vendors must not list prohibited, counterfeit, or illegal products.</li>
-                                <li>Shopping Complex reserves the right to remove listings or suspend vendors who violate these rules.</li>
+                                <li>jiidaa reserves the right to remove listings or suspend vendors who violate these rules.</li>
                             </ul>
                         </section>
 
@@ -55,7 +55,7 @@ const Terms: React.FC = () => {
                             <h2 className="text-xl font-semibold text-primary-dark mb-3">5. Buyer Responsibilities</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Buyers interact directly with vendors for purchases, delivery, and payment.</li>
-                                <li>Shopping Complex is a discovery platform and is not a party to transactions between buyers and vendors.</li>
+                                <li>jiidaa is a discovery platform and is not a party to transactions between buyers and vendors.</li>
                                 <li>Buyers should exercise due diligence before making any purchase.</li>
                             </ul>
                         </section>
@@ -77,7 +77,7 @@ const Terms: React.FC = () => {
 
                         <section>
                             <h2 className="text-xl font-semibold text-primary-dark mb-3">8. Limitation of Liability</h2>
-                            <p>Shopping Complex is not liable for any disputes, losses, or damages arising from transactions between buyers and vendors. The platform is provided "as is" without warranties of any kind.</p>
+                            <p>jiidaa is not liable for any disputes, losses, or damages arising from transactions between buyers and vendors. The platform is provided "as is" without warranties of any kind.</p>
                         </section>
 
                         <section>
@@ -95,7 +95,7 @@ const Terms: React.FC = () => {
 
                     <div className="mt-8 text-center">
                         <Link href="/" className="text-primary-olive hover:underline text-sm">
-                            ← Back to Shopping Complex
+                            ← Back to jiidaa
                         </Link>
                     </div>
                 </div>

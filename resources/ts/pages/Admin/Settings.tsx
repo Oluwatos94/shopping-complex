@@ -42,7 +42,7 @@ export default function Settings() {
                                 Platform Settings
                             </h2>
                             <p className="text-gray-400 text-sm">
-                                Global configuration for the Shopping Complex ecosystem.
+                                Global configuration for the jiidaa ecosystem.
                             </p>
                         </div>
                         <div className="flex gap-3">

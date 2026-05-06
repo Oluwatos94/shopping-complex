@@ -47,7 +47,7 @@ export default function VendorProfilePage({
     const [reviewError, setReviewError] = useState<string | null>(null);
 
     const whatsAppHref = vendor.whatsapp_number
-        ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${vendor.business_name}, I found you on Shopping Complex.`)}`
+        ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${vendor.business_name}, I found you on jiidaa.`)}`
         : null;
 
     const handleToggleFollow = useCallback(async () => {
@@ -120,7 +120,7 @@ export default function VendorProfilePage({
 
     return (
         <>
-            <Head title={`${vendor.business_name} - Shopping Complex`} />
+            <Head title={`${vendor.business_name} - jiidaa`} />
 
             <div className="min-h-screen bg-gray-50">
                 {isOwner && <VendorSidebar vendorSlug={vendor.slug} businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
@@ -143,8 +143,8 @@ export default function VendorProfilePage({
                                             </svg>
                                         </button>
                                         <Link href="/" className="flex items-center space-x-3">
-                                            <img src="/logo/dark-mode-logo.svg" alt="Shopping Complex" className="h-8 w-auto" />
-                                            <span className="text-primary-light font-bold text-lg hidden sm:block">Shopping Complex</span>
+                                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-8 w-auto" />
+                                            <span className="text-primary-light font-bold text-lg hidden sm:block">jiidaa</span>
                                         </Link>
                                     </div>
                                     <Link href="/vendors" className="text-sm text-primary-light hover:text-white transition-colors">

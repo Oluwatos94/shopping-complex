@@ -11,7 +11,7 @@ export interface GuestLayoutProps {
 
 const GuestLayout: React.FC<GuestLayoutProps> = ({
     children,
-    title = 'Shopping Complex',
+    title = 'jiidaa',
     description = 'Your trusted marketplace connecting customers with quality vendors in real-time',
     showBackLink = true,
     className = '',
@@ -31,7 +31,7 @@ const GuestLayout: React.FC<GuestLayoutProps> = ({
                             SC
                         </div>
                         <span className="text-primary-dark font-bold text-2xl">
-                            Shopping Complex
+                            jiidaa
                         </span>
                     </Link>
                 </div>
@@ -57,7 +57,7 @@ const GuestLayout: React.FC<GuestLayoutProps> = ({
 
                 {/* Footer */}
                 <div className="mt-8 text-center text-sm text-primary-brown">
-                    <p>&copy; {new Date().getFullYear()} Shopping Complex. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} jiidaa. All rights reserved.</p>
                 </div>
             </div>
         </>

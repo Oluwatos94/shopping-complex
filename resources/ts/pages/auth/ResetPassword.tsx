@@ -31,7 +31,7 @@ function ResetPassword() {
                 <div className="hidden md:flex absolute inset-0 bg-white/10 backdrop-blur-md p-8 lg:p-12 flex-col justify-end pb-16">
                     <div className="mb-10">
                         <h1 className="text-3xl lg:text-5xl font-serif font-medium text-white mb-4">
-                            Shopping Complex
+                            jiidaa
                         </h1>
                     </div>
                 </div>

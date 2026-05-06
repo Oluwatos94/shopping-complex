@@ -83,13 +83,12 @@ export default function VendorRegister({ categories }: Props) {
         debounceRef.current = setTimeout(async () => {
             setAddressLoading(true);
             try {
-                const apiKey = geoapifyKey;
                 const params = new URLSearchParams({
                     text: query,
                     'filter[countrycode]': 'ng',
                     format: 'json',
                     limit: '6',
-                    apiKey,
+                    apiKey: geoapifyKey ?? '',
                 });
                 const res = await fetch(`https://api.geoapify.com/v1/geocode/autocomplete?${params}`);
                 const data = await res.json();
@@ -177,15 +176,15 @@ export default function VendorRegister({ categories }: Props) {
 
     return (
         <>
-            <Head title="Become a Vendor - Shopping Complex" />
+            <Head title="Become a Vendor - jiidaa" />
 
             <div className="min-h-screen bg-gray-50">
                 <nav className="bg-white shadow-sm border-b border-gray-200">
                     <div className="container mx-auto px-4 py-3">
-                        <a href="/" className="flex items-center space-x-3">
-                            <img src="/logo/dark-mode-2.svg" alt="Shopping Complex" className="h-10 w-auto" />
-                            <h1 className="text-xl font-bold text-gray-900">Shopping Complex</h1>
-                        </a>
+                        {/* <a href="/" className="flex items-center space-x-3">
+                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-10 w-auto" />
+                            <h1 className="text-xl font-bold text-gray-900">jiidaa</h1>
+                        </a> */}
                     </div>
                 </nav>
 
