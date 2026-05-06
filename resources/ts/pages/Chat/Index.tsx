@@ -26,7 +26,7 @@ export default function ChatIndex({ conversations, auth }: Props) {
 
     return (
         <>
-            <Head title="Messages - Shopping Complex" />
+            <Head title="Messages - jiidaa" />
 
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}

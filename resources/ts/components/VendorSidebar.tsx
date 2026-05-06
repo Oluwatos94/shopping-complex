@@ -81,8 +81,8 @@ export default function VendorSidebar({ vendorSlug, businessName, businessLogo }
             {/* Logo */}
             <Link href="/" className="mb-8">
                 <img
-                    src="/logo/dark-mode-2.svg"
-                    alt="Shopping Complex"
+                    src="/logo/jiidaa.jpeg"
+                    alt="jiidaa"
                     className="h-10 w-auto"
                 />
             </Link>

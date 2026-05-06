@@ -1,6 +1,6 @@
 @extends('emails.layout')
 
-@section('title', 'Verify Your Email — Shopping Complex')
+@section('title', 'Verify Your Email — jiidaa')
 
 @section('content')
     <h2>Verify Your Email Address</h2>
@@ -8,7 +8,7 @@
     <p>Hello <strong>{{ $user->name }}</strong>,</p>
 
     <p>
-        Thank you for joining Shopping Complex! To complete your registration and
+        Thank you for joining jiidaa! To complete your registration and
         access all features, please verify your email address by clicking the button below.
     </p>
 
@@ -29,7 +29,7 @@
     </div>
 
     <p style="color: #888; font-size: 13px;">
-        If you did not create an account with Shopping Complex, you can safely
+        If you did not create an account with jiidaa, you can safely
         ignore this email — no action is required.
     </p>
 

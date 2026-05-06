@@ -84,7 +84,7 @@ const WhatsAppBotSection: React.FC = () => {
                                     </svg>
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-white font-semibold text-sm">Shopping Complex Bot</div>
+                                    <div className="text-white font-semibold text-sm">jiidaa Bot</div>
                                     <div className="text-green-200 text-xs">Online</div>
                                 </div>
 

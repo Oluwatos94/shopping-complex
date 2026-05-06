@@ -8,7 +8,7 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
     {
-        question: 'How do I find vendors on Shopping Complex?',
+        question: 'How do I find vendors on jiidaa?',
         answer: 'You can browse vendors by category, search by product name, or filter by location. Every vendor profile shows their catalogue, ratings, and availability status in real-time so you always know who is ready to serve you.',
     },
     {
@@ -16,7 +16,7 @@ const faqs: FAQItem[] = [
         answer: 'Send a message to our platform WhatsApp number and you will get a welcome menu. From there you can type a product name or category, and the bot will return a list of nearby vendors that carry what you are looking for — along with their contact details.',
     },
     {
-        question: 'Is it free to shop on Shopping Complex?',
+        question: 'Is it free to shop on jiidaa?',
         answer: 'Yes, shopping is completely free for buyers. There are no fees to browse, contact vendors, or place orders. Vendors pay a subscription to list their products and get discovered.',
     },
 
@@ -33,8 +33,8 @@ const faqs: FAQItem[] = [
         answer: 'You can reach us through the Contact page, via email at support.shoppingComplex@gmail.com, or by messaging our WhatsApp number. Our support team is available 24/7 to help with any issues.',
     },
     {
-        question: 'Is Shopping Complex available in my city?',
-        answer: 'Shopping Complex is expanding across cities rapidly. Vendor availability depends on your location the more vendors that register in your area, the richer the experience. If you do not see many vendors near you yet, check back soon or encourage local businesses to sign up.',
+        question: 'Is jiidaa available in my city?',
+        answer: 'jiidaa is expanding across cities rapidly. Vendor availability depends on your location the more vendors that register in your area, the richer the experience. If you do not see many vendors near you yet, check back soon or encourage local businesses to sign up.',
     },
 ];
 
@@ -54,7 +54,7 @@ const FAQSection: React.FC = () => {
                             Frequently Asked Questions
                         </h2>
                         <p className="text-lg text-primary-brown max-w-2xl mx-auto">
-                            Everything you need to know about Shopping Complex. Can't find an answer?{' '}
+                            Everything you need to know about jiidaa. Can't find an answer?{' '}
                             <Link href="/contact" className="text-primary-olive hover:underline font-medium">
                                 Contact us
                             </Link>

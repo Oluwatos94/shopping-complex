@@ -58,13 +58,13 @@ const Header: React.FC = () => {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-3">
-                        <img
-                            src="/logo/dark-mode-logo.svg"
-                            alt="Shopping Complex Logo"
+                        {/* <img
+                            src="/logo/jiidaa.jpeg"
+                            alt="jiidaa Logo"
                             className="h-12 w-auto"
-                        />
+                        /> */}
                         <span className="text-primary-light font-bold text-xl hidden sm:block">
-                            Shopping Complex
+                            jiidaa
                         </span>
                     </Link>
 

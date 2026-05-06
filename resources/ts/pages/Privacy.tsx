@@ -4,13 +4,13 @@ import { Head, Link } from '@inertiajs/react';
 const Privacy: React.FC = () => {
     return (
         <>
-            <Head title="Privacy Policy - Shopping Complex" />
+            <Head title="Privacy Policy - jiidaa" />
             <div className="min-h-screen bg-gray-50">
                 <nav className="bg-white shadow-sm border-b border-gray-200">
                     <div className="container mx-auto px-4 py-3">
                         <Link href="/" className="flex items-center space-x-3">
-                            <img src="/logo/dark-mode-2.svg" alt="Shopping Complex" className="h-10 w-auto" />
-                            <span className="text-xl font-bold text-gray-900">Shopping Complex</span>
+                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-10 w-auto" />
+                            <span className="text-xl font-bold text-gray-900">jiidaa</span>
                         </Link>
                     </div>
                 </nav>
@@ -23,7 +23,7 @@ const Privacy: React.FC = () => {
 
                         <section>
                             <h2 className="text-xl font-semibold text-primary-dark mb-3">1. Introduction</h2>
-                            <p>Shopping Complex ("we", "our", or "us") operates a local vendor discovery platform accessible via web and WhatsApp. This Privacy Policy explains how we collect, use, and protect your personal information when you use our services.</p>
+                            <p>jiidaa ("we", "our", or "us") operates a local vendor discovery platform accessible via web and WhatsApp. This Privacy Policy explains how we collect, use, and protect your personal information when you use our services.</p>
                         </section>
 
                         <section>
@@ -88,7 +88,7 @@ const Privacy: React.FC = () => {
 
                     <div className="mt-8 text-center">
                         <Link href="/" className="text-primary-olive hover:underline text-sm">
-                            ← Back to Shopping Complex
+                            ← Back to jiidaa
                         </Link>
                     </div>
                 </div>

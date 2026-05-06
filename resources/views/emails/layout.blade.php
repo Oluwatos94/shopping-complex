@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>@yield('title', 'Shopping Complex')</title>
+    <title>@yield('title', 'jiidaa')</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -162,7 +162,7 @@
                     <rect x="56.4539" y="97.7383" width="8.44888" height="8.44888" rx="4.22444" fill="#D49F89"/>
                     <circle cx="60.678" cy="101.962" r="1.9202" fill="#272518"/>
                 </svg>
-                <span class="brand-name">Shopping Complex</span>
+                <span class="brand-name">jiidaa</span>
             </div>
         </div>
 
@@ -173,8 +173,8 @@
 
         <!-- Footer -->
         <div class="email-footer">
-            <p class="footer-brand">Shopping Complex</p>
-            <p>&copy; {{ date('Y') }} Shopping Complex. All rights reserved.</p>
+            <p class="footer-brand">jiidaa</p>
+            <p>&copy; {{ date('Y') }} jiidaa. All rights reserved.</p>
             <p>This is an automated email — please do not reply to this message.</p>
         </div>
 

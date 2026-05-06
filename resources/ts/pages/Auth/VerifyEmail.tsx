@@ -73,12 +73,12 @@ export default function VerifyEmail() {
                         {/* Logo + name */}
                         <div className="flex items-center justify-center gap-3 mb-5">
                             <img
-                                src="/logo/dark-mode-logo.svg"
-                                alt="Shopping Complex"
+                                src="/logo/jiidaa.jpeg"
+                                alt="jiidaa"
                                 className="h-10 w-auto"
                             />
                             <span className="text-white font-serif font-bold text-lg tracking-wide">
-                                Shopping Complex
+                                jiidaa
                             </span>
                         </div>
 

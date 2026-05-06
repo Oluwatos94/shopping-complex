@@ -108,7 +108,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         </svg>
                     </div>
                     <div>
-                        <h1 className="text-base font-bold text-white leading-tight">Shopping Complex</h1>
+                        <h1 className="text-base font-bold text-white leading-tight">jiidaa</h1>
                         <p className="text-[10px] tracking-wider uppercase text-primary-light/40">Admin Console</p>
                     </div>
                 </div>

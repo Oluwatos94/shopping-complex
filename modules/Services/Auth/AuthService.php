@@ -57,7 +57,7 @@ class AuthService
         }
 
         $message = $isNewUser
-            ? 'Welcome to Shopping Complex, '.$user->name.'! Your account is ready.'
+            ? 'Welcome to jiidaa, '.$user->name.'! Your account is ready.'
             : 'Welcome back, '.$user->name.'! You are now logged in.';
 
         $this->notificationService->send(new SystemAlertEvent(
