@@ -11,13 +11,13 @@ interface PageProps {
 
 // Map category IDs to local images (same as the landing page section)
 const categoryImages: Record<number, string> = {
-    1: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat1.jpg',
-    2: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat2.jpg',
-    4: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat4.jpg',
-    5: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat5.jpg',
-    6: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat6.jpg',
-    7: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat7.jpg',
-    8: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/cat8.jpg',
+    1: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat1.jpg',
+    2: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat2.jpg',
+    4: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat4.jpg',
+    5: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat5.jpg',
+    6: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat6.jpg',
+    7: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat7.jpg',
+    8: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat8.jpg',
 };
 
 const Categories: React.FC = () => {

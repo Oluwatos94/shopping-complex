@@ -119,7 +119,7 @@ const HowItWorksSection: React.FC = () => {
                         </div>
                         <div className="relative">
                             <img
-                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/shopping-image2.jpg"
+                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/shopping-image2.jpg"
                                 alt="Real-time shopping experience"
                                 className="rounded-xl shadow-2xl w-full h-auto object-cover"
                             />

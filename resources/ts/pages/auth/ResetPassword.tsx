@@ -18,7 +18,7 @@ function ResetPassword() {
         <div className="h-screen w-full fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
             {/* Background Image */}
             <img
-                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/Polo Park 2.jpg"
+                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Polo Park 2.jpg"
                 alt="register page background"
                 className="fixed inset-0 w-full h-full object-cover z-0"
             />
