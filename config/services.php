@@ -57,9 +57,9 @@ return [
         'platform_number' => env('PLATFORM_WHATSAPP_NUMBER', ''),
     ],
 
-    'gemini' => [
-        'api_key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    'claude' => [
+        'api_key' => env('CLAUDE_API_KEY'),
+        'model' => env('CLAUDE_MODEL', 'claude-haiku-4-5-20251001'),
     ],
 
     'admin' => [
