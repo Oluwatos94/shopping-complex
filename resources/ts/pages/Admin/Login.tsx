@@ -37,13 +37,7 @@ export default function AdminLogin() {
                         {/* Logo + Admin badge */}
                         <div className="flex flex-col items-center gap-2 mb-6">
                             <div className="flex items-center gap-2">
-                                {/* <img
-                                    src="/logo/jiidaa.jpeg"
-                                    alt="jiidaa"
-                                    className="h-7 w-auto"
-                                    style={{ filter: 'invert(1) sepia(1) saturate(0.5) hue-rotate(0deg)' }}
-                                /> */}
-                                <span className="text-sm font-semibold text-gray-900">jiidaa</span>
+                                <img src="/logo/light.svg" alt="jiidaa" className="h-10 w-auto" />
                             </div>
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wide">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

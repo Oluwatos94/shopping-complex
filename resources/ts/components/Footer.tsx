@@ -9,15 +9,8 @@ const Footer: React.FC = () => {
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                     <div>
-                        <div className="flex items-center space-x-3 mb-4">
-                            <img
-                                src="/logo/jiidaa.jpeg"
-                                alt="jiidaa Logo"
-                                className="h-10 w-auto"
-                            />
-                            <span className="text-white font-bold text-lg">
-                                jiidaa
-                            </span>
+                        <div className="mb-4">
+                            <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
                         </div>
                         <p className="text-primary-light mb-4">
                             Your trusted marketplace connecting customers with quality vendors in real-time.

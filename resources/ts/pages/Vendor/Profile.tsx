@@ -142,9 +142,8 @@ export default function VendorProfilePage({
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                             </svg>
                                         </button>
-                                        <Link href="/" className="flex items-center space-x-3">
-                                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-8 w-auto" />
-                                            <span className="text-primary-light font-bold text-lg hidden sm:block">jiidaa</span>
+                                        <Link href="/">
+                                            <img src="/logo/dark.svg" alt="jiidaa" className="h-10 w-auto" />
                                         </Link>
                                     </div>
                                     <Link href="/vendors" className="text-sm text-primary-light hover:text-white transition-colors">

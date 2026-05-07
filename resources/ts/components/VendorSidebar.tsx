@@ -80,11 +80,7 @@ export default function VendorSidebar({ vendorSlug, businessName, businessLogo }
         <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[100px] bg-gray-100 border-r border-gray-200 flex-col items-center py-6 z-40">
             {/* Logo */}
             <Link href="/" className="mb-8">
-                <img
-                    src="/logo/jiidaa.jpeg"
-                    alt="jiidaa"
-                    className="h-10 w-auto"
-                />
+                <img src="/logo/light.svg" alt="jiidaa" className="h-10 w-auto" />
             </Link>
 
             {/* Nav Items */}

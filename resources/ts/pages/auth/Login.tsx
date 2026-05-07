@@ -25,10 +25,9 @@ function Login() {
                 />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
-                    {/* <a href="/" className="flex items-center gap-3">
-                        <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-9 w-auto" />
-                        <span className="text-white font-bold text-lg tracking-wide">jiidaa</span>
-                    </a> */}
+                    <a href="/">
+                        <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
+                    </a>
 
                     {/* Tagline */}
                     <div>

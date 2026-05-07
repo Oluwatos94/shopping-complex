@@ -8,9 +8,8 @@ const Terms: React.FC = () => {
             <div className="min-h-screen bg-gray-50">
                 <nav className="bg-white shadow-sm border-b border-gray-200">
                     <div className="container mx-auto px-4 py-3">
-                        <Link href="/" className="flex items-center space-x-3">
-                            <img src="/logo/jiidaa.jpeg" alt="jiidaa" className="h-10 w-auto" />
-                            <span className="text-xl font-bold text-gray-900">jiidaa</span>
+                        <Link href="/">
+                            <img src="/logo/light.svg" alt="jiidaa" className="h-10 w-auto" />
                         </Link>
                     </div>
                 </nav>
