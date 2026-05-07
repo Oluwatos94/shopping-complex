@@ -31,7 +31,8 @@ class UploadProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0'],
             'pay_on_delivery' => ['boolean'],
             'is_returnable' => ['boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp,gif', 'max:20480'],
             'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:102400'],
         ];
     }
@@ -51,9 +52,10 @@ class UploadProductRequest extends FormRequest
             'price.required' => 'Price is required.',
             'price.numeric' => 'Price must be a number.',
             'price.min' => 'Price cannot be negative.',
-            'image.image' => 'The file must be an image.',
-            'image.mimes' => 'The image must be a JPG, PNG, or WebP file.',
-            'image.max' => 'The image must not exceed 10MB.',
+            'images.max' => 'You can upload a maximum of 5 images per product.',
+            'images.*.image' => 'Each file must be an image.',
+            'images.*.mimes' => 'Images must be JPG, PNG, WebP, or GIF.',
+            'images.*.max' => 'Each image must not exceed 20MB.',
             'video.mimes' => 'The video must be MP4, MOV, AVI, WebM, or MKV.',
             'video.max' => 'The video must not exceed 100MB.',
         ];

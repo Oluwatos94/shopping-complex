@@ -78,9 +78,17 @@ class VendorController extends Controller
             ];
         });
 
+        $categories = Cache::remember('vendor_listing_categories', 3600, fn () => Category::select('id', 'name', 'slug')
+            ->withCount(['vendors'])
+            ->having('vendors_count', '>', 0)
+            ->orderBy('name')
+            ->get()
+        );
+
         return Inertia::render('Vendors/Index', [
             'vendors' => $transformedVendors,
             'filters' => $filters,
+            'categories' => $categories,
             'auth' => [
                 'user' => $request->user(),
             ],
@@ -270,13 +278,15 @@ class VendorController extends Controller
                     modelId: $product->id,
                     type: 'product_video'
                 );
-            } elseif ($request->hasFile('image')) {
-                $this->mediaService->uploadImage(
-                    file: $request->file('image'),
-                    modelType: Product::class,
-                    modelId: $product->id,
-                    type: 'product_image'
-                );
+            } elseif ($request->hasFile('images')) {
+                foreach ($request->file('images') as $imageFile) {
+                    $this->mediaService->uploadImage(
+                        file: $imageFile,
+                        modelType: Product::class,
+                        modelId: $product->id,
+                        type: 'product_image'
+                    );
+                }
             }
 
             return $product;
@@ -307,14 +317,16 @@ class VendorController extends Controller
                     modelId: $product->id,
                     type: 'product_video'
                 );
-            } elseif ($request->hasFile('image')) {
+            } elseif ($request->hasFile('images')) {
                 $this->mediaService->deleteMediaForModel(Product::class, $product->id);
-                $this->mediaService->uploadImage(
-                    file: $request->file('image'),
-                    modelType: Product::class,
-                    modelId: $product->id,
-                    type: 'product_image'
-                );
+                foreach ($request->file('images') as $imageFile) {
+                    $this->mediaService->uploadImage(
+                        file: $imageFile,
+                        modelType: Product::class,
+                        modelId: $product->id,
+                        type: 'product_image'
+                    );
+                }
             }
         });
 

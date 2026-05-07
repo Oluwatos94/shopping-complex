@@ -18,9 +18,6 @@ export default function VendorCard({ vendor }: VendorCardProps) {
             : `${vendor.distance_km.toFixed(1)} km away`
         : null;
 
-    // Determine status badge color
-    const statusColor = vendor.is_online ? 'bg-green-500' : 'bg-gray-400';
-
     return (
         <div className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#D49F89] hover:scale-[1.02]">
             {/* Vendor Image/Logo */}
@@ -31,33 +28,23 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    {vendor.is_verified && (
-                        <span className="bg-[#D49F89] text-[#272518] text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            Verified
-                        </span>
-                    )}
-                </div>
 
-                {/* Online Status */}
-                <div className="absolute top-3 right-3">
-                    <div className={`flex items-center gap-1.5 ${statusColor} text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-md`}>
-                        <span className={`w-2 h-2 ${statusColor} rounded-full ${vendor.is_online ? 'animate-pulse' : ''}`}></span>
-                        {vendor.is_online ? 'Active' : 'Offline'}
-                    </div>
-                </div>
             </div>
 
             {/* Vendor Info */}
             <div className="p-4 pt-5">
                 {/* Business Name */}
                 <Link href={`/vendors/${vendor.slug}`}>
-                    <h3 className="font-semibold text-[#272518] mb-1.5 line-clamp-1 group-hover:text-[#D49F89] transition-colors text-lg">
-                        {vendor.business_name}
+                    <h3 className="font-semibold text-[#272518] mb-1.5 group-hover:text-[#D49F89] transition-colors text-lg flex items-center gap-2">
+                        <span className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="line-clamp-1">{vendor.business_name}</span>
+                            <span className={`flex-shrink-0 w-2 h-2 rounded-full ${vendor.is_online ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                        </span>
+                        {vendor.is_verified && (
+                            <svg className="flex-shrink-0 w-4 h-4 text-[#D49F89]" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                        )}
                     </h3>
                 </Link>
 
@@ -124,7 +111,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.526 5.845L.057 23.882l6.198-1.625A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.374l-.36-.214-3.68.965.982-3.59-.234-.369A9.818 9.818 0 1112 21.818z"/>
                         </svg>
-                        WhatsApp Vendor
+                        <span className="hidden sm:inline">WhatsApp Vendor</span>
                     </a>
                 ) : (
                     <Link

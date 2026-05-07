@@ -1,21 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from '@/types';
+import { Category } from '@/types/product';
 import { VendorGrid } from '@/components/Vendors';
 import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
 
 interface VendorListingProps {
     vendors: PaginatedVendors;
     filters: VendorFilters;
+    categories: Category[];
     auth?: {
         user: any;
     };
 }
 
-export default function VendorListing({ vendors, filters, auth }: VendorListingProps) {
+export default function VendorListing({ vendors, filters, categories, auth }: VendorListingProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [radius, setRadius] = useState(filters.radius || 5);
     const [sortBy, setSortBy] = useState<VendorSortOption>(filters.sort_by || 'distance');
+    const [categoryId, setCategoryId] = useState<number | undefined>(filters.category_id);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -67,6 +70,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                 search: searchQuery,
                 radius: radius,
                 sort_by: sortBy,
+                category_id: categoryId,
                 latitude: userLocation?.latitude,
                 longitude: userLocation?.longitude,
                 ...additionalFilters,
@@ -209,7 +213,7 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                             {/* Search button */}
                             <button
                                 onClick={() => handleSearch()}
-                                className="h-10 px-5 bg-[#D49F89] hover:bg-[#c48f79] text-[#272518] font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"
+                                className="h-10 px-2.5 sm:px-5 bg-[#D49F89] hover:bg-[#c48f79] text-[#272518] font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -217,6 +221,36 @@ export default function VendorListing({ vendors, filters, auth }: VendorListingP
                                 <span className="hidden sm:inline">Search</span>
                             </button>
                         </div>
+
+                        {/* Category chips */}
+                        {categories.length > 0 && (
+                            <div className="flex gap-2 mt-2 overflow-x-auto pb-1 scrollbar-hide">
+                                <button
+                                    onClick={() => { setCategoryId(undefined); handleSearch({ category_id: undefined }); }}
+                                    className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-colors ${
+                                        !categoryId
+                                            ? 'bg-[#D49F89] text-[#272518]'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => { setCategoryId(cat.id); handleSearch({ category_id: cat.id }); }}
+                                        className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-colors ${
+                                            categoryId === cat.id
+                                                ? 'bg-[#D49F89] text-[#272518]'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {cat.name}
+                                        <span className="ml-1 opacity-60">({cat.vendors_count})</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Mobile: radius + sort on second row */}
                         <div className="flex gap-2 mt-2 sm:hidden">
