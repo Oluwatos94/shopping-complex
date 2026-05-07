@@ -9,15 +9,24 @@ interface Props {
     onEditClose?: () => void;
 }
 
+const MAX_IMAGES = 5;
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;  // 20 MB
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
+
 export default function UploadProductFab({ productLimit, activeProductsCount, editProduct, onEditClose }: Props) {
     const isEditMode = !!editProduct;
     const atLimit = !isEditMode && productLimit !== null && activeProductsCount >= productLimit;
     const [open, setOpen] = useState(isEditMode);
-    const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-    const [isVideo, setIsVideo] = useState(false);
+
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [videoPreview, setVideoPreview] = useState<string | null>(null);
+    const [fileSizeError, setFileSizeError] = useState<string | null>(null);
+
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm({
         name: editProduct?.name ?? '',
@@ -25,7 +34,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
         price: editProduct?.price ? String(editProduct.price) : '',
         pay_on_delivery: editProduct?.pay_on_delivery ?? false as boolean,
         is_returnable: editProduct?.is_returnable ?? false as boolean,
-        image: null as File | null,
+        images: [] as File[],
         video: null as File | null,
     });
 
@@ -38,37 +47,107 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                 price: String(editProduct.price),
                 pay_on_delivery: editProduct.pay_on_delivery,
                 is_returnable: editProduct.is_returnable,
-                image: null,
+                images: [],
                 video: null,
             });
+            setImagePreviews([]);
+            setVideoPreview(null);
+            setFileSizeError(null);
         }
     }, [editProduct?.id]);
 
-    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        if (!files.length) return;
+
+        setFileSizeError(null);
+
+        const oversized = files.filter(f => f.size > MAX_IMAGE_BYTES);
+        if (oversized.length) {
+            setFileSizeError(`File too large — max 20MB per image. Please compress and try again.`);
+            if (imageInputRef.current) imageInputRef.current.value = '';
+            return;
+        }
+
+        const currentCount = form.data.images.length;
+        const available = MAX_IMAGES - currentCount;
+        if (available <= 0) {
+            setFileSizeError(`Maximum ${MAX_IMAGES} images per product.`);
+            if (imageInputRef.current) imageInputRef.current.value = '';
+            return;
+        }
+
+        const toAdd = files.slice(0, available);
+        if (toAdd.length < files.length) {
+            setFileSizeError(`Only ${available} slot(s) remaining — ${files.length - toAdd.length} file(s) skipped.`);
+        }
+
+        // clear video if switching to images
+        if (videoPreview) {
+            URL.revokeObjectURL(videoPreview);
+            setVideoPreview(null);
+            form.setData('video', null);
+        }
+
+        const newPreviews = toAdd.map(f => URL.createObjectURL(f));
+        setImagePreviews(prev => [...prev, ...newPreviews]);
+        form.setData('images', [...form.data.images, ...toAdd]);
+
+        if (imageInputRef.current) imageInputRef.current.value = '';
+    }, [videoPreview, form.data.images]);
+
+    const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const fileIsVideo = file.type.startsWith('video/');
-        setIsVideo(fileIsVideo);
-        setMediaPreview(URL.createObjectURL(file));
+        setFileSizeError(null);
 
-        if (fileIsVideo) {
-            form.setData('video', file);
-            form.setData('image', null);
-        } else {
-            form.setData('image', file);
-            form.setData('video', null);
+        if (file.size > MAX_VIDEO_BYTES) {
+            setFileSizeError('Video is too large — maximum size is 100MB.');
+            if (videoInputRef.current) videoInputRef.current.value = '';
+            return;
         }
-    }, []);
+
+        // clear images if switching to video
+        imagePreviews.forEach(URL.revokeObjectURL);
+        setImagePreviews([]);
+        form.setData('images', []);
+
+        if (videoPreview) URL.revokeObjectURL(videoPreview);
+        setVideoPreview(URL.createObjectURL(file));
+        form.setData('video', file);
+
+        if (videoInputRef.current) videoInputRef.current.value = '';
+    }, [imagePreviews, videoPreview]);
+
+    const removeImage = useCallback((index: number) => {
+        setImagePreviews(prev => {
+            const url = prev[index];
+            if (url) URL.revokeObjectURL(url);
+            return prev.filter((_, i) => i !== index);
+        });
+        form.setData('images', form.data.images.filter((_, i) => i !== index));
+        setFileSizeError(null);
+    }, [form.data.images]);
+
+    const removeVideo = useCallback(() => {
+        if (videoPreview) URL.revokeObjectURL(videoPreview);
+        setVideoPreview(null);
+        form.setData('video', null);
+        if (videoInputRef.current) videoInputRef.current.value = '';
+    }, [videoPreview]);
 
     const resetForm = useCallback(() => {
         form.reset();
-        if (mediaPreview) URL.revokeObjectURL(mediaPreview);
-        setMediaPreview(null);
-        setIsVideo(false);
+        imagePreviews.forEach(URL.revokeObjectURL);
+        setImagePreviews([]);
+        if (videoPreview) URL.revokeObjectURL(videoPreview);
+        setVideoPreview(null);
+        setFileSizeError(null);
         setDeleteConfirm(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    }, [mediaPreview]);
+        if (imageInputRef.current) imageInputRef.current.value = '';
+        if (videoInputRef.current) videoInputRef.current.value = '';
+    }, [imagePreviews, videoPreview]);
 
     const handleClose = () => {
         if (form.processing) return;
@@ -106,12 +185,14 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
         });
     };
 
-    const existingMediaUrl = editProduct?.images?.[0]?.url ?? null;
-    const existingIsVideo = editProduct?.images?.[0] && (editProduct.images[0] as any).type === 'product_video';
+    const existingImages = editProduct?.images?.filter(img => img.type !== 'product_video') ?? [];
+    const existingVideoUrl = editProduct?.images?.find(img => img.type === 'product_video')?.url ?? null;
+
+    const showExistingImages = isEditMode && imagePreviews.length === 0 && !videoPreview && existingImages.length > 0;
+    const showExistingVideo = isEditMode && !videoPreview && imagePreviews.length === 0 && !!existingVideoUrl;
 
     return (
         <>
-            {/* FAB — only shown when not in edit mode */}
             {!isEditMode && (
                 <button
                     onClick={() => setOpen(true)}
@@ -126,7 +207,6 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                 </button>
             )}
 
-            {/* Modal */}
             {open && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
@@ -160,47 +240,129 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-4">
 
-                                {/* Media upload area */}
+                                {/* Media section */}
                                 <div>
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-primary-olive"
-                                        style={{ minHeight: '10rem' }}
-                                    >
-                                        {mediaPreview ? (
-                                            isVideo ? (
-                                                <video src={mediaPreview} className="w-full max-h-48 object-contain" controls />
-                                            ) : (
-                                                <img src={mediaPreview} alt="Preview" className="w-full max-h-48 object-cover" />
-                                            )
-                                        ) : existingMediaUrl ? (
-                                            existingIsVideo ? (
-                                                <video src={existingMediaUrl} className="w-full max-h-48 object-contain" controls />
-                                            ) : (
-                                                <img src={existingMediaUrl} alt="Current" className="w-full max-h-48 object-cover" />
-                                            )
-                                        ) : (
+                                    {/* Existing images (edit mode, no new selection yet) */}
+                                    {showExistingImages && (
+                                        <div className="mb-2">
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {existingImages.map(img => (
+                                                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                                                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1.5">Selecting new images will replace all existing ones</p>
+                                        </div>
+                                    )}
+
+                                    {/* Existing video (edit mode, no new selection yet) */}
+                                    {showExistingVideo && (
+                                        <div className="mb-2">
+                                            <video src={existingVideoUrl!} className="w-full max-h-48 object-contain rounded-lg" controls />
+                                            <p className="text-xs text-gray-400 mt-1.5">Selecting new media will replace the existing video</p>
+                                        </div>
+                                    )}
+
+                                    {/* New image previews grid */}
+                                    {imagePreviews.length > 0 && (
+                                        <div className="grid grid-cols-3 gap-2 mb-2">
+                                            {imagePreviews.map((src, i) => (
+                                                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                                                    <img src={src} alt="" className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeImage(i)}
+                                                        className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black text-white rounded-full flex items-center justify-center text-xs leading-none"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {imagePreviews.length < MAX_IMAGES && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => imageInputRef.current?.click()}
+                                                    className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-olive flex items-center justify-center text-gray-400 hover:text-primary-olive transition-colors"
+                                                >
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* New video preview */}
+                                    {videoPreview && (
+                                        <div className="relative mb-2">
+                                            <video src={videoPreview} className="w-full max-h-48 object-contain rounded-lg" controls />
+                                            <button
+                                                type="button"
+                                                onClick={removeVideo}
+                                                className="absolute top-2 right-2 w-6 h-6 bg-black/60 hover:bg-black text-white rounded-full flex items-center justify-center text-sm"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Upload area — shown when no new media selected */}
+                                    {imagePreviews.length === 0 && !videoPreview && (
+                                        <div
+                                            onClick={() => imageInputRef.current?.click()}
+                                            className="w-full rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-olive cursor-pointer transition-colors flex items-center justify-center"
+                                            style={{ minHeight: '10rem' }}
+                                        >
                                             <div className="text-center py-8 px-4">
                                                 <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
-                                                <p className="text-sm text-gray-500">Click to upload image or video</p>
-                                                <p className="text-xs text-gray-400 mt-1">Image: JPG, PNG, WebP (max 10MB) · Video: MP4, MOV, WebM (max 100MB)</p>
+                                                <p className="text-sm text-gray-500">Click to upload images (up to {MAX_IMAGES})</p>
+                                                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP · max 20MB each</p>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
+
+                                    {/* Video upload link */}
+                                    {!videoPreview && (
+                                        <button
+                                            type="button"
+                                            onClick={() => videoInputRef.current?.click()}
+                                            className="mt-2 text-xs text-gray-400 hover:text-primary-olive transition-colors underline underline-offset-2"
+                                        >
+                                            Upload a video instead (MP4, MOV · max 100MB)
+                                        </button>
+                                    )}
+
+                                    {/* Hidden inputs */}
                                     <input
-                                        ref={fileInputRef}
+                                        ref={imageInputRef}
                                         type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska"
-                                        onChange={handleFileChange}
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        multiple
+                                        onChange={handleImageChange}
                                         className="sr-only"
                                     />
-                                    {isEditMode && !mediaPreview && (
-                                        <p className="text-xs text-gray-400 mt-1">Leave empty to keep current media</p>
+                                    <input
+                                        ref={videoInputRef}
+                                        type="file"
+                                        accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska"
+                                        onChange={handleVideoChange}
+                                        className="sr-only"
+                                    />
+
+                                    {/* File size / slot error */}
+                                    {fileSizeError && (
+                                        <p className="text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
+                                            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                            </svg>
+                                            {fileSizeError}
+                                        </p>
                                     )}
-                                    {(form.errors.image || form.errors.video) && (
-                                        <p className="text-sm text-red-600 mt-1">{form.errors.image || form.errors.video}</p>
+                                    {(form.errors.images || form.errors.video) && (
+                                        <p className="text-sm text-red-600 mt-1">{form.errors.images || form.errors.video}</p>
                                     )}
                                 </div>
 

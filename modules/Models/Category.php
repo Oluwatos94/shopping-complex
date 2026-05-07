@@ -2,6 +2,7 @@
 
 namespace ModulesShoppingComplex\Models;
 
+use ModulesShoppingComplex\Models\User;
 use Carbon\Carbon;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,5 +39,10 @@ class Category extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function vendors()
+    {
+        return $this->hasMany(User::class, 'category_id')->where('role', 'vendor');
     }
 }

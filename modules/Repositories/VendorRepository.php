@@ -27,6 +27,7 @@ class VendorRepository extends BasePageRepository
         $radius = $filters['radius'] ?? 5; // Default 5km radius
         $search = $filters['search'] ?? null;
         $sortBy = $filters['sort_by'] ?? 'distance';
+        $categoryId = $filters['category_id'] ?? null;
 
         $addressTable = Address::getTableName();
         $query = User::query()
@@ -76,6 +77,10 @@ class VendorRepository extends BasePageRepository
                     )
                     ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escapedSearch}%"));
             });
+        }
+
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
         }
 
         if (isset($filters['verified_only']) && $filters['verified_only']) {
