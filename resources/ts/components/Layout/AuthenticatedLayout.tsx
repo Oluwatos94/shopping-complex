@@ -29,16 +29,8 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
                 <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
                     <div className="container mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                {/* Logo */}
-                                <img
-                                    src="/logo/jiidaa.jpeg"
-                                    alt="jiidaa"
-                                    className="h-10 w-auto"
-                                />
-                                <h1 className="text-xl font-bold text-gray-900">
-                                    jiidaa
-                                </h1>
+                            <div>
+                                <img src="/logo/light.svg" alt="jiidaa" className="h-10 w-auto" />
                             </div>
 
                             {/* User Menu */}

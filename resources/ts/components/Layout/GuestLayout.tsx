@@ -25,14 +25,9 @@ const GuestLayout: React.FC<GuestLayoutProps> = ({
 
             <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-light to-white py-12 px-4">
                 {/* Logo/Brand */}
-                <div className="mb-8 text-center">
-                    <Link href="/" className="inline-flex items-center space-x-2">
-                        <div className="bg-primary-olive text-white font-bold text-3xl px-6 py-3 rounded-lg shadow-lg">
-                            SC
-                        </div>
-                        <span className="text-primary-dark font-bold text-2xl">
-                            jiidaa
-                        </span>
+                <div className="mb-8">
+                    <Link href="/">
+                        <img src="/logo/light.svg" alt="jiidaa" className="h-16 w-auto" />
                     </Link>
                 </div>
 

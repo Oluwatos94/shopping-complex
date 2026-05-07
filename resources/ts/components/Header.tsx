@@ -57,15 +57,8 @@ const Header: React.FC = () => {
             <nav className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-3">
-                        {/* <img
-                            src="/logo/jiidaa.jpeg"
-                            alt="jiidaa Logo"
-                            className="h-12 w-auto"
-                        /> */}
-                        <span className="text-primary-light font-bold text-xl hidden sm:block">
-                            jiidaa
-                        </span>
+                    <Link href="/">
+                        <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
                     </Link>
 
                     {/* Desktop nav */}

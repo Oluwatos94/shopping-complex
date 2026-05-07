@@ -101,16 +101,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="min-h-screen bg-gray-50">
             {/* Sidebar */}
             <aside className="fixed left-0 top-0 h-screen w-64 bg-primary-dark flex flex-col py-6 px-4 z-50 overflow-y-auto scrollbar-thin-dark">
-                <div className="mb-10 px-2 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-olive rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 className="text-base font-bold text-white leading-tight">jiidaa</h1>
-                        <p className="text-[10px] tracking-wider uppercase text-primary-light/40">Admin Console</p>
-                    </div>
+                <div className="mb-10 px-2">
+                    <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
+                    <p className="text-[10px] tracking-wider uppercase text-primary-light/40 mt-1">Admin Console</p>
                 </div>
 
                 <nav className="flex-1 space-y-1">
