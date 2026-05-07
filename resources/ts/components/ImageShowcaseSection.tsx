@@ -10,7 +10,7 @@ const ImageShowcaseSection: React.FC = () => {
                     <div className="relative">
                         <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                             <img
-                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/images/shopping-image3.jpg"
+                                src="https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/shopping-image3.jpg"
                                 alt="Fresh grocery shopping experience"
                                 className="w-full h-auto object-cover"
                             />
