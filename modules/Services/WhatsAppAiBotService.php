@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Services;
 
+use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\User;
@@ -18,13 +19,15 @@ final readonly class WhatsAppAiBotService
 
     private const SESSION_TTL_MINUTES = 60;
 
+    private const MAX_TOOL_ITERATIONS = 10;
+
     public function __construct(
         private WhatsAppApiService $apiService,
         private WhatsAppSessionRepository $sessionRepository,
         private WhatsAppInteractionRepository $interactionRepository,
         private VendorService $vendorService,
         private AnalyticsService $analyticsService,
-        private GeminiClient $gemini,
+        private ClaudeClient $claude,
     ) {}
 
     /**
@@ -58,12 +61,12 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runGeminiWithTools($from, $history, $session, $message);
+        $reply = $this->runClaudeWithTools($from, $history, $session);
 
         $history[] = ['role' => 'assistant', 'content' => $reply];
 
-        if (count($history) > self::MAX_HISTORY_MESSAGES) {
-            $history = array_slice($history, -self::MAX_HISTORY_MESSAGES);
+        while (count($history) > self::MAX_HISTORY_MESSAGES) {
+            array_splice($history, 0, 2);
         }
 
         $session->data = array_merge((array) ($session->data ?? []), ['history' => $history]);
@@ -74,103 +77,71 @@ final readonly class WhatsAppAiBotService
 
     /**
      * @param  array<int, array<string, mixed>>  $history
-     * @param  array<string, mixed>  $rawMessage
      */
-    private function runGeminiWithTools(string $from, array $history, WhatsAppSession $session, array $rawMessage): string
+    private function runClaudeWithTools(string $from, array $history, WhatsAppSession $session): string
     {
         $tools = $this->defineTools();
-        $contents = $this->buildContents($history);
+
+        $messages = array_map(fn (array $msg) => [
+            'role' => $msg['role'],
+            'content' => (string) $msg['content'],
+        ], $history);
 
         $payload = [
-            'system_instruction' => ['parts' => [['text' => $this->systemPrompt()]]],
-            'contents' => $contents,
-            'tools' => [['function_declarations' => $tools]],
+            'model' => config('services.claude.model', 'claude-haiku-4-5-20251001'),
+            'max_tokens' => 2048,
+            'system' => $this->systemPrompt(),
+            'messages' => $messages,
+            'tools' => $tools,
         ];
 
-        $response = $this->gemini->generateContent($payload);
+        $response = $this->claude->createMessage($payload);
 
-        // Agentic loop: keep going while Gemini wants to call a function
-        while ($this->hasFunctionCall($response)) {
-            $functionCall = $this->getFunctionCall($response);
+        $iterations = 0;
+        while (($response['stop_reason'] ?? '') === 'tool_use') {
+            if (++$iterations > self::MAX_TOOL_ITERATIONS) {
+                Log::warning('Claude tool loop exceeded max iterations', ['from' => $from]);
+                break;
+            }
 
-            $contents[] = [
-                'role' => 'model',
-                'parts' => [['functionCall' => $functionCall]],
-            ];
+            $content = (array) ($response['content'] ?? []);
 
-            /** @var array<string, mixed> $args */
-            $args = (array) ($functionCall['args'] ?? []);
-            $result = $this->executeTool((string) $functionCall['name'], $args, $from, $session, $rawMessage);
+            $messages[] = ['role' => 'assistant', 'content' => $content];
 
-            $contents[] = [
-                'role' => 'user',
-                'parts' => [['functionResponse' => [
-                    'name' => $functionCall['name'],
-                    'response' => ['result' => $result],
-                ]]],
-            ];
+            $toolResults = [];
+            foreach ($content as $block) {
+                if (($block['type'] ?? '') !== 'tool_use') {
+                    continue;
+                }
+                /** @var array<string, mixed> $input */
+                $input = (array) ($block['input'] ?? []);
+                $result = $this->executeTool((string) $block['name'], $input, $from, $session);
+                $toolResults[] = [
+                    'type' => 'tool_result',
+                    'tool_use_id' => $block['id'],
+                    'content' => $result,
+                ];
+            }
 
-            $response = $this->gemini->generateContent([
-                'system_instruction' => ['parts' => [['text' => $this->systemPrompt()]]],
-                'contents' => $contents,
-                'tools' => [['function_declarations' => $tools]],
-            ]);
+            $messages[] = ['role' => 'user', 'content' => $toolResults];
+
+            $payload['messages'] = $messages;
+            $response = $this->claude->createMessage($payload);
         }
 
-        return $this->extractText($response) ?? "Sorry, I couldn't process your request. Please try again.";
-    }
-
-    /**
-     * @param  array<string, mixed>  $response
-     */
-    private function hasFunctionCall(array $response): bool
-    {
-        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
-        foreach ($parts as $part) {
-            if (isset($part['functionCall'])) {
-                return true;
+        foreach ((array) ($response['content'] ?? []) as $block) {
+            if (($block['type'] ?? '') === 'text') {
+                return (string) $block['text'];
             }
         }
 
-        return false;
-    }
-
-    /**
-     * @param  array<string, mixed>  $response
-     * @return array<string, mixed>
-     */
-    private function getFunctionCall(array $response): array
-    {
-        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
-        foreach ($parts as $part) {
-            if (isset($part['functionCall'])) {
-                return (array) $part['functionCall'];
-            }
-        }
-
-        return [];
-    }
-
-    /**
-     * @param  array<string, mixed>  $response
-     */
-    private function extractText(array $response): ?string
-    {
-        $parts = (array) data_get($response, 'candidates.0.content.parts', []);
-        foreach ($parts as $part) {
-            if (isset($part['text']) && is_string($part['text'])) {
-                return $part['text'];
-            }
-        }
-
-        return null;
+        return "Sorry, I couldn't process your request. Please try again.";
     }
 
     /**
      * @param  array<string, mixed>  $input
-     * @param  array<string, mixed>  $rawMessage
      */
-    private function executeTool(string $name, array $input, string $from, WhatsAppSession $session, array $rawMessage): string
+    private function executeTool(string $name, array $input, string $from, WhatsAppSession $session): string
     {
         return match ($name) {
             'search_vendors' => $this->toolSearchVendors($input, $from, $session),
@@ -190,14 +161,14 @@ final readonly class WhatsAppAiBotService
         $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
         $radius = isset($input['radius_km']) ? (float) $input['radius_km'] : 5.0;
 
-        if ($lat && $lng) {
+        if ($lat !== null && $lng !== null) {
             $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
         } else {
             $vendors = $this->vendorService->findByQuery($query);
         }
 
         if ($vendors->isEmpty()) {
-            return "No vendors found for \"{$query}\"".($lat ? " within {$radius} km" : '').'.';
+            return "No vendors found for \"{$query}\"".($lat !== null ? " within {$radius} km" : '').'.';
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
@@ -222,7 +193,9 @@ final readonly class WhatsAppAiBotService
 
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::warning('toolGetVendorProducts failed', ['vendor_id' => $vendorId, 'error' => $e->getMessage()]);
+
             return 'Vendor not found.';
         }
 
@@ -258,7 +231,9 @@ final readonly class WhatsAppAiBotService
 
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::warning('toolGetVendorContact failed', ['vendor_id' => $vendorId, 'error' => $e->getMessage()]);
+
             return 'Vendor not found.';
         }
 
@@ -289,7 +264,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'search_vendors',
                 'description' => 'Search for vendors selling a product. Use this whenever the buyer mentions a product or service they want. If they share their location coordinates, pass them to find nearby vendors. Otherwise search all vendors.',
-                'parameters' => [
+                'input_schema' => [
                     'type' => 'object',
                     'properties' => [
                         'query' => ['type' => 'string', 'description' => 'Product or service the buyer is looking for'],
@@ -303,7 +278,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'get_vendor_products',
                 'description' => 'Get the product list for a specific vendor by their ID.',
-                'parameters' => [
+                'input_schema' => [
                     'type' => 'object',
                     'properties' => [
                         'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID from search results'],
@@ -314,7 +289,7 @@ final readonly class WhatsAppAiBotService
             [
                 'name' => 'get_vendor_contact',
                 'description' => "Get a vendor's WhatsApp contact link so the buyer can chat with them directly.",
-                'parameters' => [
+                'input_schema' => [
                     'type' => 'object',
                     'properties' => [
                         'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID'],
@@ -323,18 +298,6 @@ final readonly class WhatsAppAiBotService
                 ],
             ],
         ];
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $history
-     * @return array<int, array<string, mixed>>
-     */
-    private function buildContents(array $history): array
-    {
-        return array_map(fn (array $msg) => [
-            'role' => $msg['role'] === 'assistant' ? 'model' : 'user',
-            'parts' => [['text' => (string) $msg['content']]],
-        ], $history);
     }
 
     private function systemPrompt(): string
@@ -368,7 +331,7 @@ PROMPT;
         if ($messageType === 'location') {
             $lat = $rawMessage['location']['latitude'] ?? null;
             $lng = $rawMessage['location']['longitude'] ?? null;
-            if ($lat && $lng) {
+            if ($lat !== null && $lng !== null) {
                 return "My location: latitude {$lat}, longitude {$lng}";
             }
         }

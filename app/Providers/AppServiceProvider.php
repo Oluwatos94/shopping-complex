@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use ModulesShoppingComplex\Services\GeminiClient;
+use ModulesShoppingComplex\Services\ClaudeClient;
 use ModulesShoppingComplex\Services\PaystackClient;
 use ModulesShoppingComplex\Services\WhatsAppApiService;
 
@@ -21,9 +21,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(WhatsAppApiService::class);
 
-        $this->app->singleton(GeminiClient::class, fn () => new GeminiClient(
-            apiKey: (string) config('services.gemini.api_key'),
-            model: (string) config('services.gemini.model', 'gemini-2.0-flash'),
+        $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
+            apiKey: (string) config('services.claude.api_key'),
+            model: (string) config('services.claude.model', 'claude-haiku-4-5-20251001'),
         ));
     }
 
