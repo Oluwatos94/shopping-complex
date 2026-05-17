@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Head, usePage, router } from '@inertiajs/react';
 import { PaginatedProducts, Category, ProductSortOption } from '@/types/product';
 import ProductGrid from '@/components/Products/partials/ProductGrid';
 import FilterSidebar from '@/components/Products/partials/FilterSidebar';
@@ -11,8 +11,84 @@ interface ProductsPageProps {
     categories: Category[];
 }
 
+const BATCH_SIZE = 20;
+
 export default function ProductsIndex({ products, categories }: ProductsPageProps) {
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+    // Restore location from URL on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const lat = params.get('latitude');
+        const lon = params.get('longitude');
+        if (lat && lon) setUserLocation({ latitude: Number(lat), longitude: Number(lon) });
+    }, []);
+
+    const handleNearMe = useCallback(() => {
+        if (userLocation) {
+            setUserLocation(null);
+            const params = new URLSearchParams(window.location.search);
+            params.delete('latitude');
+            params.delete('longitude');
+            params.delete('radius');
+            router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+            return;
+        }
+
+        if (!navigator.geolocation) return;
+        setIsLoadingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+                setUserLocation(loc);
+                setIsLoadingLocation(false);
+                const params = new URLSearchParams(window.location.search);
+                params.set('latitude', String(loc.latitude));
+                params.set('longitude', String(loc.longitude));
+                params.set('radius', '50');
+                router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+            },
+            () => setIsLoadingLocation(false)
+        );
+    }, [userLocation]);
+
+    // Reset visible count when navigating to a different page
+    useEffect(() => {
+        setVisibleCount(BATCH_SIZE);
+    }, [products.current_page]);
+
+    // Progressive reveal via IntersectionObserver
+    useEffect(() => {
+        if (visibleCount >= products.data.length) return;
+        if (!('IntersectionObserver' in window)) {
+            setVisibleCount(products.data.length);
+            return;
+        }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) {
+                    setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, products.data.length));
+                }
+            },
+            { threshold: 0.1 }
+        );
+        if (sentinelRef.current) observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [visibleCount, products.data.length]);
+
+    const handlePageChange = (page: number) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', String(page));
+        router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+    };
+
+    const visibleProducts = products.data.slice(0, visibleCount);
+    const allRevealed = visibleCount >= products.data.length;
+
     const {
         searchTerm,
         filters,
@@ -25,11 +101,11 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     } = useProducts();
 
     const sortOptions: { value: ProductSortOption; label: string }[] = [
+        { value: 'name_asc', label: 'Name: A-Z' },
+        { value: 'name_desc', label: 'Name: Z-A' },
         { value: 'newest', label: 'Newest' },
         { value: 'price_asc', label: 'Price: Low to High' },
         { value: 'price_desc', label: 'Price: High to Low' },
-        { value: 'name_asc', label: 'Name: A-Z' },
-        { value: 'name_desc', label: 'Name: Z-A' },
     ];
 
     const { auth } = usePage<{ auth: { user: any } | null }>().props;
@@ -56,6 +132,30 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                             <span className="text-sm text-gray-400 hidden sm:inline">
                                 {products.total} {products.total === 1 ? 'product' : 'products'} found
                             </span>
+                            <button
+                                onClick={handleNearMe}
+                                disabled={isLoadingLocation}
+                                className={`ml-auto flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50 ${
+                                    userLocation
+                                        ? 'border-primary-olive bg-primary-olive/10 text-primary-olive'
+                                        : 'border-gray-300 text-gray-600 hover:border-primary-olive hover:text-primary-olive'
+                                }`}
+                            >
+                                {isLoadingLocation ? (
+                                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                )}
+                                <span>{isLoadingLocation ? 'Locating...' : 'Near Me'}</span>
+                                {userLocation && !isLoadingLocation && (
+                                    <span className="w-1.5 h-1.5 bg-primary-olive rounded-full" />
+                                )}
+                            </button>
                         </div>
 
                         {/* Search and Sort */}
@@ -89,7 +189,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                             {/* Sort Dropdown */}
                             <div className="sm:w-52">
                                 <select
-                                    value={filters.sort_by || 'newest'}
+                                    value={filters.sort_by || 'name_asc'}
                                     onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
                                 >
@@ -148,20 +248,33 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                             </div>
 
                             {/* Grid */}
-                            <ProductGrid products={products.data} loading={isLoading} />
+                            <ProductGrid products={visibleProducts} loading={isLoading} />
 
-                            {/* Pagination */}
-                            {products.last_page > 1 && (
+                            {/* Sentinel for progressive reveal */}
+                            {!allRevealed && (
+                                <div ref={sentinelRef} className="mt-8 flex justify-center">
+                                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Loading more products…
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pagination — only visible after all items on this page are revealed */}
+                            {allRevealed && products.last_page > 1 && (
                                 <div className="mt-8 flex justify-center">
                                     <nav className="flex items-center gap-2">
                                         <button
+                                            onClick={() => handlePageChange(products.current_page - 1)}
                                             disabled={products.current_page === 1}
                                             className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Previous
                                         </button>
 
-                                        {/* Page Numbers */}
                                         {[...Array(products.last_page)].map((_, i) => {
                                             const page = i + 1;
                                             const isCurrentPage = page === products.current_page;
@@ -180,6 +293,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                                             return (
                                                 <button
                                                     key={page}
+                                                    onClick={() => handlePageChange(page)}
                                                     className={`px-4 py-2 border rounded-md ${
                                                         isCurrentPage
                                                             ? 'bg-primary-olive text-white border-primary-olive'
@@ -192,6 +306,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                                         })}
 
                                         <button
+                                            onClick={() => handlePageChange(products.current_page + 1)}
                                             disabled={products.current_page === products.last_page}
                                             className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >

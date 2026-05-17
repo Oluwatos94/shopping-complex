@@ -8,6 +8,7 @@ use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Product;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -16,10 +17,37 @@ class ProductRepository extends BasePageRepository
 {
     /**
      * Get all products with pagination and filtering
+     *
+     * @param  array<string, mixed>  $locationFilters  Optional lat/lon/radius for nearby filtering
      */
-    public function list(int $perPage = 15): LengthAwarePaginator
+    public function list(int $perPage = 15, array $locationFilters = []): LengthAwarePaginator
     {
-        return QueryBuilder::for(Product::where('is_active', true))
+        $latitude = isset($locationFilters['latitude']) ? (float) $locationFilters['latitude'] : null;
+        $longitude = isset($locationFilters['longitude']) ? (float) $locationFilters['longitude'] : null;
+        $radius = isset($locationFilters['radius']) ? (float) $locationFilters['radius'] : 50;
+
+        $baseQuery = Product::where('is_active', true);
+
+        if ($latitude && $longitude) {
+            $addressTable = Address::getTableName();
+            $haversine = "(6371 * acos(
+                cos(radians(?)) *
+                cos(radians(COALESCE({$addressTable}.latitude, 0))) *
+                cos(radians(COALESCE({$addressTable}.longitude, 0)) - radians(?)) +
+                sin(radians(?)) *
+                sin(radians(COALESCE({$addressTable}.latitude, 0)))
+            ))";
+
+            $nearbyVendorIds = DB::table('users')
+                ->leftJoin($addressTable, 'users.id', '=', "{$addressTable}.user_id")
+                ->where('users.role', 'vendor')
+                ->whereRaw("{$haversine} <= ?", [$latitude, $longitude, $latitude, $radius])
+                ->pluck('users.id');
+
+            $baseQuery->whereIn('vendor_id', $nearbyVendorIds);
+        }
+
+        return QueryBuilder::for($baseQuery)
             ->with(['media', 'vendor'])
             ->allowedFilters([
                 AllowedFilter::exact('category_id'),
@@ -39,7 +67,7 @@ class ProductRepository extends BasePageRepository
             ->allowedIncludes([
                 'category',
             ])
-            ->defaultSort('-created_at')
+            ->defaultSort('name')
             ->paginate($perPage)
             ->withQueryString();
     }

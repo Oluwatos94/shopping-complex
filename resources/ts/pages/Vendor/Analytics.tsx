@@ -120,7 +120,7 @@ export default function Analytics(props: AnalyticsData) {
             <Head title="Analytics" />
             <VendorSidebar />
 
-            <main className="md:ml-[100px] min-h-screen bg-gray-50">
+            <main className="md:ml-[260px] min-h-screen bg-gray-50">
                 <div className="max-w-6xl mx-auto px-6 py-8">
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

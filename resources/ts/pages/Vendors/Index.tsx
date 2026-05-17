@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from '@/types';
 import { Category } from '@/types/product';
@@ -14,6 +14,8 @@ interface VendorListingProps {
     };
 }
 
+const VENDOR_BATCH_SIZE = 20;
+
 export default function VendorListing({ vendors, filters, categories, auth }: VendorListingProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [radius, setRadius] = useState(filters.radius || 5);
@@ -22,6 +24,33 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+    const [visibleCount, setVisibleCount] = useState(VENDOR_BATCH_SIZE);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setVisibleCount(VENDOR_BATCH_SIZE);
+    }, [vendors.current_page]);
+
+    useEffect(() => {
+        if (visibleCount >= vendors.data.length) return;
+        if (!('IntersectionObserver' in window)) {
+            setVisibleCount(vendors.data.length);
+            return;
+        }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) {
+                    setVisibleCount((prev) => Math.min(prev + VENDOR_BATCH_SIZE, vendors.data.length));
+                }
+            },
+            { threshold: 0.1 }
+        );
+        if (sentinelRef.current) observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [visibleCount, vendors.data.length]);
+
+    const visibleVendors = vendors.data.slice(0, visibleCount);
+    const allVendorsRevealed = visibleCount >= vendors.data.length;
 
     const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
         setNotification({ type, message });
@@ -142,7 +171,11 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
                             <button
                                 onClick={getCurrentLocation}
                                 disabled={isLoadingLocation}
-                                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50 border-gray-200 text-gray-600 hover:border-[#D49F89] hover:text-[#D49F89]"
+                                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50 ${
+                                    userLocation
+                                        ? 'border-primary-olive bg-primary-olive/10 text-primary-olive'
+                                        : 'border-gray-300 text-gray-600 hover:border-primary-olive hover:text-primary-olive'
+                                }`}
                             >
                                 {isLoadingLocation ? (
                                     <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
@@ -154,9 +187,9 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                 )}
-                                <span className="hidden sm:inline">{isLoadingLocation ? 'Locating...' : userLocation ? 'Location on' : 'Enable location'}</span>
+                                <span>{isLoadingLocation ? 'Locating...' : 'Near Me'}</span>
                                 {userLocation && !isLoadingLocation && (
-                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                    <span className="w-1.5 h-1.5 bg-primary-olive rounded-full" />
                                 )}
                             </button>
                         </div>
@@ -286,27 +319,6 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
                     </div>
                 </div>
 
-                {/* Location permission banner */}
-                {!userLocation && !isLoadingLocation && (
-                    <div className="bg-primary-olive/10 border-b border-primary-olive/20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-olive/20 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </div>
-                            <p className="flex-1 text-sm text-gray-700">
-                                <span className="font-medium">Enable location</span> to find vendors near you.
-                            </p>
-                            <button
-                                onClick={getCurrentLocation}
-                                className="flex-shrink-0 px-3 py-1.5 bg-primary-olive text-white text-xs font-semibold rounded-lg hover:bg-primary-dark transition-colors"
-                            >
-                                Enable
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Content */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -316,24 +328,69 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
                     </p>
 
                     {/* Vendor Grid */}
-                    <VendorGrid vendors={vendors.data} isLoading={false} />
+                    <VendorGrid vendors={visibleVendors} isLoading={false} />
+
+                    {/* Sentinel for progressive reveal */}
+                    {!allVendorsRevealed && (
+                        <div ref={sentinelRef} className="mt-8 flex justify-center">
+                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                Loading more vendors…
+                            </div>
+                        </div>
+                    )}
 
                     {/* Pagination */}
-                    {vendors.last_page > 1 && (
-                        <div className="mt-8 flex justify-center gap-2">
-                            {[...Array(vendors.last_page)].map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => handleSearch({ page: i + 1 })}
-                                    className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
-                                        vendors.current_page === i + 1
-                                            ? 'bg-[#D49F89] text-[#272518]'
-                                            : 'bg-white text-gray-700 border border-gray-200 hover:border-[#D49F89]'
-                                    }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
+                    {allVendorsRevealed && vendors.last_page > 1 && (
+                        <div className="mt-8 flex justify-center items-center gap-2">
+                            <button
+                                onClick={() => handleSearch({ page: vendors.current_page - 1 })}
+                                disabled={vendors.current_page === 1}
+                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#D49F89] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Previous
+                            </button>
+
+                            {[...Array(vendors.last_page)].map((_, i) => {
+                                const page = i + 1;
+                                const isCurrentPage = vendors.current_page === page;
+                                const showPage =
+                                    page === 1 ||
+                                    page === vendors.last_page ||
+                                    (page >= vendors.current_page - 1 && page <= vendors.current_page + 1);
+
+                                if (!showPage) {
+                                    if (page === vendors.current_page - 2 || page === vendors.current_page + 2) {
+                                        return <span key={page} className="px-1 text-gray-400">…</span>;
+                                    }
+                                    return null;
+                                }
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => handleSearch({ page })}
+                                        className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
+                                            isCurrentPage
+                                                ? 'bg-[#D49F89] text-[#272518]'
+                                                : 'bg-white text-gray-700 border border-gray-200 hover:border-[#D49F89]'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={() => handleSearch({ page: vendors.current_page + 1 })}
+                                disabled={vendors.current_page === vendors.last_page}
+                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#D49F89] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
                 </div>

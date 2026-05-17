@@ -34,17 +34,36 @@ class ProductController extends Controller
 
     public function index(): Response
     {
-        $products = $this->productService->index(perPage: 20);
+        $locationFilters = request()->only(['latitude', 'longitude', 'radius']);
+        $userLat = isset($locationFilters['latitude']) ? (float) $locationFilters['latitude'] : null;
+        $userLon = isset($locationFilters['longitude']) ? (float) $locationFilters['longitude'] : null;
+
+        $products = $this->productService->index(perPage: 100, locationFilters: $locationFilters);
         $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
         );
 
-        $products->through(function ($product) {
+        // Eager-load vendor address so we can compute distance per product
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \ModulesShoppingComplex\Models\Product> $collection */
+        $collection = $products->getCollection();
+        $collection->loadMissing('vendor.address');
+
+        $products->through(function ($product) use ($userLat, $userLon) {
             $product->images = $product->media->map(fn ($media) => [
                 'id' => $media->id,
                 'url' => $this->mediaService->getMediaUrl($media),
                 'type' => $media->type,
                 'is_primary' => true,
             ])->values()->all();
+
+            if ($userLat && $userLon) {
+                $address = $product->vendor?->address;
+                if ($address !== null && $address->latitude && $address->longitude) {
+                    $dist = $this->haversineKm($userLat, $userLon, (float) $address->latitude, (float) $address->longitude);
+                    $product->distance_formatted = $dist < 1
+                        ? round($dist * 1000).' m away'
+                        : round($dist, 1).' km away';
+                }
+            }
 
             return $product;
         });
@@ -53,6 +72,16 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
         ]);
+    }
+
+    private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $r = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+
+        return $r * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     public function create(): Response

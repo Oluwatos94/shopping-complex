@@ -33,7 +33,7 @@ export default function ChatConversation({ conversation, messages, conversations
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}
 
-                <div className={`flex h-screen ${isVendor ? 'md:ml-[100px]' : ''}`}>
+                <div className={`flex h-screen ${isVendor ? 'md:ml-[260px]' : ''}`}>
                     {/* Conversation List - desktop only */}
                     <div className="hidden lg:block w-[350px] flex-shrink-0 border-r border-gray-200">
                         <ConversationList

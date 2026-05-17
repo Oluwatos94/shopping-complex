@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect, FormEvent } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Category } from '@/types/product';
+import { resizeImage } from '@/utils/imageResize';
 
 interface PageProps {
     [key: string]: unknown;
@@ -123,13 +124,14 @@ export default function VendorRegister({ categories }: Props) {
         setErrors((prev) => ({ ...prev, address: '', city: '', state: '', latitude: '', longitude: '' }));
     };
 
-    const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setAvatar(file);
+            const resized = await resizeImage(file, 800);
+            setAvatar(resized);
             setAvatarPreview((prev) => {
                 if (prev) URL.revokeObjectURL(prev);
-                return URL.createObjectURL(file);
+                return URL.createObjectURL(resized);
             });
         }
     }, []);
@@ -222,7 +224,7 @@ export default function VendorRegister({ categories }: Props) {
                                 )}
                             </div>
                             <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleAvatarChange} className="sr-only" />
-                            <p className="text-xs text-gray-400 mt-2">JPG, PNG or WebP. Max 5MB.</p>
+                            <p className="text-xs text-gray-400 mt-2">JPG, PNG or WebP. Large images are automatically resized.</p>
                             {errors.avatar && <p className="text-sm text-red-600 mt-1">{errors.avatar}</p>}
                         </div>
 

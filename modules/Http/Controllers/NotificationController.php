@@ -86,6 +86,21 @@ class NotificationController extends Controller
     }
 
     /**
+     * GET /vendor/settings
+     * Vendor settings page including notification preferences (Inertia)
+     */
+    public function vendorSettingsPage(Request $request): Response
+    {
+        $preferences = $this->notificationService->getUserPreferences($request->user());
+        $types = config('notifications.types', []);
+
+        return Inertia::render('Vendor/Settings', [
+            'preferences' => $preferences,
+            'availableTypes' => $types,
+        ]);
+    }
+
+    /**
      * GET /notifications/preferences
      * Notification preferences page (Inertia)
      */

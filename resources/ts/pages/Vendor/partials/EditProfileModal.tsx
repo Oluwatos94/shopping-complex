@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
 import { VendorProfile } from '@/types/vendor';
+import { resizeImage } from '@/utils/imageResize';
 
 interface Props {
     vendor: VendorProfile;
@@ -36,6 +37,8 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
     const [whatsapp, setWhatsapp] = useState(vendor.whatsapp_number ?? '');
     const [avatar, setAvatar] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [banner, setBanner] = useState<File | null>(null);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [addressQuery, setAddressQuery] = useState(vendor.address ?? '');
     const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -49,12 +52,14 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
     const [processing, setProcessing] = useState(false);
 
     const fileRef = useRef<HTMLInputElement>(null);
+    const bannerRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => {
             if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+            if (bannerPreview) URL.revokeObjectURL(bannerPreview);
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,13 +122,14 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
         setShowSuggestions(false);
     };
 
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setAvatar(file);
+            const resized = await resizeImage(file, 800);
+            setAvatar(resized);
             setAvatarPreview((prev) => {
                 if (prev) URL.revokeObjectURL(prev);
-                return URL.createObjectURL(file);
+                return URL.createObjectURL(resized);
             });
         }
     };
@@ -133,6 +139,24 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
         if (avatarPreview) URL.revokeObjectURL(avatarPreview);
         setAvatarPreview(null);
         if (fileRef.current) fileRef.current.value = '';
+    };
+
+    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setBanner(file);
+            setBannerPreview((prev) => {
+                if (prev) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
+        }
+    };
+
+    const removeBanner = () => {
+        setBanner(null);
+        if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+        setBannerPreview(null);
+        if (bannerRef.current) bannerRef.current.value = '';
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -152,6 +176,7 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
         formData.append('latitude', String(selectedAddress.lat));
         formData.append('longitude', String(selectedAddress.lon));
         if (avatar) formData.append('avatar', avatar);
+        if (banner) formData.append('banner', banner);
 
         router.post('/vendor/profile/update', formData, {
             forceFormData: true,
@@ -181,6 +206,41 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Banner */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Store Banner</label>
+                        <div
+                            onClick={() => bannerRef.current?.click()}
+                            className="relative w-full h-32 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary-olive overflow-hidden cursor-pointer transition-colors bg-gray-50 flex items-center justify-center"
+                        >
+                            {bannerPreview ? (
+                                <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+                            ) : vendor.banner_image ? (
+                                <img src={vendor.banner_image} alt="Current banner" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="text-center">
+                                    <svg className="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-xs text-gray-400">Click to upload a banner image</span>
+                                </div>
+                            )}
+                            {(bannerPreview || vendor.banner_image) && (
+                                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <span className="opacity-0 hover:opacity-100 text-white text-xs font-medium bg-black/50 px-3 py-1 rounded-full">Change banner</span>
+                                </div>
+                            )}
+                        </div>
+                        {bannerPreview && (
+                            <button type="button" onClick={removeBanner} className="mt-1 text-xs text-red-500 hover:text-red-700">
+                                Remove banner
+                            </button>
+                        )}
+                        <input ref={bannerRef} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleBannerChange} className="sr-only" />
+                        <p className="text-xs text-gray-400 mt-1">Recommended: 1200×400px. Max 10MB.</p>
+                        {errors.banner && <p className="text-xs text-red-600 mt-1">{errors.banner}</p>}
+                    </div>
+
                     {/* Avatar */}
                     <div className="flex flex-col items-center">
                         <div className="relative">

@@ -58,9 +58,9 @@ final readonly class ClaudeClient
         }
 
         Log::error('Claude API error', [
-            'status' => $lastResponse?->status(),
-            'body' => $lastResponse?->body(),
+            'status' => $lastResponse->status(),
+            'body' => $lastResponse->body(),
         ]);
-        throw new RuntimeException('Claude API error (HTTP '.($lastResponse?->status() ?? 'unknown').').');
+        throw new RuntimeException('Claude API error (HTTP '.$lastResponse->status().').');
     }
 }

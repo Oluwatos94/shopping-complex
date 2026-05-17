@@ -20,6 +20,7 @@ class UpdateVendorProfileRequest extends FormRequest
             'bio' => ['required', 'string', 'max:1000'],
             'whatsapp_number' => ['required', 'string', 'max:20'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'address' => ['required', 'string', 'max:500'],
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'max:255'],

@@ -5,6 +5,9 @@ import viteGlob from 'vite-plugin-glob';
 import { resolve } from 'path';
 
 export default defineConfig({
+    build: {
+        target: ['es2015', 'safari13'],
+    },
     plugins: [
         react(),
         laravel({
