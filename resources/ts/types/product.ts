@@ -74,6 +74,7 @@ export interface Product {
     category?: Category;
     reviews_count?: number;
     average_rating: number;
+    distance_formatted?: string;
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;

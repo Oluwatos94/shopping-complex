@@ -59,7 +59,7 @@ export default function ProfileIndex() {
             <div className="min-h-screen bg-gray-50">
                 {isVendor && <VendorSidebar />}
 
-                <div className={isVendor ? 'md:ml-[100px]' : ''}>
+                <div className={isVendor ? 'md:ml-[260px]' : ''}>
                     {/* Header */}
                     <div className="bg-primary-dark py-8">
                         <div className="max-w-3xl mx-auto px-4">

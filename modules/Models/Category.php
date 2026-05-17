@@ -2,7 +2,6 @@
 
 namespace ModulesShoppingComplex\Models;
 
-use ModulesShoppingComplex\Models\User;
 use Carbon\Carbon;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

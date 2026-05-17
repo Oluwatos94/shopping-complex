@@ -94,6 +94,17 @@ class MediaService
     }
 
     /**
+     * Delete all media of a specific type for a given model
+     */
+    public function deleteMediaByType(string $modelType, int $modelId, string $type): void
+    {
+        $mediaItems = $this->mediaRepository->getByTypeForModel($modelType, $modelId, $type);
+        foreach ($mediaItems as $media) {
+            $this->deleteMedia($media->id);
+        }
+    }
+
+    /**
      * Upload a video file for a model (stored directly, no image processing)
      */
     public function uploadVideo(

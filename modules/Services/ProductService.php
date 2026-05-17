@@ -26,9 +26,12 @@ final readonly class ProductService
      * - ?sort=-price
      * - ?include=vendor,category,media
      */
-    public function index(int $perPage = 15): LengthAwarePaginator
+    /**
+     * @param  array<string, mixed>  $locationFilters
+     */
+    public function index(int $perPage = 15, array $locationFilters = []): LengthAwarePaginator
     {
-        return $this->productRepository->list($perPage);
+        return $this->productRepository->list($perPage, $locationFilters);
     }
 
     /**

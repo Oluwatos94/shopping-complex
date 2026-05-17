@@ -35,7 +35,8 @@ export default function VendorProfilePage({
     const [followersCount, setFollowersCount] = useState(stats.followers_count);
     const [followLoading, setFollowLoading] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1');
+    const [lightboxOpen, setLightboxOpen] = useState(false);
 
     // Review form state
     const [reviewRating, setReviewRating] = useState(0);
@@ -123,11 +124,35 @@ export default function VendorProfilePage({
             <Head title={`${vendor.business_name} - jiidaa`} />
 
             <div className="min-h-screen bg-gray-50">
-                {isOwner && <VendorSidebar vendorSlug={vendor.slug} businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
+                {isOwner && <VendorSidebar businessName={vendor.business_name} businessLogo={vendor.business_logo} />}
 
-                <div className={isOwner ? 'md:ml-[100px]' : ''}>
+                <div className={isOwner ? 'md:ml-[260px]' : ''}>
                     {/* Cover / Header Area */}
-                    <div className="bg-primary-dark">
+                    <div className="relative bg-primary-dark">
+                        {vendor.banner_image && (
+                            <img
+                                src={vendor.banner_image}
+                                alt="Store banner"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                        )}
+                        {/* dark overlay so text stays readable over any banner */}
+                        <div className="absolute inset-0 bg-primary-dark/60" />
+                        {isOwner && (
+                            <button
+                                onClick={() => setIsEditOpen(true)}
+                                className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-black/40 hover:bg-black/60 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors"
+                                title="Change banner"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {vendor.banner_image ? 'Change banner' : 'Add banner'}
+                            </button>
+                        )}
+                        {/* Content sits above the overlay */}
+                        <div className="relative z-10">
+
                         {/* Top Nav (visitors only) */}
                         {!isOwner && (
                             <div className="container mx-auto px-4 py-4">
@@ -156,7 +181,12 @@ export default function VendorProfilePage({
                         {/* Profile Section */}
                         <div className="pb-8 pt-6">
                             <div className="flex justify-center">
-                                <div className="w-28 h-28 rounded-full border-4 border-white overflow-hidden bg-gray-200 shadow-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => vendor.business_logo && setLightboxOpen(true)}
+                                    className={`w-28 h-28 rounded-full border-4 border-white overflow-hidden bg-gray-200 shadow-lg ${vendor.business_logo ? 'cursor-pointer hover:opacity-90 transition-opacity' : 'cursor-default'}`}
+                                    aria-label="View profile photo"
+                                >
                                     {vendor.business_logo ? (
                                         <img src={vendor.business_logo} alt={vendor.business_name} className="w-full h-full object-cover" />
                                     ) : (
@@ -164,7 +194,7 @@ export default function VendorProfilePage({
                                             <span className="text-white text-3xl font-bold">{vendor.business_name.charAt(0).toUpperCase()}</span>
                                         </div>
                                     )}
-                                </div>
+                                </button>
                             </div>
 
                             <div className="text-center mt-4">
@@ -252,6 +282,7 @@ export default function VendorProfilePage({
                                 </div>
                             )}
                         </div>
+                        </div>{/* end z-10 content wrapper */}
                     </div>
 
                     {/* Tab bar */}
@@ -514,6 +545,35 @@ export default function VendorProfilePage({
                     geoapifyKey={geoapifyKey}
                     onClose={() => setIsEditOpen(false)}
                 />
+            )}
+
+            {lightboxOpen && vendor.business_logo && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
+                    onClick={() => setLightboxOpen(false)}
+                >
+                    <div
+                        className="relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setLightboxOpen(false)}
+                            className="absolute -top-3 -right-3 z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-md transition-colors"
+                            aria-label="Close"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <img
+                            src={vendor.business_logo}
+                            alt={vendor.business_name}
+                            className="w-64 h-64 rounded-2xl object-cover shadow-2xl"
+                        />
+                        <p className="text-center text-white/80 text-sm mt-3">{vendor.business_name}</p>
+                    </div>
+                </div>
             )}
         </>
     );

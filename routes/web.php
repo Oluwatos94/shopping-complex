@@ -73,6 +73,17 @@ Route::middleware(['throttle:guest'])->group(function () {
 // Public Product Routes (accessible to everyone with product-specific rate limiting)
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+});
+
+// Protected Product Routes — must come before /products/{product} wildcard
+Route::middleware(['auth', 'throttle:auth'])->group(function () {
+    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::get('/products/{product}/images', [ProductController::class, 'getImages'])->name('products.images.index');
+});
+
+// Public product detail — wildcard last so it doesn't swallow /products/create
+Route::middleware(['throttle:products'])->group(function () {
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 });
 
@@ -87,13 +98,6 @@ Route::middleware(['throttle:products'])->group(function () {
 Route::middleware(['throttle:products'])->group(function () {
     Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
     Route::get('/vendors/{vendorSlug}', [VendorController::class, 'show'])->name('vendor.show');
-});
-
-// Protected Product Routes (Vendor/Admin only with auth rate limiting + write limits)
-Route::middleware(['auth', 'throttle:auth'])->group(function () {
-    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::get('/products/{product}/images', [ProductController::class, 'getImages'])->name('products.images.index');
 });
 
 // Write operations with stricter rate limiting
@@ -198,6 +202,12 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function ()
     Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
 });
 
+// Vendor Dashboard & Product Management
+Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
+    Route::get('/', [VendorController::class, 'dashboard'])->name('vendor.dashboard');
+    Route::get('/products', [VendorController::class, 'vendorProducts'])->name('vendor.products.index');
+});
+
 // Vendor Registration & Onboarding Routes
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
     Route::get('/register', [VendorController::class, 'register'])->name('vendor.register');
@@ -229,6 +239,7 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
 // Vendor Analytics
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/vendor/analytics', [AnalyticsController::class, 'index'])->name('vendor.analytics');
+    Route::get('/vendor/settings', [NotificationController::class, 'vendorSettingsPage'])->name('vendor.settings');
 });
 
 // Vendor Subscription Routes

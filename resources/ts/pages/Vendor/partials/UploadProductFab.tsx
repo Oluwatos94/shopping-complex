@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, FormEvent, useEffect } from 'react';
 import { Link, useForm, router } from '@inertiajs/react';
 import { Product } from '@/types/product';
+import { resizeImage } from '@/utils/imageResize';
 
 interface Props {
     productLimit: number | null;
@@ -56,7 +57,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
         }
     }, [editProduct?.id]);
 
-    const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
         if (!files.length) return;
 
@@ -89,9 +90,10 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
             form.setData('video', null);
         }
 
-        const newPreviews = toAdd.map(f => URL.createObjectURL(f));
+        const resized = await Promise.all(toAdd.map(f => resizeImage(f)));
+        const newPreviews = resized.map(f => URL.createObjectURL(f));
         setImagePreviews(prev => [...prev, ...newPreviews]);
-        form.setData('images', [...form.data.images, ...toAdd]);
+        form.setData('images', [...form.data.images, ...resized]);
 
         if (imageInputRef.current) imageInputRef.current.value = '';
     }, [videoPreview, form.data.images]);

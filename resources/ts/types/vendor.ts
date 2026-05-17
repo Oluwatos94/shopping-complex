@@ -15,6 +15,7 @@ export interface VendorProfile {
     business_name: string;
     business_description?: string;
     business_logo?: string;
+    banner_image?: string | null;
     is_verified: boolean;
     created_at: string;
     whatsapp_number?: string | null;

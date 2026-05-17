@@ -64,9 +64,19 @@ export default function ProductCard({ product }: ProductCardProps) {
             {/* Product Info */}
             <div className="p-4">
                 {product.vendor && (
-                    <p className="text-xs text-gray-500 mb-1">
-                        {product.vendor.business_name || product.vendor.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                        <p className="text-xs text-gray-500 truncate">
+                            {product.vendor.business_name || product.vendor.name}
+                        </p>
+                        {product.distance_formatted && (
+                            <span className="flex items-center gap-0.5 text-xs font-medium text-primary-olive flex-shrink-0">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                </svg>
+                                {product.distance_formatted}
+                            </span>
+                        )}
+                    </div>
                 )}
 
                 <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-olive transition-colors">

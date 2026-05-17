@@ -46,7 +46,7 @@ class VendorController extends Controller
     public function index(VendorRequest $request): Response
     {
         $filters = $request->getFilters();
-        $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 12);
+        $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 100);
 
         $vendorIds = $vendors->getCollection()->pluck('id')->all();
         $ratingStatsByVendor = $this->reviewService->getBulkVendorRatingStats($vendorIds);
@@ -119,6 +119,88 @@ class VendorController extends Controller
         return round($distanceKm, 1).' km';
     }
 
+    public function dashboard(): Response
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'vendor') {
+            return Inertia::render('index');
+        }
+
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        $subscription = $this->subscriptionService->getVendorSubscription($user->id);
+        $isFree = $subscription?->plan->isFree() ?? false;
+
+        $daysRemaining = null;
+        if ($subscription !== null && ! $isFree && $subscription->expires_at) {
+            $daysRemaining = max(0, (int) now()->diffInDays($subscription->expires_at, false));
+        }
+
+        $profileViewMetrics = $this->analyticsService->getProfileViewMetrics($user->id, $startOfWeek, $endOfWeek);
+        $chatContactMetrics = $this->analyticsService->getChatContactMetrics($user->id, $startOfWeek, $endOfWeek);
+        $activeProductsCount = $user->products()->where('is_active', true)->count();
+
+        return Inertia::render('Vendor/Dashboard', [
+            'vendor' => [
+                'name' => $user->name,
+                'business_name' => $user->business_name ?? $user->name,
+                'slug' => $user->slug,
+            ],
+            'subscription' => [
+                'plan_name' => $subscription?->plan->name ?? null,
+                'plan_slug' => $subscription?->plan->slug ?? null,
+                'expires_at' => ($subscription !== null && ! $isFree) ? $subscription->expires_at->toDateString() : null,
+                'days_remaining' => $daysRemaining,
+                'is_expired' => $subscription !== null && $subscription->status === 'expired',
+                'product_limit' => $subscription?->plan->product_limit ?? null,
+            ],
+            'stats' => [
+                'active_products' => $activeProductsCount,
+                'catalogue_views_this_week' => $profileViewMetrics['total'],
+                'contact_requests_this_week' => $chatContactMetrics['total'],
+            ],
+        ]);
+    }
+
+    public function vendorProducts(): Response
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'vendor') {
+            return Inertia::render('index');
+        }
+
+        $products = Product::where('vendor_id', $user->id)
+            ->with('media')
+            ->latest()
+            ->paginate(20);
+
+        $products->through(function ($product) {
+            $primaryMedia = $product->media->first();
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'price' => $product->price,
+                'sale_price' => $product->sale_price,
+                'stock' => $product->stock,
+                'is_active' => $product->is_active,
+                'is_featured' => $product->is_featured,
+                'created_at' => $product->created_at->toDateString(),
+                'image' => $primaryMedia ? $this->mediaService->getMediaUrl($primaryMedia) : null,
+                'image_type' => $primaryMedia?->type,
+            ];
+        });
+
+        return Inertia::render('Vendor/Products', [
+            'products' => $products,
+            'vendor_slug' => $user->slug,
+        ]);
+    }
+
     public function register(): Response|RedirectResponse
     {
         $user = Auth::user();
@@ -174,6 +256,7 @@ class VendorController extends Controller
         $ratingStats = $this->reviewService->getVendorRatingStats($vendorId);
 
         $avatarMedia = $vendor->media->where('type', 'avatar')->first();
+        $bannerMedia = $vendor->media->where('type', 'banner')->first();
 
         $authUser = Auth::user();
         $isOwner = $authUser && $authUser->id === $vendor->id;
@@ -205,6 +288,7 @@ class VendorController extends Controller
                 'business_name' => $vendor->business_name ?? $vendor->name,
                 'business_description' => $vendor->bio,
                 'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
+                'banner_image' => $bannerMedia ? $this->mediaService->getMediaUrl($bannerMedia) : null,
                 'is_verified' => $vendor->isVendorVerified(),
                 'created_at' => $vendor->created_at->toISOString(),
                 'whatsapp_number' => $vendor->whatsapp_number ?? null,
@@ -368,12 +452,22 @@ class VendorController extends Controller
             );
 
             if ($request->hasFile('avatar')) {
-                $this->mediaService->deleteMediaForModel(User::class, $user->id);
+                $this->mediaService->deleteMediaByType(User::class, $user->id, 'avatar');
                 $this->mediaService->uploadImage(
                     file: $request->file('avatar'),
                     modelType: User::class,
                     modelId: $user->id,
                     type: 'avatar'
+                );
+            }
+
+            if ($request->hasFile('banner')) {
+                $this->mediaService->deleteMediaByType(User::class, $user->id, 'banner');
+                $this->mediaService->uploadImage(
+                    file: $request->file('banner'),
+                    modelType: User::class,
+                    modelId: $user->id,
+                    type: 'banner'
                 );
             }
         });
