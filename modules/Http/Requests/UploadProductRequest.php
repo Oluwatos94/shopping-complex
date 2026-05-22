@@ -31,6 +31,8 @@ class UploadProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0'],
             'pay_on_delivery' => ['boolean'],
             'is_returnable' => ['boolean'],
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['string', 'max:50'],
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['image', 'mimes:jpg,jpeg,png,webp,gif', 'max:20480'],
             'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:102400'],

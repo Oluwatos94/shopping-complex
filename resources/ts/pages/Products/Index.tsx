@@ -186,36 +186,39 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                                 </div>
                             </div>
 
-                            {/* Sort Dropdown */}
-                            <div className="sm:w-52">
-                                <select
-                                    value={filters.sort_by || 'name_asc'}
-                                    onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
-                                >
-                                    {sortOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {/* Sort + Filter on same row for mobile */}
+                            <div className="flex items-center justify-between sm:contents">
+                                {/* Sort Dropdown */}
+                                <div className="w-2/5 sm:w-52">
+                                    <select
+                                        value={filters.sort_by || 'name_asc'}
+                                        onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent text-sm"
+                                    >
+                                        {sortOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            {/* Mobile Filter Button */}
-                            <button
-                                onClick={() => setShowMobileFilters(true)}
-                                className="lg:hidden flex items-center justify-center gap-2 px-6 py-3 bg-primary-olive text-white rounded-lg hover:bg-primary-dark transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                    />
-                                </svg>
-                                Filters
-                            </button>
+                                {/* Mobile Filter Button */}
+                                <button
+                                    onClick={() => setShowMobileFilters(true)}
+                                    className="lg:hidden w-2/5 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary-olive text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                        />
+                                    </svg>
+                                    Filters
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

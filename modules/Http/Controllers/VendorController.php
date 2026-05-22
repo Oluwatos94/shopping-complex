@@ -353,6 +353,7 @@ class VendorController extends Controller
                 'is_active' => true,
                 'pay_on_delivery' => $request->boolean('pay_on_delivery'),
                 'is_returnable' => $request->boolean('is_returnable'),
+                'tags' => array_values(array_filter(array_map('strtolower', $request->input('tags', [])))),
             ]);
 
             if ($request->hasFile('video')) {
@@ -391,6 +392,7 @@ class VendorController extends Controller
                 'price' => $request->input('price'),
                 'pay_on_delivery' => $request->boolean('pay_on_delivery'),
                 'is_returnable' => $request->boolean('is_returnable'),
+                'tags' => array_values(array_filter(array_map('strtolower', $request->input('tags', [])))),
             ]);
 
             if ($request->hasFile('video')) {

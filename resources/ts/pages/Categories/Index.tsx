@@ -11,13 +11,22 @@ interface PageProps {
 
 // Map category IDs to local images (same as the landing page section)
 const categoryImages: Record<number, string> = {
-    1: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat1.jpg',
-    2: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat2.jpg',
-    4: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat4.jpg',
-    5: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat5.jpg',
-    6: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat6.jpg',
-    7: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat7.jpg',
-    8: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat8.jpg',
+    1:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat1.jpg',
+    2:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat2.jpg',
+    4:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat4.jpg',
+    5:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat5.jpg',
+    6:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat6.jpg',
+    7:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat7.jpg',
+    8:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat8.jpg',
+    9:  'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/funiture.jpg',
+    10: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/O&E.jpg',
+    11: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/autoTools.jpg',
+    12: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/A&G.jpg',
+    13: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Catering.jpg',
+    14: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/artisan.jpg',
+    15: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/footwear.jpg',
+    16: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Bag.jpg',
+    17: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Kid.jpg',
 };
 
 const Categories: React.FC = () => {

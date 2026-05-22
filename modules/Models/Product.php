@@ -44,6 +44,12 @@ class Product extends Model
         'is_active',
         'pay_on_delivery',
         'is_returnable',
+        'tags',
+    ];
+
+    /** {@inheritdoc} */
+    protected $casts = [
+        'tags' => 'array',
     ];
 
     /**
