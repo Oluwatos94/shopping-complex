@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, FormEvent, useEffect } from 'react';
+import { useRef, useState, useCallback, FormEvent, useEffect, KeyboardEvent } from 'react';
 import { Link, useForm, router } from '@inertiajs/react';
 import { Product } from '@/types/product';
 import { resizeImage } from '@/utils/imageResize';
@@ -29,12 +29,15 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
     const imageInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
 
+    const [tagInput, setTagInput] = useState('');
+
     const form = useForm({
         name: editProduct?.name ?? '',
         description: editProduct?.description ?? '',
         price: editProduct?.price ? String(editProduct.price) : '',
         pay_on_delivery: editProduct?.pay_on_delivery ?? false as boolean,
         is_returnable: editProduct?.is_returnable ?? false as boolean,
+        tags: (editProduct?.tags ?? []) as string[],
         images: [] as File[],
         video: null as File | null,
     });
@@ -48,6 +51,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                 price: String(editProduct.price),
                 pay_on_delivery: editProduct.pay_on_delivery,
                 is_returnable: editProduct.is_returnable,
+                tags: editProduct.tags ?? [],
                 images: [],
                 video: null,
             });
@@ -147,6 +151,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
         setVideoPreview(null);
         setFileSizeError(null);
         setDeleteConfirm(false);
+        setTagInput('');
         if (imageInputRef.current) imageInputRef.current.value = '';
         if (videoInputRef.current) videoInputRef.current.value = '';
     }, [imagePreviews, videoPreview]);
@@ -407,6 +412,53 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                         />
                                     </div>
                                     {form.errors.price && <p className="text-sm text-red-600 mt-1">{form.errors.price}</p>}
+                                </div>
+
+                                {/* Tags */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                                        Tags <span className="font-normal text-gray-400">(press Enter or comma to add)</span>
+                                    </label>
+                                    {form.data.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
+                                            {form.data.tags.map((tag, i) => (
+                                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-olive/10 text-primary-olive text-xs rounded-full">
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => form.setData('tags', form.data.tags.filter((_, j) => j !== i))}
+                                                        className="hover:text-red-500 transition-colors leading-none"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <input
+                                        type="text"
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                                            if (e.key === 'Enter' || e.key === ',') {
+                                                e.preventDefault();
+                                                const tag = tagInput.trim().toLowerCase().replace(/,/g, '');
+                                                if (tag && !form.data.tags.includes(tag) && form.data.tags.length < 20) {
+                                                    form.setData('tags', [...form.data.tags, tag]);
+                                                }
+                                                setTagInput('');
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            const tag = tagInput.trim().toLowerCase().replace(/,/g, '');
+                                            if (tag && !form.data.tags.includes(tag) && form.data.tags.length < 20) {
+                                                form.setData('tags', [...form.data.tags, tag]);
+                                            }
+                                            setTagInput('');
+                                        }}
+                                        placeholder="e.g. bag, leather, handmade"
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50"
+                                    />
                                 </div>
 
                                 {/* Options */}

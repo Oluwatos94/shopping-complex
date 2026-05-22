@@ -51,7 +51,16 @@ class ProductRepository extends BasePageRepository
             ->with(['media', 'vendor'])
             ->allowedFilters([
                 AllowedFilter::exact('category_id'),
-                AllowedFilter::partial('name'),
+                AllowedFilter::callback('name', function ($query, $value) {
+                    $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $value);
+                    $query->where(function ($q) use ($escaped) {
+                        $q->where('name', 'like', "%{$escaped}%")
+                            ->orWhereRaw(
+                                "JSON_SEARCH(LOWER(COALESCE(tags, '[]')), 'one', ?) IS NOT NULL",
+                                ['%'.strtolower($escaped).'%']
+                            );
+                    });
+                }),
                 AllowedFilter::partial('description'),
                 AllowedFilter::callback('min_price', fn ($query, $value) => $query->where('price', '>=', (float) $value)),
                 AllowedFilter::callback('max_price', fn ($query, $value) => $query->where('price', '<=', (float) $value)),
@@ -164,7 +173,11 @@ class ProductRepository extends BasePageRepository
         $query = Product::query()
             ->where(function ($q) use ($escapedTerm) {
                 $q->where('name', 'like', "%{$escapedTerm}%")
-                    ->orWhere('description', 'like', "%{$escapedTerm}%");
+                    ->orWhere('description', 'like', "%{$escapedTerm}%")
+                    ->orWhereRaw(
+                        "JSON_SEARCH(LOWER(COALESCE(tags, '[]')), 'one', ?) IS NOT NULL",
+                        ['%'.strtolower($escapedTerm).'%']
+                    );
             });
 
         if (! empty($relations)) {

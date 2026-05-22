@@ -23,6 +23,15 @@ class CategorySeeder extends Seeder
             ['id' => 6, 'name' => 'Accessories & Lifestyle',  'slug' => 'accessories-lifestyle',   'description' => 'Jewellery, bags, watches, and everyday lifestyle items'],
             ['id' => 7, 'name' => 'Electronics & Repairs',    'slug' => 'electronics-repairs',     'description' => 'Gadgets, phones, laptops, and repair services'],
             ['id' => 8, 'name' => 'Fashion & Clothing',       'slug' => 'fashion-clothing',        'description' => 'Clothes, shoes, and accessories for men, women, and kids'],
+            ['id' => 9,  'name' => 'Furniture & Appliances',        'slug' => 'furniture-appliances',        'description' => 'Home furniture, kitchen appliances, and household equipment'],
+            ['id' => 10, 'name' => 'Outdoors & Entertainment',      'slug' => 'outdoors-entertainment',      'description' => 'Outdoor gear, sports equipment, games, and entertainment'],
+            ['id' => 11, 'name' => 'Automotive & Tools',            'slug' => 'automotive-tools',            'description' => 'Car accessories, spare parts, power tools, and hardware'],
+            ['id' => 12, 'name' => 'Art & Gallery',                 'slug' => 'art-gallery',                 'description' => 'Paintings, sculptures, photography, and creative artworks'],
+            ['id' => 13, 'name' => 'Restaurant & Catering Service', 'slug' => 'restaurant-catering',         'description' => 'Food vendors, catering services, and dining experiences'],
+            ['id' => 14, 'name' => 'Artisan & Handmade Goods',      'slug' => 'artisan-handmade',            'description' => 'Handcrafted products, custom-made items, and local crafts'],
+            ['id' => 15, 'name' => 'Footwear',                      'slug' => 'footwear',                    'description' => 'Shoes, sandals, boots, and all types of footwear'],
+            ['id' => 16, 'name' => 'Bags & Accessories',            'slug' => 'bags-accessories',            'description' => 'Handbags, backpacks, wallets, belts, and fashion accessories'],
+            ['id' => 17, 'name' => 'Baby & Kids Items',             'slug' => 'baby-kids',                   'description' => 'Toys, clothing, feeding supplies, and essentials for babies and children'],
         ];
 
         $now = now()->toDateTimeString();
@@ -35,6 +44,6 @@ class CategorySeeder extends Seeder
         }
 
         // Reset the auto-increment so new categories don't collide.
-        DB::statement('ALTER TABLE categories AUTO_INCREMENT = 9');
+        DB::statement('ALTER TABLE categories AUTO_INCREMENT = 18');
     }
 }

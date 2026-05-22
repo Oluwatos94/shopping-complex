@@ -51,6 +51,60 @@ const categories: Category[] = [
         image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/cat1.jpg',
         description: '110 vendors',
     },
+    {
+        id: 9,
+        name: 'Furniture & Appliances',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/funiture.jpg',
+        description: '',
+    },
+    {
+        id: 10,
+        name: 'Outdoors & Entertainment',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/O&E.jpg',
+        description: '',
+    },
+    {
+        id: 11,
+        name: 'Automotive & Tools',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/autoTools.jpg',
+        description: '',
+    },
+    {
+        id: 12,
+        name: 'Art & Gallery',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/A&G.jpg',
+        description: '',
+    },
+    {
+        id: 13,
+        name: 'Restaurant & Catering Service',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Catering.jpg',
+        description: '',
+    },
+    {
+        id: 14,
+        name: 'Artisan & Handmade Goods',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/artisan.jpg',
+        description: '',
+    },
+    {
+        id: 15,
+        name: 'Footwear',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/footwear.jpg',
+        description: '',
+    },
+    {
+        id: 16,
+        name: 'Bags & Accessories',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Bag.jpg',
+        description: '',
+    },
+    {
+        id: 17,
+        name: 'Baby & Kids Items',
+        image: 'https://pub-c54b269b978445a983e2a4569f9b4dce.r2.dev/Kid.jpg',
+        description: '',
+    },
 ];
 
 const CategoriesSection: React.FC = () => {

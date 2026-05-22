@@ -69,6 +69,7 @@ export interface Product {
     is_featured: boolean;
     pay_on_delivery: boolean;
     is_returnable: boolean;
+    tags?: string[];
     images?: ProductImage[];
     vendor?: Vendor;
     category?: Category;
