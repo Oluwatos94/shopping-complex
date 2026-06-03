@@ -6,7 +6,11 @@ use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
@@ -88,18 +92,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Address::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function vendorOnboarding()
+    public function vendorOnboarding(): HasOne
     {
         return $this->hasOne(VendorOnboarding::class);
     }
@@ -116,85 +114,53 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->vendorOnboarding?->status === VendorOnboardingStatusEnum::APPROVED;
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function products()
+    public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'vendor_id');
     }
 
-    /**
-     * Reviews written by this user (as customer).
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function reviews()
+    /** Reviews written by this user (as customer). */
+    public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'customer_id');
     }
 
-    /**
-     * Reviews received by this user (as vendor).
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function receivedReviews()
+    /** Reviews received by this user (as vendor). */
+    public function receivedReviews(): HasMany
     {
         return $this->hasMany(Review::class, 'vendor_id');
     }
 
-    /**
-     * Get approved reviews received by this vendor.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function approvedReviews()
+    /** Get approved reviews received by this vendor. */
+    public function approvedReviews(): HasMany
     {
         return $this->receivedReviews()->where('status', ReviewStatusEnum::APPROVED);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function notifications()
+    public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function wishlist()
+    public function wishlist(): HasMany
     {
         return $this->hasMany(CustomerWishlist::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function media()
+    public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'model');
     }
 
-    /**
-     * Users who follow this vendor.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
-    public function followers()
+    /** Users who follow this vendor. */
+    public function followers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'vendor_followers', 'vendor_id', 'follower_id')
             ->withTimestamps();
     }
 
-    /**
-     * Vendors this user is following.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
-    public function following()
+    /** Vendors this user is following. */
+    public function following(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'vendor_followers', 'follower_id', 'vendor_id')
             ->withTimestamps();

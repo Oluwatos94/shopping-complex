@@ -424,8 +424,10 @@ class VendorController extends Controller
         $user = Auth::user();
         $product = Product::where('id', $productId)->where('vendor_id', $user->id)->firstOrFail();
 
-        $this->mediaService->deleteMediaForModel(Product::class, $product->id);
-        $product->delete();
+        DB::transaction(function () use ($product) {
+            $this->mediaService->deleteMediaForModel(Product::class, $product->id);
+            $product->delete();
+        });
 
         return redirect()->back()->with('success', 'Product deleted successfully.');
     }

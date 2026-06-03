@@ -48,9 +48,12 @@ class Product extends Model
     ];
 
     /** {@inheritdoc} */
-    protected $casts = [
-        'tags' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'tags' => 'array',
+        ];
+    }
 
     /**
      * Create a new factory instance for the model.

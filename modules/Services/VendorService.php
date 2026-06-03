@@ -185,13 +185,7 @@ final readonly class VendorService
 
             $existingOnboarding = $this->vendorRepository->findOnboardingByUserId($user->id);
 
-            $errors = $this->validateOnboardingSubmission(
-                $businessInfo,
-                $bankDetails,
-                $agreedToTerms,
-                $files,
-                $existingOnboarding
-            );
+            $errors = $this->validateOnboardingSubmission($files, $existingOnboarding);
 
             if (! empty($errors)) {
                 throw new \InvalidArgumentException(json_encode($errors));
@@ -368,68 +362,30 @@ final readonly class VendorService
     }
 
     /**
-     * Validate onboarding submission.
+     * Validate that required documents exist (new upload or already on file).
+     * Field-level validation is handled by SubmitOnboardingRequest.
      *
-     * @param  array<string, mixed>  $businessInfo
-     * @param  array<string, mixed>  $bankDetails
      * @param  array<string, UploadedFile|null>  $files
      * @return array<string, string>
      */
     private function validateOnboardingSubmission(
-        array $businessInfo,
-        array $bankDetails,
-        bool $agreedToTerms,
         array $files = [],
         ?VendorOnboarding $existingOnboarding = null
     ): array {
         $errors = [];
 
-        // Business info validation
-        if (empty($businessInfo['legal_entity_name'])) {
-            $errors['legal_entity_name'] = 'Legal entity name is required';
-        }
-        if (empty($businessInfo['business_category'])) {
-            $errors['business_category'] = 'Business category is required';
-        }
-        if (empty($businessInfo['physical_address'])) {
-            $errors['physical_address'] = 'Physical address is required';
-        }
-        if (empty($businessInfo['whatsapp_number'])) {
-            $errors['whatsapp_number'] = 'Business WhatsApp number is required';
-        }
+        $required = [
+            'certificate_of_incorporation' => 'Certificate of incorporation is required',
+            'government_issued_id' => 'Government-issued ID is required',
+            'proof_of_address' => 'Proof of address is required',
+        ];
 
-        // Bank details validation
-        if (empty($bankDetails['bank_name'])) {
-            $errors['bank_name'] = 'Bank name is required';
-        }
-        if (empty($bankDetails['bank_branch'])) {
-            $errors['bank_branch'] = 'Bank branch is required';
-        }
-        if (empty($bankDetails['account_number'])) {
-            $errors['account_number'] = 'Account number is required';
-        }
-
-        // File validation - check if new file uploaded or existing file present
-        $hasNewCertificate = isset($files['certificate_of_incorporation']) && $files['certificate_of_incorporation'] instanceof UploadedFile;
-        $hasExistingCertificate = $existingOnboarding?->certificate_of_incorporation;
-        if (! $hasNewCertificate && ! $hasExistingCertificate) {
-            $errors['certificate_of_incorporation'] = 'Certificate of incorporation is required';
-        }
-
-        $hasNewId = isset($files['government_issued_id']) && $files['government_issued_id'] instanceof UploadedFile;
-        $hasExistingId = $existingOnboarding?->government_issued_id;
-        if (! $hasNewId && ! $hasExistingId) {
-            $errors['government_issued_id'] = 'Government-issued ID is required';
-        }
-
-        $hasNewProof = isset($files['proof_of_address']) && $files['proof_of_address'] instanceof UploadedFile;
-        $hasExistingProof = $existingOnboarding?->proof_of_address;
-        if (! $hasNewProof && ! $hasExistingProof) {
-            $errors['proof_of_address'] = 'Proof of address is required';
-        }
-
-        if (! $agreedToTerms) {
-            $errors['agreed_to_terms'] = 'You must agree to the terms and conditions';
+        foreach ($required as $field => $message) {
+            $hasNew = isset($files[$field]) && $files[$field] instanceof UploadedFile;
+            $hasExisting = (bool) $existingOnboarding?->$field;
+            if (! $hasNew && ! $hasExisting) {
+                $errors[$field] = $message;
+            }
         }
 
         return $errors;
