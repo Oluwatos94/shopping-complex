@@ -14,14 +14,12 @@ use ModulesShoppingComplex\Http\Requests\LoginRequest;
 use ModulesShoppingComplex\Http\Requests\RegisterRequest;
 use ModulesShoppingComplex\Services\Auth\AuthService;
 use ModulesShoppingComplex\Services\Auth\EmailVerificationService;
-use ModulesShoppingComplex\Services\NotificationService;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService,
-        private readonly NotificationService $notificationService, // @phpstan-ignore-line
         private readonly EmailVerificationService $emailVerificationService
     ) {}
 

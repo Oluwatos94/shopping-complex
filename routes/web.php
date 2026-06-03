@@ -197,7 +197,7 @@ Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(
 });
 
 // Review Moderation Routes - Admin only
-Route::middleware(['auth', 'throttle:auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(function () {
     Route::get('/reviews/pending', [ReviewController::class, 'pending'])->name('admin.reviews.pending');
     Route::post('/reviews/{review}/moderate', [ReviewController::class, 'moderate'])->name('admin.reviews.moderate');
 });

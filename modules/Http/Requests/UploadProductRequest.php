@@ -33,7 +33,7 @@ class UploadProductRequest extends FormRequest
             'is_returnable' => ['boolean'],
             'tags' => ['nullable', 'array', 'max:10'],
             'tags.*' => ['string', 'max:50'],
-            'images' => ['nullable', 'array', 'max:5'],
+            'images' => [$isUpdate ? 'nullable' : 'required_without:video', 'array', 'min:1', 'max:5'],
             'images.*' => ['image', 'mimes:jpg,jpeg,png,webp,gif', 'max:20480'],
             'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:102400'],
         ];
@@ -54,6 +54,7 @@ class UploadProductRequest extends FormRequest
             'price.required' => 'Price is required.',
             'price.numeric' => 'Price must be a number.',
             'price.min' => 'Price cannot be negative.',
+            'images.required_without' => 'At least one image is required when no video is provided.',
             'images.max' => 'You can upload a maximum of 5 images per product.',
             'images.*.image' => 'Each file must be an image.',
             'images.*.mimes' => 'Images must be JPG, PNG, WebP, or GIF.',

@@ -171,7 +171,7 @@ final readonly class ChatService
         };
 
         // Store the file
-        $path = $file->store("chat/{$conversationId}", 'public');
+        $path = $file->store("chat/{$conversationId}", config('media.storage_disk'));
 
         return [
             'attachment_path' => $path,
@@ -186,7 +186,7 @@ final readonly class ChatService
     public function deleteAttachment(ChatMessage $message): void
     {
         if ($message->hasAttachment() && $message->attachment_path) {
-            Storage::disk('public')->delete($message->attachment_path);
+            Storage::disk(config('media.storage_disk'))->delete($message->attachment_path);
         }
     }
 

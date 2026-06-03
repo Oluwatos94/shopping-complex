@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Controllers;
 
+use App\Http\Controllers\Concerns\PaginatesResults;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Http\Requests\ModerateReviewRequest;
 use ModulesShoppingComplex\Http\Requests\StoreReviewRequest;
 use ModulesShoppingComplex\Http\Requests\UpdateReviewRequest;
@@ -20,6 +20,8 @@ use ModulesShoppingComplex\Services\ReviewService;
 
 class ReviewController extends Controller
 {
+    use PaginatesResults;
+
     public function __construct(
         private readonly ReviewService $reviewService
     ) {}
@@ -317,29 +319,5 @@ class ReviewController extends Controller
         $reviews = $this->reviewService->getVendorAllReviews($user->id, $perPage);
 
         return $this->paginatedResponse($reviews, 'reviews');
-    }
-
-    /**
-     * Generate a paginated JSON response.
-     */
-    private function paginatedResponse(LengthAwarePaginator $paginator, string $key = 'data'): JsonResponse
-    {
-        return response()->json([
-            $key => $paginator->items(),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
-        ]);
-    }
-
-    /**
-     * Get per_page value from request with max limit.
-     */
-    private function getPerPage(Request $request, int $default = 15): int
-    {
-        return min((int) $request->get('per_page', $default), 50);
     }
 }

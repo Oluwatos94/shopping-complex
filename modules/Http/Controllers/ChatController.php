@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Controllers;
 
+use App\Http\Controllers\Concerns\PaginatesResults;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,8 @@ use ModulesShoppingComplex\Services\ChatService;
 
 class ChatController extends Controller
 {
+    use PaginatesResults;
+
     public function __construct(
         private readonly ChatService $chatService
     ) {}
@@ -30,15 +33,7 @@ class ChatController extends Controller
         $perPage = min((int) $request->get('per_page', 20), 50);
         $conversations = $this->chatService->getConversations($request->user(), $perPage);
 
-        return response()->json([
-            'conversations' => $conversations->items(),
-            'meta' => [
-                'current_page' => $conversations->currentPage(),
-                'last_page' => $conversations->lastPage(),
-                'per_page' => $conversations->perPage(),
-                'total' => $conversations->total(),
-            ],
-        ]);
+        return $this->paginatedResponse($conversations, 'conversations');
     }
 
     /**
@@ -100,15 +95,7 @@ class ChatController extends Controller
         $perPage = min((int) $request->get('per_page', 50), 100);
         $messages = $this->chatService->getMessages($conversation, $perPage);
 
-        return response()->json([
-            'messages' => $messages->items(),
-            'meta' => [
-                'current_page' => $messages->currentPage(),
-                'last_page' => $messages->lastPage(),
-                'per_page' => $messages->perPage(),
-                'total' => $messages->total(),
-            ],
-        ]);
+        return $this->paginatedResponse($messages, 'messages');
     }
 
     /**

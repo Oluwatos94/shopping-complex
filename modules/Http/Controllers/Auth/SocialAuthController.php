@@ -7,15 +7,21 @@ namespace ModulesShoppingComplex\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\Auth\AuthService;
+use ModulesShoppingComplex\Services\MediaService;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
 class SocialAuthController extends Controller
 {
     public function __construct(
-        private readonly AuthService $authService
+        private readonly AuthService $authService,
+        private readonly MediaService $mediaService,
     ) {}
 
     /**
@@ -44,6 +50,8 @@ class SocialAuthController extends Controller
 
             Auth::login($user);
 
+            $this->maybeUploadAvatar($user, $googleUser->getAvatar());
+
             $this->authService->sendWelcomeNotification($user);
 
             return redirect()->intended('/')
@@ -52,6 +60,49 @@ class SocialAuthController extends Controller
         } catch (Exception $e) {
             return redirect('/login')
                 ->with('error', 'Failed to authenticate with Google. Please try again.');
+        }
+    }
+
+    /**
+     * Download and store the Google avatar if the user doesn't have one yet.
+     */
+    private function maybeUploadAvatar(User $user, ?string $avatarUrl): void
+    {
+        if (! $avatarUrl || $user->media()->where('type', 'avatar')->exists()) {
+            return;
+        }
+
+        try {
+            $response = Http::timeout(10)->get($avatarUrl);
+
+            if (! $response->successful()) {
+                return;
+            }
+
+            $tempPath = tempnam(sys_get_temp_dir(), 'google_avatar_');
+            file_put_contents($tempPath, $response->body());
+
+            $uploadedFile = new UploadedFile(
+                path: $tempPath,
+                originalName: 'avatar.jpg',
+                mimeType: 'image/jpeg',
+                error: null,
+                test: true
+            );
+
+            $this->mediaService->uploadImage(
+                file: $uploadedFile,
+                modelType: User::class,
+                modelId: $user->id,
+                type: 'avatar'
+            );
+
+            @unlink($tempPath);
+        } catch (Exception $e) {
+            Log::warning('Failed to upload Google avatar', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }
