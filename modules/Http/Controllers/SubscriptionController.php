@@ -10,7 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Services\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Services\SubscriptionService;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -38,10 +40,12 @@ class SubscriptionController extends Controller
         ]);
     }
 
+    private const DEFAULT_METHOD = PaymentMethodEnum::PAYSTACK;
+
     /**
-     * Initiate a Paystack payment for the selected plan and redirect the vendor to Paystack.
+     * Start a payment for the selected plan on the chosen rail and hand the vendor off to pay.
      */
-    public function checkout(SubscriptionPlan $plan): RedirectResponse|SymfonyResponse
+    public function checkout(Request $request, SubscriptionPlan $plan): RedirectResponse|SymfonyResponse
     {
         if ($redirect = $this->denyNonVendor()) {
             return $redirect;
@@ -52,16 +56,19 @@ class SubscriptionController extends Controller
         }
 
         $vendor = Auth::user();
+        $method = PaymentMethodEnum::tryFrom((string) $request->input('method')) ?? self::DEFAULT_METHOD;
 
         try {
-            $authorizationUrl = $this->subscriptionService->initiatePayment($vendor, $plan);
+            $session = $this->subscriptionService->initiatePayment($vendor, $plan, $method);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        // Inertia::location sends a 409 that Inertia's client handles as window.location,
-        // which is the correct pattern for redirecting outside the Inertia SPA.
-        return Inertia::location($authorizationUrl);
+        if ($session->type === CheckoutTypeEnum::REDIRECT) {
+            return Inertia::location($session->url);
+        }
+
+        return back()->with('stellarCheckoutUrl', $session->url);
     }
 
     /**
@@ -82,7 +89,7 @@ class SubscriptionController extends Controller
         }
 
         try {
-            $this->subscriptionService->handlePaystackCallback($reference, Auth::id());
+            $this->subscriptionService->handleCallback(PaymentMethodEnum::PAYSTACK, $reference, Auth::user());
         } catch (\RuntimeException $e) {
             return redirect()->route('vendor.subscription.index')
                 ->with('error', $e->getMessage());
