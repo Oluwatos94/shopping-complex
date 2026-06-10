@@ -8,17 +8,20 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorSubscription;
 use ModulesShoppingComplex\Repositories\SubscriptionRepository;
+use ModulesShoppingComplex\Services\Payments\CheckoutSession;
+use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
 
 final readonly class SubscriptionService
 {
     public function __construct(
         private SubscriptionRepository $subscriptionRepository,
-        private PaystackClient $paystackClient,
+        private PaymentProviderManager $providers,
     ) {}
 
     /**
@@ -38,89 +41,74 @@ final readonly class SubscriptionService
     }
 
     /**
-     * Initiate a Paystack payment for a vendor plan.
-     * Returns the Paystack authorization URL to redirect the vendor to.
+     * Start a payment for a vendor plan on the chosen rail.
+     * Returns a CheckoutSession describing where to send the vendor to pay.
      *
      * @throws \RuntimeException
      */
-    public function initiatePayment(User $vendor, SubscriptionPlan $plan): string
+    public function initiatePayment(User $vendor, SubscriptionPlan $plan, PaymentMethodEnum $method): CheckoutSession
     {
-        // Amount must be in kobo (Paystack uses the smallest currency unit)
-        $amountInKobo = (int) round($plan->price * 100);
-
-        return $this->paystackClient->initializeTransaction(
-            email: $vendor->email,
-            amountInKobo: $amountInKobo,
-            metadata: [
-                'vendor_id' => $vendor->id,
-                'plan_id' => $plan->id,
-                'plan_slug' => $plan->slug,
-            ],
-            callbackUrl: route('vendor.subscription.callback'),
-        );
+        return $this->providers->for($method)->startCheckout($vendor, $plan);
     }
 
     /**
-     * Verify a Paystack callback reference and activate the vendor's subscription.
+     * Verify a completed payment on the given rail and activate the vendor's subscription.
      *
-     * Security: validates that the reference belongs to the authenticated vendor.
+     * Provider-agnostic: the provider handles verification + ownership; this method owns the
+     * subscription lifecycle.
+     * Security: the provider validates that the reference belongs to the authenticated vendor.
      * Idempotent: calling with the same reference twice returns the existing subscription.
      * Race-safe: handles concurrent duplicate callbacks via unique-constraint recovery.
      *
      * @throws \RuntimeException
      */
-    public function handlePaystackCallback(string $reference, int $authenticatedVendorId): VendorSubscription
+    public function handleCallback(PaymentMethodEnum $method, string $reference, User $vendor): VendorSubscription
     {
-        // Fast-path idempotency check — avoids hitting the Paystack API on duplicate callbacks
+        // Fast-path idempotency check — avoids hitting the gateway API on duplicate callbacks
         $existing = $this->subscriptionRepository->findByPaymentReference($reference);
         if ($existing !== null) {
             return $existing;
         }
 
-        $paystackData = $this->paystackClient->verifyTransaction($reference);
+        $result = $this->providers->for($method)->confirm($reference, $vendor);
 
-        $metadata = $paystackData['metadata'] ?? [];
-        $vendorId = (int) ($metadata['vendor_id'] ?? 0);
-        $planId = (int) ($metadata['plan_id'] ?? 0);
-
-        if (! $vendorId || ! $planId) {
-            throw new \RuntimeException('Invalid payment metadata.');
-        }
-
-        if ($vendorId !== $authenticatedVendorId) {
-            throw new \RuntimeException('Payment reference does not belong to your account.');
-        }
-
-        if ($this->subscriptionRepository->findActivePlanById($planId) === null) {
+        $plan = $this->subscriptionRepository->findActivePlanById($result->planId);
+        if ($plan === null) {
             throw new \RuntimeException('The selected plan is no longer available.');
         }
 
-        $amountPaid = $paystackData['amount'] / 100; // kobo → naira
+        // Enforce, for every rail, that the settled amount covers the plan price. Paystack
+        // fixes the amount at initialisation, but on-chain rails (Stellar/MPP) settle an
+        // arbitrary amount, so this guard belongs in the shared lifecycle, not per-provider.
+        if (round($result->amountPaid, 2) < round((float) $plan->price, 2)) {
+            throw new \RuntimeException('Payment amount does not match the plan price.');
+        }
 
-        return DB::transaction(function () use ($vendorId, $planId, $reference, $amountPaid) {
-            $existing = $this->subscriptionRepository->findByPaymentReference($reference);
+        return DB::transaction(function () use ($vendor, $method, $result) {
+            $existing = $this->subscriptionRepository->findByPaymentReference($result->reference);
             if ($existing !== null) {
                 return $existing;
             }
 
-            $currentSubscription = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendorId);
+            $currentSubscription = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendor->id);
             if ($currentSubscription !== null) {
                 $this->subscriptionRepository->expireSubscription($currentSubscription);
             }
 
             try {
                 return $this->subscriptionRepository->create([
-                    'vendor_id' => $vendorId,
-                    'plan_id' => $planId,
+                    'vendor_id' => $vendor->id,
+                    'plan_id' => $result->planId,
                     'status' => VendorSubscriptionStatusEnum::ACTIVE,
+                    'payment_method' => $method,
                     'started_at' => now(),
                     'expires_at' => now()->addMonth(),
-                    'payment_reference' => $reference,
-                    'amount_paid' => $amountPaid,
+                    'payment_reference' => $result->reference,
+                    'amount_paid' => $result->amountPaid,
                 ]);
             } catch (UniqueConstraintViolationException) {
                 // A concurrent request created the subscription between our check and our insert
-                return $this->subscriptionRepository->findByPaymentReference($reference);
+                return $this->subscriptionRepository->findByPaymentReference($result->reference);
             }
         });
     }

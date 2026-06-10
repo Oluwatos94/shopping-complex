@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
@@ -15,6 +16,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int $vendor_id
  * @property int $plan_id
  * @property VendorSubscriptionStatusEnum $status
+ * @property PaymentMethodEnum $payment_method
  * @property Carbon $started_at
  * @property Carbon $expires_at
  * @property string|null $payment_reference
@@ -33,6 +35,7 @@ class VendorSubscription extends Model
         'vendor_id',
         'plan_id',
         'status',
+        'payment_method',
         'started_at',
         'expires_at',
         'payment_reference',
@@ -42,6 +45,7 @@ class VendorSubscription extends Model
     /** {@inheritdoc} */
     protected $casts = [
         'status' => VendorSubscriptionStatusEnum::class,
+        'payment_method' => PaymentMethodEnum::class,
         'started_at' => 'datetime',
         'expires_at' => 'datetime',
         'amount_paid' => 'float',

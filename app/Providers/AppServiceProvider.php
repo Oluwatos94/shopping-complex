@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use ModulesShoppingComplex\Services\ClaudeClient;
+use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
+use ModulesShoppingComplex\Services\Payments\PaystackProvider;
 use ModulesShoppingComplex\Services\PaystackClient;
 use ModulesShoppingComplex\Services\WhatsAppApiService;
 
@@ -18,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PaystackClient::class, fn () => new PaystackClient(
             (string) (config('services.paystack.secret_key') ?? '')
         ));
+
+        $this->app->singleton(PaymentProviderManager::class, fn ($app) => new PaymentProviderManager([
+            $app->make(PaystackProvider::class),
+        ]));
 
         $this->app->singleton(WhatsAppApiService::class);
 
