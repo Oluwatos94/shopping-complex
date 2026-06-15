@@ -50,10 +50,13 @@ final class PaystackClient
 
         $url = (string) $response->json('data.authorization_url');
 
-        // Guard against an open-redirect if the Paystack response is ever tampered with
+        // Guard against an open-redirect if the Paystack response is ever tampered with.
+        // Match the apex domain or a real subdomain — NOT any host merely ending in the
+        // string (e.g. "evilpaystack.com" must not pass).
         $parsed = parse_url($url);
         $host = $parsed['host'] ?? '';
-        if (($parsed['scheme'] ?? '') !== 'https' || ! str_ends_with($host, 'paystack.com')) {
+        $isPaystackHost = $host === 'paystack.com' || str_ends_with($host, '.paystack.com');
+        if (($parsed['scheme'] ?? '') !== 'https' || ! $isPaystackHost) {
             Log::error('Paystack returned unexpected authorization URL', ['url' => $url]);
             throw new \RuntimeException('Invalid payment gateway response.');
         }
