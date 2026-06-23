@@ -1,210 +1,112 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Testimonial } from '@/types/landing';
+import React from 'react';
+
+interface Testimonial {
+    quote: string;
+    name: string;
+    role: string;
+    date: string;
+    rating: number;
+}
 
 const testimonials: Testimonial[] = [
     {
-        id: 1,
-        customerName: 'Sarah Johnson',
-        rating: 5,
-        comment: 'jiidaa has completely changed how I shop! The real-time connection with vendors is incredible. I found exactly what I needed within minutes, and the delivery was super fast. Highly recommend!',
-        date: '2 days ago',
-    },
-    {
-        id: 2,
-        customerName: 'Michael Chen',
-        rating: 5,
-        comment: 'As a busy professional, this platform saves me so much time. I can chat with vendors, negotiate, and track my orders all in one place. The vendor quality is consistently excellent!',
-        date: '1 week ago',
-    },
-    {
-        id: 3,
-        customerName: 'Aisha Okonkwo',
-        rating: 5,
-        comment: 'I love supporting local vendors, and jiidaa makes it so easy. The real-time tracking feature is just like Uber—I always know when my order will arrive. Great platform!',
+        quote: 'I love that I can chat with vendors on WhatsApp, no new app, no password. I found a great electronics repair guy 400m from my house in under 2 minutes',
+        name: 'James Wilson',
+        role: 'Software engineer, Lagos',
         date: '2 weeks ago',
+        rating: 5,
     },
     {
-        id: 4,
-        customerName: 'David Martinez',
-        rating: 4,
-        comment: 'Excellent service and wide variety of products. The instant messaging with vendors is a game-changer. I can ask questions and get answers immediately before making a purchase.',
+        quote: 'Jiidaa solved my biggest problem — people walking past my store but not knowing I exist. Now I get 20+ WhatsApp inquiries weekly. Worth every kobo',
+        name: 'Fatima Abdulrahman',
+        role: 'Verified food vendor, Ikeja',
+        date: '1 month ago',
+        rating: 5,
+    },
+    {
+        quote: "Since joining Jiidaa I've been getting 3-4 new customers every single day just from people walking nearby who found me on the map. It's genuinely changed my business",
+        name: 'Adaobi Nwosu',
+        role: 'Fashion Vendor, Oshodi Market',
+        date: '3 months ago',
+        rating: 5,
+    },
+    {
+        quote: 'Found a tailor two streets away I never knew existed. Sent measurements over WhatsApp and picked up my outfit the same week. So convenient.',
+        name: 'Chinedu Okafor',
+        role: 'Shopper, Surulere',
         date: '3 weeks ago',
+        rating: 5,
     },
     {
-        id: 5,
-        customerName: 'Fatima Al-Rahman',
-        rating: 5,
-        comment: 'The best shopping experience I have had online! The vendors are professional, responsive, and the platform is so easy to use. I have made multiple purchases and never been disappointed.',
-        date: '1 month ago',
+        quote: 'As a small bakery, the foot-traffic discovery is everything. People searching for cake nearby now find me first. Orders have doubled.',
+        name: 'Blessing Eze',
+        role: 'Verified baker, Yaba',
+        date: '2 months ago',
+        rating: 4,
     },
     {
-        id: 6,
-        customerName: 'James Wilson',
+        quote: 'No app to install, no sign-up stress. I just shared my location and started chatting with sellers around me. This is how shopping should work.',
+        name: 'Tunde Bakare',
+        role: 'Shopper, Lekki',
+        date: '5 days ago',
         rating: 5,
-        comment: 'jiidaa connects me with quality vendors near me. The categorization makes it easy to find what I need, and the real-time updates keep me informed throughout the entire process.',
-        date: '1 month ago',
     },
 ];
 
-function getVisibleCount(): number {
-    if (typeof window === 'undefined') return 3;
-    if (window.innerWidth >= 1024) return 3;
-    if (window.innerWidth >= 768) return 2;
-    return 1;
-}
+const Stars: React.FC<{ rating: number }> = ({ rating }) => (
+    <div className="flex gap-1 text-brand-star">
+        {Array.from({ length: rating }).map((_, i) => (
+            <svg key={i} className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z" />
+            </svg>
+        ))}
+    </div>
+);
 
-function renderStars(rating: number) {
-    return (
-        <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-                <svg
-                    key={i}
-                    className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-            ))}
+const TestimonialCard: React.FC<{ t: Testimonial }> = ({ t }) => (
+    <figure className="mr-7 w-[300px] shrink-0 rounded-2xl bg-brand-surface p-7 sm:w-[380px]">
+        <div className="flex items-center justify-between">
+            <Stars rating={t.rating} />
+            <span className="text-[13px] text-brand-muted">{t.date}</span>
         </div>
-    );
-}
+        <blockquote className="mt-6 font-serif text-[15px] italic leading-relaxed text-brand-ink/80">
+            &ldquo;{t.quote}&rdquo;
+        </blockquote>
+        <figcaption className="mt-8 flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-ink text-sm font-bold text-white">
+                {t.name.charAt(0)}
+            </span>
+            <div>
+                <p className="text-[15px] font-bold text-brand-ink">{t.name}</p>
+                <p className="text-[13px] text-brand-muted">{t.role}</p>
+            </div>
+        </figcaption>
+    </figure>
+);
 
 const TestimonialsSection: React.FC = () => {
-    const [current, setCurrent] = useState(0);
-    const [visibleCount, setVisibleCount] = useState(getVisibleCount);
-    const [paused, setPaused] = useState(false);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const total = testimonials.length;
-    const maxIndex = total - visibleCount;
-
-    // Update visible count on resize
-    useEffect(() => {
-        const handleResize = () => {
-            const next = getVisibleCount();
-            setVisibleCount(next);
-            setCurrent((c) => Math.min(c, total - next));
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [total]);
-
-    const goNext = useCallback(() => {
-        setCurrent((c) => (c >= maxIndex ? 0 : c + 1));
-    }, [maxIndex]);
-
-    const goPrev = useCallback(() => {
-        setCurrent((c) => (c <= 0 ? maxIndex : c - 1));
-    }, [maxIndex]);
-
-    // Auto-advance
-    useEffect(() => {
-        if (paused) return;
-        timerRef.current = setInterval(goNext, 4000);
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
-    }, [goNext, paused]);
-
-    const cardWidthPercent = 100 / visibleCount;
-    const translateX = -(current * cardWidthPercent);
-
     return (
-        <section className="bg-white pt-16 lg:pt-24 pb-10 lg:pb-12">
-            <div className="container mx-auto px-4">
-                {/* Heading */}
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-dark mb-4">
-                        What Our Customers Say
+        <section className="bg-white py-20 font-display text-brand-ink">
+            <div className="mx-auto max-w-[1320px] px-6 lg:px-10">
+                {/* Header */}
+                <div className="mx-auto max-w-2xl text-center">
+                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-ink">Testimonials</p>
+                    <h2 className="mt-4 font-serif text-[48px] font-medium leading-tight text-brand-ink">
+                        What Our Community Says
                     </h2>
-                    <p className="text-lg text-primary-brown max-w-2xl mx-auto">
-                        Join thousands of satisfied customers who trust jiidaa for their daily needs.
+                    <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-brand-muted">
+                        Real stories from shoppers and vendors connecting on Jiidaa every day.
                     </p>
                 </div>
+            </div>
 
-                {/* Carousel */}
-                <div
-                    className="relative"
-                    onMouseEnter={() => setPaused(true)}
-                    onMouseLeave={() => setPaused(false)}
-                >
-                    {/* Sliding track */}
-                    <div className="overflow-hidden">
-                        <div
-                            className="flex transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateX(${translateX}%)` }}
-                        >
-                            {testimonials.map((testimonial) => (
-                                <div
-                                    key={testimonial.id}
-                                    className="flex-shrink-0 px-3"
-                                    style={{ width: `${cardWidthPercent}%` }}
-                                >
-                                    <div className="bg-gradient-to-br from-primary-light to-white rounded-xl p-6 shadow-lg border border-primary-olive/20 h-full flex flex-col">
-                                        <div className="flex items-center justify-between mb-4">
-                                            {renderStars(testimonial.rating)}
-                                            <span className="text-sm text-primary-brown">{testimonial.date}</span>
-                                        </div>
-
-                                        <p className="text-primary-dark mb-6 leading-relaxed italic flex-1">
-                                            "{testimonial.comment}"
-                                        </p>
-
-                                        <div className="flex items-center pt-4 border-t border-primary-olive/20">
-                                            <div className="bg-primary-olive text-white w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg mr-3 shrink-0">
-                                                {testimonial.customerName.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold text-primary-dark">{testimonial.customerName}</div>
-                                                <div className="text-sm text-primary-brown">Verified Customer</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Prev arrow */}
-                    <button
-                        onClick={goPrev}
-                        className="absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-primary-dark hover:bg-primary-olive hover:text-white transition-colors duration-200 z-10"
-                        aria-label="Previous"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-
-                    {/* Next arrow */}
-                    <button
-                        onClick={goNext}
-                        className="absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-primary-dark hover:bg-primary-olive hover:text-white transition-colors duration-200 z-10"
-                        aria-label="Next"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Dot indicators */}
-                <div className="flex justify-center gap-2 mt-8">
-                    {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => setCurrent(idx)}
-                            className={`rounded-full transition-all duration-300 ${
-                                idx === current
-                                    ? 'w-6 h-2.5 bg-primary-olive'
-                                    : 'w-2.5 h-2.5 bg-gray-300 hover:bg-primary-olive/50'
-                            }`}
-                            aria-label={`Go to slide ${idx + 1}`}
-                        />
+            {/* Auto-scrolling carousel */}
+            <div className="group mt-16 overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]">
+                <div className="flex w-max animate-marquee group-hover:[animation-play-state:paused]">
+                    {[...testimonials, ...testimonials].map((t, i) => (
+                        <TestimonialCard key={`${t.name}-${i}`} t={t} />
                     ))}
                 </div>
-
             </div>
         </section>
     );

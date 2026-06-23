@@ -17,6 +17,12 @@ interface PageProps {
     };
 }
 
+const BrandLogo: React.FC = () => (
+    <Link href="/" className="flex items-center" aria-label="Jiidaa home">
+        <img src="/logo/Logo.svg" alt="Jiidaa" className="h-12 w-auto" />
+    </Link>
+);
+
 const Header: React.FC = () => {
     const { auth } = usePage<PageProps>().props;
     const user = auth?.user;
@@ -52,168 +58,131 @@ const Header: React.FC = () => {
 
     const profileLink = user?.role === 'vendor' ? `/vendors/${user.slug}` : '/profile';
 
-    return (
-        <header className="bg-primary-dark shadow-md sticky top-0 z-50">
-            <nav className="container mx-auto px-4 py-4">
-                <div className="flex items-center justify-between">
-                    {/* Logo */}
-                    <Link href="/">
-                        <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
-                    </Link>
+    const accountDropdown = (
+        <div className="absolute right-0 mt-2 w-48 rounded-xl border border-brand-line bg-white py-1 shadow-lg shadow-brand-ink/5 z-50 animate-dropdown-in">
+            <div className="border-b border-brand-line px-4 py-2">
+                <p className="truncate text-sm font-semibold text-brand-ink">{user?.name}</p>
+                <p className="truncate text-xs text-brand-muted">{user?.email}</p>
+            </div>
+            {user?.role === 'vendor' && (
+                <Link
+                    href={profileLink}
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="block px-4 py-2 text-sm text-brand-ink transition-colors hover:bg-brand-surface"
+                >
+                    View Profile
+                </Link>
+            )}
+            <Link
+                href="/profile"
+                onClick={() => setIsDropdownOpen(false)}
+                className="block px-4 py-2 text-sm text-brand-ink transition-colors hover:bg-brand-surface"
+            >
+                Account Settings
+            </Link>
+            <div className="border-t border-brand-line">
+                <button
+                    onClick={handleSignOut}
+                    className="block w-full px-4 py-2 text-left text-sm text-brand-danger transition-colors hover:bg-red-50"
+                >
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    );
 
-                    {/* Desktop nav */}
-                    <div className="hidden md:flex items-center space-x-8">
+    const avatar = (size: string, textSize: string) =>
+        user?.avatar ? (
+            <img
+                src={user.avatar}
+                alt={user.name}
+                className={`${size} rounded-full border-2 border-brand-line object-cover transition-colors hover:border-brand-green`}
+            />
+        ) : (
+            <div
+                className={`${size} flex items-center justify-center rounded-full border-2 border-brand-line bg-brand-ink transition-colors hover:border-brand-green`}
+            >
+                <span className={`font-bold text-white ${textSize}`}>{user?.name.charAt(0).toUpperCase()}</span>
+            </div>
+        );
+
+    return (
+        <header className="sticky top-0 z-50 border-b border-brand-line/60 bg-brand-surface/80 backdrop-blur-md font-display">
+            <nav className="mx-auto max-w-[1320px] px-6 lg:px-10">
+                <div className="flex items-center justify-between py-5">
+                    {/* Logo */}
+                    <BrandLogo />
+
+                    {/* Center nav — desktop */}
+                    <div className="hidden items-center gap-9 lg:flex">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="text-primary-light hover:text-primary-peach transition-colors duration-300 font-medium"
+                                className="text-[15px] font-medium text-brand-muted transition hover:text-brand-ink"
                             >
                                 {link.label}
                             </Link>
                         ))}
+                    </div>
 
+                    {/* Right actions — desktop */}
+                    <div className="hidden items-center gap-5 lg:flex">
                         {user ? (
-                            <div className="flex items-center gap-3">
-                                {/* Notification bell — logged-in only */}
+                            <div className="flex items-center gap-4">
                                 <NotificationBell />
-
-                                {/* Avatar + dropdown */}
                                 <div className="relative" ref={dropdownRef}>
                                     <button
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                         className="flex items-center focus:outline-none"
                                     >
-                                        {user.avatar ? (
-                                            <img
-                                                src={user.avatar}
-                                                alt={user.name}
-                                                className="w-9 h-9 rounded-full object-cover border-2 border-primary-light/30 hover:border-primary-peach transition-colors"
-                                            />
-                                        ) : (
-                                            <div className="w-9 h-9 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30 hover:border-primary-peach transition-colors">
-                                                <span className="text-white text-sm font-bold">
-                                                    {user.name.charAt(0).toUpperCase()}
-                                                </span>
-                                            </div>
-                                        )}
+                                        {avatar('h-9 w-9', 'text-sm')}
                                     </button>
-
-                                    {isDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                                            <div className="px-4 py-2 border-b border-gray-100">
-                                                <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                            </div>
-                                            {user.role === 'vendor' && (
-                                                <Link
-                                                    href={profileLink}
-                                                    onClick={() => setIsDropdownOpen(false)}
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                                >
-                                                    View Profile
-                                                </Link>
-                                            )}
-                                            <Link
-                                                href="/profile"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                Account Settings
-                                            </Link>
-                                            <div className="border-t border-gray-100">
-                                                <button
-                                                    onClick={handleSignOut}
-                                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                                >
-                                                    Sign Out
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {isDropdownOpen && accountDropdown}
                                 </div>
                             </div>
                         ) : (
-                            <Link
-                                href="/login"
-                                className="bg-primary-dark text-white px-6 py-2 rounded-lg hover:bg-primary-brown transition-colors duration-300 font-medium"
-                            >
-                                Login
-                            </Link>
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="text-[15px] font-semibold text-brand-ink transition hover:text-brand-muted"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="rounded-full bg-brand-ink px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-brand-ink/90"
+                                >
+                                    Get started
+                                </Link>
+                            </>
                         )}
                     </div>
 
                     {/* Mobile right-side controls */}
-                    <div className="md:hidden flex items-center gap-3">
+                    <div className="flex items-center gap-3 lg:hidden">
                         {user && (
                             <>
-                                {/* Notification bell — logged-in only */}
                                 <NotificationBell />
-
-                                {/* Avatar button */}
                                 <div ref={mobileDropdownRef} className="relative">
                                     <button
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                         className="focus:outline-none"
                                     >
-                                        {user.avatar ? (
-                                            <img
-                                                src={user.avatar}
-                                                alt={user.name}
-                                                className="w-8 h-8 rounded-full object-cover border-2 border-primary-light/30"
-                                            />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-primary-olive flex items-center justify-center border-2 border-primary-light/30">
-                                                <span className="text-white text-xs font-bold">
-                                                    {user.name.charAt(0).toUpperCase()}
-                                                </span>
-                                            </div>
-                                        )}
+                                        {avatar('h-8 w-8', 'text-xs')}
                                     </button>
-
-                                    {/* Mobile dropdown panel — inside same ref wrapper */}
-                                    {isDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                                            <div className="px-4 py-2 border-b border-gray-100">
-                                                <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                            </div>
-                                            {user.role === 'vendor' && (
-                                                <Link
-                                                    href={profileLink}
-                                                    onClick={() => setIsDropdownOpen(false)}
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                                >
-                                                    View Profile
-                                                </Link>
-                                            )}
-                                            <Link
-                                                href="/profile"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                Account Settings
-                                            </Link>
-                                            <div className="border-t border-gray-100">
-                                                <button
-                                                    onClick={handleSignOut}
-                                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                                >
-                                                    Sign Out
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {isDropdownOpen && accountDropdown}
                                 </div>
                             </>
                         )}
 
                         {/* Hamburger */}
                         <button
-                            className="text-primary-light"
+                            className="text-brand-ink"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Toggle menu"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 {isMobileMenuOpen ? (
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 ) : (
@@ -224,26 +193,33 @@ const Header: React.FC = () => {
                     </div>
                 </div>
 
-
                 {/* Mobile nav links */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden mt-4 pb-4 space-y-3">
+                    <div className="space-y-1 pb-5 lg:hidden">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="block text-primary-light hover:text-primary-peach transition-colors duration-300 font-medium py-2"
+                                className="block rounded-lg px-2 py-2.5 text-[15px] font-medium text-brand-muted transition hover:bg-white hover:text-brand-ink"
                             >
                                 {link.label}
                             </Link>
                         ))}
                         {!user && (
-                            <Link
-                                href="/login"
-                                className="block bg-primary-dark text-white px-6 py-2 rounded-lg hover:bg-primary-brown transition-colors duration-300 font-medium text-center"
-                            >
-                                Login
-                            </Link>
+                            <div className="flex flex-col gap-3 pt-3">
+                                <Link
+                                    href="/login"
+                                    className="rounded-full border border-brand-line bg-white px-5 py-2.5 text-center text-[15px] font-semibold text-brand-ink transition hover:bg-brand-surface"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="rounded-full bg-brand-ink px-5 py-2.5 text-center text-[15px] font-semibold text-white transition hover:bg-brand-ink/90"
+                                >
+                                    Get started
+                                </Link>
+                            </div>
                         )}
                     </div>
                 )}

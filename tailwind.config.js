@@ -17,6 +17,7 @@ export default {
             fontFamily: {
                 sans: ['Lato', ...defaultTheme.fontFamily.sans],
                 serif: ['Lora', ...defaultTheme.fontFamily.serif],
+                display: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 primary: {
@@ -25,6 +26,17 @@ export default {
                     light: '#cacfca',
                     brown: '#523026',
                     peach: '#d49f89',
+                },
+                // New brand palette (rebrand — rolled out section by section)
+                brand: {
+                    ink: '#0B1F3A',
+                    green: '#25D366',
+                    'green-dark': '#1EB85A',
+                    surface: '#F8FAFC',
+                    muted: '#667085',
+                    line: '#E4E7EC',
+                    danger: '#F04438',
+                    star: '#F5C518',
                 },
             },
             fontSize: {
@@ -71,12 +83,30 @@ export default {
                     from: { opacity: '0', transform: 'translateY(-8px) scale(0.97)' },
                     to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
                 },
+                vendorScroll: {
+                    '0%':   { transform: 'translateY(0)' },
+                    '100%': { transform: 'translateY(-50%)' },
+                },
+                pinFloat: {
+                    '0%, 100%': { transform: 'translate(0, 0)' },
+                    '33%':      { transform: 'translate(5px, -7px)' },
+                    '66%':      { transform: 'translate(-6px, -3px)' },
+                },
+                marqueeX: {
+                    '0%':   { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
             },
             animation: {
-                'bell-shake':  'bellShake 0.6s ease',
-                'badge-pop':   'badgePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                'ripple':      'ripple 0.6s ease-out forwards',
-                'dropdown-in': 'dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                'bell-shake':    'bellShake 0.6s ease',
+                'badge-pop':     'badgePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                'ripple':        'ripple 0.6s ease-out forwards',
+                'dropdown-in':   'dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                'vendor-scroll': 'vendorScroll 14s linear infinite',
+                'pin-float-1':   'pinFloat 7s ease-in-out infinite',
+                'pin-float-2':   'pinFloat 9s ease-in-out 0.6s infinite',
+                'pin-float-3':   'pinFloat 8s ease-in-out 1.2s infinite',
+                'marquee':       'marqueeX 50s linear infinite',
             },
         },
     },
