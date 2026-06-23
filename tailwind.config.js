@@ -96,6 +96,19 @@ export default {
                     '0%':   { transform: 'translateX(0)' },
                     '100%': { transform: 'translateX(-50%)' },
                 },
+                authRipple: {
+                    '0%':   { transform: 'translate(-50%, -50%) scale(0.16)', opacity: '0' },
+                    '12%':  { opacity: '0.55' },
+                    '100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: '0' },
+                },
+                authDrop: {
+                    '0%':   { transform: 'translate(-50%, -50%) scale(0)', opacity: '0.7' },
+                    '100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: '0' },
+                },
+                authBob: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%':      { transform: 'translateY(-7px)' },
+                },
             },
             animation: {
                 'bell-shake':    'bellShake 0.6s ease',
@@ -107,6 +120,9 @@ export default {
                 'pin-float-2':   'pinFloat 9s ease-in-out 0.6s infinite',
                 'pin-float-3':   'pinFloat 8s ease-in-out 1.2s infinite',
                 'marquee':       'marqueeX 50s linear infinite',
+                'auth-ripple':   'authRipple 4.5s ease-out infinite',
+                'auth-drop':     'authDrop 2s ease-out infinite',
+                'auth-bob':      'authBob 5s ease-in-out infinite',
             },
         },
     },
