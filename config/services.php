@@ -62,6 +62,15 @@ return [
         'model' => env('CLAUDE_MODEL', 'claude-haiku-4-5-20251001'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+    ],
+
+    'ai_bot' => [
+        'driver' => env('AI_BOT_DRIVER', 'gemini'),
+    ],
+
     'admin' => [
         'email' => env('ADMIN_EMAIL', 'admin@shoppingcomplex.com'),
         'name' => env('ADMIN_NAME', 'Super Admin'),

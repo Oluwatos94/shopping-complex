@@ -12,6 +12,7 @@ use ModulesShoppingComplex\Models\WhatsAppInteraction;
 use ModulesShoppingComplex\Models\WhatsAppSession;
 use ModulesShoppingComplex\Repositories\WhatsAppInteractionRepository;
 use ModulesShoppingComplex\Repositories\WhatsAppSessionRepository;
+use ModulesShoppingComplex\Services\Contracts\AiChatClient;
 
 final readonly class WhatsAppAiBotService
 {
@@ -27,7 +28,7 @@ final readonly class WhatsAppAiBotService
         private WhatsAppInteractionRepository $interactionRepository,
         private VendorService $vendorService,
         private AnalyticsService $analyticsService,
-        private ClaudeClient $claude,
+        private AiChatClient $ai,
     ) {}
 
     /**
@@ -61,7 +62,7 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runClaudeWithTools($from, $history, $session);
+        $reply = $this->runAiWithTools($from, $history, $session);
 
         $history[] = ['role' => 'assistant', 'content' => $reply];
 
@@ -78,7 +79,7 @@ final readonly class WhatsAppAiBotService
     /**
      * @param  array<int, array<string, mixed>>  $history
      */
-    private function runClaudeWithTools(string $from, array $history, WhatsAppSession $session): string
+    private function runAiWithTools(string $from, array $history, WhatsAppSession $session): string
     {
         $tools = $this->defineTools();
 
@@ -88,19 +89,18 @@ final readonly class WhatsAppAiBotService
         ], $history);
 
         $payload = [
-            'model' => config('services.claude.model', 'claude-haiku-4-5-20251001'),
             'max_tokens' => 2048,
             'system' => $this->systemPrompt(),
             'messages' => $messages,
             'tools' => $tools,
         ];
 
-        $response = $this->claude->createMessage($payload);
+        $response = $this->ai->createMessage($payload);
 
         $iterations = 0;
         while (($response['stop_reason'] ?? '') === 'tool_use') {
             if (++$iterations > self::MAX_TOOL_ITERATIONS) {
-                Log::warning('Claude tool loop exceeded max iterations', ['from' => $from]);
+                Log::warning('AI tool loop exceeded max iterations', ['from' => $from]);
                 break;
             }
 
@@ -126,7 +126,7 @@ final readonly class WhatsAppAiBotService
             $messages[] = ['role' => 'user', 'content' => $toolResults];
 
             $payload['messages'] = $messages;
-            $response = $this->claude->createMessage($payload);
+            $response = $this->ai->createMessage($payload);
         }
 
         foreach ((array) ($response['content'] ?? []) as $block) {
