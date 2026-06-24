@@ -10,7 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use ModulesShoppingComplex\Services\WhatsAppBotService;
+use ModulesShoppingComplex\Services\WhatsAppAiBotService;
 
 class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
 {
@@ -37,7 +37,7 @@ class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
         return (string) data_get($this->payload, 'entry.0.changes.0.value.messages.0.id', '');
     }
 
-    public function handle(WhatsAppBotService $botService): void
+    public function handle(WhatsAppAiBotService $botService): void
     {
         /** @var array<string, mixed>|null $message */
         $message = data_get($this->payload, 'entry.0.changes.0.value.messages.0');
