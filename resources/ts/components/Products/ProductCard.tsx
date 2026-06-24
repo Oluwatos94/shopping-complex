@@ -18,22 +18,22 @@ export default function ProductCard({ product }: ProductCardProps) {
     return (
         <Link
             href={`/products/${product.slug}`}
-            className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="group flex flex-col overflow-hidden rounded-[18px] border border-brand-line bg-white font-display transition duration-150 hover:-translate-y-1 hover:border-[#D7DCE3] hover:shadow-[0_18px_38px_rgba(11,31,58,0.12)]"
         >
             {/* Product Media */}
-            <div className="relative aspect-square overflow-hidden bg-gray-100">
+            <div className="relative aspect-square overflow-hidden bg-brand-surface">
                 {isVideo ? (
                     <>
                         <video
                             src={primaryImage}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                             muted
                             playsInline
                             preload="metadata"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-colors">
-                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 transition-colors group-hover:bg-black/70">
+                                <svg className="ml-0.5 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
                             </div>
@@ -43,18 +43,18 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <img
                         src={primaryImage}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                 )}
 
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
                     {hasDiscount && salePrice && (
-                        <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                        <span className="rounded-md bg-brand-danger px-2 py-1 text-xs font-bold text-white">
                             {Math.round(((price - salePrice) / price) * 100)}% OFF
                         </span>
                     )}
                     {product.is_featured && (
-                        <span className="bg-primary-olive text-white text-xs font-semibold px-2 py-1 rounded">
+                        <span className="rounded-md bg-brand-green px-2 py-1 text-xs font-bold text-white">
                             Featured
                         </span>
                     )}
@@ -62,15 +62,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
 
             {/* Product Info */}
-            <div className="p-4">
+            <div className="flex flex-col gap-1.5 p-4 pb-5">
                 {product.vendor && (
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                        <p className="text-xs text-gray-500 truncate">
+                    <div className="flex items-center justify-between gap-1">
+                        <p className="truncate text-xs font-bold uppercase tracking-[0.06em] text-brand-muted/80">
                             {product.vendor.business_name || product.vendor.name}
                         </p>
                         {product.distance_formatted && (
-                            <span className="flex items-center gap-0.5 text-xs font-medium text-primary-olive flex-shrink-0">
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <span className="flex flex-shrink-0 items-center gap-0.5 text-xs font-semibold text-brand-green-dark">
+                                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                                 </svg>
                                 {product.distance_formatted}
@@ -79,20 +79,18 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                 )}
 
-                <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-olive transition-colors">
+                <h3 className="line-clamp-2 min-h-[42px] text-[17px] font-semibold leading-snug text-brand-ink transition-colors group-hover:text-brand-green-dark">
                     {product.name}
                 </h3>
 
-                {product.reviews_count && product.reviews_count > 0 && (
-                    <div className="flex items-center gap-2 mb-2">
+                {product.reviews_count && product.reviews_count > 0 ? (
+                    <div className="flex items-center gap-2">
                         <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
                                 <svg
                                     key={i}
-                                    className={`w-4 h-4 ${
-                                        i < Math.floor(product.average_rating)
-                                            ? 'text-yellow-400 fill-current'
-                                            : 'text-gray-300'
+                                    className={`h-4 w-4 ${
+                                        i < Math.floor(product.average_rating) ? 'fill-current text-brand-star' : 'text-brand-line'
                                     }`}
                                     viewBox="0 0 20 20"
                                 >
@@ -100,24 +98,18 @@ export default function ProductCard({ product }: ProductCardProps) {
                                 </svg>
                             ))}
                         </div>
-                        <span className="text-xs text-gray-500">({product.reviews_count})</span>
+                        <span className="text-xs text-brand-muted">({product.reviews_count})</span>
                     </div>
-                )}
+                ) : null}
 
-                <div className="flex items-baseline gap-2">
+                <div className="mt-0.5 flex items-baseline gap-2">
                     {hasDiscount && salePrice ? (
                         <>
-                            <span className="text-lg font-bold text-gray-900">
-                                ₦{salePrice.toLocaleString()}
-                            </span>
-                            <span className="text-sm text-gray-500 line-through">
-                                ₦{price.toLocaleString()}
-                            </span>
+                            <span className="text-[19px] font-extrabold text-brand-ink">₦{salePrice.toLocaleString()}</span>
+                            <span className="text-sm text-brand-muted line-through">₦{price.toLocaleString()}</span>
                         </>
                     ) : (
-                        <span className="text-lg font-bold text-gray-900">
-                            ₦{price.toLocaleString()}
-                        </span>
+                        <span className="text-[19px] font-extrabold text-brand-ink">₦{price.toLocaleString()}</span>
                     )}
                 </div>
             </div>
