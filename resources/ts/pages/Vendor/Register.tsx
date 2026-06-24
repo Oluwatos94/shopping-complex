@@ -114,7 +114,7 @@ export default function VendorRegister({ categories }: Props) {
 
     const selectSuggestion = (s: GeoapifySuggestion) => {
         const p = s.properties;
-        const street = [p.housenumber, p.street].filter(Boolean).join(' ') || p.formatted.split(',')[0];
+        const street = [p.housenumber, p.street].filter(Boolean).join(' ') || p.formatted.split(',')[0] || p.formatted;
         const city = p.city || p.county || '';
         const state = p.state || '';
 
@@ -127,7 +127,7 @@ export default function VendorRegister({ categories }: Props) {
     const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const resized = await resizeImage(file, 800);
+            const resized = await resizeImage(file, 1280);
             setAvatar(resized);
             setAvatarPreview((prev) => {
                 if (prev) URL.revokeObjectURL(prev);

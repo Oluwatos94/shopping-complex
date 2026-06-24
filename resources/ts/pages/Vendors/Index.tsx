@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from '@/types';
 import { Category } from '@/types/product';
 import { VendorGrid } from '@/components/Vendors';
-import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
+import Header from '@/components/Header';
 
 interface VendorListingProps {
     vendors: PaginatedVendors;
@@ -16,7 +16,16 @@ interface VendorListingProps {
 
 const VENDOR_BATCH_SIZE = 20;
 
-export default function VendorListing({ vendors, filters, categories, auth }: VendorListingProps) {
+const radiusOptions = [5, 10, 25, 50];
+
+const sortOptions: { value: VendorSortOption; label: string }[] = [
+    { value: 'distance', label: 'Nearest' },
+    { value: 'rating', label: 'Top Rated' },
+    { value: 'products_count', label: 'Most products' },
+    { value: 'newest', label: 'Newest' },
+];
+
+export default function VendorListing({ vendors, filters, categories }: VendorListingProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [radius, setRadius] = useState(filters.radius || 5);
     const [sortBy, setSortBy] = useState<VendorSortOption>(filters.sort_by || 'distance');
@@ -109,7 +118,7 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
                 preserveScroll: true,
             }
         );
-    }, [searchQuery, radius, sortBy, userLocation]);
+    }, [searchQuery, radius, sortBy, categoryId, userLocation]);
 
     // Restore location from URL filters only (no auto-prompt)
     useEffect(() => {
@@ -123,278 +132,254 @@ export default function VendorListing({ vendors, filters, categories, auth }: Ve
     }, [filters.latitude, filters.longitude]);
 
     return (
-        <AuthenticatedLayout user={auth?.user} className="!p-0 !max-w-none">
+        <div className="min-h-screen bg-brand-surface font-display text-brand-ink">
             <Head title="Find Nearby Vendors" />
 
-            <div className="bg-gray-50">
-                {/* Notification Banner */}
-                {notification && (
-                    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg max-w-sm w-full mx-4 transition-all ${
-                        notification.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' :
-                        notification.type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' :
-                        'bg-blue-50 border border-blue-200 text-blue-800'
-                    }`}>
-                        {notification.type === 'success' ? (
-                            <svg className="w-5 h-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        )}
-                        <p className="text-sm font-medium flex-1">{notification.message}</p>
-                        <button onClick={() => setNotification(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <Header />
+
+            {/* Notification banner */}
+            {notification && (
+                <div
+                    className={`fixed left-1/2 top-4 z-[60] mx-4 flex w-full max-w-sm -translate-x-1/2 items-center gap-3 rounded-xl px-4 py-3 shadow-lg ${
+                        notification.type === 'success'
+                            ? 'border border-brand-green/30 bg-brand-green/10 text-brand-green-dark'
+                            : notification.type === 'error'
+                              ? 'border border-brand-danger/30 bg-brand-danger/10 text-brand-danger'
+                              : 'border border-brand-line bg-white text-brand-ink'
+                    }`}
+                >
+                    {notification.type === 'success' ? (
+                        <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    )}
+                    <p className="flex-1 text-sm font-medium">{notification.message}</p>
+                    <button onClick={() => setNotification(null)} className="flex-shrink-0 opacity-60 transition-opacity hover:opacity-100">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
+
+            <div className="mx-auto max-w-[1380px] px-5 pb-20 pt-8 lg:px-10">
+                {/* Page head */}
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => window.history.back()}
+                            className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-brand-line bg-white text-brand-ink transition hover:bg-brand-surface"
+                            aria-label="Go back"
+                        >
+                            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M15 18l-6-6 6-6" />
                             </svg>
                         </button>
+                        <h1 className="font-serif text-[26px] font-bold tracking-tight sm:text-[34px]">Nearby Vendors</h1>
+                        <span className="hidden text-[15px] font-medium text-brand-muted sm:inline">
+                            {vendors.total} {vendors.total === 1 ? 'vendor' : 'vendors'} found
+                        </span>
+                    </div>
+                    <button
+                        onClick={getCurrentLocation}
+                        disabled={isLoadingLocation}
+                        className={`inline-flex items-center gap-2.5 rounded-full border px-5 py-2.5 text-[15px] font-semibold transition disabled:opacity-50 ${
+                            userLocation
+                                ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
+                                : 'border-brand-line bg-white text-brand-ink hover:border-brand-green'
+                        }`}
+                    >
+                        {isLoadingLocation ? (
+                            <svg className="h-[17px] w-[17px] animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : (
+                            <svg className="h-[17px] w-[17px] text-brand-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                <circle cx="12" cy="10" r="2.6" />
+                            </svg>
+                        )}
+                        {isLoadingLocation ? 'Locating...' : 'Near Me'}
+                    </button>
+                </div>
+
+                {/* Search row */}
+                <div className="mb-5 flex flex-wrap gap-3.5">
+                    <div className="relative min-w-[260px] flex-1">
+                        <svg className="absolute left-5 top-1/2 -translate-y-1/2" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.3-4.3" />
+                        </svg>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Search vendors or products..."
+                            className="h-14 w-full rounded-[14px] border border-brand-line bg-white pl-[52px] pr-5 text-base text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                        />
+                    </div>
+
+                    {/* Radius */}
+                    <div className="relative w-[calc(50%-7px)] sm:w-[150px]">
+                        <select
+                            value={radius}
+                            onChange={(e) => {
+                                const newRadius = Number(e.target.value);
+                                setRadius(newRadius);
+                                handleSearch({ radius: newRadius });
+                            }}
+                            className="h-14 w-full appearance-none rounded-[14px] border border-brand-line bg-white pl-[18px] pr-10 text-base font-medium text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                        >
+                            {radiusOptions.map((km) => (
+                                <option key={km} value={km}>{km} km</option>
+                            ))}
+                        </select>
+                        <svg className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+
+                    {/* Sort */}
+                    <div className="relative w-[calc(50%-7px)] sm:w-[180px]">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => {
+                                const newSort = e.target.value as VendorSortOption;
+                                setSortBy(newSort);
+                                handleSearch({ sort_by: newSort });
+                            }}
+                            className="h-14 w-full appearance-none rounded-[14px] border border-brand-line bg-white pl-[18px] pr-10 text-base font-medium text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                        <svg className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+
+                    {/* Search button */}
+                    <button
+                        onClick={() => handleSearch()}
+                        className="inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-[14px] bg-brand-ink px-7 text-base font-bold text-white transition hover:bg-brand-ink/90 sm:w-auto"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.3-4.3" />
+                        </svg>
+                        Search
+                    </button>
+                </div>
+
+                {/* Category chips */}
+                {categories.length > 0 && (
+                    <div className="mb-8 flex gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <button
+                            onClick={() => { setCategoryId(undefined); handleSearch({ category_id: undefined }); }}
+                            className={`inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-full border px-[18px] py-2.5 text-sm font-semibold transition ${
+                                !categoryId
+                                    ? 'border-brand-ink bg-brand-ink text-white'
+                                    : 'border-brand-line bg-white text-brand-muted hover:border-brand-ink/30'
+                            }`}
+                        >
+                            All
+                        </button>
+                        {categories.map((cat) => {
+                            const active = categoryId === cat.id;
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => { setCategoryId(cat.id); handleSearch({ category_id: cat.id }); }}
+                                    className={`inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-full border px-[18px] py-2.5 text-sm font-semibold transition ${
+                                        active
+                                            ? 'border-brand-ink bg-brand-ink text-white'
+                                            : 'border-brand-line bg-white text-brand-muted hover:border-brand-ink/30'
+                                    }`}
+                                >
+                                    {cat.name}
+                                    <span className={`ml-1.5 font-semibold ${active ? 'text-white/65' : 'text-brand-muted/60'}`}>
+                                        ({cat.vendors_count})
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
-                {/* Sticky Search Bar */}
-                <div className="sticky top-[57px] z-10 bg-white border-b border-gray-200 shadow-sm">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                        {/* Top row: title + location status */}
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                                <a href="/" className="text-gray-400 hover:text-gray-700 transition-colors">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </a>
-                                <h1 className="text-base font-semibold text-gray-900">Nearby Vendors</h1>
-                                <span className="text-sm text-gray-400 hidden sm:inline">
-                                    {vendors.total} {vendors.total === 1 ? 'vendor' : 'vendors'} found
-                                </span>
-                            </div>
-                            <button
-                                onClick={getCurrentLocation}
-                                disabled={isLoadingLocation}
-                                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50 ${
-                                    userLocation
-                                        ? 'border-primary-olive bg-primary-olive/10 text-primary-olive'
-                                        : 'border-gray-300 text-gray-600 hover:border-primary-olive hover:text-primary-olive'
-                                }`}
-                            >
-                                {isLoadingLocation ? (
-                                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
-                                ) : (
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                )}
-                                <span>{isLoadingLocation ? 'Locating...' : 'Near Me'}</span>
-                                {userLocation && !isLoadingLocation && (
-                                    <span className="w-1.5 h-1.5 bg-primary-olive rounded-full" />
-                                )}
-                            </button>
-                        </div>
+                {/* Vendor grid */}
+                <VendorGrid vendors={visibleVendors} isLoading={false} />
 
-                        {/* Controls row */}
-                        <div className="flex gap-2">
-                            {/* Search */}
-                            <div className="flex-1 max-w-xs relative">
-                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
-                                    placeholder="Search vendors or products..."
-                                    className="w-full h-10 pl-9 pr-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D49F89]/30 focus:border-[#D49F89] transition-all"
-                                />
-                            </div>
-
-                            {/* Radius */}
-                            <select
-                                value={radius}
-                                onChange={(e) => {
-                                    const newRadius = Number(e.target.value);
-                                    setRadius(newRadius);
-                                    handleSearch({ radius: newRadius });
-                                }}
-                                className="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D49F89]/30 focus:border-[#D49F89] bg-white hidden sm:block"
-                            >
-                                <option value={1}>1 km</option>
-                                <option value={3}>3 km</option>
-                                <option value={5}>5 km</option>
-                                <option value={10}>10 km</option>
-                                <option value={20}>20 km</option>
-                            </select>
-
-                            {/* Sort */}
-                            <select
-                                value={sortBy}
-                                onChange={(e) => {
-                                    const newSort = e.target.value as VendorSortOption;
-                                    setSortBy(newSort);
-                                    handleSearch({ sort_by: newSort });
-                                }}
-                                className="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D49F89]/30 focus:border-[#D49F89] bg-white hidden sm:block"
-                            >
-                                <option value="distance">Nearest</option>
-                                <option value="rating">Top Rated</option>
-                                <option value="newest">Newest</option>
-                            </select>
-
-                            {/* Search button */}
-                            <button
-                                onClick={() => handleSearch()}
-                                className="h-10 px-2.5 sm:px-5 bg-[#D49F89] hover:bg-[#c48f79] text-[#272518] font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <span className="hidden sm:inline">Search</span>
-                            </button>
-                        </div>
-
-                        {/* Category chips */}
-                        {categories.length > 0 && (
-                            <div className="flex gap-2 mt-2 overflow-x-auto pb-1 scrollbar-hide">
-                                <button
-                                    onClick={() => { setCategoryId(undefined); handleSearch({ category_id: undefined }); }}
-                                    className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-colors ${
-                                        !categoryId
-                                            ? 'bg-[#D49F89] text-[#272518]'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    All
-                                </button>
-                                {categories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => { setCategoryId(cat.id); handleSearch({ category_id: cat.id }); }}
-                                        className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-colors ${
-                                            categoryId === cat.id
-                                                ? 'bg-[#D49F89] text-[#272518]'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        {cat.name}
-                                        <span className="ml-1 opacity-60">({cat.vendors_count})</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Mobile: radius + sort on second row */}
-                        <div className="flex gap-2 mt-2 sm:hidden">
-                            <select
-                                value={radius}
-                                onChange={(e) => {
-                                    const newRadius = Number(e.target.value);
-                                    setRadius(newRadius);
-                                    handleSearch({ radius: newRadius });
-                                }}
-                                className="flex-1 h-9 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#D49F89] bg-white"
-                            >
-                                <option value={1}>1 km</option>
-                                <option value={3}>3 km</option>
-                                <option value={5}>5 km</option>
-                                <option value={10}>10 km</option>
-                                <option value={20}>20 km</option>
-                            </select>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => {
-                                    const newSort = e.target.value as VendorSortOption;
-                                    setSortBy(newSort);
-                                    handleSearch({ sort_by: newSort });
-                                }}
-                                className="flex-1 h-9 px-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#D49F89] bg-white"
-                            >
-                                <option value="distance">Nearest</option>
-                                <option value="rating">Top Rated</option>
-                                <option value="newest">Newest</option>
-                            </select>
+                {/* Sentinel for progressive reveal */}
+                {!allVendorsRevealed && (
+                    <div ref={sentinelRef} className="mt-8 flex justify-center">
+                        <div className="flex items-center gap-2 text-sm text-brand-muted">
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Loading more vendors…
                         </div>
                     </div>
-                </div>
+                )}
 
+                {/* Pagination */}
+                {allVendorsRevealed && vendors.last_page > 1 && (
+                    <div className="mt-10 flex items-center justify-center gap-2">
+                        <button
+                            onClick={() => handleSearch({ page: vendors.current_page - 1 })}
+                            disabled={vendors.current_page === 1}
+                            className="rounded-full border border-brand-line bg-white px-4 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
 
-                {/* Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    {/* Mobile results count */}
-                    <p className="sm:hidden text-sm text-gray-500 mb-4">
-                        {vendors.total} {vendors.total === 1 ? 'vendor' : 'vendors'} found
-                    </p>
+                        {[...Array(vendors.last_page)].map((_, i) => {
+                            const page = i + 1;
+                            const isCurrentPage = vendors.current_page === page;
+                            const showPage =
+                                page === 1 ||
+                                page === vendors.last_page ||
+                                (page >= vendors.current_page - 1 && page <= vendors.current_page + 1);
 
-                    {/* Vendor Grid */}
-                    <VendorGrid vendors={visibleVendors} isLoading={false} />
-
-                    {/* Sentinel for progressive reveal */}
-                    {!allVendorsRevealed && (
-                        <div ref={sentinelRef} className="mt-8 flex justify-center">
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
-                                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                Loading more vendors…
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {allVendorsRevealed && vendors.last_page > 1 && (
-                        <div className="mt-8 flex justify-center items-center gap-2">
-                            <button
-                                onClick={() => handleSearch({ page: vendors.current_page - 1 })}
-                                disabled={vendors.current_page === 1}
-                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#D49F89] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Previous
-                            </button>
-
-                            {[...Array(vendors.last_page)].map((_, i) => {
-                                const page = i + 1;
-                                const isCurrentPage = vendors.current_page === page;
-                                const showPage =
-                                    page === 1 ||
-                                    page === vendors.last_page ||
-                                    (page >= vendors.current_page - 1 && page <= vendors.current_page + 1);
-
-                                if (!showPage) {
-                                    if (page === vendors.current_page - 2 || page === vendors.current_page + 2) {
-                                        return <span key={page} className="px-1 text-gray-400">…</span>;
-                                    }
-                                    return null;
+                            if (!showPage) {
+                                if (page === vendors.current_page - 2 || page === vendors.current_page + 2) {
+                                    return <span key={page} className="px-1 text-brand-muted">…</span>;
                                 }
+                                return null;
+                            }
 
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => handleSearch({ page })}
-                                        className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
-                                            isCurrentPage
-                                                ? 'bg-[#D49F89] text-[#272518]'
-                                                : 'bg-white text-gray-700 border border-gray-200 hover:border-[#D49F89]'
-                                        }`}
-                                    >
-                                        {page}
-                                    </button>
-                                );
-                            })}
+                            return (
+                                <button
+                                    key={page}
+                                    onClick={() => handleSearch({ page })}
+                                    className={`h-10 w-10 rounded-full text-sm font-semibold transition ${
+                                        isCurrentPage
+                                            ? 'border border-brand-ink bg-brand-ink text-white'
+                                            : 'border border-brand-line bg-white text-brand-ink hover:bg-brand-surface'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
 
-                            <button
-                                onClick={() => handleSearch({ page: vendors.current_page + 1 })}
-                                disabled={vendors.current_page === vendors.last_page}
-                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#D49F89] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Next
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        <button
+                            onClick={() => handleSearch({ page: vendors.current_page + 1 })}
+                            disabled={vendors.current_page === vendors.last_page}
+                            className="rounded-full border border-brand-line bg-white px-4 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }
