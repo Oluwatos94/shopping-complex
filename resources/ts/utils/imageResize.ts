@@ -1,4 +1,4 @@
-export async function resizeImage(file: File, maxSize = 800): Promise<File> {
+export async function resizeImage(file: File, maxSize = 1280): Promise<File> {
     return new Promise((resolve) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
@@ -30,6 +30,9 @@ export async function resizeImage(file: File, maxSize = 800): Promise<File> {
                 resolve(file);
                 return;
             }
+            
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
             ctx.drawImage(img, 0, 0, width, height);
 
@@ -42,8 +45,8 @@ export async function resizeImage(file: File, maxSize = 800): Promise<File> {
                     }
                     // toBlob returned null (low-memory Android) — fall back to toDataURL
                     try {
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                        const base64 = dataUrl.split(',')[1];
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        const base64 = dataUrl.split(',')[1] ?? '';
                         const bytes = atob(base64);
                         const ab = new ArrayBuffer(bytes.length);
                         const ia = new Uint8Array(ab);
@@ -56,7 +59,7 @@ export async function resizeImage(file: File, maxSize = 800): Promise<File> {
                     }
                 },
                 'image/jpeg',
-                0.85
+                0.9
             );
         };
 

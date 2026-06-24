@@ -125,7 +125,7 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const resized = await resizeImage(file, 800);
+            const resized = await resizeImage(file, 1280);
             setAvatar(resized);
             setAvatarPreview((prev) => {
                 if (prev) URL.revokeObjectURL(prev);

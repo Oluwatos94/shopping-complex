@@ -19,107 +19,102 @@ export default function VendorCard({ vendor }: VendorCardProps) {
         : null;
 
     return (
-        <div className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#D49F89] hover:scale-[1.02]">
-            {/* Vendor Image/Logo */}
-            <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="group flex flex-col overflow-hidden rounded-[20px] border border-brand-line bg-white font-display transition duration-150 hover:-translate-y-1 hover:border-[#D7DCE3] hover:shadow-[0_20px_42px_rgba(11,31,58,0.12)]">
+            {/* Vendor image/logo */}
+            <Link href={`/vendors/${vendor.slug}`} className="relative aspect-[16/11] overflow-hidden bg-brand-surface">
                 <img
                     src={profileImage}
                     alt={vendor.business_name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+            </Link>
 
-
-            </div>
-
-            {/* Vendor Info */}
-            <div className="p-4 pt-5">
-                {/* Business Name */}
-                <Link href={`/vendors/${vendor.slug}`}>
-                    <h3 className="font-semibold text-[#272518] mb-1.5 group-hover:text-[#D49F89] transition-colors text-lg flex items-center gap-2">
-                        <span className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="line-clamp-1">{vendor.business_name}</span>
-                            <span className={`flex-shrink-0 w-2 h-2 rounded-full ${vendor.is_online ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                        </span>
-                        {vendor.is_verified && (
-                            <svg className="flex-shrink-0 w-4 h-4 text-[#D49F89]" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                        )}
-                    </h3>
+            {/* Vendor info */}
+            <div className="flex flex-1 flex-col px-[18px] pb-5 pt-[18px]">
+                {/* Business name + online dot + verified */}
+                <Link href={`/vendors/${vendor.slug}`} className="mb-3 flex items-center gap-2.5">
+                    <span className="line-clamp-1 text-[19px] font-bold leading-tight text-brand-ink transition-colors group-hover:text-brand-green-dark">
+                        {vendor.business_name}
+                    </span>
+                    <span
+                        className={`h-[9px] w-[9px] flex-none rounded-full ${
+                            vendor.is_online ? 'bg-brand-green shadow-[0_0_0_3px_rgba(37,211,102,0.18)]' : 'bg-brand-line'
+                        }`}
+                    />
+                    {vendor.is_verified && (
+                        <svg className="h-4 w-4 flex-none text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                    )}
                 </Link>
 
-                {/* Distance & Location */}
+                {/* Distance & location */}
                 {(distance || vendor.location?.address) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2.5">
-                        <svg className="w-4 h-4 text-[#D49F89]" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="mb-2.5 flex items-center gap-2 text-sm text-brand-muted">
+                        <svg className="h-4 w-4 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
-                        {distance && <span className="font-medium text-[#D49F89]">{distance}</span>}
+                        {distance && <span className="font-semibold text-brand-green-dark">{distance}</span>}
                         {vendor.location?.address && (
                             <>
-                                {distance && <span className="text-gray-400">•</span>}
+                                {distance && <span className="text-brand-muted/50">•</span>}
                                 <span className="truncate">{vendor.location.address.split(',')[0]}</span>
                             </>
                         )}
                     </div>
                 )}
 
-                {/* Rating & Reviews */}
+                {/* Rating */}
                 {vendor.rating > 0 && (
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="mb-3 flex items-center gap-2">
                         <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
                                 <svg
                                     key={i}
-                                    className={`w-4 h-4 ${
-                                        i < Math.floor(vendor.rating)
-                                            ? 'text-[#D49F89] fill-current'
-                                            : 'text-gray-300'
-                                    }`}
+                                    className={`h-4 w-4 ${i < Math.floor(vendor.rating) ? 'fill-current text-brand-star' : 'text-brand-line'}`}
                                     viewBox="0 0 20 20"
                                 >
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                             ))}
                         </div>
-                        <span className="text-sm font-medium text-[#272518]">{vendor.rating.toFixed(1)}</span>
-                        {vendor.reviews_count && vendor.reviews_count > 0 && (
-                            <span className="text-xs text-gray-500">({vendor.reviews_count})</span>
-                        )}
+                        <span className="text-sm font-semibold text-brand-ink">{vendor.rating.toFixed(1)}</span>
+                        {vendor.reviews_count && vendor.reviews_count > 0 ? (
+                            <span className="text-xs text-brand-muted">({vendor.reviews_count})</span>
+                        ) : null}
                     </div>
                 )}
 
-                {/* Products Count */}
-                <div className="flex items-center text-xs text-gray-600 mb-4">
-                    <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        {vendor.products_count} products
-                    </span>
+                {/* Products count */}
+                <div className="mb-[18px] flex items-center gap-2 text-sm font-medium text-brand-muted">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                        <path d="m3.3 7 8.7 5 8.7-5" />
+                        <path d="M12 22V12" />
+                    </svg>
+                    {vendor.products_count} {vendor.products_count === 1 ? 'product' : 'products'}
                 </div>
 
-                {/* Contact Button */}
+                {/* Contact button */}
                 {whatsAppHref ? (
                     <a
                         href={whatsAppHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full bg-transparent border-2 border-primary-dark text-primary-dark font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:bg-primary-dark hover:text-white"
+                        className="mt-auto flex h-[52px] items-center justify-center gap-2.5 rounded-[13px] bg-brand-green text-[15px] font-bold text-white transition hover:bg-brand-green-dark"
                     >
-                        <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.526 5.845L.057 23.882l6.198-1.625A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.374l-.36-.214-3.68.965.982-3.59-.234-.369A9.818 9.818 0 1112 21.818z"/>
+                        <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.18c-.24.68-1.42 1.31-1.95 1.36-.5.05-1.13.07-1.83-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-2.99 0-1.42.74-2.12 1.01-2.41.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.65.49.24.58.82 2 .89 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.93 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.69-.81.88-1.09.18-.28.37-.23.62-.14.25.09 1.6.76 1.87.9.28.14.46.21.53.32.07.12.07.65-.17 1.33Z" />
                         </svg>
-                        <span className="hidden sm:inline">WhatsApp Vendor</span>
+                        WhatsApp Vendor
                     </a>
                 ) : (
                     <Link
                         href={`/vendors/${vendor.slug}`}
-                        className="w-full bg-transparent border-2 border-primary-dark text-primary-dark font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:bg-primary-dark hover:text-white"
+                        className="mt-auto flex h-[52px] items-center justify-center gap-2.5 rounded-[13px] border border-brand-ink text-[15px] font-bold text-brand-ink transition hover:bg-brand-ink hover:text-white"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         Contact Vendor
                     </Link>
