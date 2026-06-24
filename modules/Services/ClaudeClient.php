@@ -6,9 +6,10 @@ namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Services\Contracts\AiChatClient;
 use RuntimeException;
 
-final readonly class ClaudeClient
+final readonly class ClaudeClient implements AiChatClient
 {
     private const BASE_URL = 'https://api.anthropic.com/v1/messages';
 
