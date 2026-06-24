@@ -29,83 +29,76 @@ export default function FilterSidebar({
         onPriceChange(min, max);
     };
 
+    const totalCount = categories.reduce((sum, c) => sum + (c.products_count || 0), 0);
+
+    const categoryButton = (id: number | undefined, name: string, count: number) => {
+        const active = id === undefined ? !selectedCategory : selectedCategory === id;
+        return (
+            <button
+                key={id ?? 'all'}
+                onClick={() => onCategoryChange(id)}
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[15px] transition ${
+                    active ? 'bg-[#E7F8EE] font-bold text-brand-ink' : 'font-medium text-brand-muted hover:bg-brand-surface'
+                }`}
+            >
+                <span className={`h-1.5 w-1.5 flex-none rounded-full ${active ? 'bg-brand-green' : 'bg-transparent'}`} />
+                <span className="flex-1">{name}</span>
+                <span className={`text-[13px] font-semibold ${active ? 'text-brand-green-dark' : 'text-brand-muted/70'}`}>
+                    {count}
+                </span>
+            </button>
+        );
+    };
+
     return (
-        <div className="space-y-6">
-            {/* Clear Filters */}
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-serif font-semibold text-gray-900">Filters</h2>
+        <div className="font-display">
+            {/* Header */}
+            <div className="mb-5 flex items-center justify-between">
+                <h2 className="font-serif text-[21px] font-bold text-brand-ink">Filters</h2>
                 <button
                     onClick={onClearFilters}
-                    className="text-sm text-primary-olive hover:text-primary-dark transition-colors"
+                    className="text-[14px] font-bold text-brand-green transition hover:text-brand-green-dark"
                 >
                     Clear All
                 </button>
             </div>
 
             {/* Categories */}
-            <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Categories</h3>
-                <div className="space-y-2">
-                    <button
-                        onClick={() => onCategoryChange(undefined)}
-                        className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-                            !selectedCategory
-                                ? 'bg-primary-olive text-white'
-                                : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                        All Categories
-                    </button>
-                    {categories.map((category) => (
-                        <button
-                            key={category.id}
-                            onClick={() => onCategoryChange(category.id)}
-                            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-                                selectedCategory === category.id
-                                    ? 'bg-primary-olive text-white'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
-                            <div className="flex items-center justify-between">
-                                <span>{category.name}</span>
-                                <span className="text-sm opacity-75">({category.products_count})</span>
-                            </div>
-                        </button>
-                    ))}
-                </div>
+            <div className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-brand-muted/70">Categories</div>
+            <div className="mb-6 flex flex-col gap-0.5">
+                {categoryButton(undefined, 'All Categories', totalCount)}
+                {categories.map((category) => categoryButton(category.id, category.name, category.products_count || 0))}
             </div>
 
+            <div className="mb-6 h-px bg-brand-line" />
+
             {/* Price Range */}
-            <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Price Range</h3>
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="Min"
-                            value={priceMin}
-                            onChange={(e) => setPriceMin(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
-                            min="0"
-                        />
-                        <span className="text-gray-500">-</span>
-                        <input
-                            type="number"
-                            placeholder="Max"
-                            value={priceMax}
-                            onChange={(e) => setPriceMax(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
-                            min="0"
-                        />
-                    </div>
-                    <button
-                        onClick={handlePriceSubmit}
-                        className="w-full px-4 py-2 bg-primary-olive text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                        Apply
-                    </button>
-                </div>
+            <div className="mb-3.5 text-[13px] font-bold uppercase tracking-[0.08em] text-brand-muted/70">Price Range</div>
+            <div className="mb-4 flex items-center gap-2.5">
+                <input
+                    type="number"
+                    placeholder="Min"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    min="0"
+                    className="h-12 w-full rounded-xl border border-brand-line bg-brand-surface px-3.5 text-[15px] text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                />
+                <span className="font-semibold text-brand-muted/70">–</span>
+                <input
+                    type="number"
+                    placeholder="Max"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    min="0"
+                    className="h-12 w-full rounded-xl border border-brand-line bg-brand-surface px-3.5 text-[15px] text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                />
             </div>
+            <button
+                onClick={handlePriceSubmit}
+                className="h-[50px] w-full rounded-xl bg-brand-ink text-[15px] font-bold text-white transition hover:bg-brand-ink/90"
+            >
+                Apply
+            </button>
         </div>
     );
 }

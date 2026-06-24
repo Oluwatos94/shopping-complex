@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Head, usePage, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { PaginatedProducts, Category, ProductSortOption } from '@/types/product';
 import ProductGrid from '@/components/Products/partials/ProductGrid';
 import FilterSidebar from '@/components/Products/partials/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
-import AuthenticatedLayout from '@/components/Layout/AuthenticatedLayout';
+import Header from '@/components/Header';
 
 interface ProductsPageProps {
     products: PaginatedProducts;
@@ -108,268 +108,229 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
         { value: 'price_desc', label: 'Price: High to Low' },
     ];
 
-    const { auth } = usePage<{ auth: { user: any } | null }>().props;
-
     return (
-        <AuthenticatedLayout user={(auth as any)?.user} title="Products - jiidaa" className="!p-0 !max-w-none">
+        <div className="min-h-screen bg-brand-surface font-display text-brand-ink">
             <Head title="Products - jiidaa" />
 
-            <div className="bg-gray-50">
-                {/* Sticky search + sort bar */}
-                <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                        <div className="flex items-center gap-3 mb-3">
-                            <button
-                                onClick={() => window.history.back()}
-                                className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600 flex-shrink-0"
-                                aria-label="Go back"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <h1 className="text-base font-semibold text-gray-900">Products</h1>
-                            <span className="text-sm text-gray-400 hidden sm:inline">
-                                {products.total} {products.total === 1 ? 'product' : 'products'} found
-                            </span>
-                            <button
-                                onClick={handleNearMe}
-                                disabled={isLoadingLocation}
-                                className={`ml-auto flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50 ${
-                                    userLocation
-                                        ? 'border-primary-olive bg-primary-olive/10 text-primary-olive'
-                                        : 'border-gray-300 text-gray-600 hover:border-primary-olive hover:text-primary-olive'
-                                }`}
-                            >
-                                {isLoadingLocation ? (
-                                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+            <Header />
+
+            <div className="mx-auto max-w-[1380px] px-5 pb-20 pt-8 lg:px-10">
+                {/* Page head */}
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => window.history.back()}
+                            className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-brand-line bg-white text-brand-ink transition hover:bg-brand-surface"
+                            aria-label="Go back"
+                        >
+                            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <h1 className="font-serif text-[28px] font-bold tracking-tight sm:text-[34px]">Products</h1>
+                        <span className="hidden text-[15px] font-medium text-brand-muted sm:inline">
+                            {products.total} {products.total === 1 ? 'product' : 'products'} found
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleNearMe}
+                        disabled={isLoadingLocation}
+                        className={`inline-flex items-center gap-2.5 rounded-full border px-5 py-2.5 text-[15px] font-semibold transition disabled:opacity-50 ${
+                            userLocation
+                                ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
+                                : 'border-brand-line bg-white text-brand-ink hover:border-brand-green'
+                        }`}
+                    >
+                        {isLoadingLocation ? (
+                            <svg className="h-[17px] w-[17px] animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : (
+                            <svg className="h-[17px] w-[17px] text-brand-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                <circle cx="12" cy="10" r="2.6" />
+                            </svg>
+                        )}
+                        {isLoadingLocation ? 'Locating...' : 'Near Me'}
+                    </button>
+                </div>
+
+                {/* Search + Sort */}
+                <div className="mb-7 flex flex-wrap gap-4">
+                    <div className="relative min-w-[260px] flex-1">
+                        <svg className="absolute left-5 top-1/2 -translate-y-1/2" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.3-4.3" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={searchTerm}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="h-14 w-full rounded-[14px] border border-brand-line bg-white pl-[52px] pr-5 text-base text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                        />
+                    </div>
+                    <div className="relative w-full sm:w-[240px]">
+                        <select
+                            value={filters.sort_by || 'name_asc'}
+                            onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
+                            className="h-14 w-full appearance-none rounded-[14px] border border-brand-line bg-white pl-5 pr-11 text-base font-medium text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <svg className="pointer-events-none absolute right-[18px] top-1/2 -translate-y-1/2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                    {/* Mobile filter button */}
+                    <button
+                        onClick={() => setShowMobileFilters(true)}
+                        className="inline-flex h-14 items-center justify-center gap-2 rounded-[14px] border border-brand-line bg-white px-5 text-base font-semibold text-brand-ink transition hover:border-brand-green lg:hidden"
+                    >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Filters
+                    </button>
+                </div>
+
+                {/* Body: sidebar + grid */}
+                <div className="grid grid-cols-1 items-start gap-9 lg:grid-cols-[280px_1fr]">
+                    {/* Desktop Sidebar */}
+                    <aside className="sticky top-24 hidden rounded-[18px] border border-brand-line bg-white p-6 lg:block">
+                        <FilterSidebar
+                            categories={categories}
+                            selectedCategory={filters.category_id}
+                            minPrice={filters.min_price}
+                            maxPrice={filters.max_price}
+                            onCategoryChange={handleCategoryChange}
+                            onPriceChange={handlePriceChange}
+                            onClearFilters={clearFilters}
+                        />
+                    </aside>
+
+                    {/* Product grid */}
+                    <section>
+                        <div className="mb-4 text-[15px] font-medium text-brand-muted">
+                            Showing {products.from || 0}-{products.to || 0} of {products.total} products
+                        </div>
+
+                        <ProductGrid products={visibleProducts} loading={isLoading} />
+
+                        {/* Sentinel for progressive reveal */}
+                        {!allRevealed && (
+                            <div ref={sentinelRef} className="mt-8 flex justify-center">
+                                <div className="flex items-center gap-2 text-sm text-brand-muted">
+                                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                     </svg>
-                                ) : (
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                )}
-                                <span>{isLoadingLocation ? 'Locating...' : 'Near Me'}</span>
-                                {userLocation && !isLoadingLocation && (
-                                    <span className="w-1.5 h-1.5 bg-primary-olive rounded-full" />
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Search and Sort */}
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            {/* Search Input */}
-                            <div className="w-full sm:w-72">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Search products..."
-                                        value={searchTerm}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
-                                    />
-                                    <svg
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                        />
-                                    </svg>
+                                    Loading more products…
                                 </div>
                             </div>
+                        )}
 
-                            {/* Sort + Filter on same row for mobile */}
-                            <div className="flex items-center justify-between sm:contents">
-                                {/* Sort Dropdown */}
-                                <div className="w-2/5 sm:w-52">
-                                    <select
-                                        value={filters.sort_by || 'name_asc'}
-                                        onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
-                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent text-sm"
+                        {/* Pagination — only after all items on this page are revealed */}
+                        {allRevealed && products.last_page > 1 && (
+                            <div className="mt-10 flex justify-center">
+                                <nav className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handlePageChange(products.current_page - 1)}
+                                        disabled={products.current_page === 1}
+                                        className="rounded-full border border-brand-line bg-white px-4 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {sortOptions.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                        Previous
+                                    </button>
 
-                                {/* Mobile Filter Button */}
+                                    {[...Array(products.last_page)].map((_, i) => {
+                                        const page = i + 1;
+                                        const isCurrentPage = page === products.current_page;
+                                        const showPage =
+                                            page === 1 ||
+                                            page === products.last_page ||
+                                            (page >= products.current_page - 1 && page <= products.current_page + 1);
+
+                                        if (!showPage) {
+                                            if (page === products.current_page - 2 || page === products.current_page + 2) {
+                                                return <span key={page} className="px-2 text-brand-muted">...</span>;
+                                            }
+                                            return null;
+                                        }
+
+                                        return (
+                                            <button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                                                    isCurrentPage
+                                                        ? 'border-brand-ink bg-brand-ink text-white'
+                                                        : 'border-brand-line bg-white text-brand-ink hover:bg-brand-surface'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        onClick={() => handlePageChange(products.current_page + 1)}
+                                        disabled={products.current_page === products.last_page}
+                                        className="rounded-full border border-brand-line bg-white px-4 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-surface disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Next
+                                    </button>
+                                </nav>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </div>
+
+            {/* Mobile filter drawer */}
+            {showMobileFilters && (
+                <div className="fixed inset-0 z-50 lg:hidden">
+                    <div className="absolute inset-0 bg-brand-ink/50" onClick={() => setShowMobileFilters(false)} />
+                    <div className="absolute bottom-0 right-0 top-0 w-full max-w-sm overflow-y-auto bg-white shadow-xl">
+                        <div className="p-6">
+                            <div className="mb-4 flex justify-end">
                                 <button
-                                    onClick={() => setShowMobileFilters(true)}
-                                    className="lg:hidden w-2/5 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary-olive text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className="rounded-full p-2 text-brand-ink hover:bg-brand-surface"
+                                    aria-label="Close filters"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                        />
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                    Filters
                                 </button>
                             </div>
+
+                            <FilterSidebar
+                                categories={categories}
+                                selectedCategory={filters.category_id}
+                                minPrice={filters.min_price}
+                                maxPrice={filters.max_price}
+                                onCategoryChange={(cat) => {
+                                    handleCategoryChange(cat);
+                                    setShowMobileFilters(false);
+                                }}
+                                onPriceChange={(min, max) => {
+                                    handlePriceChange(min, max);
+                                    setShowMobileFilters(false);
+                                }}
+                                onClearFilters={() => {
+                                    clearFilters();
+                                    setShowMobileFilters(false);
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
-
-                {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex gap-8">
-                        {/* Desktop Sidebar */}
-                        <aside className="hidden lg:block w-64 flex-shrink-0">
-                            <div className="sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
-                                <FilterSidebar
-                                    categories={categories}
-                                    selectedCategory={filters.category_id}
-                                    minPrice={filters.min_price}
-                                    maxPrice={filters.max_price}
-                                    onCategoryChange={handleCategoryChange}
-                                    onPriceChange={handlePriceChange}
-                                    onClearFilters={clearFilters}
-                                />
-                            </div>
-                        </aside>
-
-                        {/* Product Grid */}
-                        <main className="flex-1">
-                            {/* Results Count */}
-                            <div className="mb-6 flex items-center justify-between">
-                                <p className="text-gray-600">
-                                    Showing {products.from || 0}-{products.to || 0} of {products.total} products
-                                </p>
-                            </div>
-
-                            {/* Grid */}
-                            <ProductGrid products={visibleProducts} loading={isLoading} />
-
-                            {/* Sentinel for progressive reveal */}
-                            {!allRevealed && (
-                                <div ref={sentinelRef} className="mt-8 flex justify-center">
-                                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                        </svg>
-                                        Loading more products…
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Pagination — only visible after all items on this page are revealed */}
-                            {allRevealed && products.last_page > 1 && (
-                                <div className="mt-8 flex justify-center">
-                                    <nav className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handlePageChange(products.current_page - 1)}
-                                            disabled={products.current_page === 1}
-                                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Previous
-                                        </button>
-
-                                        {[...Array(products.last_page)].map((_, i) => {
-                                            const page = i + 1;
-                                            const isCurrentPage = page === products.current_page;
-                                            const showPage =
-                                                page === 1 ||
-                                                page === products.last_page ||
-                                                (page >= products.current_page - 1 && page <= products.current_page + 1);
-
-                                            if (!showPage) {
-                                                if (page === products.current_page - 2 || page === products.current_page + 2) {
-                                                    return <span key={page} className="px-2">...</span>;
-                                                }
-                                                return null;
-                                            }
-
-                                            return (
-                                                <button
-                                                    key={page}
-                                                    onClick={() => handlePageChange(page)}
-                                                    className={`px-4 py-2 border rounded-md ${
-                                                        isCurrentPage
-                                                            ? 'bg-primary-olive text-white border-primary-olive'
-                                                            : 'border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    {page}
-                                                </button>
-                                            );
-                                        })}
-
-                                        <button
-                                            onClick={() => handlePageChange(products.current_page + 1)}
-                                            disabled={products.current_page === products.last_page}
-                                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Next
-                                        </button>
-                                    </nav>
-                                </div>
-                            )}
-                        </main>
-                    </div>
-                </div>
-
-                {/* Mobile Filter Drawer */}
-                {showMobileFilters && (
-                    <div className="lg:hidden fixed inset-0 z-50">
-                        {/* Overlay */}
-                        <div
-                            className="absolute inset-0 bg-black/50"
-                            onClick={() => setShowMobileFilters(false)}
-                        />
-
-                        {/* Drawer */}
-                        <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto">
-                            <div className="p-6">
-                                {/* Close Button */}
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-lg font-serif font-semibold">Filters</h2>
-                                    <button
-                                        onClick={() => setShowMobileFilters(false)}
-                                        className="p-2 hover:bg-gray-100 rounded-full"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <FilterSidebar
-                                    categories={categories}
-                                    selectedCategory={filters.category_id}
-                                    minPrice={filters.min_price}
-                                    maxPrice={filters.max_price}
-                                    onCategoryChange={(cat) => {
-                                        handleCategoryChange(cat);
-                                        setShowMobileFilters(false);
-                                    }}
-                                    onPriceChange={(min, max) => {
-                                        handlePriceChange(min, max);
-                                        setShowMobileFilters(false);
-                                    }}
-                                    onClearFilters={() => {
-                                        clearFilters();
-                                        setShowMobileFilters(false);
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </AuthenticatedLayout>
+            )}
+        </div>
     );
 }
