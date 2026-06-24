@@ -30,7 +30,7 @@ const vendors = [
 const HeroSection: React.FC = () => {
     const { platformWhatsApp } = usePage<PageProps>().props;
     const whatsAppHref = platformWhatsApp
-        ? `https://wa.me/${platformWhatsApp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Welcome to Jiidaa! I would like to help you find the vendor nearest to you.')}`
+        ? `https://wa.me/${platformWhatsApp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hi Jiidaa.')}`
         : 'https://wa.me/';
 
     return (
