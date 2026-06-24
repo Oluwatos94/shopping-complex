@@ -64,7 +64,13 @@ final readonly class WhatsAppAiBotService
 
         $reply = $this->runAiWithTools($from, $history, $session);
 
-        $history[] = ['role' => 'assistant', 'content' => $reply];
+        // An empty reply means a tool already messaged the buyer directly
+        // (e.g. the location-request button). Record a note for context so the
+        // model remembers it on the next turn, but don't send another message.
+        $history[] = [
+            'role' => 'assistant',
+            'content' => $reply === '' ? '(Sent the buyer a button to share their location.)' : $reply,
+        ];
 
         while (count($history) > self::MAX_HISTORY_MESSAGES) {
             array_splice($history, 0, 2);
@@ -73,7 +79,9 @@ final readonly class WhatsAppAiBotService
         $session->data = array_merge((array) ($session->data ?? []), ['history' => $history]);
         $this->sessionRepository->save($session);
 
-        $this->apiService->sendText($from, $reply);
+        if ($reply !== '') {
+            $this->apiService->sendText($from, $reply);
+        }
     }
 
     /**
@@ -97,6 +105,8 @@ final readonly class WhatsAppAiBotService
 
         $response = $this->ai->createMessage($payload);
 
+        $directMessageSent = false;
+
         $iterations = 0;
         while (($response['stop_reason'] ?? '') === 'tool_use') {
             if (++$iterations > self::MAX_TOOL_ITERATIONS) {
@@ -115,7 +125,13 @@ final readonly class WhatsAppAiBotService
                 }
                 /** @var array<string, mixed> $input */
                 $input = (array) ($block['input'] ?? []);
-                $result = $this->executeTool((string) $block['name'], $input, $from, $session);
+                $toolName = (string) $block['name'];
+                $result = $this->executeTool($toolName, $input, $from, $session);
+
+                if ($toolName === 'request_location') {
+                    $directMessageSent = true;
+                }
+
                 $toolResults[] = [
                     'type' => 'tool_result',
                     'tool_use_id' => $block['id'],
@@ -130,9 +146,14 @@ final readonly class WhatsAppAiBotService
         }
 
         foreach ((array) ($response['content'] ?? []) as $block) {
-            if (($block['type'] ?? '') === 'text') {
+            if (($block['type'] ?? '') === 'text' && trim((string) $block['text']) !== '') {
                 return (string) $block['text'];
             }
+        }
+
+        // A tool already replied directly; nothing more to send.
+        if ($directMessageSent) {
+            return '';
         }
 
         return "Sorry, I couldn't process your request. Please try again.";
@@ -147,8 +168,26 @@ final readonly class WhatsAppAiBotService
             'search_vendors' => $this->toolSearchVendors($input, $from, $session),
             'get_vendor_products' => $this->toolGetVendorProducts($input),
             'get_vendor_contact' => $this->toolGetVendorContact($input, $from),
+            'request_location' => $this->toolRequestLocation($input, $from),
             default => 'Unknown tool.',
         };
+    }
+
+    /**
+     * Send the buyer a native WhatsApp "Send location" button.
+     *
+     * @param  array<string, mixed>  $input
+     */
+    private function toolRequestLocation(array $input, string $from): string
+    {
+        $message = trim((string) ($input['message'] ?? ''));
+        if ($message === '') {
+            $message = 'Please tap the button below to share your location so I can find vendors near you.';
+        }
+
+        $this->apiService->sendLocationRequest($from, $message);
+
+        return 'A "Send location" button was shown to the buyer. Wait for them to share their location before searching for nearby vendors.';
     }
 
     /**
@@ -297,28 +336,49 @@ final readonly class WhatsAppAiBotService
                     'required' => ['vendor_id'],
                 ],
             ],
+            [
+                'name' => 'request_location',
+                'description' => "Ask the buyer to share their GPS location by showing them a native WhatsApp 'Send location' button. Use this whenever you need to find nearby vendors or measure distance and you don't already have the buyer's coordinates. Never ask the buyer to type coordinates manually — use this tool instead.",
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'message' => ['type' => 'string', 'description' => "Short prompt to show above the button, written in the buyer's own language (e.g. ask them to tap the button to share their location)."],
+                    ],
+                    'required' => ['message'],
+                ],
+            ],
         ];
     }
 
     private function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are a helpful shopping assistant for jiidaa, a Nigerian local vendor discovery platform. Your job is to help buyers find vendors and products near them.
+You are a helpful shopping assistant for Jiidaa, a Nigerian local vendor discovery platform. You help buyers find vendors and products near them.
 
 You help buyers:
 - Find vendors selling specific products or services
 - Browse a vendor's product catalogue
 - Get a vendor's WhatsApp contact to negotiate directly
 
-Guidelines:
-- Be friendly, concise, and conversational. Keep replies short — this is WhatsApp.
-- If a buyer mentions a product, immediately use the search_vendors tool to find relevant vendors.
-- If a buyer shares their location (latitude/longitude), use it to find nearby vendors.
-- If no nearby vendors are found within the default radius, automatically try a wider range (10km, then 20km, then search all).
+LANGUAGE:
+- Detect the language the buyer writes in — English, Yoruba, Nigerian Pidgin, Hausa, Igbo, or a mix — and reply in that SAME language, consistently, for the whole conversation.
+- Many Nigerians code-switch and mix English words into local sentences. "Mo fẹ́ X" / "Mo fe X" is Yoruba for "I want X"; "Abeg find me X" is Pidgin. Treat a message as Yoruba/Pidgin if its sentence structure is Yoruba/Pidgin, even when the product word is in English (e.g. "Mo fe sneakers" is still Yoruba). Do NOT switch to English unless the buyer clearly switches to English first.
+
+SEARCHING:
+- When the buyer names a product, ALWAYS call search_vendors. Translate the product or service into English for the search query, even when the buyer writes in another language. Examples: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans".
+- If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
+
+LOCATION:
+- To find NEARBY vendors, or to tell a buyer how close a vendor is, you need their GPS location. NEVER ask the buyer to type their latitude and longitude manually — most buyers don't know how. Instead call the request_location tool, which shows them a native "Send location" button to tap.
+- After the buyer shares their location, call search_vendors with those coordinates and the product they previously asked about.
+- If no nearby vendors are found within the default radius, automatically widen the search (10km, then 25km, then search all vendors).
+
+GENERAL:
+- Be friendly and concise — this is WhatsApp, so keep replies short.
 - After showing vendors, offer to show their products or get their contact.
 - All prices are in Nigerian Naira (₦).
-- If someone asks something unrelated to shopping, politely redirect them.
 - Never make up vendor names, prices, or products — only use what the tools return.
+- If someone asks something unrelated to shopping, politely redirect them.
 PROMPT;
     }
 
