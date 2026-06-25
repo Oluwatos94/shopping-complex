@@ -78,9 +78,6 @@ final readonly class WhatsAppAiBotService
 
         $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
 
-        // An empty reply means a tool already messaged the buyer directly
-        // (e.g. the location-request button). Record a note for context so the
-        // model remembers it on the next turn, but don't send another message.
         $history[] = [
             'role' => 'assistant',
             'content' => $reply === '' ? '(Sent the buyer a button to share their location.)' : $reply,
@@ -260,7 +257,18 @@ final readonly class WhatsAppAiBotService
         $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
 
         if ($vendors->isEmpty()) {
-            return "No vendors found for \"{$query}\" within {$radius} km. Try a wider radius_km (e.g. 10 or 25), or set search_everywhere=true to search the whole platform.";
+
+            $global = $this->vendorService->findByQuery($query);
+
+            if ($global->isEmpty()) {
+                return "No vendors anywhere on Jiidaa match \"{$query}\". Tell the buyer none are listed yet — do NOT invent any.";
+            }
+
+            $this->logVendorViews($global, $from, $query, null, null);
+
+            return "No vendors within {$radius} km, but these match \"{$query}\" elsewhere on Jiidaa (distance unknown):\n"
+                .$this->formatVendorLines($global)
+                ."\nPresent these to the buyer as options that are not nearby.";
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
@@ -451,7 +459,7 @@ SEARCHING:
 - search_vendors matches a vendor's business NAME, their product names/descriptions, product TAGS, and category. So you can find vendors by what they sell OR by a specific vendor's name — if a buyer asks "do you have <vendor name>?" or "search by name", use search_vendors with that name. You CAN search by name; never tell the buyer you can't.
 - Translate the product or service into English for the search query, even when the buyer writes in another language. Examples — Yoruba: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans"; Hausa: "takalmi" → "shoes", "abinci" → "food", "waya" → "phone", "kaya" → "goods"; Igbo: "akpụkpọ ụkwụ" → "shoes", "nri" → "food", "ekwentị" → "phone", "akwa" → "clothes".
 - If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
-- If nothing is found nearby: first widen radius_km to 10, then 25; if still nothing, call search_vendors with search_everywhere=true to search the whole platform. Only after the search_everywhere search also returns empty may you tell the buyer no vendor is listed.
+- search_vendors automatically widens to the whole platform when nothing is nearby: if there are no nearby matches it returns vendors from elsewhere (marked "distance unknown"). PRESENT exactly what the tool returns. NEVER claim you "searched all vendors" or that none exist unless the tool result literally says "No vendors anywhere on Jiidaa match". Do not describe searching — actually rely on the tool's returned list.
 
 CONTACT & ACCURACY (very important):
 - To give a vendor's WhatsApp or profile link, you MUST call get_vendor_contact with that exact vendor's ID and use ONLY what it returns. NEVER invent, guess, or reformat a phone number or link, and NEVER give one vendor's contact when the buyer asked about a different vendor.
