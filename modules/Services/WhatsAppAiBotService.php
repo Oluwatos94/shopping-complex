@@ -20,6 +20,8 @@ final readonly class WhatsAppAiBotService
 
     private const SESSION_TTL_MINUTES = 60;
 
+    private const LOCATION_FRESH_MINUTES = 60;
+
     private const MAX_TOOL_ITERATIONS = 10;
 
     private const LOCATION_REQUESTED_MARKER = 'LOCATION_REQUESTED:';
@@ -60,7 +62,7 @@ final readonly class WhatsAppAiBotService
             $lng = data_get($message, 'location.longitude');
             if ($lat !== null && $lng !== null) {
                 $session->data = array_merge((array) ($session->data ?? []), [
-                    'location' => ['lat' => (float) $lat, 'lng' => (float) $lng],
+                    'location' => ['lat' => (float) $lat, 'lng' => (float) $lng, 'at' => now()->timestamp],
                 ]);
             }
         }
@@ -195,10 +197,10 @@ final readonly class WhatsAppAiBotService
      */
     private function toolRequestLocation(array $input, string $from, WhatsAppSession $session): string
     {
-        $stored = data_get($session->data, 'location');
-        if (is_array($stored) && isset($stored['lat'], $stored['lng'])) {
+        $stored = $this->storedLocation($session);
+        if ($stored !== null && $stored['fresh']) {
             return sprintf(
-                'The buyer already shared their location (latitude %s, longitude %s). Do not ask again — call search_vendors with these coordinates.',
+                'The buyer already shared their location recently (latitude %s, longitude %s). Do not ask again — call search_vendors with these coordinates.',
                 $stored['lat'],
                 $stored['lng'],
             );
@@ -215,6 +217,42 @@ final readonly class WhatsAppAiBotService
     }
 
     /**
+     * Read the buyer's saved location from the session, flagging whether it is
+     * still recent enough to trust without re-asking.
+     *
+     * @return array{lat: float, lng: float, fresh: bool}|null
+     */
+    private function storedLocation(WhatsAppSession $session): ?array
+    {
+        $stored = data_get($session->data, 'location');
+        if (! is_array($stored) || ! isset($stored['lat'], $stored['lng'])) {
+            return null;
+        }
+
+        $at = isset($stored['at']) ? (int) $stored['at'] : 0;
+        $ageMinutes = $at > 0 ? (now()->timestamp - $at) / 60 : PHP_INT_MAX;
+
+        return [
+            'lat' => (float) $stored['lat'],
+            'lng' => (float) $stored['lng'],
+            'fresh' => $ageMinutes < self::LOCATION_FRESH_MINUTES,
+        ];
+    }
+
+    /**
+     * Mark the saved location as just-confirmed so we stop treating it as stale
+     * for the rest of this conversation.
+     */
+    private function touchStoredLocation(WhatsAppSession $session): void
+    {
+        $stored = data_get($session->data, 'location');
+        if (is_array($stored)) {
+            $stored['at'] = now()->timestamp;
+            $session->data = array_merge((array) ($session->data ?? []), ['location' => $stored]);
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $input
      */
     private function toolSearchVendors(array $input, string $from, WhatsAppSession $session): string
@@ -224,12 +262,33 @@ final readonly class WhatsAppAiBotService
         $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
         $radius = isset($input['radius_km']) ? (float) $input['radius_km'] : 5.0;
         $searchEverywhere = (bool) ($input['search_everywhere'] ?? false);
+        $useSaved = (bool) ($input['use_saved_location'] ?? false);
 
-        if ($lat === null || $lng === null) {
-            $stored = data_get($session->data, 'location');
-            if (is_array($stored) && isset($stored['lat'], $stored['lng'])) {
-                $lat = (float) $stored['lat'];
-                $lng = (float) $stored['lng'];
+        if (($lat === null || $lng === null) && ! $searchEverywhere) {
+            $stored = $this->storedLocation($session);
+
+            if ($stored === null) {
+                $this->apiService->sendLocationRequest(
+                    $from,
+                    'Please tap the button below to share your location so I can find the nearest vendors for you.'
+                );
+
+                return self::LOCATION_REQUESTED_MARKER.' The buyer has not shared their location yet, so no search was run. A "Send location" button was shown to them. Wait for them to share their location, then search with those coordinates.';
+            }
+
+            if (! $stored['fresh'] && ! $useSaved) {
+                return 'The buyer shared a location earlier in this chat, but it is now more than '
+                    .self::LOCATION_FRESH_MINUTES.' minutes old, so they may have moved. Do NOT search yet. '
+                    .'Ask the buyer, in their own language, whether to use that saved location or share their current location now. '
+                    .'If they choose the saved one, call search_vendors again with use_saved_location=true. '
+                    .'If they want to share a new one, call request_location.';
+            }
+
+            $lat = $stored['lat'];
+            $lng = $stored['lng'];
+
+            if ($useSaved) {
+                $this->touchStoredLocation($session);
             }
         }
 
@@ -388,6 +447,7 @@ final readonly class WhatsAppAiBotService
                         'longitude' => ['type' => 'number', 'description' => 'Buyer longitude (optional)'],
                         'radius_km' => ['type' => 'number', 'description' => 'Search radius in km (default 5). Widen to 10, then 25 if nothing is found nearby.'],
                         'search_everywhere' => ['type' => 'boolean', 'description' => 'When true, ignore distance and search ALL vendors on the platform. Use only after nearby searches (including a widened radius) return nothing.'],
+                        'use_saved_location' => ['type' => 'boolean', 'description' => 'Set true ONLY when the buyer has confirmed they want to reuse a previously saved location that the tool flagged as possibly outdated.'],
                     ],
                     'required' => ['query'],
                 ],
@@ -453,7 +513,8 @@ Jiidaa's whole purpose is to connect a buyer to the NEAREST vendor that sells wh
 2. For a product request, if you do NOT already have the buyer's location in this conversation, you MUST call the request_location tool. It pops up a native WhatsApp "Send location" button. Do NOT call search_vendors yet, and never ask the buyer to type latitude/longitude.
    CRITICAL: Writing "share your location" or "tap the button" as plain text does NOTHING — no button appears and the buyer is stuck. The ONLY way to show the button is to actually CALL the request_location tool. Always call the tool; never just talk about it.
 3. Once the buyer shares their location, call search_vendors with the product (translated to English) AND their coordinates, so results are the nearest matching vendors.
-4. If you ALREADY received the buyer's location earlier in this same conversation, reuse it — do not ask again; go straight to search_vendors with those coordinates.
+4. If you ALREADY received the buyer's location earlier in this same conversation and it is still recent, reuse it — do not ask again; go straight to search_vendors with those coordinates.
+5. Locations can go stale. If the saved location is too old, search_vendors will NOT search; instead it tells you the location may be outdated. When that happens, ask the buyer (in their language) whether to use the saved location or share their current one. If they want the saved one, call search_vendors again with use_saved_location=true. If they want to share a fresh one, call request_location to pop the "Send location" button. Never assume — let the buyer decide.
 
 SEARCHING:
 - search_vendors matches a vendor's business NAME, their product names/descriptions, product TAGS, and category. So you can find vendors by what they sell OR by a specific vendor's name — if a buyer asks "do you have <vendor name>?" or "search by name", use search_vendors with that name. You CAN search by name; never tell the buyer you can't.
