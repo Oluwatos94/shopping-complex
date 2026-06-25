@@ -22,6 +22,8 @@ final readonly class WhatsAppAiBotService
 
     private const MAX_TOOL_ITERATIONS = 10;
 
+    private const LOCATION_REQUESTED_MARKER = 'LOCATION_REQUESTED:';
+
     public function __construct(
         private WhatsAppApiService $apiService,
         private WhatsAppSessionRepository $sessionRepository,
@@ -38,6 +40,8 @@ final readonly class WhatsAppAiBotService
     {
         $session = $this->sessionRepository->findOrCreate($from);
 
+        $isFirstTime = $session->wasRecentlyCreated;
+
         if ($session->last_active_at->diffInMinutes(now()) >= self::SESSION_TTL_MINUTES) {
             $this->sessionRepository->resetSession($session);
             $session = $this->sessionRepository->findOrCreate($from);
@@ -51,6 +55,16 @@ final readonly class WhatsAppAiBotService
             return;
         }
 
+        if ($messageType === 'location') {
+            $lat = data_get($message, 'location.latitude');
+            $lng = data_get($message, 'location.longitude');
+            if ($lat !== null && $lng !== null) {
+                $session->data = array_merge((array) ($session->data ?? []), [
+                    'location' => ['lat' => (float) $lat, 'lng' => (float) $lng],
+                ]);
+            }
+        }
+
         /** @var array<int, array<string, mixed>> $history */
         $history = (array) data_get($session->data, 'history', []);
 
@@ -62,7 +76,7 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runAiWithTools($from, $history, $session);
+        $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
 
         // An empty reply means a tool already messaged the buyer directly
         // (e.g. the location-request button). Record a note for context so the
@@ -87,7 +101,7 @@ final readonly class WhatsAppAiBotService
     /**
      * @param  array<int, array<string, mixed>>  $history
      */
-    private function runAiWithTools(string $from, array $history, WhatsAppSession $session): string
+    private function runAiWithTools(string $from, array $history, WhatsAppSession $session, bool $isFirstTime = false): string
     {
         $tools = $this->defineTools();
 
@@ -96,9 +110,14 @@ final readonly class WhatsAppAiBotService
             'content' => (string) $msg['content'],
         ], $history);
 
+        $system = $this->systemPrompt();
+        if ($isFirstTime) {
+            $system .= "\n\nFIRST CONTACT: This is the buyer's very first message to Jiidaa. In your reply this turn, also warmly invite them — in their own language — to save this WhatsApp number as \"Jiidaa\" so they can easily reach us next time. Keep it to one short, friendly line, and do this only once.";
+        }
+
         $payload = [
             'max_tokens' => 2048,
-            'system' => $this->systemPrompt(),
+            'system' => $system,
             'messages' => $messages,
             'tools' => $tools,
         ];
@@ -128,7 +147,7 @@ final readonly class WhatsAppAiBotService
                 $toolName = (string) $block['name'];
                 $result = $this->executeTool($toolName, $input, $from, $session);
 
-                if ($toolName === 'request_location') {
+                if (str_starts_with($result, self::LOCATION_REQUESTED_MARKER)) {
                     $directMessageSent = true;
                 }
 
@@ -145,15 +164,14 @@ final readonly class WhatsAppAiBotService
             $response = $this->ai->createMessage($payload);
         }
 
+        if ($directMessageSent) {
+            return '';
+        }
+
         foreach ((array) ($response['content'] ?? []) as $block) {
             if (($block['type'] ?? '') === 'text' && trim((string) $block['text']) !== '') {
                 return (string) $block['text'];
             }
-        }
-
-        // A tool already replied directly; nothing more to send.
-        if ($directMessageSent) {
-            return '';
         }
 
         return "Sorry, I couldn't process your request. Please try again.";
@@ -168,7 +186,7 @@ final readonly class WhatsAppAiBotService
             'search_vendors' => $this->toolSearchVendors($input, $from, $session),
             'get_vendor_products' => $this->toolGetVendorProducts($input),
             'get_vendor_contact' => $this->toolGetVendorContact($input, $from),
-            'request_location' => $this->toolRequestLocation($input, $from),
+            'request_location' => $this->toolRequestLocation($input, $from, $session),
             default => 'Unknown tool.',
         };
     }
@@ -178,8 +196,17 @@ final readonly class WhatsAppAiBotService
      *
      * @param  array<string, mixed>  $input
      */
-    private function toolRequestLocation(array $input, string $from): string
+    private function toolRequestLocation(array $input, string $from, WhatsAppSession $session): string
     {
+        $stored = data_get($session->data, 'location');
+        if (is_array($stored) && isset($stored['lat'], $stored['lng'])) {
+            return sprintf(
+                'The buyer already shared their location (latitude %s, longitude %s). Do not ask again — call search_vendors with these coordinates.',
+                $stored['lat'],
+                $stored['lng'],
+            );
+        }
+
         $message = trim((string) ($input['message'] ?? ''));
         if ($message === '') {
             $message = 'Please tap the button below to share your location so I can find vendors near you.';
@@ -187,7 +214,7 @@ final readonly class WhatsAppAiBotService
 
         $this->apiService->sendLocationRequest($from, $message);
 
-        return 'A "Send location" button was shown to the buyer. Wait for them to share their location before searching for nearby vendors.';
+        return self::LOCATION_REQUESTED_MARKER.' A "Send location" button was shown to the buyer. Wait for them to share their location before searching for nearby vendors.';
     }
 
     /**
@@ -200,14 +227,27 @@ final readonly class WhatsAppAiBotService
         $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
         $radius = isset($input['radius_km']) ? (float) $input['radius_km'] : 5.0;
 
-        if ($lat !== null && $lng !== null) {
-            $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
-        } else {
-            $vendors = $this->vendorService->findByQuery($query);
+        if ($lat === null || $lng === null) {
+            $stored = data_get($session->data, 'location');
+            if (is_array($stored) && isset($stored['lat'], $stored['lng'])) {
+                $lat = (float) $stored['lat'];
+                $lng = (float) $stored['lng'];
+            }
         }
 
+        if ($lat === null || $lng === null) {
+            $this->apiService->sendLocationRequest(
+                $from,
+                'Please tap the button below to share your location so I can find the nearest vendors for you.'
+            );
+
+            return self::LOCATION_REQUESTED_MARKER.' The buyer has not shared their location yet, so no search was run. A "Send location" button was shown to them. Wait for them to share their location, then search with those coordinates.';
+        }
+
+        $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
+
         if ($vendors->isEmpty()) {
-            return "No vendors found for \"{$query}\"".($lat !== null ? " within {$radius} km" : '').'.';
+            return "No vendors found for \"{$query}\" within {$radius} km.";
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
@@ -361,16 +401,25 @@ You help buyers:
 - Get a vendor's WhatsApp contact to negotiate directly
 
 LANGUAGE:
-- Detect the language the buyer writes in — English, Yoruba, Nigerian Pidgin, Hausa, Igbo, or a mix — and reply in that SAME language, consistently, for the whole conversation.
-- Many Nigerians code-switch and mix English words into local sentences. "Mo fẹ́ X" / "Mo fe X" is Yoruba for "I want X"; "Abeg find me X" is Pidgin. Treat a message as Yoruba/Pidgin if its sentence structure is Yoruba/Pidgin, even when the product word is in English (e.g. "Mo fe sneakers" is still Yoruba). Do NOT switch to English unless the buyer clearly switches to English first.
+- Reply in the SAME language the buyer writes in, and keep it consistent for the whole conversation. The five common languages are English, Nigerian Pidgin, Yoruba, Hausa and Igbo. Identify the language carefully — do NOT default to Yoruba:
+  - English → reply in plain English.
+  - Nigerian Pidgin is ENGLISH-BASED. Tell-tale words: "wey", "dey", "wan", "abeg", "make", "no wahala", "una", "dem", "comot", "wetin", "sabi", "na". Example: "I need vendor wey dey sell food" → reply in Nigerian Pidgin, NOT Yoruba.
+  - Yoruba tell-tale words: "Mo fẹ́"/"Mo fe", "ọjà", "olùtajà", "oúnjẹ", "báwo", "jọ̀wọ́", "ẹ jọ̀wọ́", "kí". Example: "Mo fe bata" → reply in Yoruba.
+  - Hausa tell-tale words: "ina", "neman", "ina son", "kaya", "nawa", "kana", "ina nemi", "abinci", "don Allah". Example: "Ina neman mai sayar da abinci" → reply in Hausa.
+  - Igbo tell-tale words: "achọrọ m", "ebee", "onye", "na-ere", "kedu", "biko", "nke", "m". Example: "Achọrọ m onye na-ere nri" → reply in Igbo.
+- Judge by the sentence's overall language, not a single word — buyers often mix an English product word into a local sentence (e.g. "Mo fe sneakers" is still Yoruba; "I need sneakers wey dey near me" is still Pidgin; "Ina son sneakers" is still Hausa). When genuinely unsure, use simple English.
+
+CORE FLOW — ALWAYS LOCATION FIRST:
+Jiidaa's whole purpose is to connect a buyer to the NEAREST vendor that sells what they want. So you MUST have the buyer's GPS location before searching.
+1. Treat ANY message that names a product or service, or asks where to buy or who sells something, as a product request — e.g. "I need food", "Mo fe bata", "where can I buy a phone", "who sells shoes", "abeg find me tailor", "Ina neman takalmi", "Achọrọ m nri".
+2. For a product request, if you do NOT already have the buyer's location in this conversation, you MUST call the request_location tool. It pops up a native WhatsApp "Send location" button. Do NOT call search_vendors yet, and never ask the buyer to type latitude/longitude.
+   CRITICAL: Writing "share your location" or "tap the button" as plain text does NOTHING — no button appears and the buyer is stuck. The ONLY way to show the button is to actually CALL the request_location tool. Always call the tool; never just talk about it.
+3. Once the buyer shares their location, call search_vendors with the product (translated to English) AND their coordinates, so results are the nearest matching vendors.
+4. If you ALREADY received the buyer's location earlier in this same conversation, reuse it — do not ask again; go straight to search_vendors with those coordinates.
 
 SEARCHING:
-- When the buyer names a product, ALWAYS call search_vendors. Translate the product or service into English for the search query, even when the buyer writes in another language. Examples: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans".
+- Translate the product or service into English for the search query, even when the buyer writes in another language. Examples — Yoruba: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans"; Hausa: "takalmi" → "shoes", "abinci" → "food", "waya" → "phone", "kaya" → "goods"; Igbo: "akpụkpọ ụkwụ" → "shoes", "nri" → "food", "ekwentị" → "phone", "akwa" → "clothes".
 - If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
-
-LOCATION:
-- To find NEARBY vendors, or to tell a buyer how close a vendor is, you need their GPS location. NEVER ask the buyer to type their latitude and longitude manually — most buyers don't know how. Instead call the request_location tool, which shows them a native "Send location" button to tap.
-- After the buyer shares their location, call search_vendors with those coordinates and the product they previously asked about.
 - If no nearby vendors are found within the default radius, automatically widen the search (10km, then 25km, then search all vendors).
 
 GENERAL:
