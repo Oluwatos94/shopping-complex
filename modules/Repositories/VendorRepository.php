@@ -73,6 +73,7 @@ class VendorRepository extends BasePageRepository
                         ->where(fn ($p2) => $p2
                             ->where('name', 'like', "%{$escapedSearch}%")
                             ->orWhere('description', 'like', "%{$escapedSearch}%")
+                            ->orWhere('tags', 'like', "%{$escapedSearch}%")
                         )
                     )
                     ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escapedSearch}%"));

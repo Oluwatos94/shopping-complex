@@ -226,6 +226,7 @@ final readonly class WhatsAppAiBotService
         $lat = isset($input['latitude']) ? (float) $input['latitude'] : null;
         $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
         $radius = isset($input['radius_km']) ? (float) $input['radius_km'] : 5.0;
+        $searchEverywhere = (bool) ($input['search_everywhere'] ?? false);
 
         if ($lat === null || $lng === null) {
             $stored = data_get($session->data, 'location');
@@ -233,6 +234,18 @@ final readonly class WhatsAppAiBotService
                 $lat = (float) $stored['lat'];
                 $lng = (float) $stored['lng'];
             }
+        }
+
+        if ($searchEverywhere) {
+            $vendors = $this->vendorService->findByQuery($query);
+
+            if ($vendors->isEmpty()) {
+                return "No vendors anywhere on Jiidaa match \"{$query}\". Tell the buyer none are listed yet — do NOT invent any.";
+            }
+
+            $this->logVendorViews($vendors, $from, $query, null, null);
+
+            return 'Found '.count($vendors)." vendor(s) across the platform (distance unknown):\n".$this->formatVendorLines($vendors);
         }
 
         if ($lat === null || $lng === null) {
@@ -247,20 +260,26 @@ final readonly class WhatsAppAiBotService
         $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
 
         if ($vendors->isEmpty()) {
-            return "No vendors found for \"{$query}\" within {$radius} km.";
+            return "No vendors found for \"{$query}\" within {$radius} km. Try a wider radius_km (e.g. 10 or 25), or set search_everywhere=true to search the whole platform.";
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
 
-        $lines = $vendors->map(fn (User $vendor) => sprintf(
+        return 'Found '.count($vendors)." vendor(s):\n".$this->formatVendorLines($vendors);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $vendors
+     */
+    private function formatVendorLines(\Illuminate\Support\Collection $vendors): string
+    {
+        return $vendors->map(fn (User $vendor) => sprintf(
             '- ID:%d | %s | %d products%s',
             $vendor->id,
             $vendor->business_name ?? $vendor->name,
             $vendor->active_products_count ?? 0,
             isset($vendor->distance_km) ? ' | '.number_format((float) $vendor->distance_km, 1).' km away' : ''
         ))->implode("\n");
-
-        return 'Found '.count($vendors)." vendor(s):\n".$lines;
     }
 
     /**
@@ -316,22 +335,32 @@ final readonly class WhatsAppAiBotService
             return 'Vendor not found.';
         }
 
-        if (empty($vendor->whatsapp_number)) {
-            return 'This vendor has not set up a WhatsApp contact yet.';
-        }
-
         $this->interactionRepository->log([
             'phone_number' => $from,
             'event_type' => WhatsAppInteractionEventEnum::CONTACT_REQUESTED,
             'vendor_id' => $vendorId,
         ]);
 
+        $name = $vendor->business_name ?? $vendor->name;
+        $profileUrl = $vendor->slug ? url('/vendors/'.$vendor->slug) : null;
+
+        if (empty($vendor->whatsapp_number)) {
+            return $profileUrl !== null
+                ? "{$name} has not added a WhatsApp number yet. Their Jiidaa profile: {$profileUrl}"
+                : "{$name} has not added a WhatsApp number yet, and has no public profile link.";
+        }
+
         $digits = (string) preg_replace('/[^0-9]/', '', (string) $vendor->whatsapp_number);
         if (str_starts_with($digits, '0') && strlen($digits) === 11) {
             $digits = '234'.substr($digits, 1);
         }
 
-        return "WhatsApp link for *{$vendor->business_name}*: https://wa.me/{$digits}";
+        $contact = "Contact details for {$name}:\nWhatsApp: https://wa.me/{$digits}";
+        if ($profileUrl !== null) {
+            $contact .= "\nProfile: {$profileUrl}";
+        }
+
+        return $contact;
     }
 
     /**
@@ -342,14 +371,15 @@ final readonly class WhatsAppAiBotService
         return [
             [
                 'name' => 'search_vendors',
-                'description' => 'Search for vendors selling a product. Use this whenever the buyer mentions a product or service they want. If they share their location coordinates, pass them to find nearby vendors. Otherwise search all vendors.',
+                'description' => "Search for vendors. The query matches a vendor's business NAME, their product names/descriptions, their product TAGS, and their category — so the buyer can search by what they sell (e.g. \"furniture\", \"sneakers\"), by a product tag, OR by a specific vendor's name (e.g. \"Royal Priesthood Furniture\"). Pass the buyer's coordinates to rank by nearness. If a nearby search returns nothing even after widening the radius, set search_everywhere=true to search the whole platform regardless of distance.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'query' => ['type' => 'string', 'description' => 'Product or service the buyer is looking for'],
+                        'query' => ['type' => 'string', 'description' => 'Product, service, tag, or vendor name the buyer is looking for'],
                         'latitude' => ['type' => 'number', 'description' => 'Buyer latitude (optional)'],
                         'longitude' => ['type' => 'number', 'description' => 'Buyer longitude (optional)'],
-                        'radius_km' => ['type' => 'number', 'description' => 'Search radius in km (default 5, max 100)'],
+                        'radius_km' => ['type' => 'number', 'description' => 'Search radius in km (default 5). Widen to 10, then 25 if nothing is found nearby.'],
+                        'search_everywhere' => ['type' => 'boolean', 'description' => 'When true, ignore distance and search ALL vendors on the platform. Use only after nearby searches (including a widened radius) return nothing.'],
                     ],
                     'required' => ['query'],
                 ],
@@ -367,7 +397,7 @@ final readonly class WhatsAppAiBotService
             ],
             [
                 'name' => 'get_vendor_contact',
-                'description' => "Get a vendor's WhatsApp contact link so the buyer can chat with them directly.",
+                'description' => "Get a vendor's WhatsApp contact link and Jiidaa profile link so the buyer can reach them. Returns only the requested vendor's real details — pass in the correct vendor_id.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -418,15 +448,21 @@ Jiidaa's whole purpose is to connect a buyer to the NEAREST vendor that sells wh
 4. If you ALREADY received the buyer's location earlier in this same conversation, reuse it — do not ask again; go straight to search_vendors with those coordinates.
 
 SEARCHING:
+- search_vendors matches a vendor's business NAME, their product names/descriptions, product TAGS, and category. So you can find vendors by what they sell OR by a specific vendor's name — if a buyer asks "do you have <vendor name>?" or "search by name", use search_vendors with that name. You CAN search by name; never tell the buyer you can't.
 - Translate the product or service into English for the search query, even when the buyer writes in another language. Examples — Yoruba: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans"; Hausa: "takalmi" → "shoes", "abinci" → "food", "waya" → "phone", "kaya" → "goods"; Igbo: "akpụkpọ ụkwụ" → "shoes", "nri" → "food", "ekwentị" → "phone", "akwa" → "clothes".
 - If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
-- If no nearby vendors are found within the default radius, automatically widen the search (10km, then 25km, then search all vendors).
+- If nothing is found nearby: first widen radius_km to 10, then 25; if still nothing, call search_vendors with search_everywhere=true to search the whole platform. Only after the search_everywhere search also returns empty may you tell the buyer no vendor is listed.
+
+CONTACT & ACCURACY (very important):
+- To give a vendor's WhatsApp or profile link, you MUST call get_vendor_contact with that exact vendor's ID and use ONLY what it returns. NEVER invent, guess, or reformat a phone number or link, and NEVER give one vendor's contact when the buyer asked about a different vendor.
+- If get_vendor_contact says the vendor has no WhatsApp number, tell the buyer that plainly and share the profile link if one was returned. Do NOT substitute another vendor's number.
+- For a vendor's profile link, use the Profile link returned by get_vendor_contact.
 
 GENERAL:
 - Be friendly and concise — this is WhatsApp, so keep replies short.
 - After showing vendors, offer to show their products or get their contact.
 - All prices are in Nigerian Naira (₦).
-- Never make up vendor names, prices, or products — only use what the tools return.
+- Never make up vendor names, prices, products, numbers, or links — only use what the tools return.
 - If someone asks something unrelated to shopping, politely redirect them.
 PROMPT;
     }
