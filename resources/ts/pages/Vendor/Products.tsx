@@ -51,7 +51,7 @@ export default function VendorProducts({ products }: Props) {
             <Head title="My Products" />
             <VendorSidebar />
 
-            <main className="md:ml-[260px] min-h-screen bg-[#f5f0ea] pb-20 md:pb-0">
+            <main className="md:ml-[260px] min-h-screen bg-brand-surface pb-20 md:pb-0">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
                     {/* Header */}
@@ -62,7 +62,7 @@ export default function VendorProducts({ products }: Props) {
                         </div>
                         <Link
                             href="/products/create"
-                            className="flex items-center gap-2 bg-primary-brown text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors"
+                            className="flex items-center gap-2 bg-brand-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-brand-ink transition-colors"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -130,7 +130,7 @@ export default function VendorProducts({ products }: Props) {
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <Link
                                                     href={`/products/${product.slug}/edit`}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-primary-olive hover:text-primary-olive transition-colors"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-green hover:text-brand-green transition-colors"
                                                     title="Edit product"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@ export default function VendorProducts({ products }: Props) {
                                                 </Link>
                                                 <Link
                                                     href={`/products/${product.slug}`}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-primary-olive hover:text-primary-olive transition-colors"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-green hover:text-brand-green transition-colors"
                                                     title="View product"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ export default function VendorProducts({ products }: Props) {
                             <p className="text-gray-400 text-sm mb-6">Add your first product to start selling.</p>
                             <Link
                                 href="/products/create"
-                                className="bg-primary-brown text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-primary-dark transition-colors"
+                                className="bg-brand-green text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-brand-ink transition-colors"
                             >
                                 Add Product
                             </Link>
@@ -192,7 +192,7 @@ export default function VendorProducts({ products }: Props) {
                                     href={`/vendor/products?page=${page}`}
                                     className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                                         page === products.current_page
-                                            ? 'bg-primary-brown text-white'
+                                            ? 'bg-brand-green text-white'
                                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                                     }`}
                                 >

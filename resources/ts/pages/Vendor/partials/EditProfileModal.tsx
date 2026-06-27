@@ -198,7 +198,7 @@ export default function EditProfileModal({ vendor, onClose }: Props) {
     };
 
     const inputClass = (field: string) =>
-        `w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 ${errors[field] ? 'border-red-300' : 'border-gray-300'}`;
+        `w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 ${errors[field] ? 'border-red-300' : 'border-gray-300'}`;
 
     return (
         <div
@@ -221,7 +221,7 @@ export default function EditProfileModal({ vendor, onClose }: Props) {
                         <label className="block text-sm font-medium text-gray-700 mb-2">Store Banner</label>
                         <div
                             onClick={() => bannerRef.current?.click()}
-                            className="relative w-full h-32 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary-olive overflow-hidden cursor-pointer transition-colors bg-gray-50 flex items-center justify-center"
+                            className="relative w-full h-32 rounded-xl border-2 border-dashed border-gray-300 hover:border-brand-green overflow-hidden cursor-pointer transition-colors bg-gray-50 flex items-center justify-center"
                         >
                             {bannerPreview ? (
                                 <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
@@ -256,7 +256,7 @@ export default function EditProfileModal({ vendor, onClose }: Props) {
                         <div className="relative">
                             <div
                                 onClick={() => fileRef.current?.click()}
-                                className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 hover:border-primary-olive flex items-center justify-center cursor-pointer overflow-hidden transition-colors"
+                                className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 hover:border-brand-green flex items-center justify-center cursor-pointer overflow-hidden transition-colors"
                             >
                                 {avatarPreview ? (
                                     <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
@@ -360,7 +360,7 @@ export default function EditProfileModal({ vendor, onClose }: Props) {
                             )}
                             {selectedAddress && !addressLoading && (
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    <svg className="h-4 w-4 text-primary-olive" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="h-4 w-4 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
                                 </span>
@@ -402,7 +402,7 @@ export default function EditProfileModal({ vendor, onClose }: Props) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex-1 py-2.5 rounded-lg bg-primary-olive text-white text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-2.5 rounded-lg bg-brand-green text-white text-sm font-semibold hover:bg-brand-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing ? 'Saving...' : 'Save Changes'}
                         </button>

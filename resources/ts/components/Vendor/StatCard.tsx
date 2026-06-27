@@ -8,7 +8,7 @@ interface Props {
 export default function StatCard({ label, value, icon, trend }: Props) {
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary-olive/10 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-lg bg-brand-green/10 flex items-center justify-center shrink-0">
                 {icon}
             </div>
             <div className="min-w-0">

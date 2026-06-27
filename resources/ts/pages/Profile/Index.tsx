@@ -61,10 +61,10 @@ export default function ProfileIndex() {
 
                 <div className={isVendor ? 'md:ml-[260px]' : ''}>
                     {/* Header */}
-                    <div className="bg-primary-dark py-8">
+                    <div className="bg-brand-ink py-8">
                         <div className="max-w-3xl mx-auto px-4">
                             <h1 className="text-2xl font-serif font-bold text-white">Account Settings</h1>
-                            <p className="text-sm text-primary-light mt-1">Manage your profile and preferences</p>
+                            <p className="text-sm text-brand-muted mt-1">Manage your profile and preferences</p>
                         </div>
                     </div>
 
@@ -90,10 +90,10 @@ export default function ProfileIndex() {
                         {/* Recent Conversations */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-serif font-bold text-primary-dark">Recent Messages</h2>
+                                <h2 className="text-lg font-serif font-bold text-brand-ink">Recent Messages</h2>
                                 <Link
                                     href="/chat"
-                                    className="text-sm text-primary-olive hover:text-primary-dark font-medium transition-colors"
+                                    className="text-sm text-brand-green hover:text-brand-ink font-medium transition-colors"
                                 >
                                     View All
                                 </Link>
@@ -113,8 +113,8 @@ export default function ProfileIndex() {
                                                 href={`/chat/${convo.id}`}
                                                 className="flex items-center gap-3 py-3 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                                             >
-                                                <div className="w-10 h-10 rounded-full flex-shrink-0 bg-primary-olive/20 flex items-center justify-center">
-                                                    <span className="text-xs font-bold text-primary-olive">
+                                                <div className="w-10 h-10 rounded-full flex-shrink-0 bg-brand-green/20 flex items-center justify-center">
+                                                    <span className="text-xs font-bold text-brand-green">
                                                         {getInitials(displayName)}
                                                     </span>
                                                 </div>
@@ -132,7 +132,7 @@ export default function ProfileIndex() {
                                                     </p>
                                                 </div>
                                                 {convo.unread_count > 0 && (
-                                                    <span className="flex-shrink-0 w-5 h-5 bg-primary-olive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                                    <span className="flex-shrink-0 w-5 h-5 bg-brand-green text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                                                         {convo.unread_count > 9 ? '9+' : convo.unread_count}
                                                     </span>
                                                 )}

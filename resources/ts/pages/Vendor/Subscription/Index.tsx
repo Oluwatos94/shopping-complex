@@ -57,11 +57,11 @@ function CurrentPlanCard({
     const usagePercent = Math.min(Math.round((productsCount / plan.product_limit) * 100), 100);
 
     return (
-        <div className="bg-white rounded-2xl border-2 border-primary-olive p-6 mb-8">
+        <div className="bg-white rounded-2xl border-2 border-brand-green p-6 mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Current Plan</p>
-                    <h2 className="text-2xl font-bold text-primary-dark">{plan.name}</h2>
+                    <h2 className="text-2xl font-bold text-brand-ink">{plan.name}</h2>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[subscription.status]}`}>
@@ -84,7 +84,7 @@ function CurrentPlanCard({
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
-                        className={`h-2 rounded-full transition-all ${usagePercent >= 90 ? 'bg-red-500' : 'bg-primary-olive'}`}
+                        className={`h-2 rounded-full transition-all ${usagePercent >= 90 ? 'bg-red-500' : 'bg-brand-green'}`}
                         style={{ width: `${usagePercent}%` }}
                     />
                 </div>
@@ -104,7 +104,7 @@ function CurrentPlanCard({
 
 function CheckIcon() {
     return (
-        <svg className="w-4 h-4 text-primary-olive flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-brand-green flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
         </svg>
     );
@@ -124,12 +124,12 @@ function PlanCard({
     const isFree = plan.slug === 'free';
 
     return (
-        <div className={`bg-white rounded-2xl border-2 p-6 flex flex-col transition-shadow hover:shadow-md ${isCurrentPlan ? 'border-primary-olive' : 'border-gray-200'}`}>
+        <div className={`bg-white rounded-2xl border-2 p-6 flex flex-col transition-shadow hover:shadow-md ${isCurrentPlan ? 'border-brand-green' : 'border-gray-200'}`}>
             <div className="mb-5">
                 <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-bold text-primary-dark">{plan.name}</h3>
+                    <h3 className="text-lg font-bold text-brand-ink">{plan.name}</h3>
                     {isCurrentPlan && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-olive/10 text-primary-olive">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-green/10 text-brand-green">
                             Current
                         </span>
                     )}
@@ -162,7 +162,7 @@ function PlanCard({
             </ul>
 
             {isCurrentPlan ? (
-                <button disabled className="w-full py-2.5 rounded-xl text-sm font-semibold bg-primary-olive/10 text-primary-olive cursor-default">
+                <button disabled className="w-full py-2.5 rounded-xl text-sm font-semibold bg-brand-green/10 text-brand-green cursor-default">
                     {isFree ? 'Default Plan' : 'Active Plan'}
                 </button>
             ) : isFree ? (
@@ -173,7 +173,7 @@ function PlanCard({
                 <button
                     onClick={() => onSubscribe(plan.id)}
                     disabled={processing}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-primary-olive text-white hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-brand-green text-white hover:bg-brand-ink transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {processing ? 'Redirecting…' : 'Subscribe'}
                 </button>

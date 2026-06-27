@@ -203,12 +203,12 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
             {!isEditMode && (
                 <button
                     onClick={() => setOpen(true)}
-                    className="fixed bottom-8 right-8 w-14 h-14 bg-primary-olive text-white rounded-full shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center z-50 group"
+                    className="fixed bottom-8 right-8 w-14 h-14 bg-brand-green text-white rounded-full shadow-lg hover:bg-brand-ink hover:shadow-xl transition-all flex items-center justify-center z-50 group"
                 >
                     <svg className="w-7 h-7 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    <span className="absolute right-full mr-3 bg-primary-dark text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="absolute right-full mr-3 bg-brand-ink text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         Add Product
                     </span>
                 </button>
@@ -219,7 +219,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                     <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
                     <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-lg font-serif font-bold text-primary-dark">
+                            <h2 className="text-lg font-serif font-bold text-brand-ink">
                                 {isEditMode ? 'Edit Product' : 'Add Product'}
                             </h2>
                             <button onClick={handleClose} className="text-gray-400 hover:text-gray-600" disabled={form.processing}>
@@ -240,7 +240,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                 <p className="text-sm text-gray-500 mb-5">
                                     You've used all {productLimit} product slots. Upgrade to add more.
                                 </p>
-                                <Link href="/vendor/subscription" className="inline-block bg-primary-olive text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-primary-dark transition-colors">
+                                <Link href="/vendor/subscription" className="inline-block bg-brand-green text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-brand-ink transition-colors">
                                     View Plans
                                 </Link>
                             </div>
@@ -290,7 +290,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                                 <button
                                                     type="button"
                                                     onClick={() => imageInputRef.current?.click()}
-                                                    className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-olive flex items-center justify-center text-gray-400 hover:text-primary-olive transition-colors"
+                                                    className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-brand-green flex items-center justify-center text-gray-400 hover:text-brand-green transition-colors"
                                                 >
                                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -318,7 +318,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                     {imagePreviews.length === 0 && !videoPreview && (
                                         <div
                                             onClick={() => imageInputRef.current?.click()}
-                                            className="w-full rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-olive cursor-pointer transition-colors flex items-center justify-center"
+                                            className="w-full rounded-lg border-2 border-dashed border-gray-300 hover:border-brand-green cursor-pointer transition-colors flex items-center justify-center"
                                             style={{ minHeight: '10rem' }}
                                         >
                                             <div className="text-center py-8 px-4">
@@ -336,7 +336,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                         <button
                                             type="button"
                                             onClick={() => videoInputRef.current?.click()}
-                                            className="mt-2 text-xs text-gray-400 hover:text-primary-olive transition-colors underline underline-offset-2"
+                                            className="mt-2 text-xs text-gray-400 hover:text-brand-green transition-colors underline underline-offset-2"
                                         >
                                             Upload a video instead (MP4, MOV · max 100MB)
                                         </button>
@@ -380,7 +380,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                         value={form.data.name}
                                         onChange={(e) => form.setData('name', e.target.value)}
                                         placeholder="Product title"
-                                        className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 ${form.errors.name ? 'border-red-300' : 'border-gray-300'}`}
+                                        className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 ${form.errors.name ? 'border-red-300' : 'border-gray-300'}`}
                                     />
                                     {form.errors.name && <p className="text-sm text-red-600 mt-1">{form.errors.name}</p>}
                                 </div>
@@ -392,7 +392,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                         onChange={(e) => form.setData('description', e.target.value)}
                                         placeholder="Product description"
                                         rows={3}
-                                        className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 resize-none ${form.errors.description ? 'border-red-300' : 'border-gray-300'}`}
+                                        className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 resize-none ${form.errors.description ? 'border-red-300' : 'border-gray-300'}`}
                                     />
                                     {form.errors.description && <p className="text-sm text-red-600 mt-1">{form.errors.description}</p>}
                                 </div>
@@ -408,7 +408,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                             value={form.data.price}
                                             onChange={(e) => form.setData('price', e.target.value)}
                                             placeholder="0.00"
-                                            className={`w-full rounded-lg border pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 ${form.errors.price ? 'border-red-300' : 'border-gray-300'}`}
+                                            className={`w-full rounded-lg border pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 ${form.errors.price ? 'border-red-300' : 'border-gray-300'}`}
                                         />
                                     </div>
                                     {form.errors.price && <p className="text-sm text-red-600 mt-1">{form.errors.price}</p>}
@@ -422,7 +422,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                     {form.data.tags.length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {form.data.tags.map((tag, i) => (
-                                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-olive/10 text-primary-olive text-xs rounded-full">
+                                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-green/10 text-brand-green text-xs rounded-full">
                                                     {tag}
                                                     <button
                                                         type="button"
@@ -457,7 +457,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                             setTagInput('');
                                         }}
                                         placeholder="e.g. bag, leather, handmade"
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50"
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50"
                                     />
                                 </div>
 
@@ -468,7 +468,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                             type="checkbox"
                                             checked={form.data.pay_on_delivery}
                                             onChange={(e) => form.setData('pay_on_delivery', e.target.checked)}
-                                            className="w-4 h-4 rounded border-gray-300 text-primary-olive focus:ring-primary-olive/50"
+                                            className="w-4 h-4 rounded border-gray-300 text-brand-green focus:ring-brand-green/50"
                                         />
                                         <span className="text-sm text-gray-700">Pay on Delivery available</span>
                                     </label>
@@ -477,7 +477,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                             type="checkbox"
                                             checked={form.data.is_returnable}
                                             onChange={(e) => form.setData('is_returnable', e.target.checked)}
-                                            className="w-4 h-4 rounded border-gray-300 text-primary-olive focus:ring-primary-olive/50"
+                                            className="w-4 h-4 rounded border-gray-300 text-brand-green focus:ring-brand-green/50"
                                         />
                                         <span className="text-sm text-gray-700">Returns accepted</span>
                                     </label>
@@ -487,7 +487,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
                                 <button
                                     type="submit"
                                     disabled={form.processing}
-                                    className="w-full bg-primary-olive text-white py-3 rounded-lg font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-brand-green text-white py-3 rounded-lg font-semibold hover:bg-brand-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {form.processing ? (isEditMode ? 'Saving...' : 'Uploading...') : (isEditMode ? 'Save Changes' : 'Upload Product')}
                                 </button>
