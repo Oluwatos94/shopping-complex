@@ -16,7 +16,7 @@ const quickLinks: FooterLink[] = [
 const supportLinks: FooterLink[] = [
     { label: 'Help Center', href: '/help' },
     { label: 'Contact Us', href: '/contact' },
-    { label: 'FAQ', href: '/faq' },
+    { label: 'FAQ', href: '/#faq' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
 ];
@@ -136,6 +136,7 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="text-[15px] font-bold text-white">Contact Info</h4>
                         <ul className="mt-5 space-y-4 text-[15px] text-white/55">
+                            {/* Physical address hidden for now
                             <li className="flex items-center gap-3">
                                 <svg
                                     className="h-4 w-4 shrink-0 text-brand-green"
@@ -151,6 +152,7 @@ const Footer: React.FC = () => {
                                 </svg>
                                 Johnkay crescent, Lagos, Nigeria
                             </li>
+                            */}
                             <li className="flex items-center gap-3">
                                 <svg
                                     className="h-4 w-4 shrink-0 text-brand-green"
