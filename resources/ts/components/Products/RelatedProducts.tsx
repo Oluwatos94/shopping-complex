@@ -97,7 +97,7 @@ export default function RelatedProducts({ products, title = 'Related Products' }
             <div className="text-center pt-2">
                 <Link
                     href="/products"
-                    className="inline-flex items-center gap-2 text-primary-olive hover:text-primary-dark font-medium transition-colors"
+                    className="inline-flex items-center gap-2 text-brand-green hover:text-brand-ink font-medium transition-colors"
                 >
                     View All Products
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

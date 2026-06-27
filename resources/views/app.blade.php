@@ -6,6 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>jiidaa</title>
 
+        <!-- Favicon / app icon -->
+        <link rel="icon" type="image/svg+xml" href="/logo/icon.svg">
+        <link rel="apple-touch-icon" href="/logo/icon.svg">
+        <meta name="theme-color" content="#0B1F3A">
+
         <!-- Lato, Lora & Plus Jakarta Sans Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

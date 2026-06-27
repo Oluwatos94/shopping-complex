@@ -49,7 +49,7 @@ export default function ProductShow({
                 )}
             </Head>
 
-            <div className="min-h-screen bg-gray-50 flex flex-col">
+            <div className="min-h-screen bg-brand-surface flex flex-col font-display">
                 <Header />
 
                 <main className="flex-1">
@@ -102,7 +102,7 @@ export default function ProductShow({
 
                     {/* More from Vendor */}
                     {vendor.products_count > 1 && (
-                        <section className="bg-gray-50 border-t border-gray-200">
+                        <section className="bg-brand-surface border-t border-gray-200">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
                                 <RelatedProducts
                                     products={related_products.filter(p => p.vendor_id === vendor.id)}
