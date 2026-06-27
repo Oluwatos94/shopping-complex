@@ -41,7 +41,7 @@ const steps: Step[] = [
 
 const HowItWorksSection: React.FC = () => {
     return (
-        <section className="bg-brand-surface py-20 font-display text-brand-ink">
+        <section id="how-it-works" className="scroll-mt-24 bg-brand-surface py-20 font-display text-brand-ink">
             <div className="mx-auto max-w-[1320px] px-6 lg:px-10">
                 {/* Header */}
                 <div className="text-center">

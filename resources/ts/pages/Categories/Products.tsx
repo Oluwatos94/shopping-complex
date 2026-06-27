@@ -14,16 +14,16 @@ const CategoryProducts: React.FC = () => {
     const { category, products } = usePage<PageProps>().props;
 
     return (
-        <div className="min-h-screen bg-white flex flex-col">
+        <div className="min-h-screen bg-brand-surface flex flex-col font-display">
             <Header />
 
             <main className="flex-1">
                 {/* Hero */}
-                <section className="bg-gradient-to-br from-primary-dark to-primary-brown text-white py-14 lg:py-20">
+                <section className="bg-gradient-to-br from-brand-ink to-brand-green-dark text-white py-14 lg:py-20">
                     <div className="container mx-auto px-4">
                         <Link
                             href="/categories"
-                            className="inline-flex items-center text-primary-light hover:text-white transition-colors mb-4 text-sm"
+                            className="inline-flex items-center text-white/70 hover:text-white transition-colors mb-4 text-sm"
                         >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -31,7 +31,7 @@ const CategoryProducts: React.FC = () => {
                             All Categories
                         </Link>
                         <h1 className="text-3xl md:text-5xl font-bold mb-3">{category.name}</h1>
-                        <p className="text-primary-light text-lg">
+                        <p className="text-white/70 text-lg">
                             {products.data.length > 0
                                 ? `${products.data.length} product${products.data.length !== 1 ? 's' : ''} available`
                                 : 'No products in this category yet'}
@@ -47,10 +47,10 @@ const CategoryProducts: React.FC = () => {
                                 <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
-                                <p className="text-primary-brown text-lg mb-6">No products in this category yet.</p>
+                                <p className="text-gray-600 text-lg mb-6">No products in this category yet.</p>
                                 <Link
                                     href="/categories"
-                                    className="bg-primary-olive text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-peach transition-colors"
+                                    className="bg-brand-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-ink transition-colors"
                                 >
                                     Browse Other Categories
                                 </Link>
@@ -64,7 +64,7 @@ const CategoryProducts: React.FC = () => {
                                         className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden border border-gray-100"
                                     >
                                         {/* Product media */}
-                                        <div className="h-48 bg-primary-light overflow-hidden relative">
+                                        <div className="h-48 bg-gray-100 overflow-hidden relative">
                                             {product.image ? (
                                                 product.media_type === 'product_video' ? (
                                                     <>
@@ -91,8 +91,8 @@ const CategoryProducts: React.FC = () => {
                                                     />
                                                 )
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-primary-olive/10">
-                                                    <svg className="w-12 h-12 text-primary-olive/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="w-full h-full flex items-center justify-center bg-brand-green/10">
+                                                    <svg className="w-12 h-12 text-brand-green/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
                                                 </div>
@@ -100,13 +100,13 @@ const CategoryProducts: React.FC = () => {
                                         </div>
 
                                         <div className="p-3 md:p-4">
-                                            <h3 className="font-semibold text-primary-dark text-sm md:text-base leading-snug mb-1 group-hover:text-primary-olive transition-colors line-clamp-2">
+                                            <h3 className="font-semibold text-brand-ink text-sm md:text-base leading-snug mb-1 group-hover:text-brand-green transition-colors line-clamp-2">
                                                 {product.name}
                                             </h3>
                                             {product.vendor_name && (
-                                                <p className="text-xs text-primary-brown mb-2 truncate">{product.vendor_name}</p>
+                                                <p className="text-xs text-gray-600 mb-2 truncate">{product.vendor_name}</p>
                                             )}
-                                            <p className="text-primary-olive font-bold text-base md:text-lg">
+                                            <p className="text-brand-green font-bold text-base md:text-lg">
                                                 ₦{Number(product.price).toLocaleString()}
                                             </p>
                                         </div>
@@ -121,7 +121,7 @@ const CategoryProducts: React.FC = () => {
                                 {products.prev_page_url && (
                                     <Link
                                         href={products.prev_page_url}
-                                        className="px-6 py-3 bg-primary-olive text-white rounded-lg font-medium hover:bg-primary-peach transition-colors"
+                                        className="px-6 py-3 bg-brand-green text-white rounded-lg font-medium hover:bg-brand-ink transition-colors"
                                     >
                                         Previous
                                     </Link>
@@ -129,7 +129,7 @@ const CategoryProducts: React.FC = () => {
                                 {products.next_page_url && (
                                     <Link
                                         href={products.next_page_url}
-                                        className="px-6 py-3 bg-primary-olive text-white rounded-lg font-medium hover:bg-primary-peach transition-colors"
+                                        className="px-6 py-3 bg-brand-green text-white rounded-lg font-medium hover:bg-brand-ink transition-colors"
                                     >
                                         Next
                                     </Link>

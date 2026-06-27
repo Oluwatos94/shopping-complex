@@ -44,7 +44,7 @@ const FinalCTASection: React.FC = () => {
                                 </svg>
                             </Link>
                             <Link
-                                href="/products"
+                                href="/#how-it-works"
                                 className="inline-flex items-center rounded-full border border-brand-line bg-white/60 px-8 py-4 text-base font-semibold text-brand-ink transition hover:bg-white"
                             >
                                 See how it works
