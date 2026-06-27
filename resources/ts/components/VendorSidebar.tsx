@@ -125,7 +125,7 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
                 <Link
                     href="/"
                     onClick={onNavigate}
-                    className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary-olive transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white transition-colors"
                 >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -137,11 +137,11 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
             {/* User profile section */}
             <div className="px-5 pt-2 pb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-olive flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/15 flex-shrink-0">
                         {logo ? (
                             <img src={logo} alt={name} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full bg-primary-olive flex items-center justify-center">
+                            <div className="w-full h-full bg-gradient-to-br from-brand-green to-brand-green-dark flex items-center justify-center">
                                 <span className="text-white text-base font-bold">
                                     {name.charAt(0).toUpperCase()}
                                 </span>
@@ -149,13 +149,13 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
                         )}
                     </div>
                     <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm truncate">{name}</p>
-                        <p className="text-xs text-gray-500 truncate">{email}</p>
+                        <p className="font-semibold text-white text-sm truncate">{name}</p>
+                        <p className="text-xs text-white/50 truncate">{email}</p>
                     </div>
                 </div>
             </div>
 
-            <div className="mx-5 border-t border-gray-200" />
+            <div className="mx-5 border-t border-white/10" />
 
             {/* Nav Items */}
             <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
@@ -166,10 +166,10 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
                             key={item.label}
                             href={item.href}
                             onClick={onNavigate}
-                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors ${
                                 active
-                                    ? 'bg-primary-brown text-white'
-                                    : 'text-gray-700 hover:bg-primary-olive/10 hover:text-primary-olive'
+                                    ? 'bg-brand-green text-white font-bold'
+                                    : 'text-white/60 font-medium hover:bg-white/5 hover:text-white'
                             }`}
                         >
                             {item.icon}
@@ -181,10 +181,10 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
 
             {/* Sign Out */}
             <div className="px-3 pb-5">
-                <div className="border-t border-gray-200 pt-3">
+                <div className="border-t border-white/10 pt-3">
                     <button
                         onClick={() => { onNavigate?.(); handleSignOut(); }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-colors"
                     >
                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -199,17 +199,17 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
     return (
         <>
         {/* Desktop sidebar */}
-        <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] bg-[#f5f0ea] border-r border-gray-200 flex-col z-40">
+        <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] bg-brand-ink font-display flex-col z-40">
             <SidebarContent />
         </aside>
 
         {/* Mobile — hamburger button */}
         <button
             onClick={() => setDrawerOpen(true)}
-            className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 flex items-center justify-center bg-[#f5f0ea] border border-gray-200 rounded-xl shadow-sm"
+            className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 flex items-center justify-center bg-brand-ink text-white border border-white/10 rounded-xl shadow-sm"
             aria-label="Open menu"
         >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
@@ -224,14 +224,14 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
 
         {/* Mobile — slide-in drawer */}
         <aside
-            className={`md:hidden fixed left-0 top-0 bottom-0 w-[280px] bg-[#f5f0ea] flex flex-col z-50 shadow-xl transition-transform duration-300 ${
+            className={`md:hidden fixed left-0 top-0 bottom-0 w-[280px] bg-brand-ink font-display flex flex-col z-50 shadow-xl transition-transform duration-300 ${
                 drawerOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
         >
             {/* Close button */}
             <button
                 onClick={() => setDrawerOpen(false)}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label="Close menu"
             >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
