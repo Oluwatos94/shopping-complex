@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use ModulesShoppingComplex\Services\ClaudeClient;
 use ModulesShoppingComplex\Services\Contracts\AiChatClient;
 use ModulesShoppingComplex\Services\GeminiClient;
+use ModulesShoppingComplex\Services\GeoLocationService;
 use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Services\Payments\PaystackProvider;
 use ModulesShoppingComplex\Services\PaystackClient;
@@ -43,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
             'claude' => $app->make(ClaudeClient::class),
             default => $app->make(GeminiClient::class),
         });
+
+        $this->app->singleton(GeoLocationService::class, fn () => new GeoLocationService(
+            apiKey: (string) config('services.google_maps.key'),
+        ));
     }
 
     /**

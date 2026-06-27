@@ -11,6 +11,7 @@ use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
+use ModulesShoppingComplex\Http\Controllers\GeoController;
 use ModulesShoppingComplex\Http\Controllers\HomeController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
@@ -110,6 +111,11 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     // Product Image Management
     Route::post('/products/{product}/images', [ProductController::class, 'uploadImages'])->name('products.images.upload');
     Route::delete('/products/{product}/images/{mediaId}', [ProductController::class, 'deleteImage'])->name('products.images.delete');
+});
+
+Route::middleware(['auth', 'throttle:30,1'])->prefix('api/geo')->group(function () {
+    Route::get('/autocomplete', [GeoController::class, 'autocomplete'])->name('geo.autocomplete');
+    Route::get('/place', [GeoController::class, 'place'])->name('geo.place');
 });
 
 Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {

@@ -25,7 +25,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- * @property-read User $vendor
+ * @property-read User|null $vendor
  * @property-read Collection<int, Media> $media
  */
 class Product extends Model

@@ -45,8 +45,8 @@ return [
         'secret_key' => env('PAYSTACK_SECRET_KEY', ''),
     ],
 
-    'geoapify' => [
-        'key' => env('GEOAPIFY_KEY'),
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
     'whatsapp' => [

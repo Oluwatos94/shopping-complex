@@ -62,7 +62,6 @@ final readonly class GeminiClient implements AiChatClient
     }
 
     /**
-     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */

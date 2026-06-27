@@ -91,19 +91,27 @@ final readonly class VendorService
             'radius' => $radiusKm,
             'search' => $query,
             'sort_by' => 'distance',
+            'has_active_products' => true,
         ], perPage: 5)->getCollection();
     }
 
     /**
-     * Find vendors matching a product name anywhere — used by the WhatsApp bot when no nearby vendors exist.
+     * Find vendors matching a query anywhere — used by the WhatsApp bot when no
+     * nearby vendors exist. When coords are given, distances are computed too.
      *
      * @return Collection<int, User>
      */
-    public function findByQuery(string $query, int $limit = 5): Collection
+    public function findByQuery(string $query, int $limit = 5, ?float $lat = null, ?float $lng = null): Collection
     {
+        $hasCoords = $lat !== null && $lng !== null;
+
         return $this->getNearbyVendors([
             'search' => $query,
-            'sort_by' => 'newest',
+            'latitude' => $hasCoords ? $lat : null,
+            'longitude' => $hasCoords ? $lng : null,
+            'radius' => 0,
+            'sort_by' => $hasCoords ? 'distance' : 'relevance',
+            'has_active_products' => true,
         ], perPage: $limit)->getCollection();
     }
 

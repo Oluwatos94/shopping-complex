@@ -5,21 +5,21 @@ import { resizeImage } from '@/utils/imageResize';
 
 interface Props {
     vendor: VendorProfile;
-    geoapifyKey?: string;
     onClose: () => void;
 }
 
 interface AddressSuggestion {
-    properties: {
-        formatted: string;
-        housenumber?: string;
-        street?: string;
-        city?: string;
-        county?: string;
-        state?: string;
-        lat: number;
-        lon: number;
-    };
+    place_id: string;
+    description: string;
+}
+
+interface PlaceDetails {
+    formatted: string;
+    street: string;
+    city: string;
+    state: string;
+    lat: number;
+    lng: number;
 }
 
 interface SelectedAddress {
@@ -31,7 +31,7 @@ interface SelectedAddress {
     lon: number;
 }
 
-export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props) {
+export default function EditProfileModal({ vendor, onClose }: Props) {
     const [businessName, setBusinessName] = useState(vendor.business_name);
     const [bio, setBio] = useState(vendor.business_description ?? '');
     const [whatsapp, setWhatsapp] = useState(vendor.whatsapp_number ?? '');
@@ -55,6 +55,8 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
     const bannerRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // One Places session token bundles the typing + final lookup into one billed session.
+    const sessionTokenRef = useRef<string>(crypto.randomUUID());
 
     useEffect(() => {
         return () => {
@@ -85,18 +87,11 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
         debounceRef.current = setTimeout(async () => {
             setAddressLoading(true);
             try {
-                const params = new URLSearchParams({
-                    text: query,
-                    'filter[countrycode]': 'ng',
-                    format: 'json',
-                    limit: '6',
-                    apiKey: geoapifyKey ?? '',
+                const res = await fetch(`/api/geo/autocomplete?q=${encodeURIComponent(query)}&session=${sessionTokenRef.current}`, {
+                    headers: { Accept: 'application/json' },
                 });
-                const res = await fetch(`https://api.geoapify.com/v1/geocode/autocomplete?${params}`);
                 const data = await res.json();
-                const results: AddressSuggestion[] = (data.results ?? []).map(
-                    (r: AddressSuggestion['properties']) => ({ properties: r })
-                );
+                const results: AddressSuggestion[] = data.suggestions ?? [];
                 setSuggestions(results);
                 setShowSuggestions(results.length > 0);
             } catch {
@@ -105,7 +100,7 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
                 setAddressLoading(false);
             }
         }, 350);
-    }, [geoapifyKey]);
+    }, []);
 
     const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -114,12 +109,27 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
         searchAddress(val);
     };
 
-    const selectSuggestion = (s: AddressSuggestion) => {
-        const p = s.properties;
-        const street = [p.housenumber, p.street].filter(Boolean).join(' ') || p.formatted.split(',')[0] || p.formatted;
-        setAddressQuery(p.formatted);
-        setSelectedAddress({ formatted: p.formatted, street, city: p.city || p.county || '', state: p.state || '', lat: p.lat, lon: p.lon });
+    const selectSuggestion = async (s: AddressSuggestion) => {
+        setAddressQuery(s.description);
         setShowSuggestions(false);
+        setAddressLoading(true);
+        try {
+            const res = await fetch(`/api/geo/place?place_id=${encodeURIComponent(s.place_id)}&session=${sessionTokenRef.current}`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('place lookup failed');
+            const p: PlaceDetails = await res.json();
+            setAddressQuery(p.formatted || s.description);
+            setSelectedAddress({ formatted: p.formatted, street: p.street, city: p.city, state: p.state, lat: p.lat, lon: p.lng });
+            setErrors((prev) => ({ ...prev, address: '' }));
+        } catch {
+            setAddressQuery('');
+            setErrors((prev) => ({ ...prev, address: 'Could not load that address. Please pick another.' }));
+        } finally {
+            // Selection closes the billing session — start a fresh token for the next search.
+            sessionTokenRef.current = crypto.randomUUID();
+            setAddressLoading(false);
+        }
     };
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,7 +381,7 @@ export default function EditProfileModal({ vendor, geoapifyKey, onClose }: Props
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                            <span className="line-clamp-2">{s.properties.formatted}</span>
+                                            <span className="line-clamp-2">{s.description}</span>
                                         </div>
                                     </li>
                                 ))}
