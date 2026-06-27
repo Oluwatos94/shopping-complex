@@ -438,10 +438,9 @@ final readonly class WhatsAppAiBotService
         $lines = $products->map(function (\Illuminate\Database\Eloquent\Model $p) {
             /** @var \ModulesShoppingComplex\Models\Product $p */
             return sprintf(
-                '- %s | ₦%s | %s',
+                '- %s | ₦%s',
                 $p->name,
                 number_format((float) $p->price, 0),
-                ((int) $p->stock) > 0 ? 'In stock' : 'Out of stock'
             );
         })->implode("\n");
 
