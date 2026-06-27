@@ -25,7 +25,7 @@ export default function ReviewCard({ review }: { review: VendorReview }) {
                             className="w-10 h-10 rounded-full object-cover"
                         />
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary-peach flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-green to-brand-green-dark flex items-center justify-center">
                             <span className="text-white font-semibold">
                                 {review.customer?.name?.charAt(0).toUpperCase() || 'U'}
                             </span>
@@ -80,9 +80,9 @@ export default function ReviewCard({ review }: { review: VendorReview }) {
 
                     {/* Vendor Response */}
                     {review.vendor_response && (
-                        <div className="mt-4 bg-gray-50 rounded-lg p-4 border-l-4 border-primary-olive">
+                        <div className="mt-4 bg-gray-50 rounded-lg p-4 border-l-4 border-brand-green">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-semibold text-primary-olive">
+                                <span className="text-sm font-semibold text-brand-green">
                                     Vendor Response
                                 </span>
                                 {review.vendor_responded_at && (

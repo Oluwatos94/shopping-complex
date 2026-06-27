@@ -13,7 +13,7 @@ export default function RelatedProductCard({ product }: { product: Product }) {
             href={`/products/${product.slug}`}
             className="flex-shrink-0 w-64 group"
         >
-            <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100 hover:border-primary-peach">
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100 hover:border-brand-green">
                 <div className="relative aspect-square overflow-hidden bg-gray-100">
                     {isVideo ? (
                         <>
@@ -48,7 +48,7 @@ export default function RelatedProductCard({ product }: { product: Product }) {
                         </p>
                     )}
 
-                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-olive transition-colors text-sm">
+                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-brand-green transition-colors text-sm">
                         {product.name}
                     </h3>
 

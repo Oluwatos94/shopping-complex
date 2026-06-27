@@ -161,7 +161,7 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
                             onClick={() => setSelectedIndex(index)}
                             className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
                                 index === selectedIndex
-                                    ? 'border-primary-olive ring-2 ring-primary-olive/30'
+                                    ? 'border-brand-green ring-2 ring-brand-green/30'
                                     : 'border-transparent hover:border-gray-300'
                             }`}
                             aria-label={`View ${image.type === 'product_video' ? 'video' : 'image'} ${index + 1}`}

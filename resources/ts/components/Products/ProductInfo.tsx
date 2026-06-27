@@ -19,7 +19,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                 {product.category && (
                     <Link
                         href={`/products?filter[category_id]=${product.category.id}`}
-                        className="text-sm text-primary-olive hover:text-primary-peach transition-colors"
+                        className="text-sm text-brand-green hover:text-brand-green transition-colors"
                     >
                         {product.category.name}
                     </Link>
@@ -82,7 +82,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                                 className="w-14 h-14 rounded-full object-cover ring-2 ring-white"
                             />
                         ) : (
-                            <div className="w-14 h-14 rounded-full bg-primary-olive flex items-center justify-center ring-2 ring-white">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-green to-brand-green-dark flex items-center justify-center ring-2 ring-white">
                                 <span className="text-white text-xl font-bold">
                                     {vendor.business_name.charAt(0).toUpperCase()}
                                 </span>
@@ -94,7 +94,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                         <div className="flex items-center gap-2">
                             <Link
                                 href={`/vendors/${vendor.slug}`}
-                                className="font-semibold text-gray-900 hover:text-primary-olive transition-colors truncate"
+                                className="font-semibold text-gray-900 hover:text-brand-green transition-colors truncate"
                             >
                                 {vendor.business_name}
                             </Link>
@@ -133,7 +133,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                             href={whatsAppHref}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 px-4 py-2.5 bg-primary-olive text-white rounded-lg hover:bg-primary-dark transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                            className="flex-1 px-4 py-2.5 bg-brand-green text-white rounded-lg hover:bg-brand-ink transition-colors font-medium text-sm flex items-center justify-center gap-2"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -150,7 +150,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                 {/* Shipping / Pay on Delivery */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                         </svg>
                     </div>
@@ -172,7 +172,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                 {/* Returns */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </div>
@@ -194,7 +194,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                 {/* Support / Available Hours */}
                 <div className="flex items-center gap-3 text-gray-600">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>

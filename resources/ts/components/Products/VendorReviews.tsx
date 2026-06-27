@@ -118,7 +118,7 @@ export default function VendorReviews({
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive focus:border-transparent"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent"
                 >
                     <option value="newest">Most Recent</option>
                     <option value="highest">Highest Rated</option>
@@ -177,7 +177,7 @@ export default function VendorReviews({
                                     onClick={() => onPageChange(page)}
                                     className={`px-4 py-2 border rounded-md transition-colors ${
                                         isCurrentPage
-                                            ? 'bg-primary-olive text-white border-primary-olive'
+                                            ? 'bg-brand-green text-white border-brand-green'
                                             : 'border-gray-300 hover:bg-gray-50'
                                     }`}
                                 >
