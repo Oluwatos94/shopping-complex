@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Services;
 
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
@@ -33,12 +35,28 @@ final readonly class WhatsAppAiBotService
         private VendorService $vendorService,
         private AnalyticsService $analyticsService,
         private AiChatClient $ai,
+        private GeoLocationService $geo,
     ) {}
 
     /**
      * @param  array<string, mixed>  $message
      */
     public function handle(string $from, string $messageType, mixed $messageBody, array $message): void
+    {
+        $lock = Cache::lock('wa:session:'.$from, 30);
+
+        try {
+            $lock->block(10, fn () => $this->process($from, $messageType, $messageBody, $message));
+        } catch (LockTimeoutException) {
+            Log::warning('WhatsApp session lock timeout; processing without lock', ['from' => $from]);
+            $this->process($from, $messageType, $messageBody, $message);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $message
+     */
+    private function process(string $from, string $messageType, mixed $messageBody, array $message): void
     {
         $session = $this->sessionRepository->findOrCreate($from);
 
@@ -61,9 +79,15 @@ final readonly class WhatsAppAiBotService
             $lat = data_get($message, 'location.latitude');
             $lng = data_get($message, 'location.longitude');
             if ($lat !== null && $lng !== null) {
-                $session->data = array_merge((array) ($session->data ?? []), [
-                    'location' => ['lat' => (float) $lat, 'lng' => (float) $lng, 'at' => now()->timestamp],
-                ]);
+                $label = $this->geo->reverseGeocode((float) $lat, (float) $lng);
+
+                $locationData = ['lat' => (float) $lat, 'lng' => (float) $lng, 'at' => now()->timestamp];
+                if ($label !== null && $label !== '') {
+                    $locationData['label'] = $label;
+                    $userText .= " (near {$label})";
+                }
+
+                $session->data = array_merge((array) ($session->data ?? []), ['location' => $locationData]);
             }
         }
 
@@ -183,8 +207,8 @@ final readonly class WhatsAppAiBotService
     {
         return match ($name) {
             'search_vendors' => $this->toolSearchVendors($input, $from, $session),
-            'get_vendor_products' => $this->toolGetVendorProducts($input),
-            'get_vendor_contact' => $this->toolGetVendorContact($input, $from),
+            'get_vendor_products' => $this->toolGetVendorProducts($input, $session),
+            'get_vendor_contact' => $this->toolGetVendorContact($input, $from, $session),
             'request_location' => $this->toolRequestLocation($input, $from, $session),
             default => 'Unknown tool.',
         };
@@ -211,15 +235,17 @@ final readonly class WhatsAppAiBotService
             $message = 'Please tap the button below to share your location so I can find vendors near you.';
         }
 
+        return $this->promptForLocation($from, $message);
+    }
+
+    private function promptForLocation(string $from, string $message): string
+    {
         $this->apiService->sendLocationRequest($from, $message);
 
         return self::LOCATION_REQUESTED_MARKER.' A "Send location" button was shown to the buyer. Wait for them to share their location before searching for nearby vendors.';
     }
 
     /**
-     * Read the buyer's saved location from the session, flagging whether it is
-     * still recent enough to trust without re-asking.
-     *
      * @return array{lat: float, lng: float, fresh: bool}|null
      */
     private function storedLocation(WhatsAppSession $session): ?array
@@ -268,12 +294,10 @@ final readonly class WhatsAppAiBotService
             $stored = $this->storedLocation($session);
 
             if ($stored === null) {
-                $this->apiService->sendLocationRequest(
+                return $this->promptForLocation(
                     $from,
                     'Please tap the button below to share your location so I can find the nearest vendors for you.'
                 );
-
-                return self::LOCATION_REQUESTED_MARKER.' The buyer has not shared their location yet, so no search was run. A "Send location" button was shown to them. Wait for them to share their location, then search with those coordinates.';
             }
 
             if (! $stored['fresh'] && ! $useSaved) {
@@ -296,65 +320,97 @@ final readonly class WhatsAppAiBotService
             $vendors = $this->vendorService->findByQuery($query);
 
             if ($vendors->isEmpty()) {
-                return "No vendors anywhere on Jiidaa match \"{$query}\". Tell the buyer none are listed yet — do NOT invent any.";
+                return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
             }
 
             $this->logVendorViews($vendors, $from, $query, null, null);
 
-            return 'Found '.count($vendors)." vendor(s) across the platform (distance unknown):\n".$this->formatVendorLines($vendors);
+            return 'Found '.count($vendors)." vendor(s) across the platform (distance unknown):\n".$this->presentVendors($session, $vendors);
         }
 
         if ($lat === null || $lng === null) {
-            $this->apiService->sendLocationRequest(
+            return $this->promptForLocation(
                 $from,
                 'Please tap the button below to share your location so I can find the nearest vendors for you.'
             );
-
-            return self::LOCATION_REQUESTED_MARKER.' The buyer has not shared their location yet, so no search was run. A "Send location" button was shown to them. Wait for them to share their location, then search with those coordinates.';
         }
 
         $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
 
         if ($vendors->isEmpty()) {
 
-            $global = $this->vendorService->findByQuery($query);
+            $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng);
 
             if ($global->isEmpty()) {
-                return "No vendors anywhere on Jiidaa match \"{$query}\". Tell the buyer none are listed yet — do NOT invent any.";
+                return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
             }
 
-            $this->logVendorViews($global, $from, $query, null, null);
+            $this->logVendorViews($global, $from, $query, $lat, $lng);
 
-            return "No vendors within {$radius} km, but these match \"{$query}\" elsewhere on Jiidaa (distance unknown):\n"
-                .$this->formatVendorLines($global)
-                ."\nPresent these to the buyer as options that are not nearby.";
+            return "No vendors within {$radius} km, but these match \"{$query}\" elsewhere on Jiidaa (farther away — distances shown):\n"
+                .$this->presentVendors($session, $global)
+                ."\nPresent these to the buyer as options that are not nearby, including how far each is.";
         }
 
         $this->logVendorViews($vendors, $from, $query, $lat, $lng);
 
-        return 'Found '.count($vendors)." vendor(s):\n".$this->formatVendorLines($vendors);
+        return 'Found '.count($vendors)." vendor(s):\n".$this->presentVendors($session, $vendors);
     }
 
     /**
      * @param  \Illuminate\Support\Collection<int, User>  $vendors
      */
-    private function formatVendorLines(\Illuminate\Support\Collection $vendors): string
+    private function presentVendors(WhatsAppSession $session, \Illuminate\Support\Collection $vendors): string
     {
-        return $vendors->map(fn (User $vendor) => sprintf(
-            '- ID:%d | %s | %d products%s',
-            $vendor->id,
+        $vendors = $vendors->values();
+
+        $session->data = array_merge((array) ($session->data ?? []), [
+            'last_results' => $vendors->map(fn (User $vendor, int $i) => [
+                'pos' => $i + 1,
+                'id' => $vendor->id,
+                'name' => $vendor->business_name ?? $vendor->name,
+            ])->all(),
+        ]);
+
+        return $vendors->map(fn (User $vendor, int $i) => sprintf(
+            '%d. %s | %d products%s',
+            $i + 1,
             $vendor->business_name ?? $vendor->name,
             $vendor->active_products_count ?? 0,
-            isset($vendor->distance_km) ? ' | '.number_format((float) $vendor->distance_km, 1).' km away' : ''
+            isset($vendor->distance_km) ? ' | '.number_format((float) $vendor->distance_km, 1).' km away' : '',
         ))->implode("\n");
     }
 
     /**
      * @param  array<string, mixed>  $input
      */
-    private function toolGetVendorProducts(array $input): string
+    private function resolveVendorId(array $input, WhatsAppSession $session): ?int
     {
-        $vendorId = (int) ($input['vendor_id'] ?? 0);
+        $position = isset($input['position']) ? (int) $input['position'] : 0;
+        if ($position < 1) {
+            return null;
+        }
+
+        /** @var array<int, array<string, mixed>> $results */
+        $results = (array) data_get($session->data, 'last_results', []);
+        foreach ($results as $row) {
+            if ((int) ($row['pos'] ?? 0) === $position) {
+                return (int) $row['id'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function toolGetVendorProducts(array $input, WhatsAppSession $session): string
+    {
+        $vendorId = $this->resolveVendorId($input, $session);
+        if ($vendorId === null) {
+            return 'Not sure which vendor the buyer means. Ask them which of the listed vendors they want — by name or by its number in the list.';
+        }
 
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
@@ -390,9 +446,12 @@ final readonly class WhatsAppAiBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function toolGetVendorContact(array $input, string $from): string
+    private function toolGetVendorContact(array $input, string $from, WhatsAppSession $session): string
     {
-        $vendorId = (int) ($input['vendor_id'] ?? 0);
+        $vendorId = $this->resolveVendorId($input, $session);
+        if ($vendorId === null) {
+            return 'Not sure which vendor the buyer means. Ask them which of the listed vendors they want — by name or by its number in the list.';
+        }
 
         try {
             $vendor = $this->vendorService->getVendorById($vendorId);
@@ -411,23 +470,58 @@ final readonly class WhatsAppAiBotService
         $name = $vendor->business_name ?? $vendor->name;
         $profileUrl = $vendor->slug ? url('/vendors/'.$vendor->slug) : null;
 
-        if (empty($vendor->whatsapp_number)) {
-            return $profileUrl !== null
-                ? "{$name} has not added a WhatsApp number yet. Their Jiidaa profile: {$profileUrl}"
-                : "{$name} has not added a WhatsApp number yet, and has no public profile link.";
+        $digits = empty($vendor->whatsapp_number)
+            ? null
+            : $this->normalizeWhatsAppNumber((string) $vendor->whatsapp_number);
+
+        if ($digits === null && $profileUrl === null) {
+            return "{$name} has not added a WhatsApp number or a public profile yet. Tell the buyer this in their own language.";
         }
 
-        $digits = (string) preg_replace('/[^0-9]/', '', (string) $vendor->whatsapp_number);
-        if (str_starts_with($digits, '0') && strlen($digits) === 11) {
-            $digits = '234'.substr($digits, 1);
+        $lines = ["*{$name}*"];
+        if ($digits !== null) {
+            $lines[] = "WhatsApp: https://wa.me/{$digits}";
         }
-
-        $contact = "Contact details for {$name}:\nWhatsApp: https://wa.me/{$digits}";
         if ($profileUrl !== null) {
-            $contact .= "\nProfile: {$profileUrl}";
+            $lines[] = "Profile: {$profileUrl}";
         }
 
-        return $contact;
+        $this->apiService->sendText($from, implode("\n", $lines));
+
+        if ($digits !== null && $profileUrl !== null) {
+            $shared = 'their WhatsApp link and profile link';
+        } elseif ($digits !== null) {
+            $shared = 'their WhatsApp link';
+        } else {
+            $shared = 'their profile link (no usable WhatsApp number on file)';
+        }
+
+        return "Already sent {$name}'s contact card ({$shared}) to the buyer in a separate message. "
+            ."In your reply, just confirm in the buyer's own language that you've shared {$name}'s details — "
+            .'do NOT type out any link or phone number yourself; the buyer already has the exact one.';
+    }
+
+    private function normalizeWhatsAppNumber(string $number): ?string
+    {
+        $digits = (string) preg_replace('/[^0-9]/', '', $number);
+
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        $national = match (true) {
+            str_starts_with($digits, '2340') && strlen($digits) === 14 => substr($digits, 4),
+            str_starts_with($digits, '234') && strlen($digits) === 13 => substr($digits, 3),
+            str_starts_with($digits, '0') && strlen($digits) === 11 => substr($digits, 1),
+            strlen($digits) === 10 => $digits,
+            default => null,
+        };
+
+        if ($national === null || preg_match('/^[789]\d{9}$/', $national) !== 1) {
+            return null;
+        }
+
+        return '234'.$national;
     }
 
     /**
@@ -454,24 +548,24 @@ final readonly class WhatsAppAiBotService
             ],
             [
                 'name' => 'get_vendor_products',
-                'description' => 'Get the product list for a specific vendor by their ID.',
+                'description' => 'Get the product list for a vendor from the most recent search results. Identify the vendor by their POSITION in that list (1 for the first vendor shown, 2 for the second, etc.) — this is how the buyer refers to them ("the first one", "number 2", "1 to 3"). For a range, call this once per position.',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID from search results'],
+                        'position' => ['type' => 'integer', 'description' => '1-based position of the vendor in the most recent search results (1 = first listed).'],
                     ],
-                    'required' => ['vendor_id'],
+                    'required' => ['position'],
                 ],
             ],
             [
                 'name' => 'get_vendor_contact',
-                'description' => "Get a vendor's WhatsApp contact link and Jiidaa profile link so the buyer can reach them. Returns only the requested vendor's real details — pass in the correct vendor_id.",
+                'description' => "Get a vendor's WhatsApp contact link and Jiidaa profile link so the buyer can reach them. Identify the vendor by their POSITION in the most recent search results (1 = first listed, 2 = second, etc.) — this is how the buyer refers to them. Returns only the requested vendor's real details.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'vendor_id' => ['type' => 'integer', 'description' => 'The vendor ID'],
+                        'position' => ['type' => 'integer', 'description' => '1-based position of the vendor in the most recent search results (1 = first listed).'],
                     ],
-                    'required' => ['vendor_id'],
+                    'required' => ['position'],
                 ],
             ],
             [
@@ -512,7 +606,7 @@ Jiidaa's whole purpose is to connect a buyer to the NEAREST vendor that sells wh
 1. Treat ANY message that names a product or service, or asks where to buy or who sells something, as a product request — e.g. "I need food", "Mo fe bata", "where can I buy a phone", "who sells shoes", "abeg find me tailor", "Ina neman takalmi", "Achọrọ m nri".
 2. For a product request, if you do NOT already have the buyer's location in this conversation, you MUST call the request_location tool. It pops up a native WhatsApp "Send location" button. Do NOT call search_vendors yet, and never ask the buyer to type latitude/longitude.
    CRITICAL: Writing "share your location" or "tap the button" as plain text does NOTHING — no button appears and the buyer is stuck. The ONLY way to show the button is to actually CALL the request_location tool. Always call the tool; never just talk about it.
-3. Once the buyer shares their location, call search_vendors with the product (translated to English) AND their coordinates, so results are the nearest matching vendors.
+3. Once the buyer shares their location, call search_vendors with the product (translated to English) AND their coordinates, so results are the nearest matching vendors. The shared location may include the area name in parentheses (e.g. "near Ikeja, Lagos") — briefly acknowledge that area in the buyer's own language when you reply (e.g. "Got it, you're around Ikeja, Lagos") so they know you located them correctly. Never invent an area name; only use the one provided.
 4. If you ALREADY received the buyer's location earlier in this same conversation and it is still recent, reuse it — do not ask again; go straight to search_vendors with those coordinates.
 5. Locations can go stale. If the saved location is too old, search_vendors will NOT search; instead it tells you the location may be outdated. When that happens, ask the buyer (in their language) whether to use the saved location or share their current one. If they want the saved one, call search_vendors again with use_saved_location=true. If they want to share a fresh one, call request_location to pop the "Send location" button. Never assume — let the buyer decide.
 
@@ -520,12 +614,16 @@ SEARCHING:
 - search_vendors matches a vendor's business NAME, their product names/descriptions, product TAGS, and category. So you can find vendors by what they sell OR by a specific vendor's name — if a buyer asks "do you have <vendor name>?" or "search by name", use search_vendors with that name. You CAN search by name; never tell the buyer you can't.
 - Translate the product or service into English for the search query, even when the buyer writes in another language. Examples — Yoruba: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans"; Hausa: "takalmi" → "shoes", "abinci" → "food", "waya" → "phone", "kaya" → "goods"; Igbo: "akpụkpọ ụkwụ" → "shoes", "nri" → "food", "ekwentị" → "phone", "akwa" → "clothes".
 - If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
-- search_vendors automatically widens to the whole platform when nothing is nearby: if there are no nearby matches it returns vendors from elsewhere (marked "distance unknown"). PRESENT exactly what the tool returns. NEVER claim you "searched all vendors" or that none exist unless the tool result literally says "No vendors anywhere on Jiidaa match". Do not describe searching — actually rely on the tool's returned list.
+- search_vendors automatically widens to the whole platform when nothing is nearby: if there are no nearby matches it returns vendors from elsewhere (with distances when known). PRESENT exactly what the tool returns. An empty result is ALWAYS specific to that one search term — it NEVER means "no vendors exist on Jiidaa". NEVER tell the buyer the platform has no vendors, and NEVER retract or contradict vendors you already listed earlier in this chat. If a search comes back empty, suggest a related term or try again — do not declare the platform empty.
+
+REFERRING TO RESULTS:
+- Search results are NUMBERED (1, 2, 3, …) in the order shown. When the buyer points to a vendor by position ("the first one", "number 2", "give me 1 to 3") or by name, call get_vendor_products / get_vendor_contact with the `position` of that vendor in the most recent results. For a range like "1 to 3", call the tool once per position (1, then 2, then 3).
+- You may show the buyer the numbers so they can refer back easily. There are no internal IDs for you to handle — you identify vendors only by their position in the latest results.
 
 CONTACT & ACCURACY (very important):
-- To give a vendor's WhatsApp or profile link, you MUST call get_vendor_contact with that exact vendor's ID and use ONLY what it returns. NEVER invent, guess, or reformat a phone number or link, and NEVER give one vendor's contact when the buyer asked about a different vendor.
-- If get_vendor_contact says the vendor has no WhatsApp number, tell the buyer that plainly and share the profile link if one was returned. Do NOT substitute another vendor's number.
-- For a vendor's profile link, use the Profile link returned by get_vendor_contact.
+- To share a vendor's contact, call get_vendor_contact for that exact vendor (by its position in the results). The tool sends the buyer the WhatsApp link and profile link DIRECTLY in a separate message — you will NOT receive the link or number, and you must NEVER type out, guess, invent, or reformat any link or phone number yourself. Doing so risks sending a corrupted, dead link.
+- After calling get_vendor_contact, simply confirm to the buyer, in their own language, that you've shared the vendor's contact details (e.g. "I've sent you The Elite Laundry's contact 👍"). The buyer already has the exact, correct details from the tool's message.
+- If the tool says the vendor has no WhatsApp number or profile, relay that plainly in the buyer's language. NEVER substitute another vendor's contact.
 
 GENERAL:
 - Be friendly and concise — this is WhatsApp, so keep replies short.

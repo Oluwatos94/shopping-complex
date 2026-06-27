@@ -29,7 +29,7 @@ export default function VendorProfilePage({
     isOwner,
     isFollowing: initialIsFollowing,
 }: Props) {
-    const { auth, geoapify_key: geoapifyKey } = usePage<{ auth: { user: { id: number; role: string } | null }; geoapify_key?: string }>().props;
+    const { auth } = usePage<{ auth: { user: { id: number; role: string } | null } }>().props;
 
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [followersCount, setFollowersCount] = useState(stats.followers_count);
@@ -310,8 +310,6 @@ export default function VendorProfilePage({
                                     const primaryImage = primaryMedia?.url ?? '/images/placeholder.png';
                                     const isVideo = primaryMedia?.type === 'product_video';
                                     const price = Number(product.price);
-                                    const salePrice = product.sale_price ? Number(product.sale_price) : null;
-                                    const hasDiscount = salePrice && salePrice < price;
 
                                     return (
                                         <div key={product.id} className="relative group">
@@ -334,25 +332,13 @@ export default function VendorProfilePage({
                                                     ) : (
                                                         <img src={primaryImage} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                                     )}
-                                                    {hasDiscount && salePrice && (
-                                                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                                                            {Math.round(((price - salePrice) / price) * 100)}% OFF
-                                                        </span>
-                                                    )}
                                                 </div>
                                                 <div className="p-3">
                                                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-primary-olive transition-colors">
                                                         {product.name}
                                                     </h3>
                                                     <div className="mt-1">
-                                                        {hasDiscount && salePrice ? (
-                                                            <div className="flex items-baseline gap-1">
-                                                                <span className="text-sm font-bold text-gray-900">₦{salePrice.toLocaleString()}</span>
-                                                                <span className="text-xs text-gray-400 line-through">₦{price.toLocaleString()}</span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
-                                                        )}
+                                                        <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
                                                     </div>
                                                 </div>
                                             </Link>
@@ -542,7 +528,6 @@ export default function VendorProfilePage({
             {isEditOpen && (
                 <EditProfileModal
                     vendor={vendor}
-                    geoapifyKey={geoapifyKey}
                     onClose={() => setIsEditOpen(false)}
                 />
             )}

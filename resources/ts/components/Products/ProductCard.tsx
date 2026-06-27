@@ -10,10 +10,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     const primaryImage = primaryMedia?.url ?? '/images/placeholder.png';
     const isVideo = primaryMedia?.type === 'product_video';
 
-    // Convert prices to numbers (they come as strings from Laravel)
     const price = Number(product.price);
-    const salePrice = product.sale_price ? Number(product.sale_price) : null;
-    const hasDiscount = salePrice && salePrice < price;
 
     return (
         <Link
@@ -46,19 +43,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                 )}
-
-                <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
-                    {hasDiscount && salePrice && (
-                        <span className="rounded-md bg-brand-danger px-2 py-1 text-xs font-bold text-white">
-                            {Math.round(((price - salePrice) / price) * 100)}% OFF
-                        </span>
-                    )}
-                    {product.is_featured && (
-                        <span className="rounded-md bg-brand-green px-2 py-1 text-xs font-bold text-white">
-                            Featured
-                        </span>
-                    )}
-                </div>
             </div>
 
             {/* Product Info */}
@@ -103,14 +87,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 ) : null}
 
                 <div className="mt-0.5 flex items-baseline gap-2">
-                    {hasDiscount && salePrice ? (
-                        <>
-                            <span className="text-[19px] font-extrabold text-brand-ink">₦{salePrice.toLocaleString()}</span>
-                            <span className="text-sm text-brand-muted line-through">₦{price.toLocaleString()}</span>
-                        </>
-                    ) : (
-                        <span className="text-[19px] font-extrabold text-brand-ink">₦{price.toLocaleString()}</span>
-                    )}
+                    <span className="text-[19px] font-extrabold text-brand-ink">₦{price.toLocaleString()}</span>
                 </div>
             </div>
         </Link>

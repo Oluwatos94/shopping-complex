@@ -64,20 +64,30 @@ class VendorRepository extends BasePageRepository
             $query->withAvg('reviews', 'rating');
         }
 
-        if ($search) {
-            $escapedSearch = str_replace(['%', '_'], ['\\%', '\\_'], $search);
-            $query->where(function ($q) use ($escapedSearch) {
-                $q->where('business_name', 'like', "%{$escapedSearch}%")
-                    ->orWhere('name', 'like', "%{$escapedSearch}%")
-                    ->orWhereHas('products', fn ($p) => $p->where('is_active', true)
-                        ->where(fn ($p2) => $p2
-                            ->where('name', 'like', "%{$escapedSearch}%")
-                            ->orWhere('description', 'like', "%{$escapedSearch}%")
-                            ->orWhere('tags', 'like', "%{$escapedSearch}%")
-                        )
-                    )
-                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escapedSearch}%"));
+        if ($search !== null && $search !== '') {
+            $terms = $this->searchTerms((string) $search);
+
+            $query->where(function ($outer) use ($terms) {
+                foreach ($terms as $term) {
+                    $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $term);
+                    $outer->orWhere(function ($q) use ($escaped) {
+                        $q->where('business_name', 'like', "%{$escaped}%")
+                            ->orWhere('name', 'like', "%{$escaped}%")
+                            ->orWhereHas('products', fn ($p) => $p->where('is_active', true)
+                                ->where(fn ($p2) => $p2
+                                    ->where('name', 'like', "%{$escaped}%")
+                                    ->orWhere('description', 'like', "%{$escaped}%")
+                                    ->orWhere('tags', 'like', "%{$escaped}%")
+                                )
+                            )
+                            ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escaped}%"));
+                    });
+                }
             });
+        }
+
+        if (! empty($filters['has_active_products'])) {
+            $query->whereHas('products', fn ($p) => $p->where('is_active', true));
         }
 
         if ($categoryId) {
@@ -93,11 +103,44 @@ class VendorRepository extends BasePageRepository
                 ? $query->orderBy('distance_km', 'asc')
                 : $query->orderBy('created_at', 'desc'),
             'rating' => $query->orderByDesc('reviews_avg_rating')->orderByDesc('created_at'),
+            'relevance' => $query->orderByDesc('active_products_count')->orderByDesc('created_at'),
             'newest' => $query->orderBy('created_at', 'desc'),
             default => $query->orderBy('created_at', 'desc'),
         };
 
         return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Break a free-text search into meaningful lowercase terms, dropping noise
+     * words so multi-word queries still match. Falls back to the raw query when
+     * everything is filtered out, so we never accidentally match every vendor.
+     *
+     * @return array<int, string>
+     */
+    private function searchTerms(string $search): array
+    {
+        $stopWords = [
+            'a', 'an', 'and', 'the', 'or', 'of', 'for', 'to', 'in', 'on', 'at',
+            'me', 'my', 'i', 'is', 'are', 'near', 'nearby', 'around', 'who',
+            'sell', 'sells', 'selling', 'seller', 'sellers', 'vendor', 'vendors',
+            'shop', 'shops', 'store', 'stores', 'some', 'any', 'find', 'need', 'want',
+        ];
+
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower(trim($search))) ?: [];
+
+        $terms = array_values(array_unique(array_filter(
+            $words,
+            fn (string $w) => mb_strlen($w) >= 2 && ! in_array($w, $stopWords, true),
+        )));
+
+        if ($terms !== []) {
+            return $terms;
+        }
+
+        $raw = trim($search);
+
+        return $raw !== '' ? [mb_strtolower($raw)] : [];
     }
 
     /**

@@ -1,28 +1,24 @@
 import { useRef, useState, useCallback, useEffect, FormEvent } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Category } from '@/types/product';
 import { resizeImage } from '@/utils/imageResize';
-
-interface PageProps {
-    [key: string]: unknown;
-    geoapify_key?: string;
-}
 
 interface Props {
     categories: Pick<Category, 'id' | 'name' | 'slug'>[];
 }
 
-interface GeoapifySuggestion {
-    properties: {
-        formatted: string;
-        housenumber?: string;
-        street?: string;
-        city?: string;
-        county?: string;
-        state?: string;
-        lat: number;
-        lon: number;
-    };
+interface AddressSuggestion {
+    place_id: string;
+    description: string;
+}
+
+interface PlaceDetails {
+    formatted: string;
+    street: string;
+    city: string;
+    state: string;
+    lat: number;
+    lng: number;
 }
 
 interface SelectedAddress {
@@ -35,7 +31,6 @@ interface SelectedAddress {
 }
 
 export default function VendorRegister({ categories }: Props) {
-    const { geoapify_key: geoapifyKey } = usePage<PageProps>().props;
     const [businessName, setBusinessName] = useState('');
     const [bio, setBio] = useState('');
     const [categoryId, setCategoryId] = useState('');
@@ -43,7 +38,7 @@ export default function VendorRegister({ categories }: Props) {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [whatsappNumber, setWhatsappNumber] = useState('');
     const [addressQuery, setAddressQuery] = useState('');
-    const [suggestions, setSuggestions] = useState<GeoapifySuggestion[]>([]);
+    const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
     const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
     const [addressLoading, setAddressLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -53,6 +48,8 @@ export default function VendorRegister({ categories }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
+    // One Places session token bundles the typing + final lookup into one billed session.
+    const sessionTokenRef = useRef<string>(crypto.randomUUID());
 
     useEffect(() => {
         return () => {
@@ -84,16 +81,11 @@ export default function VendorRegister({ categories }: Props) {
         debounceRef.current = setTimeout(async () => {
             setAddressLoading(true);
             try {
-                const params = new URLSearchParams({
-                    text: query,
-                    'filter[countrycode]': 'ng',
-                    format: 'json',
-                    limit: '6',
-                    apiKey: geoapifyKey ?? '',
+                const res = await fetch(`/api/geo/autocomplete?q=${encodeURIComponent(query)}&session=${sessionTokenRef.current}`, {
+                    headers: { Accept: 'application/json' },
                 });
-                const res = await fetch(`https://api.geoapify.com/v1/geocode/autocomplete?${params}`);
                 const data = await res.json();
-                const results: GeoapifySuggestion[] = (data.results ?? []).map((r: GeoapifySuggestion['properties']) => ({ properties: r }));
+                const results: AddressSuggestion[] = data.suggestions ?? [];
                 setSuggestions(results);
                 setShowSuggestions(results.length > 0);
             } catch {
@@ -112,16 +104,27 @@ export default function VendorRegister({ categories }: Props) {
         searchAddress(val);
     };
 
-    const selectSuggestion = (s: GeoapifySuggestion) => {
-        const p = s.properties;
-        const street = [p.housenumber, p.street].filter(Boolean).join(' ') || p.formatted.split(',')[0] || p.formatted;
-        const city = p.city || p.county || '';
-        const state = p.state || '';
-
-        setAddressQuery(p.formatted);
-        setSelectedAddress({ formatted: p.formatted, street, city, state, lat: p.lat, lon: p.lon });
+    const selectSuggestion = async (s: AddressSuggestion) => {
+        setAddressQuery(s.description);
         setShowSuggestions(false);
-        setErrors((prev) => ({ ...prev, address: '', city: '', state: '', latitude: '', longitude: '' }));
+        setAddressLoading(true);
+        try {
+            const res = await fetch(`/api/geo/place?place_id=${encodeURIComponent(s.place_id)}&session=${sessionTokenRef.current}`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('place lookup failed');
+            const p: PlaceDetails = await res.json();
+            setAddressQuery(p.formatted || s.description);
+            setSelectedAddress({ formatted: p.formatted, street: p.street, city: p.city, state: p.state, lat: p.lat, lon: p.lng });
+            setErrors((prev) => ({ ...prev, address: '', city: '', state: '', latitude: '', longitude: '' }));
+        } catch {
+            setAddressQuery('');
+            setErrors((prev) => ({ ...prev, address: 'Could not load that address. Please pick another.' }));
+        } finally {
+            // Selection closes the billing session — start a fresh token for the next search.
+            sessionTokenRef.current = crypto.randomUUID();
+            setAddressLoading(false);
+        }
     };
 
     const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,7 +354,7 @@ export default function VendorRegister({ categories }: Props) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
-                                                <span className="line-clamp-2">{s.properties.formatted}</span>
+                                                <span className="line-clamp-2">{s.description}</span>
                                             </div>
                                         </li>
                                     ))}

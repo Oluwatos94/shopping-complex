@@ -7,7 +7,6 @@ namespace ModulesShoppingComplex\Services\Contracts;
 interface AiChatClient
 {
     /**
-     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */

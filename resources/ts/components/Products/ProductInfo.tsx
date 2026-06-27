@@ -11,9 +11,6 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref }: ProductInfoProps) {
     const price = Number(product.price);
-    const salePrice = product.sale_price ? Number(product.sale_price) : null;
-    const hasDiscount = salePrice && salePrice < price;
-    const discountPercent = hasDiscount ? Math.round(((price - salePrice) / price) * 100) : 0;
 
     return (
         <div className="space-y-6">
@@ -57,23 +54,9 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
 
             <div className="border-t border-b border-gray-200 py-6">
                 <div className="flex items-baseline gap-4">
-                    {hasDiscount && salePrice ? (
-                        <>
-                            <span className="text-3xl font-bold text-gray-900">
-                                ₦{salePrice.toLocaleString()}
-                            </span>
-                            <span className="text-xl text-gray-500 line-through">
-                                ₦{price.toLocaleString()}
-                            </span>
-                            <span className="bg-red-100 text-red-700 text-sm font-semibold px-3 py-1 rounded-full">
-                                Save {discountPercent}%
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-3xl font-bold text-gray-900">
-                            ₦{price.toLocaleString()}
-                        </span>
-                    )}
+                    <span className="text-3xl font-bold text-gray-900">
+                        ₦{price.toLocaleString()}
+                    </span>
                 </div>
 
             </div>

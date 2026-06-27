@@ -7,8 +7,6 @@ export default function RelatedProductCard({ product }: { product: Product }) {
     const isVideo = primaryMedia?.type === 'product_video';
 
     const price = Number(product.price);
-    const salePrice = product.sale_price ? Number(product.sale_price) : null;
-    const hasDiscount = salePrice && salePrice < price;
 
     return (
         <Link
@@ -41,19 +39,6 @@ export default function RelatedProductCard({ product }: { product: Product }) {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                     )}
-
-                    <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        {hasDiscount && salePrice && (
-                            <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                                {Math.round(((price - salePrice) / price) * 100)}% OFF
-                            </span>
-                        )}
-                        {product.is_featured && (
-                            <span className="bg-primary-olive text-white text-xs font-semibold px-2 py-1 rounded">
-                                Featured
-                            </span>
-                        )}
-                    </div>
                 </div>
 
                 <div className="p-4">
@@ -89,20 +74,9 @@ export default function RelatedProductCard({ product }: { product: Product }) {
                     )}
 
                     <div className="flex items-baseline gap-2">
-                        {hasDiscount && salePrice ? (
-                            <>
-                                <span className="text-base font-bold text-gray-900">
-                                    ₦{salePrice.toFixed(2)}
-                                </span>
-                                <span className="text-sm text-gray-500 line-through">
-                                    ₦{price.toFixed(2)}
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-base font-bold text-gray-900">
-                                ₦{price.toFixed(2)}
-                            </span>
-                        )}
+                        <span className="text-base font-bold text-gray-900">
+                            ₦{price.toFixed(2)}
+                        </span>
                     </div>
                 </div>
             </div>

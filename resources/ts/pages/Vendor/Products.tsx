@@ -8,10 +8,8 @@ interface VendorProduct {
     name: string;
     slug: string;
     price: number;
-    sale_price: number | null;
     stock: number;
     is_active: boolean;
-    is_featured: boolean;
     created_at: string;
     image: string | null;
     image_type: string | null;
@@ -27,10 +25,9 @@ interface PaginatedVendorProducts {
 
 interface Props {
     products: PaginatedVendorProducts;
-    vendor_slug: string;
 }
 
-export default function VendorProducts({ products, vendor_slug }: Props) {
+export default function VendorProducts({ products }: Props) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const handleDelete = async (product: VendorProduct) => {
@@ -80,7 +77,6 @@ export default function VendorProducts({ products, vendor_slug }: Props) {
                             <div className="divide-y divide-gray-100">
                                 {products.data.map((product) => {
                                     const price = Number(product.price);
-                                    const salePrice = product.sale_price ? Number(product.sale_price) : null;
 
                                     const isVideo = product.image_type === 'product_video';
 
@@ -114,14 +110,7 @@ export default function VendorProducts({ products, vendor_slug }: Props) {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
                                                 <div className="flex items-center gap-3 mt-0.5">
-                                                    {salePrice && salePrice < price ? (
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-sm font-bold text-gray-900">₦{salePrice.toLocaleString()}</span>
-                                                            <span className="text-xs text-gray-400 line-through">₦{price.toLocaleString()}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
-                                                    )}
+                                                    <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
                                                     <span className="text-xs text-gray-400">· Stock: {product.stock}</span>
                                                 </div>
                                             </div>
@@ -135,11 +124,6 @@ export default function VendorProducts({ products, vendor_slug }: Props) {
                                                 }`}>
                                                     {product.is_active ? 'Active' : 'Inactive'}
                                                 </span>
-                                                {product.is_featured && (
-                                                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                                                        Featured
-                                                    </span>
-                                                )}
                                             </div>
 
                                             {/* Actions */}

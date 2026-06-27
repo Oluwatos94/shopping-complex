@@ -63,10 +63,8 @@ export interface Product {
     slug: string;
     description: string;
     price: number;
-    sale_price?: number;
     stock: number;
     is_active: boolean;
-    is_featured: boolean;
     pay_on_delivery: boolean;
     is_returnable: boolean;
     tags?: string[];
@@ -216,7 +214,6 @@ export interface ProductFilters {
     vendor_id?: number;
     min_price?: number;
     max_price?: number;
-    is_featured?: boolean;
     search?: string;
     sort_by?: ProductSortOption;
     in_stock_only?: boolean;
