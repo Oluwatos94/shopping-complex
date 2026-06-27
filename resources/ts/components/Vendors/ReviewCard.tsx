@@ -7,7 +7,7 @@ export default function ReviewCard({ review }: { review: VendorReview }) {
     return (
         <div className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
             <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary-peach flex items-center justify-center">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-green flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">
                         {review.customer?.name?.charAt(0).toUpperCase() ?? 'U'}
                     </span>
@@ -27,8 +27,8 @@ export default function ReviewCard({ review }: { review: VendorReview }) {
                     {review.title && <p className="text-sm font-medium text-gray-800 mt-2">{review.title}</p>}
                     {review.comment && <p className="text-sm text-gray-600 mt-1 leading-relaxed">{review.comment}</p>}
                     {review.vendor_response && (
-                        <div className="mt-3 bg-gray-50 rounded-lg p-3 border-l-4 border-primary-olive">
-                            <p className="text-xs font-semibold text-primary-olive mb-1">Vendor response</p>
+                        <div className="mt-3 bg-gray-50 rounded-lg p-3 border-l-4 border-brand-green">
+                            <p className="text-xs font-semibold text-brand-green mb-1">Vendor response</p>
                             <p className="text-xs text-gray-600">{review.vendor_response}</p>
                         </div>
                     )}

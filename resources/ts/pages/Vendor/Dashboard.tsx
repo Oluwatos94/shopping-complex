@@ -28,7 +28,7 @@ export default function VendorDashboard({ vendor, subscription, stats }: Props) 
             <Head title="Dashboard" />
             <VendorSidebar />
 
-            <main className="md:ml-[260px] min-h-screen bg-[#f5f0ea] pb-20 md:pb-0">
+            <main className="md:ml-[260px] min-h-screen bg-brand-surface pb-20 md:pb-0">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
                     {/* Page Header */}

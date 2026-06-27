@@ -29,8 +29,8 @@ function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean; onCha
             aria-checked={checked}
             onClick={onChange}
             disabled={disabled}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-olive focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                checked ? 'bg-primary-olive' : 'bg-gray-200'
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                checked ? 'bg-brand-green' : 'bg-gray-200'
             }`}
         >
             <span
@@ -117,8 +117,8 @@ export default function VendorSettings({ preferences, availableTypes }: Settings
                     <section className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
                         <div className="px-6 py-5 border-b border-gray-100">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-primary-olive/10 flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-9 h-9 rounded-lg bg-brand-green/10 flex items-center justify-center">
+                                    <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                 </div>
@@ -167,8 +167,8 @@ export default function VendorSettings({ preferences, availableTypes }: Settings
                     <section className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
                         <div className="px-6 py-5 border-b border-gray-100">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-primary-peach/20 flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-primary-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-9 h-9 rounded-lg bg-brand-green/20 flex items-center justify-center">
+                                    <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
@@ -181,7 +181,7 @@ export default function VendorSettings({ preferences, availableTypes }: Settings
                         <div className="px-6 py-4 flex flex-col gap-3">
                             <a
                                 href={auth?.user?.slug ? `/vendors/${auth.user.slug}?edit=1` : '#'}
-                                className="flex items-center justify-between py-2 hover:text-primary-olive transition-colors"
+                                className="flex items-center justify-between py-2 hover:text-brand-green transition-colors"
                             >
                                 <span className="text-sm text-gray-700">Edit Business Profile</span>
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ export default function VendorSettings({ preferences, availableTypes }: Settings
                             <div className="border-t border-gray-50" />
                             <a
                                 href="/profile"
-                                className="flex items-center justify-between py-2 hover:text-primary-olive transition-colors"
+                                className="flex items-center justify-between py-2 hover:text-brand-green transition-colors"
                             >
                                 <span className="text-sm text-gray-700">Change Password</span>
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

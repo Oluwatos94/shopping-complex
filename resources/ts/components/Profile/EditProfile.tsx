@@ -74,19 +74,19 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-serif font-bold text-primary-dark mb-6">Profile Information</h2>
+            <h2 className="text-lg font-serif font-bold text-brand-ink mb-6">Profile Information</h2>
 
             {/* Avatar */}
             <div className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 hover:border-primary-olive transition-colors group"
+                    className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 hover:border-brand-green transition-colors group"
                 >
                     {avatar ? (
                         <img src={avatar} alt={name} className="w-full h-full object-cover" />
                     ) : (
-                        <div className="w-full h-full bg-primary-olive flex items-center justify-center">
+                        <div className="w-full h-full bg-brand-green flex items-center justify-center">
                             <span className="text-white text-2xl font-bold">{name.charAt(0).toUpperCase()}</span>
                         </div>
                     )}
@@ -123,7 +123,7 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 focus:border-primary-olive"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green"
                     />
                     {serverErrors?.name && <p className="text-sm text-red-600 mt-1">{serverErrors.name}</p>}
                 </div>
@@ -134,7 +134,7 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 focus:border-primary-olive"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green"
                     />
                     {serverErrors?.email && <p className="text-sm text-red-600 mt-1">{serverErrors.email}</p>}
                 </div>
@@ -146,7 +146,7 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="Optional"
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 focus:border-primary-olive"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green"
                     />
                     {serverErrors?.phone && <p className="text-sm text-red-600 mt-1">{serverErrors.phone}</p>}
                 </div>
@@ -158,7 +158,7 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
                         onChange={(e) => setBio(e.target.value)}
                         rows={3}
                         placeholder="Tell us about yourself..."
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/50 focus:border-primary-olive resize-none"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green resize-none"
                     />
                     {serverErrors?.bio && <p className="text-sm text-red-600 mt-1">{serverErrors.bio}</p>}
                 </div>
@@ -166,7 +166,7 @@ export default function EditProfile({ user, errors: serverErrors }: Props) {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="bg-primary-olive text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+                    className="bg-brand-green text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-brand-ink transition-colors disabled:opacity-50"
                 >
                     {processing ? 'Saving...' : 'Save Changes'}
                 </button>

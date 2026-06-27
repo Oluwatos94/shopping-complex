@@ -70,7 +70,7 @@ function SubscriptionStatusCard({ subscription, activeProducts }: { subscription
                             </p>
                             <div className="w-24 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full transition-all ${atProductLimit ? 'bg-red-500' : 'bg-primary-olive'}`}
+                                    className={`h-full rounded-full transition-all ${atProductLimit ? 'bg-red-500' : 'bg-brand-green'}`}
                                     style={{ width: `${Math.min(100, (activeProducts / subscription.product_limit) * 100)}%` }}
                                 />
                             </div>
@@ -82,7 +82,7 @@ function SubscriptionStatusCard({ subscription, activeProducts }: { subscription
                         href="/vendor/subscription"
                         className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                             isFree || atProductLimit
-                                ? 'bg-primary-olive text-white hover:bg-primary-olive/90'
+                                ? 'bg-brand-green text-white hover:bg-brand-green/90'
                                 : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                     >
@@ -140,7 +140,7 @@ export default function Analytics(props: AnalyticsData) {
                                     disabled={loading}
                                     className={`px-4 py-2 text-sm rounded-md transition-colors ${
                                         period === p.value
-                                            ? 'bg-primary-olive text-white'
+                                            ? 'bg-brand-green text-white'
                                             : 'text-gray-600 hover:bg-gray-100'
                                     } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
@@ -161,7 +161,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Profile Views"
                                 value={overview.profile_views}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
@@ -171,7 +171,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Product Views"
                                 value={overview.product_views}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
                                 }
@@ -180,7 +180,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Chat Contacts"
                                 value={overview.chat_contacts}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                     </svg>
                                 }
@@ -189,7 +189,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Avg. View Value"
                                 value={formatCurrency(overview.average_view_value)}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 }
@@ -198,7 +198,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Active Products"
                                 value={overview.active_products}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                                     </svg>
                                 }
@@ -207,7 +207,7 @@ export default function Analytics(props: AnalyticsData) {
                                 label="Followers"
                                 value={overview.followers_count}
                                 icon={
-                                    <svg className="w-6 h-6 text-primary-olive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
                                 }
@@ -362,7 +362,7 @@ export default function Analytics(props: AnalyticsData) {
                                                         {formatCurrency(product.price)}
                                                     </td>
                                                     <td className="py-3 px-2 text-right">
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-olive/10 text-primary-olive">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">
                                                             {product.views_count}
                                                         </span>
                                                     </td>
