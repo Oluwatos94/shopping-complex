@@ -125,6 +125,8 @@ class VendorRepository extends BasePageRepository
             'me', 'my', 'i', 'is', 'are', 'near', 'nearby', 'around', 'who',
             'sell', 'sells', 'selling', 'seller', 'sellers', 'vendor', 'vendors',
             'shop', 'shops', 'store', 'stores', 'some', 'any', 'find', 'need', 'want',
+            'service', 'services', 'looking', 'please', 'get', 'show',
+            'where', 'how', 'what', 'buy', 'can',
         ];
 
         $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower(trim($search))) ?: [];
