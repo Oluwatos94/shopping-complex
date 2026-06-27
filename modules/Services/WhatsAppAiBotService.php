@@ -28,6 +28,8 @@ final readonly class WhatsAppAiBotService
 
     private const LOCATION_REQUESTED_MARKER = 'LOCATION_REQUESTED:';
 
+    private const SEARCH_RADII_KM = [5.0, 15.0, 30.0];
+
     public function __construct(
         private WhatsAppApiService $apiService,
         private WhatsAppSessionRepository $sessionRepository,
@@ -286,7 +288,6 @@ final readonly class WhatsAppAiBotService
         $query = (string) ($input['query'] ?? '');
         $lat = isset($input['latitude']) ? (float) $input['latitude'] : null;
         $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
-        $radius = isset($input['radius_km']) ? (float) $input['radius_km'] : 5.0;
         $searchEverywhere = (bool) ($input['search_everywhere'] ?? false);
         $useSaved = (bool) ($input['use_saved_location'] ?? false);
 
@@ -335,26 +336,30 @@ final readonly class WhatsAppAiBotService
             );
         }
 
-        $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
+        foreach (self::SEARCH_RADII_KM as $radius) {
+            $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
 
-        if ($vendors->isEmpty()) {
+            if ($vendors->isNotEmpty()) {
+                $this->logVendorViews($vendors, $from, $query, $lat, $lng);
 
-            $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng);
-
-            if ($global->isEmpty()) {
-                return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
+                return 'Found '.count($vendors)." vendor(s) within {$radius} km (distances shown):\n"
+                    .$this->presentVendors($session, $vendors);
             }
-
-            $this->logVendorViews($global, $from, $query, $lat, $lng);
-
-            return "No vendors within {$radius} km, but these match \"{$query}\" elsewhere on Jiidaa (farther away — distances shown):\n"
-                .$this->presentVendors($session, $global)
-                ."\nPresent these to the buyer as options that are not nearby, including how far each is.";
         }
 
-        $this->logVendorViews($vendors, $from, $query, $lat, $lng);
+        $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng);
 
-        return 'Found '.count($vendors)." vendor(s):\n".$this->presentVendors($session, $vendors);
+        if ($global->isEmpty()) {
+            return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
+        }
+
+        $this->logVendorViews($global, $from, $query, $lat, $lng);
+
+        $widest = (int) max(self::SEARCH_RADII_KM);
+
+        return "No vendors within {$widest} km, but these match \"{$query}\" further out on Jiidaa (distances shown):\n"
+            .$this->presentVendors($session, $global)
+            ."\nTell the buyer these aren't nearby, and how far each one is.";
     }
 
     /**
@@ -532,15 +537,14 @@ final readonly class WhatsAppAiBotService
         return [
             [
                 'name' => 'search_vendors',
-                'description' => "Search for vendors. The query matches a vendor's business NAME, their product names/descriptions, their product TAGS, and their category — so the buyer can search by what they sell (e.g. \"furniture\", \"sneakers\"), by a product tag, OR by a specific vendor's name (e.g. \"Royal Priesthood Furniture\"). Pass the buyer's coordinates to rank by nearness. If a nearby search returns nothing even after widening the radius, set search_everywhere=true to search the whole platform regardless of distance.",
+                'description' => "Search for vendors. The query matches a vendor's business NAME, their product names/descriptions, their product TAGS, and their category — so the buyer can search by what they sell (e.g. \"furniture\", \"sneakers\"), by a product tag, OR by a specific vendor's name (e.g. \"Royal Priesthood Furniture\"). Pass the buyer's coordinates and the tool automatically widens the search radius step by step before reporting distance, so you do NOT manage radius yourself. Keep the query to the core thing the buyer wants (e.g. \"laundry\", not \"laundry service near me\"). If even the widest search finds nothing, set search_everywhere=true to search the whole platform regardless of distance.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'query' => ['type' => 'string', 'description' => 'Product, service, tag, or vendor name the buyer is looking for'],
+                        'query' => ['type' => 'string', 'description' => 'The core product, service, tag, or vendor name the buyer wants — just the keyword(s), e.g. "laundry", "shoes", "jollof rice". Drop filler like "service", "near me", "where can I buy".'],
                         'latitude' => ['type' => 'number', 'description' => 'Buyer latitude (optional)'],
                         'longitude' => ['type' => 'number', 'description' => 'Buyer longitude (optional)'],
-                        'radius_km' => ['type' => 'number', 'description' => 'Search radius in km (default 5). Widen to 10, then 25 if nothing is found nearby.'],
-                        'search_everywhere' => ['type' => 'boolean', 'description' => 'When true, ignore distance and search ALL vendors on the platform. Use only after nearby searches (including a widened radius) return nothing.'],
+                        'search_everywhere' => ['type' => 'boolean', 'description' => 'When true, ignore distance and search ALL vendors on the platform. Use only after a normal (located) search returns nothing.'],
                         'use_saved_location' => ['type' => 'boolean', 'description' => 'Set true ONLY when the buyer has confirmed they want to reuse a previously saved location that the tool flagged as possibly outdated.'],
                     ],
                     'required' => ['query'],
@@ -613,8 +617,10 @@ Jiidaa's whole purpose is to connect a buyer to the NEAREST vendor that sells wh
 SEARCHING:
 - search_vendors matches a vendor's business NAME, their product names/descriptions, product TAGS, and category. So you can find vendors by what they sell OR by a specific vendor's name — if a buyer asks "do you have <vendor name>?" or "search by name", use search_vendors with that name. You CAN search by name; never tell the buyer you can't.
 - Translate the product or service into English for the search query, even when the buyer writes in another language. Examples — Yoruba: "bata"/"bàtà" → "shoes", "aṣọ" → "clothes", "ata" → "pepper", "ewa" → "beans"; Hausa: "takalmi" → "shoes", "abinci" → "food", "waya" → "phone", "kaya" → "goods"; Igbo: "akpụkpọ ụkwụ" → "shoes", "nri" → "food", "ekwentị" → "phone", "akwa" → "clothes".
+- Search for the CORE keyword only — strip filler words like "service", "services", "near me", "where can I buy", "I'm looking for". E.g. "a laundry service near me" → search "laundry"; "where can I buy good shoes" → search "shoes". Generic words like "service" match unrelated vendors, so leave them out.
 - If the first search returns nothing, automatically retry with broader or synonymous English terms (e.g. shoes → footwear → sneakers → sandals) BEFORE telling the buyer nothing was found.
-- search_vendors automatically widens to the whole platform when nothing is nearby: if there are no nearby matches it returns vendors from elsewhere (with distances when known). PRESENT exactly what the tool returns. An empty result is ALWAYS specific to that one search term — it NEVER means "no vendors exist on Jiidaa". NEVER tell the buyer the platform has no vendors, and NEVER retract or contradict vendors you already listed earlier in this chat. If a search comes back empty, suggest a related term or try again — do not declare the platform empty.
+- search_vendors automatically widens the distance step by step and, if still nothing, returns the closest matches from further away (with distances). PRESENT exactly what the tool returns and DESCRIBE the results by what they matched — e.g. "here are vendors that came up for 'laundry'". Do NOT assert they are a verified category or service (don't say "I found 3 laundry services" unless the tool result shows that's what they are); the buyer can judge from the names.
+- An empty result is ALWAYS specific to that one search term — it NEVER means "no vendors exist on Jiidaa". NEVER tell the buyer the platform has no vendors, and NEVER retract or contradict vendors you already listed earlier in this chat. If a search comes back empty, suggest a related term or try again — do not declare the platform empty.
 
 REFERRING TO RESULTS:
 - Search results are NUMBERED (1, 2, 3, …) in the order shown. When the buyer points to a vendor by position ("the first one", "number 2", "give me 1 to 3") or by name, call get_vendor_products / get_vendor_contact with the `position` of that vendor in the most recent results. For a range like "1 to 3", call the tool once per position (1, then 2, then 3).
@@ -627,7 +633,8 @@ CONTACT & ACCURACY (very important):
 
 GENERAL:
 - Be friendly and concise — this is WhatsApp, so keep replies short.
-- After showing vendors, offer to show their products or get their contact.
+- After showing vendors, offer to send a vendor's contact (WhatsApp + profile link) AND show their products — phrase it as one offer, e.g. "Want The Elite Laundry's contact details and products?". Do NOT force an either/or choice between products and contact.
+- If the buyer answers an offer with "yes", "both", or anything ambiguous, give BOTH the contact and the products — do not re-ask which one they meant.
 - All prices are in Nigerian Naira (₦).
 - Never make up vendor names, prices, products, numbers, or links — only use what the tools return.
 - If someone asks something unrelated to shopping, politely redirect them.
