@@ -6,7 +6,7 @@ interface VendorGridProps {
     isLoading?: boolean;
 }
 
-const GRID_CLASS = 'grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] sm:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]';
+const GRID_CLASS = 'grid grid-cols-2 gap-4 sm:gap-6 sm:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]';
 
 export default function VendorGrid({ vendors, isLoading = false }: VendorGridProps) {
     if (isLoading) {

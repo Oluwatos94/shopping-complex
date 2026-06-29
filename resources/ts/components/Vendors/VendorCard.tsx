@@ -30,10 +30,10 @@ export default function VendorCard({ vendor }: VendorCardProps) {
             </Link>
 
             {/* Vendor info */}
-            <div className="flex flex-1 flex-col px-[18px] pb-5 pt-[18px]">
+            <div className="flex flex-1 flex-col px-3 pb-4 pt-3.5 sm:px-[18px] sm:pb-5 sm:pt-[18px]">
                 {/* Business name + online dot + verified */}
-                <Link href={`/vendors/${vendor.slug}`} className="mb-3 flex items-center gap-2.5">
-                    <span className="line-clamp-1 text-[19px] font-bold leading-tight text-brand-ink transition-colors group-hover:text-brand-green-dark">
+                <Link href={`/vendors/${vendor.slug}`} className="mb-3 flex items-center gap-2">
+                    <span className="line-clamp-1 text-base font-bold leading-tight text-brand-ink transition-colors group-hover:text-brand-green-dark sm:text-[19px]">
                         {vendor.business_name}
                     </span>
                     <span
@@ -101,7 +101,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                         href={whatsAppHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-auto flex h-[52px] items-center justify-center gap-2.5 rounded-[13px] bg-brand-green text-[15px] font-bold text-white transition hover:bg-brand-green-dark"
+                        className="mt-auto flex h-12 items-center justify-center gap-2 rounded-[13px] bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark sm:h-[52px] sm:gap-2.5 sm:text-[15px]"
                     >
                         <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.18c-.24.68-1.42 1.31-1.95 1.36-.5.05-1.13.07-1.83-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-2.99 0-1.42.74-2.12 1.01-2.41.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.65.49.24.58.82 2 .89 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.93 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.69-.81.88-1.09.18-.28.37-.23.62-.14.25.09 1.6.76 1.87.9.28.14.46.21.53.32.07.12.07.65-.17 1.33Z" />
@@ -111,7 +111,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                 ) : (
                     <Link
                         href={`/vendors/${vendor.slug}`}
-                        className="mt-auto flex h-[52px] items-center justify-center gap-2.5 rounded-[13px] border border-brand-ink text-[15px] font-bold text-brand-ink transition hover:bg-brand-ink hover:text-white"
+                        className="mt-auto flex h-12 items-center justify-center gap-2 rounded-[13px] border border-brand-ink text-sm font-bold text-brand-ink transition hover:bg-brand-ink hover:text-white sm:h-[52px] sm:gap-2.5 sm:text-[15px]"
                     >
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
