@@ -341,6 +341,19 @@ class UserRepository
     }
 
     /**
+     * Record that a buyer contacted a vendor via an on-platform contact button.
+     */
+    public function recordVendorContact(int $customerId, int $vendorId, string $channel = 'whatsapp'): bool
+    {
+        return DB::table('vendor_contacts')->insertOrIgnore([
+            'customer_id' => $customerId,
+            'vendor_id' => $vendorId,
+            'channel' => $channel,
+            'created_at' => now(),
+        ]) > 0;
+    }
+
+    /**
      * Unfollow a vendor.
      */
     public function unfollowVendor(int $followerId, int $vendorId): bool

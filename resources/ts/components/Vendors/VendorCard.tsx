@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { NearbyVendor } from '@/types';
+import { recordVendorContact } from '@/utils/contact';
 
 interface VendorCardProps {
     vendor: NearbyVendor;
@@ -101,6 +102,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                         href={whatsAppHref}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => recordVendorContact(vendor.slug)}
                         className="mt-auto flex h-12 items-center justify-center gap-2 rounded-[13px] bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark sm:h-[52px] sm:gap-2.5 sm:text-[15px]"
                     >
                         <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">

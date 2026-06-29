@@ -83,7 +83,9 @@ final readonly class ReviewService
                 ->where('vendor_id', $vendorId)
                 ->first(['id']);
 
-            if (! $conversation) {
+            if (! $conversation
+                && ! $this->reviewRepository->hasWebContactWithVendor($customer->id, $vendorId)
+                && ! $this->reviewRepository->hasWhatsAppContactWithVendor($customer->id, $vendorId)) {
                 throw new InvalidArgumentException('You must have interacted with this vendor before leaving a review.');
             }
 
@@ -100,7 +102,7 @@ final readonly class ReviewService
             return $this->reviewRepository->create([
                 'customer_id' => $customer->id,
                 'vendor_id' => $vendorId,
-                'conversation_id' => $conversation->id,
+                'conversation_id' => $conversation?->id,
                 'rating' => $rating,
                 'title' => $title,
                 'comment' => $comment,

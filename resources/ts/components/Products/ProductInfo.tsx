@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Product, VendorRatingStats } from '@/types/product';
 import { Vendor } from '@/types/user';
+import { recordVendorContact } from '@/utils/contact';
 
 interface ProductInfoProps {
     product: Product;
@@ -133,6 +134,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                             href={whatsAppHref}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => recordVendorContact(vendor.slug)}
                             className="flex-1 px-4 py-2.5 bg-brand-green text-white rounded-lg hover:bg-brand-ink transition-colors font-medium text-sm flex items-center justify-center gap-2"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

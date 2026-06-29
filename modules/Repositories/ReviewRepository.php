@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\UserEnum;
+use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\Review;
 
 class ReviewRepository extends BasePageRepository
@@ -188,10 +189,88 @@ class ReviewRepository extends BasePageRepository
 
     public function hasCustomerInteractedWithVendor(int $customerId, int $vendorId): bool
     {
-        return DB::table('conversations')
+        $hasConversation = DB::table('conversations')
             ->where('customer_id', $customerId)
             ->where('vendor_id', $vendorId)
             ->exists();
+
+        if ($hasConversation) {
+            return true;
+        }
+
+        if ($this->hasWebContactWithVendor($customerId, $vendorId)) {
+            return true;
+        }
+
+        return $this->hasWhatsAppContactWithVendor($customerId, $vendorId);
+    }
+
+    public function hasWebContactWithVendor(int $customerId, int $vendorId): bool
+    {
+        return DB::table('vendor_contacts')
+            ->where('customer_id', $customerId)
+            ->where('vendor_id', $vendorId)
+            ->exists();
+    }
+
+    /**
+     * Whether the customer reached out to the vendor through the WhatsApp bot.
+     *
+     * The bot only knows users by their WhatsApp phone number, so we match the
+     * customer's stored phone numbers against the CONTACT_REQUESTED interactions
+     * logged for this vendor.
+     */
+    public function hasWhatsAppContactWithVendor(int $customerId, int $vendorId): bool
+    {
+        $user = DB::table('users')
+            ->where('id', $customerId)
+            ->first(['phone', 'whatsapp_number']);
+
+        if (! $user) {
+            return false;
+        }
+
+        $candidates = $this->phoneMatchKeys([$user->phone, $user->whatsapp_number]);
+
+        if (empty($candidates)) {
+            return false;
+        }
+
+        return DB::table('whatsapp_interactions')
+            ->where('vendor_id', $vendorId)
+            ->where('event_type', WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value)
+            ->where(function ($query) use ($candidates) {
+                foreach ($candidates as $key) {
+                    $query->orWhere('phone_number', 'like', '%'.$key);
+                }
+            })
+            ->exists();
+    }
+
+    /**
+     *
+     * @param  array<int, string|null>  $phones
+     * @return array<int, string>
+     */
+    private function phoneMatchKeys(array $phones): array
+    {
+        $keys = [];
+
+        foreach ($phones as $phone) {
+            if (! $phone) {
+                continue;
+            }
+
+            $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+            if (strlen($digits) < 9) {
+                continue;
+            }
+
+            $keys[] = substr($digits, -10);
+        }
+
+        return array_values(array_unique($keys));
     }
 
     /**
