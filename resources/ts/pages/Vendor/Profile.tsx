@@ -37,6 +37,7 @@ export default function VendorProfilePage({
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1');
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [bannerLightboxOpen, setBannerLightboxOpen] = useState(false);
 
     // Review form state
     const [reviewRating, setReviewRating] = useState(0);
@@ -158,7 +159,12 @@ export default function VendorProfilePage({
                     <div className="px-4 sm:px-10 pt-6">
                         <div className="relative h-44 sm:h-56 rounded-3xl overflow-hidden bg-gradient-to-br from-[#16243A] via-[#22384F] to-[#33526E]">
                             {vendor.banner_image && (
-                                <img src={vendor.banner_image} alt="Store banner" className="absolute inset-0 w-full h-full object-cover" />
+                                <img
+                                    src={vendor.banner_image}
+                                    alt="Store banner"
+                                    onClick={() => setBannerLightboxOpen(true)}
+                                    className="absolute inset-0 w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90"
+                                />
                             )}
                             {isOwner && (
                                 <button
@@ -571,6 +577,35 @@ export default function VendorProfilePage({
                             src={vendor.business_logo}
                             alt={vendor.business_name}
                             className="w-64 h-64 rounded-2xl object-cover shadow-2xl"
+                        />
+                        <p className="text-center text-white/80 text-sm mt-3">{vendor.business_name}</p>
+                    </div>
+                </div>
+            )}
+
+            {bannerLightboxOpen && vendor.banner_image && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
+                    onClick={() => setBannerLightboxOpen(false)}
+                >
+                    <div
+                        className="relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setBannerLightboxOpen(false)}
+                            className="absolute -top-3 -right-3 z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center text-brand-muted hover:text-brand-ink shadow-md transition-colors"
+                            aria-label="Close"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <img
+                            src={vendor.banner_image}
+                            alt="Store banner"
+                            className="max-w-[90vw] max-h-[80vh] rounded-2xl object-contain shadow-2xl"
                         />
                         <p className="text-center text-white/80 text-sm mt-3">{vendor.business_name}</p>
                     </div>
