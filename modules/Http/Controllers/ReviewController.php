@@ -113,7 +113,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'review' => $review->load('vendor'),
-                'message' => 'Review submitted successfully. It will be visible after moderation.',
+                'message' => 'Review submitted successfully.',
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -161,7 +161,7 @@ class ReviewController extends Controller
 
         return response()->json([
             'review' => $review,
-            'message' => 'Review updated successfully. It will be visible after moderation.',
+            'message' => 'Review updated successfully.',
         ]);
     }
 

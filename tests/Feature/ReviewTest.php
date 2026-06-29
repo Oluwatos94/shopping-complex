@@ -81,7 +81,7 @@ class ReviewTest extends TestCase
             'customer_id' => $this->customer->id,
             'vendor_id' => $this->vendor->id,
             'rating' => 5,
-            'status' => ReviewStatusEnum::PENDING->value,
+            'status' => ReviewStatusEnum::APPROVED->value,
         ]);
     }
 
@@ -590,7 +590,7 @@ class ReviewTest extends TestCase
         $review->refresh();
         $this->assertEquals(4, $review->rating);
         $this->assertEquals('Updated title', $review->title);
-        $this->assertEquals(ReviewStatusEnum::PENDING, $review->status); // Re-submitted for moderation
+        $this->assertEquals(ReviewStatusEnum::APPROVED, $review->status); // Auto-approved
     }
 
     public function test_customer_can_delete_own_review(): void
@@ -618,6 +618,20 @@ class ReviewTest extends TestCase
             ->deleteJson("/reviews/{$review->id}");
 
         $response->assertStatus(403);
+    }
+
+    public function test_vendor_cannot_delete_review_left_on_them(): void
+    {
+        $review = Review::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        $response = $this->actingAs($this->vendor)
+            ->deleteJson("/reviews/{$review->id}");
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('reviews', ['id' => $review->id, 'deleted_at' => null]);
     }
 
     public function test_admin_can_delete_any_review(): void

@@ -106,7 +106,7 @@ final readonly class ReviewService
                 'rating' => $rating,
                 'title' => $title,
                 'comment' => $comment,
-                'status' => ReviewStatusEnum::PENDING,
+                'status' => ReviewStatusEnum::APPROVED,
             ]);
         });
     }
@@ -121,7 +121,7 @@ final readonly class ReviewService
             'rating' => $rating,
             'title' => $title,
             'comment' => $comment,
-            'status' => ReviewStatusEnum::PENDING, // Re-submit for moderation
+            'status' => ReviewStatusEnum::APPROVED,
         ]);
     }
 
