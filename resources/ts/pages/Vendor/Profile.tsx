@@ -221,10 +221,14 @@ export default function VendorProfilePage({
                                     )}
 
                                     {/* Stats */}
-                                    <div className="mt-4 flex justify-center sm:justify-start gap-8 sm:gap-10">
+                                    <div className="mt-4 flex justify-center sm:justify-start gap-6 sm:gap-10">
                                         <div className="flex flex-col gap-0.5">
                                             <span className="text-2xl font-extrabold leading-none text-brand-ink">{stats.products_count}</span>
                                             <span className="text-xs font-medium text-brand-muted">Products</span>
+                                        </div>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-2xl font-extrabold leading-none text-brand-ink">{followersCount}</span>
+                                            <span className="text-xs font-medium text-brand-muted">{followersCount === 1 ? 'Follower' : 'Followers'}</span>
                                         </div>
                                         <div className="flex flex-col gap-0.5">
                                             <span className="text-2xl font-extrabold leading-none text-brand-ink">{stats.reviews_count}</span>
@@ -246,14 +250,6 @@ export default function VendorProfilePage({
                                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto flex-none">
                                     {isOwner ? (
                                         <>
-                                            <div className="inline-flex items-center justify-center gap-2 bg-brand-green text-white px-5 py-3 rounded-full text-sm font-bold">
-                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="9" cy="7" r="4" />
-                                                    <path d="M22 11h-6" />
-                                                </svg>
-                                                {followersCount} {followersCount === 1 ? 'Follower' : 'Followers'}
-                                            </div>
                                             <button
                                                 onClick={() => setIsEditOpen(true)}
                                                 className="inline-flex items-center justify-center gap-2 bg-white border border-brand-line text-brand-ink px-5 py-3 rounded-full text-sm font-bold hover:border-brand-ink transition-colors"
