@@ -262,4 +262,5 @@ Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function
 // Vendor follow toggle
 Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::post('/vendors/{vendorSlug}/follow', [VendorController::class, 'toggleFollow'])->name('vendor.follow.toggle');
+    Route::post('/vendors/{vendorSlug}/contact', [VendorController::class, 'recordContact'])->name('vendor.contact.record');
 });

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\ReviewVote;
 use ModulesShoppingComplex\Models\User;
@@ -96,6 +98,64 @@ class ReviewTest extends TestCase
         $response->assertStatus(422);
     }
 
+    public function test_customer_can_review_after_whatsapp_contact(): void
+    {
+        // No in-app conversation, but the customer contacted the vendor via the
+        // WhatsApp bot (logged against their phone number, in international form).
+        $this->otherCustomer->update(['whatsapp_number' => '+2348012345678']);
+
+        DB::table('whatsapp_interactions')->insert([
+            'phone_number' => '2348012345678',
+            'event_type' => WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value,
+            'vendor_id' => $this->vendor->id,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->otherCustomer)
+            ->postJson('/reviews', [
+                'vendor_id' => $this->vendor->id,
+                'rating' => 5,
+                'comment' => 'Reached out on WhatsApp and they delivered.',
+            ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('reviews', [
+            'customer_id' => $this->otherCustomer->id,
+            'vendor_id' => $this->vendor->id,
+            'conversation_id' => null,
+            'rating' => 5,
+        ]);
+    }
+
+    public function test_customer_can_review_after_on_platform_contact(): void
+    {
+        // No in-app conversation, but the customer used an on-platform contact
+        // button (recorded against their account id).
+        DB::table('vendor_contacts')->insert([
+            'customer_id' => $this->otherCustomer->id,
+            'vendor_id' => $this->vendor->id,
+            'channel' => 'whatsapp',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->otherCustomer)
+            ->postJson('/reviews', [
+                'vendor_id' => $this->vendor->id,
+                'rating' => 4,
+                'comment' => 'Messaged them from the store page.',
+            ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('reviews', [
+            'customer_id' => $this->otherCustomer->id,
+            'vendor_id' => $this->vendor->id,
+            'conversation_id' => null,
+            'rating' => 4,
+        ]);
+    }
+
     public function test_customer_cannot_submit_duplicate_review(): void
     {
         // Submit first review
@@ -149,7 +209,7 @@ class ReviewTest extends TestCase
             ->count(3)
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews");
 
         $response->assertStatus(200)
             ->assertJsonCount(3, 'reviews');
@@ -168,7 +228,7 @@ class ReviewTest extends TestCase
             ->approved()
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'reviews');
@@ -225,7 +285,7 @@ class ReviewTest extends TestCase
             ->withRating(3)
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews/stats");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews/stats");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -250,7 +310,7 @@ class ReviewTest extends TestCase
             ->withRating(1)
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews/stats");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews/stats");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -579,7 +639,7 @@ class ReviewTest extends TestCase
     public function test_can_review_check_returns_true_when_eligible(): void
     {
         $response = $this->actingAs($this->customer)
-            ->getJson("/vendors/{$this->vendor->id}/reviews/can-review");
+            ->getJson("/vendors/{$this->vendor->slug}/reviews/can-review");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -596,7 +656,7 @@ class ReviewTest extends TestCase
             ->create();
 
         $response = $this->actingAs($this->customer)
-            ->getJson("/vendors/{$this->vendor->id}/reviews/can-review");
+            ->getJson("/vendors/{$this->vendor->slug}/reviews/can-review");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -608,7 +668,7 @@ class ReviewTest extends TestCase
     public function test_can_review_check_returns_false_without_interaction(): void
     {
         $response = $this->actingAs($this->otherCustomer)
-            ->getJson("/vendors/{$this->vendor->id}/reviews/can-review");
+            ->getJson("/vendors/{$this->vendor->slug}/reviews/can-review");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -627,7 +687,7 @@ class ReviewTest extends TestCase
             ->count(25)
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews?per_page=10");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews?per_page=10");
 
         $response->assertStatus(200)
             ->assertJsonCount(10, 'reviews')
@@ -654,7 +714,7 @@ class ReviewTest extends TestCase
             ->approved()
             ->create();
 
-        $response = $this->getJson("/vendors/{$this->vendor->id}/reviews");
+        $response = $this->getJson("/vendors/{$this->vendor->slug}/reviews");
 
         $response->assertStatus(200);
     }

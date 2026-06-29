@@ -620,4 +620,18 @@ class VendorController extends Controller
 
         return response()->json($result);
     }
+
+    public function recordContact(string $vendorSlug): JsonResponse
+    {
+        $user = Auth::user();
+        $vendor = $this->findVendorBySlug($vendorSlug);
+
+        if ($user->id === $vendor->id) {
+            return response()->json(['recorded' => false]);
+        }
+
+        $this->userRepository->recordVendorContact($user->id, $vendor->id);
+
+        return response()->json(['recorded' => true]);
+    }
 }
