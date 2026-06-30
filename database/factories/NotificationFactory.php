@@ -25,11 +25,10 @@ class NotificationFactory extends Factory
      */
     public function definition(): array
     {
-        // Use config as single source of truth for notification types
         $types = array_keys(config('notifications.types', [
             'message_received' => [],
             'vendor_contact_request' => [],
-            'product_updated' => [],
+            'review_received' => [],
             'system_alert' => [],
         ]));
 

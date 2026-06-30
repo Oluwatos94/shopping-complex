@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Services;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use ModulesShoppingComplex\Events\ReviewReceivedEvent;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\ReviewVote;
@@ -16,12 +17,10 @@ use ModulesShoppingComplex\Repositories\ReviewRepository;
 final readonly class ReviewService
 {
     public function __construct(
-        private ReviewRepository $reviewRepository
+        private ReviewRepository $reviewRepository,
+        private NotificationService $notificationService
     ) {}
 
-    /**
-     * Get reviews for a vendor (public - only approved reviews).
-     */
     public function getVendorReviews(int $vendorId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getForVendor(
@@ -32,9 +31,6 @@ final readonly class ReviewService
         );
     }
 
-    /**
-     * Get all reviews for a vendor (vendor dashboard - all statuses).
-     */
     public function getVendorAllReviews(int $vendorId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getForVendor(
@@ -53,9 +49,6 @@ final readonly class ReviewService
         return $this->reviewRepository->getPendingModeration($perPage, ['customer', 'vendor']);
     }
 
-    /**
-     * Get reviews written by a customer.
-     */
     public function getCustomerReviews(int $customerId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getByCustomer($customerId, $perPage);
@@ -77,7 +70,7 @@ final readonly class ReviewService
             throw new InvalidArgumentException('You cannot review yourself.');
         }
 
-        return DB::transaction(function () use ($customer, $vendorId, $rating, $title, $comment) {
+        $review = DB::transaction(function () use ($customer, $vendorId, $rating, $title, $comment) {
             $conversation = DB::table('conversations')
                 ->where('customer_id', $customer->id)
                 ->where('vendor_id', $vendorId)
@@ -106,9 +99,26 @@ final readonly class ReviewService
                 'rating' => $rating,
                 'title' => $title,
                 'comment' => $comment,
-                'status' => ReviewStatusEnum::PENDING,
+                'status' => ReviewStatusEnum::APPROVED,
             ]);
         });
+
+        $this->notifyVendorOfReview($customer, $vendorId, $review);
+
+        return $review;
+    }
+
+    private function notifyVendorOfReview(User $customer, int $vendorId, Review $review): void
+    {
+        $vendor = User::find($vendorId);
+
+        if (! $vendor) {
+            return;
+        }
+
+        $this->notificationService->send(
+            new ReviewReceivedEvent($vendor, $customer, $review->rating, $review->title)
+        );
     }
 
     public function updateReview(
@@ -121,7 +131,7 @@ final readonly class ReviewService
             'rating' => $rating,
             'title' => $title,
             'comment' => $comment,
-            'status' => ReviewStatusEnum::PENDING, // Re-submit for moderation
+            'status' => ReviewStatusEnum::APPROVED,
         ]);
     }
 

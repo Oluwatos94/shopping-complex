@@ -6,6 +6,8 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use ModulesShoppingComplex\Events\ReviewReceivedEvent;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
@@ -31,6 +33,8 @@ class ReviewTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Event::fake([ReviewReceivedEvent::class]);
 
         $this->vendor = User::factory()->create([
             'role' => 'vendor',
@@ -81,8 +85,26 @@ class ReviewTest extends TestCase
             'customer_id' => $this->customer->id,
             'vendor_id' => $this->vendor->id,
             'rating' => 5,
-            'status' => ReviewStatusEnum::PENDING->value,
+            'status' => ReviewStatusEnum::APPROVED->value,
         ]);
+    }
+
+    public function test_vendor_is_notified_when_review_is_submitted(): void
+    {
+        $this->actingAs($this->customer)
+            ->postJson('/reviews', [
+                'vendor_id' => $this->vendor->id,
+                'rating' => 5,
+                'title' => 'Great service!',
+                'comment' => 'The vendor was very helpful and professional.',
+            ])
+            ->assertStatus(201);
+
+        Event::assertDispatched(ReviewReceivedEvent::class, function (ReviewReceivedEvent $event) {
+            return $event->recipient->id === $this->vendor->id
+                && $event->customer->id === $this->customer->id
+                && $event->rating === 5;
+        });
     }
 
     public function test_customer_cannot_review_without_interaction(): void
@@ -590,7 +612,7 @@ class ReviewTest extends TestCase
         $review->refresh();
         $this->assertEquals(4, $review->rating);
         $this->assertEquals('Updated title', $review->title);
-        $this->assertEquals(ReviewStatusEnum::PENDING, $review->status); // Re-submitted for moderation
+        $this->assertEquals(ReviewStatusEnum::APPROVED, $review->status); // Auto-approved
     }
 
     public function test_customer_can_delete_own_review(): void
@@ -618,6 +640,20 @@ class ReviewTest extends TestCase
             ->deleteJson("/reviews/{$review->id}");
 
         $response->assertStatus(403);
+    }
+
+    public function test_vendor_cannot_delete_review_left_on_them(): void
+    {
+        $review = Review::factory()
+            ->forCustomer($this->customer)
+            ->forVendor($this->vendor)
+            ->create();
+
+        $response = $this->actingAs($this->vendor)
+            ->deleteJson("/reviews/{$review->id}");
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('reviews', ['id' => $review->id, 'deleted_at' => null]);
     }
 
     public function test_admin_can_delete_any_review(): void
