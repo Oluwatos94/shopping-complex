@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Services;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use ModulesShoppingComplex\Events\ReviewReceivedEvent;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\ReviewVote;
@@ -16,7 +17,8 @@ use ModulesShoppingComplex\Repositories\ReviewRepository;
 final readonly class ReviewService
 {
     public function __construct(
-        private ReviewRepository $reviewRepository
+        private ReviewRepository $reviewRepository,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -77,7 +79,7 @@ final readonly class ReviewService
             throw new InvalidArgumentException('You cannot review yourself.');
         }
 
-        return DB::transaction(function () use ($customer, $vendorId, $rating, $title, $comment) {
+        $review = DB::transaction(function () use ($customer, $vendorId, $rating, $title, $comment) {
             $conversation = DB::table('conversations')
                 ->where('customer_id', $customer->id)
                 ->where('vendor_id', $vendorId)
@@ -109,6 +111,26 @@ final readonly class ReviewService
                 'status' => ReviewStatusEnum::APPROVED,
             ]);
         });
+
+        $this->notifyVendorOfReview($customer, $vendorId, $review);
+
+        return $review;
+    }
+
+    /**
+     * Notify a vendor that they received a new review (in-app + email fallback).
+     */
+    private function notifyVendorOfReview(User $customer, int $vendorId, Review $review): void
+    {
+        $vendor = User::find($vendorId);
+
+        if (! $vendor) {
+            return;
+        }
+
+        $this->notificationService->send(
+            new ReviewReceivedEvent($vendor, $customer, $review->rating, $review->title)
+        );
     }
 
     public function updateReview(

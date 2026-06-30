@@ -6,6 +6,8 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use ModulesShoppingComplex\Events\ReviewReceivedEvent;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
@@ -31,6 +33,8 @@ class ReviewTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Event::fake([ReviewReceivedEvent::class]);
 
         $this->vendor = User::factory()->create([
             'role' => 'vendor',
@@ -83,6 +87,24 @@ class ReviewTest extends TestCase
             'rating' => 5,
             'status' => ReviewStatusEnum::APPROVED->value,
         ]);
+    }
+
+    public function test_vendor_is_notified_when_review_is_submitted(): void
+    {
+        $this->actingAs($this->customer)
+            ->postJson('/reviews', [
+                'vendor_id' => $this->vendor->id,
+                'rating' => 5,
+                'title' => 'Great service!',
+                'comment' => 'The vendor was very helpful and professional.',
+            ])
+            ->assertStatus(201);
+
+        Event::assertDispatched(ReviewReceivedEvent::class, function (ReviewReceivedEvent $event) {
+            return $event->recipient->id === $this->vendor->id
+                && $event->customer->id === $this->customer->id
+                && $event->rating === 5;
+        });
     }
 
     public function test_customer_cannot_review_without_interaction(): void

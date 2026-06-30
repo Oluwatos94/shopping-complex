@@ -25,12 +25,12 @@ return [
             'default_push' => true,
             'groupable' => true,
         ],
-        'product_updated' => [
-            'label' => 'Product Updates',
-            'description' => 'Updates to products on your wishlist',
-            'default_email' => false,
+        'review_received' => [
+            'label' => 'Reviews',
+            'description' => 'When a customer leaves you a review',
+            'default_email' => true,
             'default_push' => true,
-            'groupable' => true,
+            'groupable' => false,
         ],
         'system_alert' => [
             'label' => 'System Alerts',

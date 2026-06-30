@@ -16,9 +16,9 @@ const TYPE_ICONS: Record<string, React.ReactElement> = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
-  product_updated: (
+  review_received: (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   ),
   system_alert: (
@@ -33,7 +33,7 @@ const TYPE_ICONS: Record<string, React.ReactElement> = {
 const TYPE_COLORS: Record<string, string> = {
   message_received:       "#d49f89",  // peach
   vendor_contact_request: "#86885e",  // olive
-  product_updated:        "#cacfca",  // light
+  review_received:        "#F5C518",  // star gold
   system_alert:           "#ffffff",  // white
 };
 
