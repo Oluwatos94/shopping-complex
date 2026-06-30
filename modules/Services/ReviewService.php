@@ -21,9 +21,6 @@ final readonly class ReviewService
         private NotificationService $notificationService
     ) {}
 
-    /**
-     * Get reviews for a vendor (public - only approved reviews).
-     */
     public function getVendorReviews(int $vendorId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getForVendor(
@@ -34,9 +31,6 @@ final readonly class ReviewService
         );
     }
 
-    /**
-     * Get all reviews for a vendor (vendor dashboard - all statuses).
-     */
     public function getVendorAllReviews(int $vendorId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getForVendor(
@@ -55,9 +49,6 @@ final readonly class ReviewService
         return $this->reviewRepository->getPendingModeration($perPage, ['customer', 'vendor']);
     }
 
-    /**
-     * Get reviews written by a customer.
-     */
     public function getCustomerReviews(int $customerId, int $perPage = 15): LengthAwarePaginator
     {
         return $this->reviewRepository->getByCustomer($customerId, $perPage);
@@ -117,9 +108,6 @@ final readonly class ReviewService
         return $review;
     }
 
-    /**
-     * Notify a vendor that they received a new review (in-app + email fallback).
-     */
     private function notifyVendorOfReview(User $customer, int $vendorId, Review $review): void
     {
         $vendor = User::find($vendorId);
