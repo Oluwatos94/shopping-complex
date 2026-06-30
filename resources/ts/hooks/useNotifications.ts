@@ -23,7 +23,7 @@ interface UseNotificationsReturn {
 const TYPE_TITLES: Record<string, string> = {
     message_received:      'New Message',
     vendor_contact_request:'Contact Request',
-    product_updated:       'Product Update',
+    review_received:       'New Review',
     system_alert:          'System Alert',
 };
 
@@ -119,7 +119,7 @@ export function useNotifications(
         const notificationTypes = [
             'message_received',
             'vendor_contact_request',
-            'product_updated',
+            'review_received',
             'system_alert',
         ];
 

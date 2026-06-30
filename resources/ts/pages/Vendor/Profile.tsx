@@ -108,6 +108,7 @@ export default function VendorProfilePage({
 
             if (res.ok) {
                 setReviewDone(true);
+                router.reload({ only: ['vendor_reviews', 'stats', 'can_review', 'has_reviewed'] });
             } else {
                 const data = await res.json();
                 setReviewError(data.message ?? 'Failed to submit review. Please try again.');
@@ -441,7 +442,7 @@ export default function VendorProfilePage({
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <p className="font-semibold text-brand-green-dark">Review submitted!</p>
-                                            <p className="text-sm text-brand-muted mt-1">It will appear after moderation.</p>
+                                            <p className="text-sm text-brand-muted mt-1">Thanks for sharing your experience.</p>
                                         </div>
                                     ) : has_reviewed ? (
                                         <div className="bg-brand-surface border border-brand-line rounded-2xl p-4 text-sm text-brand-muted">

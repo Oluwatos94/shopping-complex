@@ -18,7 +18,7 @@ export type PaymentStatus =
 export type NotificationType =
     | 'message_received'
     | 'vendor_contact_request'
-    | 'product_updated'
+    | 'review_received'
     | 'system_alert'
     | string; // allow future types without breaking
 

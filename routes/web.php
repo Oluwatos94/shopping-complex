@@ -129,7 +129,7 @@ Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/notifications/preferences', [NotificationController::class, 'preferencesPage'])->name('notifications.preferences');
     Route::post('/notifications/preferences/{type}', [NotificationController::class, 'updatePreference'])
-        ->where('type', 'message_received|vendor_contact_request|product_updated|system_alert')
+        ->where('type', 'message_received|vendor_contact_request|review_received|system_alert')
         ->name('notifications.preferences.update');
 });
 
