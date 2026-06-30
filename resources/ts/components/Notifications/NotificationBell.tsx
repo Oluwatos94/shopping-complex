@@ -59,7 +59,7 @@ export const NotificationBell: React.FC = () => {
   return (
     <div ref={containerRef} className="relative inline-flex">
         <button
-          className="relative w-10 h-10 rounded-xl bg-white/[0.06] border border-white/10 text-white/75 cursor-pointer flex items-center justify-center transition-colors duration-150 ease-in-out outline-none hover:bg-white/10 hover:border-white/20 hover:text-slate-100 aria-expanded:bg-white/[0.12] aria-expanded:border-white/25 aria-expanded:text-slate-100"
+          className="relative w-10 h-10 rounded-full bg-white border border-brand-line text-brand-muted cursor-pointer flex items-center justify-center transition-colors duration-150 ease-in-out outline-none hover:bg-brand-surface hover:border-brand-green/50 hover:text-brand-ink aria-expanded:bg-brand-surface aria-expanded:border-brand-green aria-expanded:text-brand-ink"
           onClick={toggle}
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
           aria-expanded={open}
@@ -94,7 +94,7 @@ export const NotificationBell: React.FC = () => {
           {unreadCount > 0 && (
             <span
               key={`badge-${unreadCount}`}
-              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-medium font-mono flex items-center justify-center border-2 border-[#0f1117] pointer-events-none leading-none animate-badge-pop"
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-medium font-mono flex items-center justify-center border-2 border-white pointer-events-none leading-none animate-badge-pop"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
