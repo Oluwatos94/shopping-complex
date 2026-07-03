@@ -1,0 +1,29 @@
+# SEP-1 Stellar Info File, served at http://localhost:8080/.well-known/stellar.toml
+# Rendered by ap_start.sh: ${DISTRIBUTION_ACCOUNT}, ${HOST_SEP10_ACCOUNT}, ${NGNC_ISSUER}.
+ACCOUNTS = ["${DISTRIBUTION_ACCOUNT}", "${NGNC_ISSUER}"]
+VERSION = "0.1.0"
+SIGNING_KEY = "${HOST_SEP10_ACCOUNT}"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+
+WEB_AUTH_ENDPOINT = "http://localhost:8080/auth"
+TRANSFER_SERVER = "http://localhost:8080/sep6"
+TRANSFER_SERVER_SEP0024 = "http://localhost:8080/sep24"
+KYC_SERVER = "http://localhost:8080/sep12"
+ANCHOR_QUOTE_SERVER = "http://localhost:8080/sep38"
+
+# NGNC — the Naira-backed token used for vendor subscription settlement.
+[[CURRENCIES]]
+code = "NGNC"
+issuer = "${NGNC_ISSUER}"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+anchor_asset = "NGN"
+display_decimals = 2
+name = "Naira Coin (testnet)"
+desc = "Testnet Naira-backed token for Jiidaa vendor subscriptions."
+
+[DOCUMENTATION]
+ORG_NAME = "Jiidaa"
+ORG_URL = "https://jiidaa.com"
+ORG_DESCRIPTION = "Jiidaa marketplace — A modern marketplace platform connecting customers with vendors in real-time..."

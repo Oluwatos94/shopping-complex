@@ -18,12 +18,17 @@ swappable payment providers behind one interface.
   must stay green.
 - **Vendor UX stays "pay Naira as normal."** The Stellar rails (NGNC mint, on-chain
   settlement) run behind the scenes. The vendor sees a Naira deposit UI, not crypto jargon.
-- **Custodial wallets** (per the grant model): the platform creates & holds each vendor's
-  testnet keypair so the MPP recurring server can settle each cycle without the vendor
-  re-signing. Vendor gives **one-time consent** at subscribe.
-- **Settlement model:** SEP-24 deposit funds the vendor's NGNC balance → each billing cycle a
-  single **MPP charge** (Soroban SAC `transfer_from`, vendor → platform) settles that month on-chain.
-  No channels, no upfront lock-up; every month is its own on-chain record. See Phase 3.
+- **Two independent payment methods (a vendor picks one), not two steps of one flow** — corrected
+  2026-06-16 after clarifying with the product owner:
+  - **Anchor (manual):** the vendor pays each renewal themselves via the SEP-24 deposit UI. The
+    NGNC settles **directly into Jiidaa's platform wallet** (`STELLAR_PLATFORM_WALLET_*`) → the
+    subscription activates. Payment goes straight to Jiidaa; **no per-vendor custodial wallet** is
+    used. (Analogous to a Paystack one-time charge.) ✅ working end-to-end on testnet.
+  - **MPP (auto-renew):** the vendor authorises once; a **scheduled job** charges them each cycle.
+    This is the only path that needs the per-vendor **custodial wallet** (the job pulls NGNC from
+    it, vendor → platform). See Phase 3.
+- **Custodial wallets** are therefore **MPP-only**: the platform holds each opted-in vendor's
+  testnet keypair so the recurring job can settle each cycle without the vendor re-signing.
 - **MPP = Merchant Payment Protocol** (Stellar agentic payments, Soroban-based, `@stellar/mpp`
   JS/TS SDK). Because the SDK is JS, the MPP server runs as a **Bun sidecar** (matches the repo
   `CLAUDE.md` Bun preference); Laravel calls it over internal HTTP.
@@ -34,6 +39,11 @@ swappable payment providers behind one interface.
 ---
 
 ## Architecture: where the pieces live
+
+> **SEP-45 not needed (docs-confirmed).** SEP-45 is web-auth for *contract* accounts (`C…`);
+> our custodial wallets are *classic* accounts (`G…`), which use **SEP-10**. The docs are
+> explicit that SEP-45 does **not** replace SEP-10. Skipping it drops a required
+> `web_auth_verify` Soroban contract + `SEP45_*` config from Phase 2a.
 
 | Role | What it is | Who owns it |
 |------|------------|-------------|
@@ -132,44 +142,73 @@ Refactor first so Stellar slots in cleanly. No behaviour change for vendors yet.
 > deposit UI embedded in the subscription page.
 
 ### 2a. Stand up the Anchor Platform (own anchor)
-- [ ] Add `docker/anchor/` with Anchor Platform `docker-compose.yaml` (Platform server +
-      Postgres + reference business server) wired to Stellar **testnet**.
-- [ ] `config/` for the anchor: `assets.yaml` (define test **NGNC** asset + issuer),
-      `stellar.<host>.toml` (SEP-1), `clients.yaml`, `dev.env` (SEP-10 signing seed, JWT
-      secrets, platform/business API auth).
-- [ ] Create & fund (friendbot) the anchor **issuer** and **distribution** accounts on testnet.
-- [ ] Bring it up; verify `stellar.toml`, SEP-10 challenge, and SEP-24 `/info` respond.
-- [ ] Decide business-server strategy: start with the **reference server** (auto-confirms the
-      simulated Naira deposit on testnet); customise callbacks only as needed.
+- [x] Add `docker/anchor/` with Anchor Platform `docker-compose.yaml` (platform + reference
+      business server + sep24-reference-ui + kafka + 2× postgres), pinned to
+      `stellar/anchor-platform:4.4.0`, wired to **testnet**. Adapted from upstream `quick-run`
+      (whose `assets.yaml`/`dev.env` schema is 4.x-era — pre-4.x tags are incompatible).
+- [x] `config/` for the anchor: `assets.yaml.template` (**NGNC** asset, `significant_decimals: 2`,
+      deposit min 100/max 10,000,000 to cover ₦ plan prices), `stellar.localhost.toml.template`
+      (SEP-1 + NGNC `[[CURRENCIES]]`), `reference-config.yaml.template`, `dev.env` (SEP-1/10/24 on,
+      **SEP-45 off** — classic accounts use SEP-10). No `clients.yaml` needed (no client allow-list
+      for custodial; vendor authenticates as its own `account`).
+- [x] `ap_start.sh` creates & friendbot-funds **3** testnet accounts (SEP-10 signing,
+      distribution, **NGNC issuer**), sets the distribution→issuer trustline, issues a
+      10,000,000 NGNC float to distribution, renders config from templates, writes
+      `accounts.generated.env` (issuer + distribution public keys for the Laravel `.env`), and
+      `docker compose up -d`. Idempotent.
+- [x] **Brought up & verified live** (2026-06-15): `stellar.toml` lists NGNC, SEP-24 `/info`
+      advertises NGNC deposit, SEP-10 challenge returns a testnet-signed tx, UI:3000 + Platform
+      API:8085 respond. Distribution wallet holds the 10,000,000 NGNC float on-chain.
+      **Gotcha (fixed):** pin **4.4.0**, not 2.11.2 — the `quick-run` config schema is 4.x-era
+      (pre-4.x uses an incompatible `assets.yaml`). And 4.4.0 gates SEP-24's
+      `exchangeAmountsCalculator` bean on `@OnAllSepsEnabled(sep6, sep24, sep31)`, so SEP-6/24/31
+      (and SEP-38, which backs it) must stay enabled — SEP-24 cannot run alone.
+- [x] Business-server strategy: **reference server as-is** (auto-confirms the simulated Naira
+      deposit on testnet); customise callbacks only as needed.
 
-### 2b. Laravel as custodial wallet client
-- [ ] Add a Stellar PHP SDK (e.g. `soneso/stellar-php-sdk`) via composer.
-- [ ] `StellarWallet` model + migration: `vendor_id`, `public_key`, `encrypted_secret`
-      (Laravel `Crypt`), `network`. One custodial keypair per vendor, created lazily on first
-      Stellar checkout; friendbot-fund + add NGNC trustline on testnet.
-- [ ] `modules/Services/Payments/Stellar/AnchorClient.php` — thin client:
-  - SEP-10: fetch challenge, sign with vendor keypair, exchange for JWT.
-  - SEP-24: `POST /transactions/deposit/interactive` → returns interactive `url` + `id`.
-  - `GET /transaction?id=` → poll status.
-- [ ] `AnchorTransaction` model + migration: `vendor_id`, `sep24_id`, `kind` (deposit),
-      `status`, `amount`, `asset`, `stellar_tx_hash`, `started_at`, `completed_at`.
-      (This table is the evidence trail for the 5 documented deposits.)
+### 2b. Laravel as custodial wallet client — DONE, smoke-tested end-to-end (2026-06-16)
+- [x] Added `soneso/stellar-php-sdk` (^1.9) via composer. **Needs PHP ext `bcmath` + `gmp`** at
+      runtime (`sudo apt install php8.3-bcmath php8.3-gmp`). Config in `config/services.php`
+      (`stellar` block) + `.env`/`.env.example`.
+- [x] `StellarWallet` model + migration: `vendor_id` (unique), `public_key`, `encrypted_secret`
+      (Laravel `encrypted` cast; read via `secret` accessor, hidden from serialisation), `network`.
+      Provisioned lazily by `StellarWalletService::getOrCreateForVendor()` — friendbot-funds + adds
+      the NGNC trustline. Verified on-chain.
+- [x] `modules/Services/Payments/Stellar/AnchorClient.php` — thin client: SEP-10 `authenticate()`
+      (soneso `WebAuth`), SEP-24 `startNgncDeposit()` (interactive `url` + `id`), `getTransaction()`.
+      **Gotcha (fixed):** soneso validates the challenge `web_auth_domain` against
+      `parse_url(authEndpoint)['host']`, which strips the port — set the anchor's
+      `SEP10_WEB_AUTH_DOMAIN=localhost` (bare host, no `:8080`).
+- [x] `AnchorTransaction` model + migration: `vendor_id`, `sep24_id` (unique, nullable), `kind`
+      (`AnchorTransactionKindEnum`), `status` (raw SEP-24 string; `Sep24StatusEnum` for branching),
+      `amount`, `asset`, `stellar_tx_hash`, `started_at`, `completed_at`.
+- [x] Bound `StellarSDK`/`Network`/`AnchorClient`/`StellarWalletService` in `AppServiceProvider`.
+      Smoke test: provision → friendbot+trustline → SEP-10 JWT → SEP-24 interactive deposit →
+      persisted `AnchorTransaction`. All green; encryption-at-rest confirmed.
 
-### 2c. StellarProvider + UI
-- [ ] `StellarProvider implements PaymentProvider`: `startCheckout` →
-      `type: 'interactive'`, `url` = anchor interactive URL; persists an `AnchorTransaction`.
-      `supportsRecurring(): true`.
-- [ ] `confirm()` checks the SEP-24 transaction reached `completed` and the NGNC landed in the
-      vendor wallet, then triggers subscription settlement (Phase 3 payment) → activates sub.
-- [ ] Subscription page: embed the interactive deposit URL (iframe/popup) when method =
-      Stellar; poll a new `vendor.subscription.stellar.status` route until `completed`/`error`,
-      then refresh the page state.
-- [ ] **Document ≥5 testnet deposits**: run 5 end-to-end deposits, capture each
+### 2c. StellarProvider + UI — DONE, working end-to-end on testnet (2026-06-16)
+- [x] `StellarProvider implements PaymentProvider` (`supportsRecurring(): true`); `startCheckout`
+      → `type: interactive`, persists an `AnchorTransaction` (vendor + plan). Registered in
+      `PaymentProviderManager`.
+- [x] **Anchor settles into Jiidaa's platform wallet, not the vendor's** (the corrected model).
+      `StellarDepositService` authenticates SEP-10 as the platform wallet (`StellarSigner` from
+      config) and the deposit credits it. `confirm()` re-syncs the SEP-24 status; on `completed`
+      it returns the gross `amountIn` (so the reference server's 10% demo fee doesn't block the
+      `amountPaid >= plan price` check — the net NGNC is captured by `stellar_tx_hash`).
+- [x] Subscription page embeds the interactive URL + polls `vendor.subscription.stellar.status`;
+      on `completed` it activates the sub and refreshes. **Gotcha (fixed):**
+      `SEP24_INTERACTIVE_URL_BASE_URL` must point at the **sep24-reference-ui (`:3000`)**, not the
+      reference server stub. And the **NGNC SAC must be deployed** (`stellar contract asset deploy`)
+      or settlement fails with `Error(Storage, MissingValue)` — now in `ap_start.sh`.
+- [x] **Verified:** vendor #10 paid ₦5000 → 4500 NGNC landed in the platform wallet → subscription
+      activated (`method=stellar`, `amount_paid=5000`). Documented deposit #1 tx
+      `e5da6fd96f7bcf9f81d82168b8e5b0d5a82358ab6277ec2f96604d1fb2b2787d`.
+- [ ] **Document ≥5 testnet deposits**: 1 done; run 4 more through the Subscribe flow, capture each
       `stellar_tx_hash`, link on `stellar.expert/explorer/testnet/tx/<hash>`. Save to
-      `docs/stellar-deposits.md` for the grant submission.
+      `docs/stellar-deposits.md`.
 
-**Exit:** A vendor can fund their NGNC wallet through the embedded Naira deposit UI; 5 deposits
-are on-chain and documented.
+**Exit:** A vendor pays Naira through the embedded deposit UI → Jiidaa receives NGNC → subscription
+activates. 1/5 deposits documented; 4 more to capture.
 
 ---
 

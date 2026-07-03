@@ -10,14 +10,18 @@
         "anthropic-ai/sdk": "^0.16.0",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",
-        "laravel/framework": "^11.31",
+        "laravel/framework": "^12.60",
         "laravel/reverb": "^1.0",
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "openai-php/client": "^0.19.1",
+        "phpseclib/phpseclib": "^3.0.52",
+        "psy/psysh": "^0.12.19",
         "resend/resend-laravel": "^1.3",
-        "spatie/laravel-query-builder": "^6.3"
+        "soneso/stellar-php-sdk": "^1.9",
+        "spatie/laravel-query-builder": "^6.3",
+        "symfony/yaml": "^7.4.13"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -28,7 +32,7 @@
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.1",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.0.1"
+        "phpunit/phpunit": "^11.5.50"
     },
     "autoload": {
         "psr-4": {
@@ -84,7 +88,13 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "composer/installers": true
+        },
+        "policy": {
+            "advisories": {
+                "block": true
+            }
         }
     },
     "minimum-stability": "stable",

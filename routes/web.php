@@ -252,6 +252,7 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('vendor.subscription.index');
     Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
+    Route::get('/subscription/stellar/status', [SubscriptionController::class, 'stellarStatus'])->name('vendor.subscription.stellar.status');
 });
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {

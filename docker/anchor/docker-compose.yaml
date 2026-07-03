@@ -1,0 +1,100 @@
+# Jiidaa SEP-24 Anchor — testnet stack.
+#
+# Adapted from the Stellar Anchor Platform `quick-run` reference
+# (github.com/stellar/anchor-platform/tree/develop/quick-run), trimmed to
+#   - platform        : SEP server (:8080) + Platform API (:8085) + observer
+#   - reference-server: the stock Kotlin business server (:8091) that auto-confirms
+#                       the simulated Naira deposit on testnet
+#   - sep24-reference-ui: the hosted interactive deposit UI (:3000)
+#   - kafka + db + reference-db: infra the platform/reference server depend on
+#
+# Secrets (SEP-10 signing seed) are injected at runtime by ./ap_start.sh,
+# See README.md.
+
+services:
+  # Anchor Platform: SEP-1/10/24 endpoints, Platform API, and the Stellar observer.
+  platform:
+    platform: linux/amd64
+    image: stellar/anchor-platform:4.4.0
+    command: --sep-server --platform-server --event-processor --stellar-observer
+    volumes:
+      - ./config:/config
+    env_file:
+      - ./dev.env
+    environment:
+      SECRET_SEP10_SIGNING_SEED: ${HOST_SEP10_SECRET_KEY}
+    ports:
+      - "8080:8080" # SEP server (Stellar protocol endpoints + /.well-known/stellar.toml)
+      - "8085:8085" # Platform API (JSON-RPC the business server drives tx state with)
+    depends_on:
+      - db
+      - kafka
+      - reference-server
+      - sep24-reference-ui
+
+  # Stock Kotlin reference business server. Auto-progresses the SEP-24 deposit
+  # state machine for testnet so we get completed deposits without custom callbacks.
+  reference-server:
+    platform: linux/amd64
+    image: stellar/anchor-platform:4.4.0
+    command: "--kotlin-reference-server"
+    volumes:
+      - ./config:/config
+    env_file:
+      - ./dev.env
+    environment:
+      KT_REFERENCE_SERVER_CONFIG: /config/reference-config.yaml
+      SECRET_SEP10_SIGNING_SEED: ${HOST_SEP10_SECRET_KEY}
+    ports:
+      - "8091:8091"
+    depends_on:
+      - reference-db
+
+  # Hosted SEP-24 interactive deposit UI (the page embedded in the subscription iframe).
+  sep24-reference-ui:
+    platform: linux/amd64
+    image: stellar/sep24-reference-ui:latest
+    ports:
+      - "3000:3000"
+
+  kafka:
+    platform: linux
+    image: confluentinc/cp-kafka:7.4.3
+    ports:
+      - "29092:29092"
+      - "29096:29096"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29096'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CLUSTER_ID: 'ciWo7IWazngRchmPES6q5A=='
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LISTENERS: "PLAINTEXT://kafka:29092,CONTROLLER://kafka:29096"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+  # Platform database.
+  db:
+    image: postgres:15.2-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+  # Reference business server database.
+  reference-db:
+    image: postgres:15.2-alpine
+    ports:
+      - "5433:5433"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    command: -p 5433
