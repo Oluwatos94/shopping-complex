@@ -248,7 +248,6 @@ class ReviewRepository extends BasePageRepository
     }
 
     /**
-     *
      * @param  array<int, string|null>  $phones
      * @return array<int, string>
      */

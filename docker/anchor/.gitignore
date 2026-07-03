@@ -1,0 +1,9 @@
+# Rendered config contains the distribution account SECRET — never commit it.
+config/reference-config.yaml
+config/stellar.localhost.toml
+config/assets.yaml
+
+# Generated public-account pointers (safe-ish, but regenerated per environment).
+accounts.generated.env
+
+# Only the *.template files and dev.env are tracked.

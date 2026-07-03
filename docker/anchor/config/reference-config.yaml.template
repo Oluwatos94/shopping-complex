@@ -1,0 +1,35 @@
+# Kotlin reference business server config. Rendered by ap_start.sh
+# (${DISTRIBUTION_ACCOUNT}, ${DISTRIBUTION_ACCOUNT_SECRET_KEY}). The distribution
+# account both holds the NGNC float and signs the on-chain payout to the vendor.
+app:
+  version: 0.0.1
+  isTest: true
+  port: 8091
+  horizonEndpoint: https://horizon-testnet.stellar.org
+  rpcEndpoint: https://soroban-testnet.stellar.org
+  platformApiEndpoint: http://platform:8085
+  # The wallet that sends Stellar assets (NGNC) to the depositing vendor.
+  distributionWallet: ${DISTRIBUTION_ACCOUNT}
+  distributionWalletMemo:
+  distributionWalletMemoType:
+  enableTest: true
+  custodyEnabled: false
+  # Drive transaction state via JSON-RPC to the Platform API rather than PATCH /transactions.
+  rpcEnabled: true
+  paymentSigningSeed: ${DISTRIBUTION_ACCOUNT_SECRET_KEY}
+
+# Anchor <-> Platform auth. NONE is fine on a single-host testnet PoC; harden for prod.
+auth:
+  type: NONE
+  platformToAnchorSecret:
+  anchorToPlatformSecret:
+  expirationMilliseconds: 30000
+
+sep24:
+  interactiveJwtKey: "secret_sep24_interactive_url_jwt_secret"
+
+data:
+  url: reference-db:5433
+  database: postgres
+  user: postgres
+  password: password

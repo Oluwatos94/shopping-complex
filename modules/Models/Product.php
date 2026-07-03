@@ -27,6 +27,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property Carbon|null $deleted_at
  * @property-read User|null $vendor
  * @property-read Collection<int, Media> $media
+ * @property list<array{id: int, url: string, type: string, is_primary: bool}> $images View-only media descriptors attached for the frontend; not a database column.
  */
 class Product extends Model
 {

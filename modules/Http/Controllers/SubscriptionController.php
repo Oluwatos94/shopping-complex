@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Services\Payments\AmountMismatchException;
 use ModulesShoppingComplex\Services\Payments\CheckoutTypeEnum;
+use ModulesShoppingComplex\Services\Payments\Stellar\AnchorUnavailableException;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarDepositService;
 use ModulesShoppingComplex\Services\SubscriptionService;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -20,6 +24,7 @@ class SubscriptionController extends Controller
 {
     public function __construct(
         private readonly SubscriptionService $subscriptionService,
+        private readonly StellarDepositService $stellarDeposits,
     ) {}
 
     /**
@@ -68,7 +73,63 @@ class SubscriptionController extends Controller
             return Inertia::location($session->url);
         }
 
-        return back()->with('stellarCheckoutUrl', $session->url);
+        return back()->with('stellarCheckout', [
+            'url' => $session->url,
+            'reference' => $session->reference,
+        ]);
+    }
+
+    /**
+     * Poll a Stellar deposit's status (called repeatedly by the deposit modal).
+     * On completion it activates the subscription; the call is idempotent.
+     */
+    public function stellarStatus(Request $request): JsonResponse
+    {
+        if (Auth::user()->role !== 'vendor') {
+            return response()->json(['status' => 'error', 'message' => 'Only vendors can manage subscriptions.'], 403);
+        }
+
+        $reference = (string) $request->query('reference', '');
+        if ($reference === '') {
+            return response()->json(['status' => 'error', 'message' => 'Missing deposit reference.'], 422);
+        }
+
+        $vendor = Auth::user();
+
+        try {
+            $transaction = $this->stellarDeposits->syncStatus($vendor, $reference);
+        } catch (AnchorUnavailableException $e) {
+            return response()->json(['status' => 'pending'], 200);
+        } catch (\RuntimeException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 404);
+        }
+
+        if ($transaction->isCompleted()) {
+            try {
+                $this->subscriptionService->handleCallback(PaymentMethodEnum::STELLAR, $reference, $vendor);
+            } catch (AmountMismatchException $e) {
+                $this->stellarDeposits->markAmountMismatch($vendor, $reference);
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => sprintf(
+                        'You deposited %s but this plan costs %s, so it was not activated. Please contact support to arrange a refund or credit.',
+                        $this->formatNaira($e->actual),
+                        $this->formatNaira($e->expected),
+                    ),
+                ], 422);
+            } catch (\RuntimeException $e) {
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+            }
+
+            return response()->json(['status' => 'completed']);
+        }
+
+        if ($transaction->isFailed()) {
+            return response()->json(['status' => 'failed']);
+        }
+
+        return response()->json(['status' => 'pending']);
     }
 
     /**
@@ -129,5 +190,11 @@ class SubscriptionController extends Controller
         }
 
         return null;
+    }
+
+    /** Format an amount as Naira for vendor-facing messages, e.g. 15000.0 -> "₦15,000.00". */
+    private function formatNaira(float $amount): string
+    {
+        return '₦'.number_format($amount, 2);
     }
 }
