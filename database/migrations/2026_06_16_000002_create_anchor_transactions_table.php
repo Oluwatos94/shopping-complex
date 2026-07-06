@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('plan_id')->nullable()->constrained(SubscriptionPlan::getTableName())->nullOnDelete();
             $table->string('sep24_id')->nullable()->unique();
             $table->enum('kind', AnchorTransactionKindEnum::values());
+            $table->string('billing_period')->nullable();
             $table->string('status');
             $table->string('reconciliation')->nullable();
             $table->decimal('amount', 20, 7)->nullable();
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['vendor_id', 'kind', 'status']);
+            $table->unique(['vendor_id', 'kind', 'billing_period'], 'anchor_tx_vendor_kind_period_unique');
         });
     }
 

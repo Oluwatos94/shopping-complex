@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
@@ -17,14 +18,25 @@ use ModulesShoppingComplex\Services\Payments\AmountMismatchException;
 use ModulesShoppingComplex\Services\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Services\Payments\Stellar\AnchorUnavailableException;
 use ModulesShoppingComplex\Services\Payments\Stellar\StellarDepositService;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarTestnetFunder;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarWalletService;
+use ModulesShoppingComplex\Services\SubscriptionAuthorizationService;
 use ModulesShoppingComplex\Services\SubscriptionService;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SubscriptionController extends Controller
 {
+    /** Cycles of NGNC to pre-load into a vendor's custodial wallet on testnet enrolment. */
+    private const STARTER_CYCLES = 3;
+
+    private const DEFAULT_METHOD = PaymentMethodEnum::PAYSTACK;
+
     public function __construct(
         private readonly SubscriptionService $subscriptionService,
         private readonly StellarDepositService $stellarDeposits,
+        private readonly SubscriptionAuthorizationService $authorizations,
+        private readonly StellarWalletService $wallets,
+        private readonly StellarTestnetFunder $funder,
     ) {}
 
     /**
@@ -38,14 +50,19 @@ class SubscriptionController extends Controller
 
         $vendor = Auth::user();
 
+        $authorization = $this->authorizations->chargeableFor($vendor->id);
+
         return Inertia::render('Vendor/Subscription/Index', [
             'plans' => $this->subscriptionService->getPlans(),
             'currentSubscription' => $this->subscriptionService->getVendorSubscription($vendor->id),
             'productsCount' => $vendor->products()->where('is_active', true)->count(),
+            'autoRenew' => [
+                'enabled' => $authorization !== null,
+                'monthlyCap' => $authorization !== null ? (float) $authorization->monthly_cap : null,
+                'validUntil' => $authorization?->valid_until?->toIso8601String(),
+            ],
         ]);
     }
-
-    private const DEFAULT_METHOD = PaymentMethodEnum::PAYSTACK;
 
     /**
      * Start a payment for the selected plan on the chosen rail and hand the vendor off to pay.
@@ -81,7 +98,7 @@ class SubscriptionController extends Controller
 
     /**
      * Poll a Stellar deposit's status (called repeatedly by the deposit modal).
-     * On completion it activates the subscription; the call is idempotent.
+     * On completion it activates the subscription.
      */
     public function stellarStatus(Request $request): JsonResponse
     {
@@ -178,10 +195,63 @@ class SubscriptionController extends Controller
         return back()->with('success', 'Your subscription has been cancelled.');
     }
 
-    /**
-     * Return a redirect if the authenticated user is not a vendor, otherwise null.
-     * Centralises the vendor-only guard to avoid repeating it in every action.
-     */
+    public function enableAutoRenew(): RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        $vendor = Auth::user();
+        $subscription = $this->subscriptionService->getVendorSubscription($vendor->id);
+
+        if ($subscription === null) {
+            return back()->with('error', 'Subscribe to a paid plan before enabling auto-renew.');
+        }
+
+        if ($subscription->plan->isFree()) {
+            return back()->with('error', 'Auto-renew is only available on paid plans.');
+        }
+
+        try {
+            $this->authorizations->authorize($vendor, $subscription->plan);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        // Testnet only: seed the custodial wallet so the scheduled charge has NGNC to pull.
+        // A funding hiccup must not undo the consent we just recorded, so surface it softly.
+        if (config('services.stellar.network') !== 'public') {
+            try {
+                $wallet = $this->wallets->getOrCreateForVendor($vendor);
+                $price = (float) $subscription->plan->price;
+
+                if ($this->funder->ngncBalance($wallet) < $price) {
+                    $this->funder->fund($wallet, $price * self::STARTER_CYCLES);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Auto-renew wallet pre-funding failed', [
+                    'vendor_id' => $vendor->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return back()->with('success', 'Auto-renew is on. We could not pre-fund your test wallet yet — the first renewal may need a manual top-up.');
+            }
+        }
+
+        return back()->with('success', 'Auto-renew is on. Your plan will renew automatically each month.');
+    }
+
+    public function disableAutoRenew(): RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        $this->authorizations->revoke(Auth::user());
+
+        return back()->with('success', 'Auto-renew has been turned off.');
+    }
+
     private function denyNonVendor(): ?RedirectResponse
     {
         if (Auth::user()->role !== 'vendor') {

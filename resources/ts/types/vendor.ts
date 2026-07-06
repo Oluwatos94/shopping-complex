@@ -101,6 +101,12 @@ export interface VendorSubscription {
     plan: SubscriptionPlan;
 }
 
+export interface AutoRenewState {
+    enabled: boolean;
+    monthlyCap: number | null;
+    validUntil: string | null;
+}
+
 /**
  * Nearby Vendor type - extends Vendor with distance info
  */

@@ -257,6 +257,8 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('vendor.subscription.cancel');
+    Route::post('/subscription/auto-renew', [SubscriptionController::class, 'enableAutoRenew'])->name('vendor.subscription.autorenew.enable');
+    Route::post('/subscription/auto-renew/revoke', [SubscriptionController::class, 'disableAutoRenew'])->name('vendor.subscription.autorenew.disable');
     Route::post('/subscription/{plan}', [SubscriptionController::class, 'checkout'])->name('vendor.subscription.checkout');
 });
 
