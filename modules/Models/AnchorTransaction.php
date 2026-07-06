@@ -20,6 +20,7 @@ use ModulesShoppingComplex\ModuleTraits\HasTableName;
  * @property int|null $plan_id
  * @property string|null $sep24_id
  * @property AnchorTransactionKindEnum $kind
+ * @property string|null $billing_period
  * @property string $status
  * @property AnchorReconciliationEnum|null $reconciliation
  * @property float|null $amount
@@ -41,6 +42,7 @@ class AnchorTransaction extends Model
         'plan_id',
         'sep24_id',
         'kind',
+        'billing_period',
         'status',
         'reconciliation',
         'amount',

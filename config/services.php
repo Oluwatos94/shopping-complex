@@ -58,6 +58,9 @@ return [
         'ngnc_asset_code' => env('STELLAR_NGNC_ASSET_CODE', 'NGNC'),
         'ngnc_issuer' => env('STELLAR_NGNC_ISSUER', ''),
 
+        'soroban_rpc_url' => env('STELLAR_SOROBAN_RPC_URL', 'https://soroban-testnet.stellar.org'),
+        'ngnc_sac' => env('STELLAR_NGNC_SAC', ''),
+
         'distribution_public' => env('STELLAR_PLATFORM_DISTRIBUTION_PUBLIC', ''),
 
         // Jiidaa's wallet that receives Anchor (SEP-24) subscription payments. The platform

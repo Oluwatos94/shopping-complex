@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import FlashBanner from '@/components/FlashBanner';
-import type { PaymentMethod, SubscriptionPlan, VendorSubscription } from '@/types/vendor';
+import type { AutoRenewState, PaymentMethod, SubscriptionPlan, VendorSubscription } from '@/types/vendor';
+import AutoRenewCard from './partials/AutoRenewCard';
 import CurrentPlanCard from './partials/CurrentPlanCard';
 import PaymentMethodSelector from './partials/PaymentMethodSelector';
 import PlanCard from './partials/PlanCard';
@@ -12,6 +13,7 @@ interface Props {
     plans: SubscriptionPlan[];
     currentSubscription: VendorSubscription | null;
     productsCount: number;
+    autoRenew: AutoRenewState;
 }
 
 interface StellarCheckout {
@@ -24,7 +26,7 @@ interface SharedProps {
     [key: string]: unknown;
 }
 
-export default function SubscriptionIndex({ plans, currentSubscription, productsCount }: Props) {
+export default function SubscriptionIndex({ plans, currentSubscription, productsCount, autoRenew }: Props) {
     const { flash } = usePage<SharedProps>().props;
     const [processingPlanId, setProcessingPlanId] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stellar');
@@ -85,6 +87,12 @@ export default function SubscriptionIndex({ plans, currentSubscription, products
                     {currentSubscription && (
                         <CurrentPlanCard subscription={currentSubscription} productsCount={productsCount} />
                     )}
+
+                    {currentSubscription &&
+                        currentSubscription.status === 'active' &&
+                        currentSubscription.plan.slug !== 'free' && (
+                            <AutoRenewCard autoRenew={autoRenew} subscription={currentSubscription} />
+                        )}
 
                     <PaymentMethodSelector value={paymentMethod} onChange={setPaymentMethod} />
 
