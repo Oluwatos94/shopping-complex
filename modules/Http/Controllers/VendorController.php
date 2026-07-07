@@ -178,24 +178,23 @@ class VendorController extends Controller
             ->paginate(20);
 
         $products->through(function ($product) {
-            $primaryMedia = $product->media->first();
+            $product->images = $product->media->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => $this->mediaService->getMediaUrl($media),
+                'type' => $media->type,
+                'is_primary' => true,
+            ])->values()->all();
 
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'price' => $product->price,
-                'stock' => $product->stock,
-                'is_active' => $product->is_active,
-                'created_at' => $product->created_at->toDateString(),
-                'image' => $primaryMedia ? $this->mediaService->getMediaUrl($primaryMedia) : null,
-                'image_type' => $primaryMedia?->type,
-            ];
+            return $product;
         });
+
+        $subscription = $this->subscriptionService->getVendorSubscription($user->id);
 
         return Inertia::render('Vendor/Products', [
             'products' => $products,
             'vendor_slug' => $user->slug,
+            'product_limit' => $subscription?->plan->product_limit ?? null,
+            'active_products_count' => $user->products()->where('is_active', true)->count(),
         ]);
     }
 

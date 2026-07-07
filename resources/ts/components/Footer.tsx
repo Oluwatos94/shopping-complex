@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 interface FooterLink {
     label: string;
@@ -73,6 +73,10 @@ const socials: { label: string; href: string; icon: React.ReactNode }[] = [
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
+    const { auth } = usePage<{ auth?: { user?: { role: string } | null } }>().props;
+    const visibleQuickLinks = auth?.user?.role === 'vendor'
+        ? quickLinks.filter((link) => link.href !== '/vendor/register')
+        : quickLinks;
 
     return (
         <footer className="bg-brand-ink font-display text-white">
@@ -108,7 +112,7 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="text-[15px] font-bold text-white">Quick Links</h4>
                         <ul className="mt-5 space-y-3.5 text-[15px] text-white/55">
-                            {quickLinks.map((link) => (
+                            {visibleQuickLinks.map((link) => (
                                 <li key={link.label}>
                                     <Link href={link.href} className="transition hover:text-white">
                                         {link.label}

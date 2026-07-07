@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 interface VendorBenefit {
     title: string;
@@ -51,6 +51,9 @@ const gridBg: React.CSSProperties = {
 };
 
 const VendorsSection: React.FC = () => {
+    const { auth } = usePage<{ auth?: { user?: { role: string } | null } }>().props;
+    const isVendor = auth?.user?.role === 'vendor';
+
     return (
         <section style={gridBg} className="bg-brand-ink py-24 font-display text-white">
             <div className="mx-auto max-w-[1320px] px-6 lg:px-10">
@@ -89,15 +92,16 @@ const VendorsSection: React.FC = () => {
                     ))}
                 </div>
 
-                {/* CTA */}
-                <div className="mt-16 flex justify-center">
-                    <Link
-                        href="/vendor/register"
-                        className="inline-flex items-center gap-3 rounded-full bg-brand-green px-8 py-4 text-base font-semibold text-white shadow-[0_14px_30px_-10px_rgba(37,211,102,0.55)] transition hover:bg-brand-green-dark"
-                    >
-                        Join Jiidaa as a vendor
-                    </Link>
-                </div>
+                {!isVendor && (
+                    <div className="mt-16 flex justify-center">
+                        <Link
+                            href="/vendor/register"
+                            className="inline-flex items-center gap-3 rounded-full bg-brand-green px-8 py-4 text-base font-semibold text-white shadow-[0_14px_30px_-10px_rgba(37,211,102,0.55)] transition hover:bg-brand-green-dark"
+                        >
+                            Join Jiidaa as a vendor
+                        </Link>
+                    </div>
+                )}
             </div>
         </section>
     );
