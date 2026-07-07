@@ -22,6 +22,7 @@ RUN install-php-extensions \
     fileinfo \
     zip \
     bcmath \
+    gmp \
     pcntl \
     sockets
 
