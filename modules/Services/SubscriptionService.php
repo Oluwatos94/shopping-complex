@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
@@ -81,7 +82,9 @@ final readonly class SubscriptionService
             throw new AmountMismatchException((float) $plan->price, $result->amountPaid);
         }
 
-        return DB::transaction(function () use ($vendor, $method, $result) {
+        $activated = false;
+
+        $subscription = DB::transaction(function () use ($vendor, $method, $result, &$activated) {
 
             $currentSubscription = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendor->id);
 
@@ -110,8 +113,16 @@ final readonly class SubscriptionService
                 $this->subscriptionRepository->expireSubscription($currentSubscription);
             }
 
+            $activated = true;
+
             return $subscription;
         });
+
+        if ($activated) {
+            SubscriptionPaymentSucceeded::dispatch($vendor, $result->amountPaid, $method);
+        }
+
+        return $subscription;
     }
 
     /**

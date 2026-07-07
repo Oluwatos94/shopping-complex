@@ -11,9 +11,13 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
+use ModulesShoppingComplex\Events\SubscriptionRenewalFailed;
 use ModulesShoppingComplex\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Models\AnchorTransaction;
 use ModulesShoppingComplex\Models\Enums\AnchorTransactionKindEnum;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\Sep24StatusEnum;
 use ModulesShoppingComplex\Models\StellarWallet;
 use ModulesShoppingComplex\Models\VendorSubscription;
@@ -144,22 +148,47 @@ class RenewVendorSubscriptions implements ShouldBeUnique, ShouldQueue
 
     private function notifySuccess(NotificationService $notifications, VendorSubscription $subscription, float $amount): void
     {
-        $notifications->send(new SystemAlertEvent(
-            recipient: $subscription->vendor,
-            message: sprintf('Your Jiidaa subscription payment of %s is confirmed — your plan is renewed for another month.', $this->formatNaira($amount)),
-            alertLevel: 'info',
-            data: ['action' => 'subscription_renewed'],
-        ));
+        try {
+            $notifications->send(new SystemAlertEvent(
+                recipient: $subscription->vendor,
+                message: sprintf('Your Jiidaa subscription payment of %s is confirmed — your plan is renewed for another month.', $this->formatNaira($amount)),
+                alertLevel: 'info',
+                data: ['action' => 'subscription_renewed'],
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Renewal in-app notification failed', ['vendor_id' => $subscription->vendor_id, 'error' => $e->getMessage()]);
+        }
+
+        try {
+            SubscriptionPaymentSucceeded::dispatch(
+                $subscription->vendor,
+                $amount,
+                PaymentMethodEnum::STELLAR,
+                true,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Renewal WhatsApp notification failed', ['vendor_id' => $subscription->vendor_id, 'error' => $e->getMessage()]);
+        }
     }
 
     private function notifyFailure(NotificationService $notifications, VendorSubscription $subscription): void
     {
-        $notifications->send(new SystemAlertEvent(
-            recipient: $subscription->vendor,
-            message: '⚠️ Your subscription renewal failed — top up your balance to keep your store active.',
-            alertLevel: 'warning',
-            data: ['action' => 'renew_subscription'],
-        ));
+        try {
+            $notifications->send(new SystemAlertEvent(
+                recipient: $subscription->vendor,
+                message: '⚠️ Your subscription renewal failed — top up your balance to keep your store active.',
+                alertLevel: 'warning',
+                data: ['action' => 'renew_subscription'],
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Renewal in-app notification failed', ['vendor_id' => $subscription->vendor_id, 'error' => $e->getMessage()]);
+        }
+
+        try {
+            SubscriptionRenewalFailed::dispatch($subscription->vendor);
+        } catch (\Throwable $e) {
+            Log::warning('Renewal WhatsApp notification failed', ['vendor_id' => $subscription->vendor_id, 'error' => $e->getMessage()]);
+        }
     }
 
     private function formatNaira(float $amount): string
