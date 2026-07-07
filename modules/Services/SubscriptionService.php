@@ -8,12 +8,14 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorSubscription;
 use ModulesShoppingComplex\Repositories\SubscriptionRepository;
+use ModulesShoppingComplex\Services\Payments\AmountMismatchException;
 use ModulesShoppingComplex\Services\Payments\CheckoutSession;
 use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
 
@@ -64,7 +66,6 @@ final readonly class SubscriptionService
      */
     public function handleCallback(PaymentMethodEnum $method, string $reference, User $vendor): VendorSubscription
     {
-        // Fast-path idempotency check — avoids hitting the gateway API on duplicate callbacks
         $existing = $this->subscriptionRepository->findByPaymentReference($reference);
         if ($existing !== null) {
             return $existing;
@@ -77,26 +78,23 @@ final readonly class SubscriptionService
             throw new \RuntimeException('The selected plan is no longer available.');
         }
 
-        // Enforce, for every rail, that the settled amount covers the plan price. Paystack
-        // fixes the amount at initialisation, but on-chain rails (Stellar/MPP) settle an
-        // arbitrary amount, so this guard belongs in the shared lifecycle, not per-provider.
-        if (round($result->amountPaid, 2) < round((float) $plan->price, 2)) {
-            throw new \RuntimeException('Payment amount does not match the plan price.');
+        if (abs($result->amountPaid - (float) $plan->price) > 0.01) {
+            throw new AmountMismatchException((float) $plan->price, $result->amountPaid);
         }
 
-        return DB::transaction(function () use ($vendor, $method, $result) {
+        $activated = false;
+
+        $subscription = DB::transaction(function () use ($vendor, $method, $result, &$activated) {
+
+            $currentSubscription = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendor->id);
+
             $existing = $this->subscriptionRepository->findByPaymentReference($result->reference);
             if ($existing !== null) {
                 return $existing;
             }
 
-            $currentSubscription = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendor->id);
-            if ($currentSubscription !== null) {
-                $this->subscriptionRepository->expireSubscription($currentSubscription);
-            }
-
             try {
-                return $this->subscriptionRepository->create([
+                $subscription = $this->subscriptionRepository->create([
                     'vendor_id' => $vendor->id,
                     'plan_id' => $result->planId,
                     'status' => VendorSubscriptionStatusEnum::ACTIVE,
@@ -110,7 +108,21 @@ final readonly class SubscriptionService
                 // A concurrent request created the subscription between our check and our insert
                 return $this->subscriptionRepository->findByPaymentReference($result->reference);
             }
+
+            if ($currentSubscription !== null) {
+                $this->subscriptionRepository->expireSubscription($currentSubscription);
+            }
+
+            $activated = true;
+
+            return $subscription;
         });
+
+        if ($activated) {
+            SubscriptionPaymentSucceeded::dispatch($vendor, $result->amountPaid, $method);
+        }
+
+        return $subscription;
     }
 
     /**
@@ -135,14 +147,12 @@ final readonly class SubscriptionService
 
     /**
      * Assign the Free plan to a vendor.
-     * Idempotent: does nothing if the vendor already has an active subscription.
      * Safe to call inside an existing DB transaction (e.g. on vendor approval).
      *
      * @throws \RuntimeException if no active Free plan is configured
      */
     public function assignFreePlan(int $vendorId): VendorSubscription
     {
-        // Use the locking variant — safe both inside and outside an existing transaction
         $existing = $this->subscriptionRepository->getActiveSubscriptionForUpdate($vendorId);
         if ($existing !== null) {
             return $existing;

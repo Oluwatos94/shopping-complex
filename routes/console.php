@@ -4,9 +4,12 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use ModulesShoppingComplex\Jobs\ExpireVendorSubscriptions;
+use ModulesShoppingComplex\Jobs\RenewVendorSubscriptions;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Schedule::job(ExpireVendorSubscriptions::class)->dailyAt('00:00');
+// Renew due Stellar subscriptions first so a successful charge pre-empts the expiry sweep below.
+Schedule::job(RenewVendorSubscriptions::class)->dailyAt('00:00');
+Schedule::job(ExpireVendorSubscriptions::class)->dailyAt('00:05');

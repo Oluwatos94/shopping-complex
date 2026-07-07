@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\LazyCollection;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Models\VendorSubscription;
@@ -96,6 +98,24 @@ class SubscriptionRepository
             ->where('expires_at', '<', now())
             ->with('vendor')
             ->lazy();
+    }
+
+    public function getStellarSubscriptionsDueForRenewal(Carbon $dueBefore): LazyCollection
+    {
+        return VendorSubscription::where('status', VendorSubscriptionStatusEnum::ACTIVE)
+            ->where('payment_method', PaymentMethodEnum::STELLAR)
+            ->where('expires_at', '<=', $dueBefore)
+            ->with(['vendor', 'plan'])
+            ->lazy();
+    }
+
+    public function extendSubscription(VendorSubscription $subscription, Carbon $expiresAt, string $reference, float $amountPaid): void
+    {
+        $subscription->update([
+            'expires_at' => $expiresAt,
+            'payment_reference' => $reference,
+            'amount_paid' => $amountPaid,
+        ]);
     }
 
     /**

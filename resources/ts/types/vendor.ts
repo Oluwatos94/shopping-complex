@@ -88,6 +88,9 @@ export interface SubscriptionPlan {
     is_active: boolean;
 }
 
+/** Mirrors the backend PaymentMethodEnum (`paystack` | `stellar`). */
+export type PaymentMethod = 'paystack' | 'stellar';
+
 export interface VendorSubscription {
     id: number;
     plan_id: number;
@@ -96,6 +99,12 @@ export interface VendorSubscription {
     expires_at: string;
     amount_paid: number | null;
     plan: SubscriptionPlan;
+}
+
+export interface AutoRenewState {
+    enabled: boolean;
+    monthlyCap: number | null;
+    validUntil: string | null;
 }
 
 /**

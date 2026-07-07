@@ -2,16 +2,32 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
+use ModulesShoppingComplex\Events\SubscriptionRenewalFailed;
+use ModulesShoppingComplex\Listeners\SendRenewalFailedWhatsApp;
+use ModulesShoppingComplex\Listeners\SendSubscriptionPaymentWhatsApp;
 use ModulesShoppingComplex\Services\ClaudeClient;
 use ModulesShoppingComplex\Services\Contracts\AiChatClient;
 use ModulesShoppingComplex\Services\GeminiClient;
 use ModulesShoppingComplex\Services\GeoLocationService;
 use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Services\Payments\PaystackProvider;
+use ModulesShoppingComplex\Services\Payments\Stellar\AnchorClient;
+use ModulesShoppingComplex\Services\Payments\Stellar\Contracts\RecurringCharger;
+use ModulesShoppingComplex\Services\Payments\Stellar\SorobanCharger;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarDepositService;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarProvider;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarSigner;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarTestnetFunder;
+use ModulesShoppingComplex\Services\Payments\Stellar\StellarWalletService;
 use ModulesShoppingComplex\Services\PaystackClient;
 use ModulesShoppingComplex\Services\WhatsAppApiService;
+use Soneso\StellarSDK\Network;
+use Soneso\StellarSDK\Soroban\SorobanServer;
+use Soneso\StellarSDK\StellarSDK;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,7 +42,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(PaymentProviderManager::class, fn ($app) => new PaymentProviderManager([
             $app->make(PaystackProvider::class),
+            $app->make(StellarProvider::class),
         ]));
+
+        $this->registerStellar();
 
         $this->app->singleton(WhatsAppApiService::class);
 
@@ -58,5 +77,70 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        Event::listen(SubscriptionPaymentSucceeded::class, SendSubscriptionPaymentWhatsApp::class);
+        Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
+    }
+
+    /**
+     * Wire the Stellar SDK + anchor clients from config/services.php.
+     */
+    private function registerStellar(): void
+    {
+        $this->app->singleton(Network::class, fn () => config('services.stellar.network') === 'public'
+            ? Network::public()
+            : Network::testnet());
+
+        $this->app->singleton(StellarSDK::class, fn () => new StellarSDK(
+            (string) config('services.stellar.horizon_url')
+        ));
+
+        $this->app->singleton(AnchorClient::class, fn ($app) => new AnchorClient(
+            baseUrl: (string) config('services.stellar.anchor_base_url'),
+            sep10SigningKey: (string) config('services.stellar.anchor_sep10_signing_key'),
+            homeDomain: (string) config('services.stellar.anchor_home_domain'),
+            network: $app->make(Network::class),
+            ngncAssetCode: (string) config('services.stellar.ngnc_asset_code'),
+            ngncIssuer: (string) config('services.stellar.ngnc_issuer'),
+        ));
+
+        $this->app->singleton(StellarWalletService::class, fn ($app) => new StellarWalletService(
+            sdk: $app->make(StellarSDK::class),
+            network: $app->make(Network::class),
+            networkName: (string) config('services.stellar.network'),
+            ngncAssetCode: (string) config('services.stellar.ngnc_asset_code'),
+            ngncIssuer: (string) config('services.stellar.ngnc_issuer'),
+        ));
+
+        $this->app->singleton(StellarDepositService::class, fn ($app) => new StellarDepositService(
+            anchor: $app->make(AnchorClient::class),
+            platformSigner: new StellarSigner(
+                (string) config('services.stellar.platform_wallet_public'),
+                (string) config('services.stellar.platform_wallet_secret'),
+            ),
+            ngncAssetCode: (string) config('services.stellar.ngnc_asset_code'),
+        ));
+
+        $this->app->singleton(SorobanServer::class, fn () => new SorobanServer(
+            (string) config('services.stellar.soroban_rpc_url')
+        ));
+
+        $this->app->singleton(RecurringCharger::class, fn ($app) => new SorobanCharger(
+            soroban: $app->make(SorobanServer::class),
+            network: $app->make(Network::class),
+            platformWalletPublic: (string) config('services.stellar.platform_wallet_public'),
+            ngncSac: (string) config('services.stellar.ngnc_sac'),
+        ));
+
+        $this->app->singleton(StellarTestnetFunder::class, fn ($app) => new StellarTestnetFunder(
+            sdk: $app->make(StellarSDK::class),
+            network: $app->make(Network::class),
+            platformSigner: new StellarSigner(
+                (string) config('services.stellar.platform_wallet_public'),
+                (string) config('services.stellar.platform_wallet_secret'),
+            ),
+            ngncAssetCode: (string) config('services.stellar.ngnc_asset_code'),
+            ngncIssuer: (string) config('services.stellar.ngnc_issuer'),
+        ));
     }
 }
