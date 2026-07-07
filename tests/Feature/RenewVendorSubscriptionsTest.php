@@ -6,7 +6,9 @@ namespace Tests\Feature;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use ModulesShoppingComplex\Jobs\RenewVendorSubscriptions;
+use ModulesShoppingComplex\Jobs\SendWhatsAppMessage;
 use ModulesShoppingComplex\Models\AnchorTransaction;
 use ModulesShoppingComplex\Models\Enums\AnchorTransactionKindEnum;
 use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
@@ -33,6 +35,8 @@ class RenewVendorSubscriptionsTest extends TestCase
         // Renewal notifications broadcast via Pusher/Reverb; use the null broadcaster in this
         // test so NotificationService::send() doesn't reach out over the network.
         config(['broadcasting.default' => 'null']);
+
+        Queue::fake([SendWhatsAppMessage::class]);
     }
 
     /** A fake charge rail so the job never touches the network. */
@@ -222,5 +226,41 @@ class RenewVendorSubscriptionsTest extends TestCase
             $subscription->expires_at->format('Y-m-d'),
         );
         $this->assertSame('preexisting-hash', $subscription->payment_reference);
+    }
+
+    public function test_successful_renewal_sends_whatsapp_confirmation(): void
+    {
+        [$subscription] = $this->dueStellarSubscription(price: 5000);
+        $subscription->vendor->update(['whatsapp_number' => '2348012345678']);
+
+        $this->runJob($this->fakeCharger(succeeds: true));
+
+        Queue::assertPushed(SendWhatsAppMessage::class, function (SendWhatsAppMessage $job) {
+            return $job->to === '2348012345678'
+                && str_contains($job->payload['text']['body'], '₦5,000.00 is confirmed')
+                && str_contains($job->payload['text']['body'], 'renewed for another month');
+        });
+    }
+
+    public function test_failed_renewal_sends_whatsapp_warning(): void
+    {
+        [$subscription] = $this->dueStellarSubscription(price: 5000);
+        $subscription->vendor->update(['whatsapp_number' => '2348012345678']);
+
+        $this->runJob($this->fakeCharger(succeeds: false));
+
+        Queue::assertPushed(SendWhatsAppMessage::class, function (SendWhatsAppMessage $job) {
+            return $job->to === '2348012345678'
+                && str_contains($job->payload['text']['body'], 'renewal failed');
+        });
+    }
+
+    public function test_renewal_without_whatsapp_number_sends_nothing(): void
+    {
+        $this->dueStellarSubscription(price: 5000);
+
+        $this->runJob($this->fakeCharger(succeeds: true));
+
+        Queue::assertNotPushed(SendWhatsAppMessage::class);
     }
 }

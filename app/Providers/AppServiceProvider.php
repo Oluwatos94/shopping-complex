@@ -2,8 +2,13 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
+use ModulesShoppingComplex\Events\SubscriptionRenewalFailed;
+use ModulesShoppingComplex\Listeners\SendRenewalFailedWhatsApp;
+use ModulesShoppingComplex\Listeners\SendSubscriptionPaymentWhatsApp;
 use ModulesShoppingComplex\Services\ClaudeClient;
 use ModulesShoppingComplex\Services\Contracts\AiChatClient;
 use ModulesShoppingComplex\Services\GeminiClient;
@@ -72,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        Event::listen(SubscriptionPaymentSucceeded::class, SendSubscriptionPaymentWhatsApp::class);
+        Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
     }
 
     /**
