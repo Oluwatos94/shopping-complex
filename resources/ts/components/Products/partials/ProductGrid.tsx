@@ -6,7 +6,7 @@ interface ProductGridProps {
     loading?: boolean;
 }
 
-const GRID_CLASS = 'grid gap-[22px] [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))] sm:[grid-template-columns:repeat(auto-fill,minmax(212px,1fr))]';
+const GRID_CLASS = 'grid grid-cols-2 gap-4 sm:gap-[22px] sm:[grid-template-columns:repeat(auto-fill,minmax(212px,1fr))]';
 
 export default function ProductGrid({ products, loading = false }: ProductGridProps) {
     if (loading) {

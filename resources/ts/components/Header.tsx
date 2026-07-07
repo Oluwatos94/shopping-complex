@@ -35,7 +35,7 @@ const Header: React.FC = () => {
         { label: 'Home', href: '/' },
         { label: 'Explore Products', href: '/products' },
         { label: 'Vendors', href: '/vendors' },
-        { label: 'Become a Vendor', href: '/vendor/register' },
+        ...(user?.role === 'vendor' ? [] : [{ label: 'Become a Vendor', href: '/vendor/register' }]),
     ];
 
     const handleSignOut = () => {

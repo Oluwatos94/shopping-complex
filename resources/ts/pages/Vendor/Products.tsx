@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
-import { getCsrfToken } from '@/utils/csrf';
-
-interface VendorProduct {
-    id: number;
-    name: string;
-    slug: string;
-    price: number;
-    stock: number;
-    is_active: boolean;
-    created_at: string;
-    image: string | null;
-    image_type: string | null;
-}
+import { Product } from '@/types/product';
+import NotificationModal from '@/components/NotificationModal';
+import UploadProductFab from './partials/UploadProductFab';
 
 interface PaginatedVendorProducts {
-    data: VendorProduct[];
+    data: Product[];
     current_page: number;
     last_page: number;
     per_page: number;
@@ -25,25 +15,26 @@ interface PaginatedVendorProducts {
 
 interface Props {
     products: PaginatedVendorProducts;
+    product_limit: number | null;
+    active_products_count: number;
 }
 
-export default function VendorProducts({ products }: Props) {
+export default function VendorProducts({ products, product_limit, active_products_count }: Props) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [addSignal, setAddSignal] = useState(0);
 
-    const handleDelete = async (product: VendorProduct) => {
-        if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
-        setDeletingId(product.id);
-        try {
-            const res = await fetch(`/vendor/products/${product.id}`, {
-                method: 'DELETE',
-                headers: { 'X-XSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
-            });
-            if (res.ok) {
-                router.reload({ only: ['products'] });
-            }
-        } finally {
-            setDeletingId(null);
-        }
+    const openAdd = () => setAddSignal((s) => s + 1);
+
+    const confirmDelete = () => {
+        if (!productToDelete) return;
+        setDeletingId(productToDelete.id);
+        router.delete(`/vendor/products/${productToDelete.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setProductToDelete(null),
+            onFinish: () => setDeletingId(null),
+        });
     };
 
     return (
@@ -60,83 +51,77 @@ export default function VendorProducts({ products }: Props) {
                             <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
                             <p className="text-sm text-gray-500 mt-1">{products.total} product{products.total !== 1 ? 's' : ''} in your store</p>
                         </div>
-                        <Link
-                            href="/products/create"
+                        <button
+                            onClick={openAdd}
                             className="flex items-center gap-2 bg-brand-green text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-brand-ink transition-colors"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                             Add Product
-                        </Link>
+                        </button>
                     </div>
 
-                    {/* Product List */}
+                    {/* Product grid — two columns on mobile, matching the vendors list */}
                     {products.data.length > 0 ? (
-                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                            <div className="divide-y divide-gray-100">
-                                {products.data.map((product) => {
-                                    const price = Number(product.price);
+                        <div className="grid grid-cols-2 gap-4 sm:gap-5 sm:[grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
+                            {products.data.map((product) => {
+                                const price = Number(product.price);
+                                const primary = product.images?.[0];
+                                const isVideo = primary?.type === 'product_video';
 
-                                    const isVideo = product.image_type === 'product_video';
-
-                                    return (
-                                        <div key={product.id} className="flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition-colors">
-                                            {/* Thumbnail */}
-                                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative">
-                                                {product.image ? (
-                                                    isVideo ? (
-                                                        <>
-                                                            <video src={product.image} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                                                <svg className="w-4 h-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M8 5v14l11-7z" />
-                                                                </svg>
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                                    )
+                                return (
+                                    <div key={product.id} className="group flex flex-col bg-white rounded-2xl border border-brand-line overflow-hidden hover:shadow-sm transition-shadow">
+                                        {/* Thumbnail */}
+                                        <div className="relative aspect-square bg-gray-100">
+                                            {primary ? (
+                                                isVideo ? (
+                                                    <>
+                                                        <video src={primary.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                            <svg className="w-8 h-8 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M8 5v14l11-7z" />
+                                                            </svg>
+                                                        </div>
+                                                    </>
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                                                <div className="flex items-center gap-3 mt-0.5">
-                                                    <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
-                                                    <span className="text-xs text-gray-400">· Stock: {product.stock}</span>
+                                                    <img src={primary.url} alt={product.name} className="w-full h-full object-cover" />
+                                                )
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
                                                 </div>
-                                            </div>
+                                            )}
+                                            <span className={`absolute top-2 left-2 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                                                product.is_active
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-500'
+                                            }`}>
+                                                {product.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
 
-                                            {/* Status badges */}
-                                            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-                                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                                                    product.is_active
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-500'
-                                                }`}>
-                                                    {product.is_active ? 'Active' : 'Inactive'}
-                                                </span>
+                                        {/* Info */}
+                                        <div className="flex flex-col flex-1 p-3">
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">{product.name}</p>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <span className="text-sm font-bold text-gray-900">₦{price.toLocaleString()}</span>
+                                                <span className="text-xs text-gray-400">Stock: {product.stock}</span>
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                <Link
-                                                    href={`/products/${product.slug}/edit`}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-green hover:text-brand-green transition-colors"
+                                            <div className="flex items-center gap-1.5 mt-3">
+                                                <button
+                                                    onClick={() => setSelectedProduct(product)}
+                                                    className="flex-1 h-8 flex items-center justify-center gap-1 rounded-lg border border-gray-200 text-gray-500 hover:border-brand-green hover:text-brand-green transition-colors"
                                                     title="Edit product"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
-                                                </Link>
+                                                </button>
                                                 <Link
                                                     href={`/products/${product.slug}`}
                                                     className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-green hover:text-brand-green transition-colors"
@@ -148,7 +133,7 @@ export default function VendorProducts({ products }: Props) {
                                                     </svg>
                                                 </Link>
                                                 <button
-                                                    onClick={() => handleDelete(product)}
+                                                    onClick={() => setProductToDelete(product)}
                                                     disabled={deletingId === product.id}
                                                     className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-red-400 hover:text-red-500 transition-colors disabled:opacity-40"
                                                     title="Delete product"
@@ -163,9 +148,9 @@ export default function VendorProducts({ products }: Props) {
                                                 </button>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="bg-white rounded-2xl shadow-sm flex flex-col items-center justify-center py-20 text-center">
@@ -174,12 +159,12 @@ export default function VendorProducts({ products }: Props) {
                             </svg>
                             <p className="text-gray-700 font-medium mb-1">No products yet</p>
                             <p className="text-gray-400 text-sm mb-6">Add your first product to start selling.</p>
-                            <Link
-                                href="/products/create"
+                            <button
+                                onClick={openAdd}
                                 className="bg-brand-green text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-brand-ink transition-colors"
                             >
                                 Add Product
-                            </Link>
+                            </button>
                         </div>
                     )}
 
@@ -202,6 +187,26 @@ export default function VendorProducts({ products }: Props) {
                         </div>
                     )}
                 </div>
+
+                <UploadProductFab
+                    productLimit={product_limit}
+                    activeProductsCount={active_products_count}
+                    editProduct={selectedProduct}
+                    onEditClose={() => setSelectedProduct(null)}
+                    hideFab
+                    openAddSignal={addSignal}
+                />
+
+                <NotificationModal
+                    open={productToDelete !== null}
+                    title="Delete product?"
+                    message={productToDelete ? `"${productToDelete.name}" will be permanently removed. This cannot be undone.` : ''}
+                    confirmLabel="Delete"
+                    tone="danger"
+                    processing={deletingId === productToDelete?.id}
+                    onConfirm={confirmDelete}
+                    onClose={() => setProductToDelete(null)}
+                />
             </main>
         </>
     );

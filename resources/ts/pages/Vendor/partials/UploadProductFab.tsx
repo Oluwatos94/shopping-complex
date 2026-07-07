@@ -8,13 +8,15 @@ interface Props {
     activeProductsCount: number;
     editProduct?: Product | null;
     onEditClose?: () => void;
+    hideFab?: boolean;
+    openAddSignal?: number;
 }
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;  // 20 MB
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
 
-export default function UploadProductFab({ productLimit, activeProductsCount, editProduct, onEditClose }: Props) {
+export default function UploadProductFab({ productLimit, activeProductsCount, editProduct, onEditClose, hideFab = false, openAddSignal }: Props) {
     const isEditMode = !!editProduct;
     const atLimit = !isEditMode && productLimit !== null && activeProductsCount >= productLimit;
     const [open, setOpen] = useState(isEditMode);
@@ -60,6 +62,12 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
             setFileSizeError(null);
         }
     }, [editProduct?.id]);
+
+    useEffect(() => {
+        if (openAddSignal && !isEditMode) {
+            setOpen(true);
+        }
+    }, [openAddSignal]);
 
     const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
@@ -200,7 +208,7 @@ export default function UploadProductFab({ productLimit, activeProductsCount, ed
 
     return (
         <>
-            {!isEditMode && (
+            {!isEditMode && !hideFab && (
                 <button
                     onClick={() => setOpen(true)}
                     className="fixed bottom-8 right-8 w-14 h-14 bg-brand-green text-white rounded-full shadow-lg hover:bg-brand-ink hover:shadow-xl transition-all flex items-center justify-center z-50 group"
