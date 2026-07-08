@@ -6,6 +6,7 @@ import { Paginated } from '@/types/product';
 import VendorCard from '@/components/Admin/vendors/partials/VendorCard';
 import DetailPanel from '@/components/Admin/vendors/partials/DetailPanel';
 import RejectModal from '@/components/Admin/vendors/partials/RejectModal';
+import { SkeletonCard } from '@/components/Loading';
 
 interface Props {
     vendors: Paginated<VendorApplication>;
@@ -16,6 +17,7 @@ export default function Vendors({ vendors, activeStatus }: Props) {
     const [selectedVendor, setSelectedVendor] = useState<VendorApplication | null>(null);
     const [rejectingVendor, setRejectingVendor] = useState<VendorApplication | null>(null);
     const [processing, setProcessing] = useState<number | null>(null);
+    const [listLoading, setListLoading] = useState(false);
 
     const filterTabs = [
         { label: 'Pending', value: 'pending_review' },
@@ -24,7 +26,11 @@ export default function Vendors({ vendors, activeStatus }: Props) {
     ];
 
     const switchTab = (status: string) => {
-        router.get('/admin/vendors/pending', { status }, { preserveScroll: false });
+        router.get('/admin/vendors/pending', { status }, {
+            preserveScroll: false,
+            onStart: () => setListLoading(true),
+            onFinish: () => setListLoading(false),
+        });
     };
 
     const handleApprove = (vendor: VendorApplication) => {
@@ -61,7 +67,11 @@ export default function Vendors({ vendors, activeStatus }: Props) {
     };
 
     const goToPage = (page: number) => {
-        router.get('/admin/vendors/pending', { page, status: activeStatus }, { preserveScroll: true });
+        router.get('/admin/vendors/pending', { page, status: activeStatus }, {
+            preserveScroll: true,
+            onStart: () => setListLoading(true),
+            onFinish: () => setListLoading(false),
+        });
     };
 
     const pendingCount = vendors.total;
@@ -157,7 +167,11 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                 </div>
 
                 {/* Application Cards Grid */}
-                {vendors.data.length === 0 ? (
+                {listLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        <SkeletonCard count={6} variant="vendor" />
+                    </div>
+                ) : vendors.data.length === 0 ? (
                     <div className="py-24 text-center">
                         <svg className="w-12 h-12 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

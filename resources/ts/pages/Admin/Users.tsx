@@ -7,6 +7,7 @@ import { AdminUser, UserSummary } from '@/types/user';
 import { Paginated } from '@/types/product';
 import { formatDate } from '@/utils/date';
 import { initials } from '@/utils/string';
+import { SkeletonTable } from '@/components/Loading';
 
 interface Props {
     users: Paginated<AdminUser>;
@@ -25,6 +26,7 @@ export default function Users({ users, summary }: Props) {
     const [search, setSearch] = useState('');
     const [openDropdown, setOpenDropdown] = useState<number | null>(null);
     const [inviteOpen, setInviteOpen] = useState(false);
+    const [tableLoading, setTableLoading] = useState(false);
 
     const applyFilters = (overrides: { role?: string; search?: string; page?: number } = {}) => {
         const params: Record<string, string | number> = {};
@@ -33,7 +35,11 @@ export default function Users({ users, summary }: Props) {
         if (r) params.role = r;
         if (q) params.search = q;
         if (overrides.page) params.page = overrides.page;
-        router.get('/admin/users', params, { preserveScroll: true });
+        router.get('/admin/users', params, {
+            preserveScroll: true,
+            onStart: () => setTableLoading(true),
+            onFinish: () => setTableLoading(false),
+        });
     };
 
     const handleRoleFilter = (role: string) => {
@@ -187,7 +193,9 @@ export default function Users({ users, summary }: Props) {
 
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                    {users.data.length === 0 ? (
+                    {tableLoading ? (
+                        <SkeletonTable rows={8} cols={5} />
+                    ) : users.data.length === 0 ? (
                         <div className="py-20 text-center">
                             <svg className="w-10 h-10 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
