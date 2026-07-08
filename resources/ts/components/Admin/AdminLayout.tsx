@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const page = usePage<SharedProps>();
     const user = page.props.auth?.user;
     const flash = page.props.flash;
-    const pathname = page.url.split('?')[0];
+    const pathname = page.url.split('?')[0] ?? '';
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -38,6 +38,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             const t = setTimeout(() => setToast(null), 5000);
             return () => clearTimeout(t);
         }
+        return undefined;
     }, [flash?.success, flash?.error]);
 
     const navItems: NavItem[] = [
@@ -72,6 +73,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             ),
         },
         {
+            label: 'Payments',
+            href: '/admin/subscriptions',
+            match: '/admin/subscriptions',
+            icon: (
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+            ),
+        },
+        {
             label: 'Bot Monitor',
             href: '/admin/bot-monitor',
             match: '/admin/bot-monitor',
@@ -102,7 +113,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             {/* Sidebar */}
             <aside className="fixed left-0 top-0 h-screen w-64 bg-primary-dark flex flex-col py-6 px-4 z-50 overflow-y-auto scrollbar-thin-dark">
                 <div className="mb-10 px-2">
-                    <img src="/logo/dark.svg" alt="jiidaa" className="h-12 w-auto" />
+                    <img src="/logo/whiteLogo.png" alt="jiidaa" className="h-12 w-auto" />
                     <p className="text-[10px] tracking-wider uppercase text-primary-light/40 mt-1">Admin Console</p>
                 </div>
 

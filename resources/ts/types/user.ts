@@ -1,6 +1,4 @@
-/**
- * Base User type that all user types extend from
- */
+
 export interface BaseUser {
     id: number;
     slug?: string;
@@ -11,18 +9,12 @@ export interface BaseUser {
     updated_at: string;
 }
 
-/**
- * User type for authenticated users
- */
 export interface User extends BaseUser {
     role: UserRole;
     profile_image?: string;
     phone?: string;
 }
 
-/**
- * Customer-specific type
- */
 export interface Customer extends BaseUser {
     role: 'customer';
     address?: Address;
@@ -31,9 +23,6 @@ export interface Customer extends BaseUser {
     loyalty_points?: number;
 }
 
-/**
- * Vendor-specific type
- */
 export interface Vendor extends BaseUser {
     role: 'vendor';
     business_name: string;
@@ -49,23 +38,14 @@ export interface Vendor extends BaseUser {
     whatsapp_number?: string | null;
 }
 
-/**
- * Admin-specific type
- */
 export interface Admin extends BaseUser {
     role: 'admin';
     permissions: AdminPermission[];
     last_login_at?: string;
 }
 
-/**
- * User roles enum
- */
 export type UserRole = 'customer' | 'vendor' | 'admin';
 
-/**
- * Admin permissions
- */
 export type AdminPermission =
     | 'manage_users'
     | 'manage_vendors'
@@ -75,9 +55,6 @@ export type AdminPermission =
     | 'view_analytics'
     | 'manage_settings';
 
-/**
- * Address type for customer addresses
- */
 export interface Address {
     id: number;
     user_id: number;
@@ -91,9 +68,6 @@ export interface Address {
     updated_at: string;
 }
 
-/**
- * Vendor location for real-time tracking
- */
 export interface VendorLocation {
     latitude: number;
     longitude: number;
@@ -101,43 +75,49 @@ export interface VendorLocation {
     updated_at: string;
 }
 
-/**
- * Admin user listing row (id, name, email, role, created_at + optional business_name for vendors)
- */
 export type AdminUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'created_at'> & {
     business_name?: string | null;
 };
 
-/**
- * Summary stats shown on the admin users page
- */
+export interface StellarTransaction {
+    kind: 'deposit' | 'mpp_charge';
+    amount: number;
+    billing_period: string | null;
+    hash: string;
+    completed_at: string | null;
+}
+
+export interface AdminSubscription {
+    id: number;
+    vendor: { id: number; name: string; business_name: string | null; email: string } | null;
+    plan: { id: number; name: string; price: number } | null;
+    payment_method: 'stellar'; // | 'paystack'
+    amount_paid: number | null;
+    status: string;
+    expires_at: string | null;
+    created_at: string;
+    payment_reference: string | null;
+    stellar_transactions: StellarTransaction[];
+}
+
 export interface UserSummary {
     users: { total: number; admins: number; vendors: number; customers: number };
     vendors: { approved: number; pending_review: number; rejected: number; draft: number };
     products: { total: number };
 }
 
-/**
- * User authentication state
- */
 export interface AuthUser {
     user: User | Customer | Vendor | Admin | null;
     isAuthenticated: boolean;
     isLoading: boolean;
 }
 
-/**
- * Login credentials
- */
 export interface LoginCredentials {
     email: string;
     password: string;
     remember?: boolean;
 }
 
-/**
- * Registration data
- */
 export interface RegistrationData {
     name: string;
     email: string;
