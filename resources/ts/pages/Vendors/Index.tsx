@@ -32,6 +32,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
     const [categoryId, setCategoryId] = useState<number | undefined>(filters.category_id);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+    const [isFiltering, setIsFiltering] = useState(false);
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
     const [visibleCount, setVisibleCount] = useState(VENDOR_BATCH_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,8 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
             {
                 preserveState: true,
                 preserveScroll: true,
+                onStart: () => setIsFiltering(true),
+                onFinish: () => setIsFiltering(false),
             }
         );
     }, [searchQuery, radius, sortBy, categoryId, userLocation]);
@@ -314,7 +317,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 )}
 
                 {/* Vendor grid */}
-                <VendorGrid vendors={visibleVendors} isLoading={false} />
+                <VendorGrid vendors={visibleVendors} isLoading={isFiltering} />
 
                 {/* Sentinel for progressive reveal */}
                 {!allVendorsRevealed && (

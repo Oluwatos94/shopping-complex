@@ -1,5 +1,6 @@
 import { Product } from '@/types/product';
 import ProductCard from '../ProductCard';
+import { SkeletonCard } from '@/components/Loading';
 
 interface ProductGridProps {
     products: Product[];
@@ -12,16 +13,7 @@ export default function ProductGrid({ products, loading = false }: ProductGridPr
     if (loading) {
         return (
             <div className={GRID_CLASS}>
-                {[...Array(10)].map((_, i) => (
-                    <div key={i} className="animate-pulse overflow-hidden rounded-[18px] border border-brand-line bg-white">
-                        <div className="aspect-square bg-brand-line/60" />
-                        <div className="space-y-2 p-4">
-                            <div className="h-3 w-1/2 rounded bg-brand-line/60" />
-                            <div className="h-4 w-3/4 rounded bg-brand-line/60" />
-                            <div className="h-4 w-1/3 rounded bg-brand-line/60" />
-                        </div>
-                    </div>
-                ))}
+                <SkeletonCard count={10} variant="product" />
             </div>
         );
     }

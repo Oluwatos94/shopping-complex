@@ -1,5 +1,6 @@
 import { NearbyVendor } from '@/types';
 import VendorCard from './VendorCard';
+import { SkeletonCard } from '@/components/Loading';
 
 interface VendorGridProps {
     vendors: NearbyVendor[];
@@ -12,16 +13,7 @@ export default function VendorGrid({ vendors, isLoading = false }: VendorGridPro
     if (isLoading) {
         return (
             <div className={GRID_CLASS}>
-                {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse overflow-hidden rounded-[20px] border border-brand-line bg-white">
-                        <div className="aspect-[16/11] bg-brand-line/60" />
-                        <div className="space-y-3 p-[18px]">
-                            <div className="h-5 w-3/4 rounded bg-brand-line/60" />
-                            <div className="h-4 w-1/2 rounded bg-brand-line/60" />
-                            <div className="h-[52px] w-full rounded-[13px] bg-brand-line/60" />
-                        </div>
-                    </div>
-                ))}
+                <SkeletonCard count={8} variant="vendor" />
             </div>
         );
     }
