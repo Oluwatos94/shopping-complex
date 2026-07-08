@@ -71,6 +71,21 @@ class AdminController extends Controller
         return Inertia::render('Admin/Users', $data);
     }
 
+    public function subscriptions(Request $request): Response|JsonResponse
+    {
+        $filters = $request->only(['method', 'per_page']);
+        $data = [
+            'subscriptions' => $this->adminAnalyticsService->getPaidSubscriptions($filters),
+            'stellarNetwork' => (string) config('services.stellar.network', 'testnet'),
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Admin/Subscriptions', $data);
+    }
+
     public function updateUser(Request $request, User $user): JsonResponse
     {
         if ($user->id === Auth::id()) {
