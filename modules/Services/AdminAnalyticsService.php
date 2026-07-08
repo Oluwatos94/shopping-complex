@@ -6,11 +6,14 @@ namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Models\AnchorTransaction;
+use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Models\VendorSubscription;
 
 final readonly class AdminAnalyticsService
 {
@@ -86,6 +89,60 @@ final readonly class AdminAnalyticsService
             ->where('status', $status)
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * Get paginated paid vendor subscriptions. Stellar-rail rows carry their on-chain
+     * transaction history (deposit + each mpp_charge) with settled tx hashes.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<VendorSubscription>
+     */
+    public function getPaidSubscriptions(array $filters): LengthAwarePaginator
+    {
+        $query = VendorSubscription::query()
+            ->with(['vendor:id,name,business_name,email', 'plan:id,name,price'])
+            ->whereNotNull('amount_paid');
+
+        if (! empty($filters['method']) && PaymentMethodEnum::tryFrom($filters['method']) !== null) {
+            $query->where('payment_method', $filters['method']);
+        }
+
+        $perPage = min(max((int) ($filters['per_page'] ?? 20), 1), 100);
+        $subscriptions = $query->latest()->paginate($perPage);
+
+        $stellarVendorIds = $subscriptions->getCollection()
+            ->where('payment_method', PaymentMethodEnum::STELLAR)
+            ->pluck('vendor_id')
+            ->unique()
+            ->values();
+
+        $hashesByVendor = $stellarVendorIds->isEmpty()
+            ? collect()
+            : AnchorTransaction::query()
+                ->whereIn('vendor_id', $stellarVendorIds)
+                ->whereNotNull('stellar_tx_hash')
+                ->orderBy('completed_at')
+                ->get(['vendor_id', 'kind', 'amount', 'billing_period', 'stellar_tx_hash', 'completed_at'])
+                ->groupBy('vendor_id');
+
+        $subscriptions->getCollection()->transform(function (VendorSubscription $sub) use ($hashesByVendor) {
+            $history = $hashesByVendor->get($sub->vendor_id, collect())
+                ->map(fn (AnchorTransaction $tx): array => [
+                    'kind' => $tx->kind->value,
+                    'amount' => (float) $tx->amount,
+                    'billing_period' => $tx->billing_period,
+                    'hash' => $tx->stellar_tx_hash,
+                    'completed_at' => $tx->completed_at?->toIso8601String(),
+                ])
+                ->values();
+
+            $sub->setAttribute('stellar_transactions', $history);
+
+            return $sub;
+        });
+
+        return $subscriptions;
     }
 
     /**
