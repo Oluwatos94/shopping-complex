@@ -72,6 +72,8 @@ class SocialAuthController extends Controller
             return;
         }
 
+        $avatarUrl = preg_replace('/=s\d+-c/', '=s400-c', $avatarUrl) ?? $avatarUrl;
+
         try {
             $response = Http::timeout(10)->get($avatarUrl);
 

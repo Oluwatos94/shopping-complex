@@ -59,10 +59,10 @@ const HeroSection: React.FC = () => {
                         </p>
 
                         {/* CTAs */}
-                        <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+                        <div className="mt-9 flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
                             <Link
                                 href="/products"
-                                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-ink px-7 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-brand-ink/90 sm:w-auto"
+                                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand-ink px-7 py-4 text-base font-semibold leading-none text-white shadow-sm transition hover:bg-brand-ink/90 md:w-auto"
                             >
                                 Find vendors
                             </Link>
@@ -70,9 +70,9 @@ const HeroSection: React.FC = () => {
                                 href={whatsAppHref}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-brand-green px-7 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-brand-green-dark sm:w-auto"
+                                className="inline-flex w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-brand-green px-7 py-4 text-base font-semibold leading-none text-white shadow-sm transition hover:bg-brand-green-dark md:w-auto"
                             >
-                                <WhatsAppIcon className="h-5 w-5" />
+                                <WhatsAppIcon className="h-5 w-5 shrink-0" />
                                 Chat on WhatsApp
                             </a>
                         </div>

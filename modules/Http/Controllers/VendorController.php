@@ -237,7 +237,7 @@ class VendorController extends Controller
             ->where('is_active', true)
             ->with(['media', 'vendor'])
             ->latest()
-            ->paginate(12);
+            ->paginate(50);
 
         $products->through(function ($product) {
             $product->images = $product->media->map(fn ($media) => [

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PaginatedProducts, Product, VendorReview, PaginatedVendorReviews } from '@/types/product';
 import { VendorProfile, VendorStats } from '@/types/vendor';
@@ -39,6 +39,17 @@ export default function VendorProfilePage({
     const [isEditOpen, setIsEditOpen] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1');
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [bannerLightboxOpen, setBannerLightboxOpen] = useState(false);
+
+    const [descExpanded, setDescExpanded] = useState(false);
+    const [descOverflows, setDescOverflows] = useState(false);
+    const descRef = useRef<HTMLParagraphElement>(null);
+
+    useEffect(() => {
+        const el = descRef.current;
+        if (el) {
+            setDescOverflows(el.scrollHeight > el.clientHeight + 1);
+        }
+    }, [vendor.business_description]);
 
     // Review form state
     const [reviewRating, setReviewRating] = useState(0);
@@ -308,9 +319,28 @@ export default function VendorProfilePage({
                         </div>
 
                         {vendor.business_description && (
-                            <p className="mt-4 px-1 max-w-2xl text-[15px] leading-relaxed text-brand-muted italic">
-                                {vendor.business_description}
-                            </p>
+                            <div className="mt-4 bg-white border border-brand-line rounded-2xl shadow-[0_8px_30px_rgba(11,31,58,0.07)] px-5 sm:px-7 py-5">
+                                <p
+                                    ref={descRef}
+                                    className={`text-[15px] leading-relaxed text-brand-muted whitespace-pre-line ${descExpanded ? '' : 'line-clamp-3'}`}
+                                >
+                                    {vendor.business_description}
+                                </p>
+                                {descOverflows && (
+                                    <button
+                                        onClick={() => setDescExpanded((v) => !v)}
+                                        className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-green hover:text-brand-green-dark transition-colors"
+                                    >
+                                        {descExpanded ? 'Show less' : 'Show more'}
+                                        <svg
+                                            className={`w-4 h-4 transition-transform ${descExpanded ? 'rotate-180' : ''}`}
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"
+                                        >
+                                            <path d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
