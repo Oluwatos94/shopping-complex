@@ -56,6 +56,8 @@ final readonly class VendorService
             );
 
             if ($avatar) {
+
+                $this->mediaService->deleteMediaByType(User::class, $user->id, 'avatar');
                 $this->mediaService->uploadImage(
                     file: $avatar,
                     modelType: User::class,

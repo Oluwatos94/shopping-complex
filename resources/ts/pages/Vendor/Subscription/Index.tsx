@@ -1,3 +1,31 @@
+import { Head } from '@inertiajs/react';
+import VendorSidebar from '@/components/VendorSidebar';
+
+export default function SubscriptionIndex() {
+    return (
+        <>
+            <Head title="Subscription" />
+            <VendorSidebar />
+
+            <main className="md:ml-[260px] min-h-screen bg-gray-50">
+                <div className="max-w-5xl mx-auto px-6 py-8">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-8">Subscription</h1>
+
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-24 text-center">
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand-green/10">
+                            <svg className="h-8 w-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">Coming soon</h2>
+                    </div>
+                </div>
+            </main>
+        </>
+    );
+}
+
+/* Payment section temporarily disabled — not live yet. Restore this when payments are ready.
 import { useCallback, useEffect, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
@@ -124,3 +152,4 @@ export default function SubscriptionIndex({ plans, currentSubscription, products
         </>
     );
 }
+*/
