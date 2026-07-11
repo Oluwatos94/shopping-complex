@@ -77,18 +77,6 @@ const HeroSection: React.FC = () => {
                             </a>
                         </div>
 
-                        {/* Social proof */}
-                        <div className="mt-10 flex items-center gap-4">
-                            <div className="flex -space-x-3">
-                                <span className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-brand-green to-emerald-300" />
-                                <span className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-emerald-300 to-teal-400" />
-                                <span className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-sky-400 to-indigo-400" />
-                                <span className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-indigo-400 to-fuchsia-400" />
-                            </div>
-                            <p className="text-[15px] font-medium text-brand-muted">
-                                Loved by 12,000+ shoppers &amp; vendors
-                            </p>
-                        </div>
                     </div>
 
                     {/* Right column — phone mockup */}
