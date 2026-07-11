@@ -41,7 +41,7 @@ const HeroSection: React.FC = () => {
             <div className="relative mx-auto max-w-[1320px] px-6 lg:px-10">
                 <div className="grid items-center gap-12 pb-24 pt-10 lg:grid-cols-2 lg:gap-8 lg:pt-16">
                     {/* Left column */}
-                    <div className="max-w-xl">
+                    <div className="min-w-0 max-w-xl">
 
                         {/* Headline */}
                         <h1 className="mt-7 text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl lg:text-[64px]">
@@ -92,7 +92,7 @@ const HeroSection: React.FC = () => {
                     </div>
 
                     {/* Right column — phone mockup */}
-                    <div className="relative mx-auto flex w-full max-w-[460px] justify-center">
+                    <div className="relative mx-auto flex w-full min-w-0 max-w-[460px] justify-center">
                         {/* Floating card: New chat */}
                         <div className="absolute right-0 top-[58%] z-20 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_40px_-12px_rgba(11,31,58,0.25)] ring-1 ring-brand-line/70">
                             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
@@ -111,7 +111,7 @@ const HeroSection: React.FC = () => {
                         </div>
 
                         {/* Phone */}
-                        <div className="relative w-[340px] rounded-[3.2rem] border-[12px] border-brand-ink bg-brand-ink shadow-[0_40px_80px_-20px_rgba(11,31,58,0.4)]">
+                        <div className="relative w-full max-w-[340px] rounded-[3.2rem] border-[12px] border-brand-ink bg-brand-ink shadow-[0_40px_80px_-20px_rgba(11,31,58,0.4)]">
                             <div className="relative overflow-hidden rounded-[2.4rem] bg-white">
                                 {/* Dynamic island */}
                                 <div className="absolute left-1/2 top-3 z-30 h-7 w-28 -translate-x-1/2 rounded-full bg-brand-ink" />
