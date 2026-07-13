@@ -53,6 +53,8 @@ final readonly class WhatsAppBotService
                 $this->sessionRepository->resetSession($session);
             }
 
+            $this->sessionRepository->touch($session);
+
             // Global commands — work from any state
             $text = is_string($messageBody) ? strtoupper(trim($messageBody)) : '';
 

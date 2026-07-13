@@ -180,7 +180,7 @@ final readonly class SupportBotService
         }
 
         $lines = $vendors->map(fn (User $vendor) => sprintf(
-            '- %s | %d products%s',
+            '- %s%s',
             $vendor->business_name ?? $vendor->name,
             $vendor->slug ? ' | '.url('/vendors/'.$vendor->slug) : '',
         ))->implode("\n");
