@@ -62,6 +62,22 @@ class SupportMessageRepository extends BasePageRepository
     }
 
     /**
+     * Get the most recent messages in a support thread, oldest first.
+     *
+     * @return Collection<int, SupportMessage>
+     */
+    public function getRecentForConversation(int $conversationId, int $limit): Collection
+    {
+        return SupportMessage::query()
+            ->where('support_conversation_id', $conversationId)
+            ->orderBy('id', 'desc')
+            ->limit($limit)
+            ->get()
+            ->reverse()
+            ->values();
+    }
+
+    /**
      * Get the last message in a support thread.
      */
     public function getLastMessage(int $conversationId): ?SupportMessage
