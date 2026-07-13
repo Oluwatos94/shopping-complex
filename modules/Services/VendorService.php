@@ -85,13 +85,14 @@ final readonly class VendorService
      *
      * @return Collection<int, User>
      */
-    public function findNearbyByQuery(float $lat, float $lng, string $query, float $radiusKm = 5.0): Collection
+    public function findNearbyByQuery(float $lat, float $lng, string $query, float $radiusKm = 5.0, bool $loose = false): Collection
     {
         return $this->getNearbyVendors([
             'latitude' => $lat,
             'longitude' => $lng,
             'radius' => $radiusKm,
             'search' => $query,
+            'search_loose' => $loose,
             'sort_by' => 'distance',
             'has_active_products' => true,
         ], perPage: 5)->getCollection();
@@ -103,12 +104,13 @@ final readonly class VendorService
      *
      * @return Collection<int, User>
      */
-    public function findByQuery(string $query, int $limit = 5, ?float $lat = null, ?float $lng = null): Collection
+    public function findByQuery(string $query, int $limit = 5, ?float $lat = null, ?float $lng = null, bool $loose = false): Collection
     {
         $hasCoords = $lat !== null && $lng !== null;
 
         return $this->getNearbyVendors([
             'search' => $query,
+            'search_loose' => $loose,
             'latitude' => $hasCoords ? $lat : null,
             'longitude' => $hasCoords ? $lng : null,
             'radius' => 0,

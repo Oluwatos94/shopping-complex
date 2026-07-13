@@ -28,6 +28,8 @@ final readonly class WhatsAppAiBotService
 
     private const LOCATION_REQUESTED_MARKER = 'LOCATION_REQUESTED:';
 
+    private const LOOSE_MATCH_NOTE = "\nIMPORTANT: These are CLOSE matches only — no vendor matched \"the exact product or tag\", so these matched via their category or a product description and may NOT offer exactly what the buyer asked for. Tell the buyer these are the closest related vendors (say what they actually sell if shown) and that they should confirm with the vendor directly.";
+
     private const SEARCH_RADII_KM = [5.0, 15.0, 30.0];
 
     public function __construct(
@@ -66,8 +68,9 @@ final readonly class WhatsAppAiBotService
 
         if ($session->last_active_at->diffInMinutes(now()) >= self::SESSION_TTL_MINUTES) {
             $this->sessionRepository->resetSession($session);
-            $session = $this->sessionRepository->findOrCreate($from);
         }
+
+        $this->sessionRepository->touch($session);
 
         $userText = $this->extractUserText($messageType, $messageBody, $message);
 
@@ -318,15 +321,19 @@ final readonly class WhatsAppAiBotService
         }
 
         if ($searchEverywhere) {
-            $vendors = $this->vendorService->findByQuery($query);
+            foreach ([false, true] as $loose) {
+                $vendors = $this->vendorService->findByQuery($query, loose: $loose);
 
-            if ($vendors->isEmpty()) {
-                return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
+                if ($vendors->isNotEmpty()) {
+                    $this->logVendorViews($vendors, $from, $query, null, null);
+
+                    return 'Found '.count($vendors)." vendor(s) across the platform (distance unknown):\n"
+                        .$this->presentVendors($session, $vendors)
+                        .($loose ? self::LOOSE_MATCH_NOTE : '');
+                }
             }
 
-            $this->logVendorViews($vendors, $from, $query, null, null);
-
-            return 'Found '.count($vendors)." vendor(s) across the platform (distance unknown):\n".$this->presentVendors($session, $vendors);
+            return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
         }
 
         if ($lat === null || $lng === null) {
@@ -336,30 +343,34 @@ final readonly class WhatsAppAiBotService
             );
         }
 
-        foreach (self::SEARCH_RADII_KM as $radius) {
-            $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius);
+        foreach ([false, true] as $loose) {
+            foreach (self::SEARCH_RADII_KM as $radius) {
+                $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius, $loose);
 
-            if ($vendors->isNotEmpty()) {
-                $this->logVendorViews($vendors, $from, $query, $lat, $lng);
+                if ($vendors->isNotEmpty()) {
+                    $this->logVendorViews($vendors, $from, $query, $lat, $lng);
 
-                return 'Found '.count($vendors)." vendor(s) within {$radius} km (distances shown):\n"
-                    .$this->presentVendors($session, $vendors);
+                    return 'Found '.count($vendors)." vendor(s) within {$radius} km (distances shown):\n"
+                        .$this->presentVendors($session, $vendors)
+                        .($loose ? self::LOOSE_MATCH_NOTE : '');
+                }
+            }
+
+            $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng, loose: $loose);
+
+            if ($global->isNotEmpty()) {
+                $this->logVendorViews($global, $from, $query, $lat, $lng);
+
+                $widest = (int) max(self::SEARCH_RADII_KM);
+
+                return "No vendors within {$widest} km, but these match \"{$query}\" further out on Jiidaa (distances shown):\n"
+                    .$this->presentVendors($session, $global)
+                    ."\nTell the buyer these aren't nearby, and how far each one is."
+                    .($loose ? self::LOOSE_MATCH_NOTE : '');
             }
         }
 
-        $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng);
-
-        if ($global->isEmpty()) {
-            return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
-        }
-
-        $this->logVendorViews($global, $from, $query, $lat, $lng);
-
-        $widest = (int) max(self::SEARCH_RADII_KM);
-
-        return "No vendors within {$widest} km, but these match \"{$query}\" further out on Jiidaa (distances shown):\n"
-            .$this->presentVendors($session, $global)
-            ."\nTell the buyer these aren't nearby, and how far each one is.";
+        return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
     }
 
     /**

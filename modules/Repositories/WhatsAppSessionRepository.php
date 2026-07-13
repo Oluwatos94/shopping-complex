@@ -9,13 +9,9 @@ use ModulesShoppingComplex\Models\WhatsAppSession;
 
 class WhatsAppSessionRepository
 {
-    /**
-     * Find a session by phone number or create a new idle one.
-     * Updates last_active_at on every call.
-     */
     public function findOrCreate(string $phoneNumber): WhatsAppSession
     {
-        $session = WhatsAppSession::firstOrCreate(
+        return WhatsAppSession::firstOrCreate(
             ['phone_number' => $phoneNumber],
             [
                 'state' => WhatsAppSessionStateEnum::IDLE,
@@ -23,11 +19,15 @@ class WhatsAppSessionRepository
                 'last_active_at' => now(),
             ]
         );
+    }
 
+    /**
+     * Mark the session as active now.
+     */
+    public function touch(WhatsAppSession $session): void
+    {
         $session->last_active_at = now();
         $session->save();
-
-        return $session;
     }
 
     /**

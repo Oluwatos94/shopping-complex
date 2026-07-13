@@ -65,25 +65,11 @@ class VendorRepository extends BasePageRepository
         }
 
         if ($search !== null && $search !== '') {
-            $terms = $this->searchTerms((string) $search);
-
-            $query->where(function ($outer) use ($terms) {
-                foreach ($terms as $term) {
-                    $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $term);
-                    $outer->orWhere(function ($q) use ($escaped) {
-                        $q->where('business_name', 'like', "%{$escaped}%")
-                            ->orWhere('name', 'like', "%{$escaped}%")
-                            ->orWhereHas('products', fn ($p) => $p->where('is_active', true)
-                                ->where(fn ($p2) => $p2
-                                    ->where('name', 'like', "%{$escaped}%")
-                                    ->orWhere('description', 'like', "%{$escaped}%")
-                                    ->orWhere('tags', 'like', "%{$escaped}%")
-                                )
-                            )
-                            ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escaped}%"));
-                    });
-                }
-            });
+            $this->applySearchTerms(
+                $query,
+                $this->searchTerms((string) $search),
+                (bool) ($filters['search_loose'] ?? true),
+            );
         }
 
         if (! empty($filters['has_active_products'])) {
@@ -109,6 +95,37 @@ class VendorRepository extends BasePageRepository
         };
 
         return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Every term must match the vendor somewhere (AND). Strict mode matches
+     * business/vendor name, product names and tags; loose mode widens to
+     * product descriptions and category names.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<User>  $query
+     * @param  array<int, string>  $terms
+     */
+    private function applySearchTerms($query, array $terms, bool $loose): void
+    {
+        foreach ($terms as $term) {
+            $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $term);
+
+            $query->where(function ($q) use ($escaped, $loose) {
+                $q->where('business_name', 'like', "%{$escaped}%")
+                    ->orWhere('name', 'like', "%{$escaped}%")
+                    ->orWhereHas('products', fn ($p) => $p->where('is_active', true)
+                        ->where(fn ($p2) => $p2
+                            ->where('name', 'like', "%{$escaped}%")
+                            ->orWhere('tags', 'like', "%{$escaped}%")
+                            ->when($loose, fn ($p3) => $p3->orWhere('description', 'like', "%{$escaped}%"))
+                        )
+                    );
+
+                if ($loose) {
+                    $q->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$escaped}%"));
+                }
+            });
+        }
     }
 
     /**
