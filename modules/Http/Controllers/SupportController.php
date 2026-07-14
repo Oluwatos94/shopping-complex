@@ -15,6 +15,7 @@ use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Repositories\SupportConversationRepository;
 use ModulesShoppingComplex\Repositories\SupportMessageRepository;
 use ModulesShoppingComplex\Services\SupportBotService;
+use ModulesShoppingComplex\Services\SupportEscalationService;
 
 class SupportController extends Controller
 {
@@ -22,6 +23,7 @@ class SupportController extends Controller
 
     public function __construct(
         private readonly SupportBotService $supportBotService,
+        private readonly SupportEscalationService $escalationService,
         private readonly SupportConversationRepository $conversationRepository,
         private readonly SupportMessageRepository $messageRepository,
     ) {}
@@ -75,20 +77,63 @@ class SupportController extends Controller
 
     /**
      * POST /api/support/conversations/{conversation}/messages
-     * Send a message and get the bot's reply back.
+     * Customers get a bot reply back (unless a human handoff is in progress);
+     * admins reply as the human agent, claiming the conversation.
      */
     public function sendMessage(SendSupportMessageRequest $request, SupportConversation $conversation): JsonResponse
     {
-        $this->authorize('view', $conversation);
+        $user = $request->user();
+        $content = (string) $request->validated('content');
 
-        $message = $this->supportBotService->reply(
-            $conversation,
-            (string) $request->validated('content'),
-        );
+        if ($user->role === 'admin' && $conversation->user_id !== $user->id) {
+            $this->authorize('actAsAgent', $conversation);
+            $message = $this->escalationService->agentReply($conversation, $user, $content);
+        } elseif (in_array($conversation->status, [
+            SupportConversationStatusEnum::AWAITING_AGENT,
+            SupportConversationStatusEnum::WITH_AGENT,
+        ], true)) {
+            $this->authorize('view', $conversation);
+            $message = $this->escalationService->customerMessage($conversation, $content);
+        } else {
+            $this->authorize('view', $conversation);
+            $message = $this->supportBotService->reply($conversation, $content);
+        }
 
         return response()->json([
             'message' => $message,
             'success' => true,
         ], 201);
+    }
+
+    /**
+     * POST /api/support/conversations/{conversation}/escalate
+     * Customer-initiated "talk to a human" handoff.
+     */
+    public function escalate(SupportConversation $conversation): JsonResponse
+    {
+        $this->authorize('escalate', $conversation);
+
+        $conversation = $this->escalationService->escalate($conversation);
+
+        return response()->json([
+            'conversation' => $conversation,
+            'message' => 'A human agent has been notified',
+        ]);
+    }
+
+    /**
+     * POST /api/support/conversations/{conversation}/resolve
+     * Mark the conversation as resolved.
+     */
+    public function resolve(SupportConversation $conversation): JsonResponse
+    {
+        $this->authorize('resolve', $conversation);
+
+        $conversation = $this->escalationService->resolve($conversation);
+
+        return response()->json([
+            'conversation' => $conversation,
+            'message' => 'Conversation resolved',
+        ]);
     }
 }

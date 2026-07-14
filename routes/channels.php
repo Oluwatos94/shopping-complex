@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Models\User;
 
 /*
@@ -102,6 +103,29 @@ Broadcast::channel('conversation.{conversationId}', function (User $user, int $c
 // Presence channel for online vendors
 Broadcast::channel('online-vendors', function (User $user) {
     if ($user->role !== 'vendor') {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+    ];
+});
+
+// Private support conversation channel (customer widget + support agents)
+Broadcast::channel('support-conversation.{conversationId}', function (User $user, int $conversationId) {
+    $conversation = SupportConversation::find($conversationId);
+
+    if (! $conversation) {
+        Log::warning('WebSocket auth failed: Support conversation not found', [
+            'support_conversation_id' => $conversationId,
+            'user_id' => $user->id,
+        ]);
+
+        return false;
+    }
+
+    if ($conversation->user_id !== $user->id && $user->role !== 'admin') {
         return false;
     }
 
