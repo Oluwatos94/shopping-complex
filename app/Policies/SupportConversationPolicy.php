@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use ModulesShoppingComplex\Models\SupportConversation;
+use ModulesShoppingComplex\Models\User;
+
+class SupportConversationPolicy
+{
+    /**
+     * Determine if the user can view (and message in) the support conversation.
+     * Admins can view any conversation so agents can read the thread.
+     */
+    public function view(User $user, SupportConversation $conversation): bool
+    {
+        return $conversation->user_id === $user->id || $user->role === 'admin';
+    }
+
+    /**
+     * Determine if the user can escalate the conversation to a human agent.
+     */
+    public function escalate(User $user, SupportConversation $conversation): bool
+    {
+        return $conversation->user_id === $user->id;
+    }
+
+    /**
+     * Determine if the user can mark the conversation as resolved.
+     */
+    public function resolve(User $user, SupportConversation $conversation): bool
+    {
+        return $conversation->user_id === $user->id || $user->role === 'admin';
+    }
+
+    /**
+     * Determine if the user can reply as a human support agent.
+     */
+    public function actAsAgent(User $user, SupportConversation $conversation): bool
+    {
+        return $user->role === 'admin';
+    }
+}

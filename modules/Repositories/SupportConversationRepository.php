@@ -49,6 +49,18 @@ class SupportConversationRepository extends BasePageRepository
     }
 
     /**
+     * Get the user's most recent open (non-resolved) support thread.
+     */
+    public function findOpenForUser(int $userId): ?SupportConversation
+    {
+        return SupportConversation::query()
+            ->where('user_id', $userId)
+            ->where('status', '!=', SupportConversationStatusEnum::RESOLVED)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    /**
      * Find a support thread by ID.
      *
      * @param  array<string>  $relations
@@ -72,6 +84,11 @@ class SupportConversationRepository extends BasePageRepository
     public function create(array $data): SupportConversation
     {
         return SupportConversation::create($data);
+    }
+
+    public function save(SupportConversation $conversation): void
+    {
+        $conversation->save();
     }
 
     public function updateLastMessageAt(int $conversationId): void
