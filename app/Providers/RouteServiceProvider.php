@@ -147,5 +147,13 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perSecond(2)
                 ->by($request->user()?->id ?: $request->ip());
         });
+
+        // Support bot interactions - limit to prevent spam
+        RateLimiter::for('support', function (Request $request) {
+            return [
+                Limit::perSecond(1)->by($request->user()?->id ?: $request->ip()),
+                Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()),
+            ];
+        });
     }
 }

@@ -15,7 +15,6 @@ use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\ModuleTraits\HasTableName;
 
 /**
- *
  * @property int $id
  * @property int|null $user_id
  * @property SupportConversationStatusEnum $status

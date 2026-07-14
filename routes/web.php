@@ -18,6 +18,7 @@ use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
 use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
+use ModulesShoppingComplex\Http\Controllers\SupportController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
 
@@ -154,6 +155,14 @@ Route::middleware(['auth', 'throttle:typing'])->prefix('api/chat')->group(functi
 Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/chat', [ChatController::class, 'chatPage'])->name('chat.index');
     Route::get('/chat/{conversation}', [ChatController::class, 'conversationPage'])->name('chat.conversation');
+});
+
+// Support Bot API Routes
+Route::middleware(['auth', 'throttle:support'])->prefix('api/support')->group(function () {
+    Route::post('/conversations', [SupportController::class, 'store'])->name('support.conversations.store');
+    Route::get('/conversations/{conversation}', [SupportController::class, 'show'])->name('support.conversations.show');
+    Route::get('/conversations/{conversation}/messages', [SupportController::class, 'messages'])->name('support.messages');
+    Route::post('/conversations/{conversation}/messages', [SupportController::class, 'sendMessage'])->name('support.messages.send');
 });
 
 // Review Routes - Public (view vendor reviews)
