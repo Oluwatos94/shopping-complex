@@ -91,6 +91,14 @@ final class PaystackClient
             throw new \RuntimeException('Payment was not successful.');
         }
 
+        if (($data['currency'] ?? '') !== 'NGN') {
+            Log::warning('Paystack transaction settled in unsupported currency', [
+                'reference' => $reference,
+                'currency' => $data['currency'] ?? null,
+            ]);
+            throw new \RuntimeException('Payment was made in an unsupported currency.');
+        }
+
         return $data;
     }
 }
