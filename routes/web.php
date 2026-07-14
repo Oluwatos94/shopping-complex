@@ -163,6 +163,8 @@ Route::middleware(['auth', 'throttle:support'])->prefix('api/support')->group(fu
     Route::get('/conversations/{conversation}', [SupportController::class, 'show'])->name('support.conversations.show');
     Route::get('/conversations/{conversation}/messages', [SupportController::class, 'messages'])->name('support.messages');
     Route::post('/conversations/{conversation}/messages', [SupportController::class, 'sendMessage'])->name('support.messages.send');
+    Route::post('/conversations/{conversation}/escalate', [SupportController::class, 'escalate'])->name('support.conversations.escalate');
+    Route::post('/conversations/{conversation}/resolve', [SupportController::class, 'resolve'])->name('support.conversations.resolve');
 });
 
 // Review Routes - Public (view vendor reviews)

@@ -33,6 +33,7 @@ final readonly class SupportBotService
         private ProductService $productService,
         private SubscriptionService $subscriptionService,
         private SubscriptionRepository $subscriptionRepository,
+        private SupportEscalationService $escalationService,
     ) {}
 
     /**
@@ -76,6 +77,7 @@ final readonly class SupportBotService
             $response = $this->ai->createMessage($payload);
 
             $iterations = 0;
+            $humanRequested = false;
             while (($response['stop_reason'] ?? '') === 'tool_use') {
                 if (++$iterations > self::MAX_TOOL_ITERATIONS) {
                     Log::warning('Support bot tool loop exceeded max iterations', [
@@ -96,6 +98,10 @@ final readonly class SupportBotService
                     /** @var array<string, mixed> $input */
                     $input = (array) ($block['input'] ?? []);
 
+                    if ((string) $block['name'] === 'request_human') {
+                        $humanRequested = true;
+                    }
+
                     $toolResults[] = [
                         'type' => 'tool_result',
                         'tool_use_id' => $block['id'],
@@ -107,6 +113,10 @@ final readonly class SupportBotService
 
                 $payload['messages'] = $messages;
                 $response = $this->ai->createMessage($payload);
+            }
+
+            if ($humanRequested) {
+                $this->escalationService->escalate($conversation);
             }
 
             foreach ((array) ($response['content'] ?? []) as $block) {
@@ -134,6 +144,7 @@ final readonly class SupportBotService
             'search_vendors' => $this->toolSearchVendors($input),
             'get_payment_status' => $this->toolGetPaymentStatus($input, $conversation),
             'get_my_subscription' => $this->toolGetMySubscription($conversation),
+            'request_human' => 'Human support agents have been notified and one will join this conversation shortly. Tell the user a human agent will be with them soon.',
             default => 'Unknown tool.',
         };
     }
@@ -293,6 +304,15 @@ final readonly class SupportBotService
                     'required' => [],
                 ],
             ],
+            [
+                'name' => 'request_human',
+                'description' => 'Hand this conversation off to a human support agent. Use when the user asks for a human, or when you cannot resolve their issue after trying.',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => (object) [],
+                    'required' => [],
+                ],
+            ],
         ];
     }
 
@@ -336,6 +356,7 @@ ACCURACY:
 
 HUMAN HANDOFF:
 - If you cannot resolve the issue, if the user is frustrated, or if they ask for a person, offer to connect them to a human support agent and ask them to confirm they want that.
+- Once they confirm (or clearly ask for a human), call the request_human tool — do not just say an agent is coming without calling it.
 PROMPT;
     }
 }

@@ -86,6 +86,11 @@ class SupportConversationRepository extends BasePageRepository
         return SupportConversation::create($data);
     }
 
+    public function save(SupportConversation $conversation): void
+    {
+        $conversation->save();
+    }
+
     public function updateLastMessageAt(int $conversationId): void
     {
         SupportConversation::query()
