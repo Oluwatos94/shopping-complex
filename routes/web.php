@@ -14,6 +14,7 @@ use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\GeoController;
 use ModulesShoppingComplex\Http\Controllers\HomeController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
+use ModulesShoppingComplex\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
@@ -25,6 +26,9 @@ use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
 // WhatsApp Webhook Routes (public — Meta servers cannot authenticate)
 Route::get('/webhook/whatsapp', [WhatsAppController::class, 'verify'])->name('whatsapp.webhook.verify');
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'receive'])->name('whatsapp.webhook.receive');
+
+// Paystack Webhook (public — authenticated by the x-paystack-signature header)
+Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handle'])->name('paystack.webhook');
 
 // Static pages
 Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');
