@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhook/whatsapp',
+            'webhook/paystack',
         ]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\Admin::class,
