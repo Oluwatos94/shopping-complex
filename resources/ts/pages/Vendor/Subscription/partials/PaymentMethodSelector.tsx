@@ -10,7 +10,6 @@ export default function PaymentMethodSelector({ value, onChange }: Props) {
         <div className="mb-6">
             <p className="text-sm font-medium text-gray-700 mb-3">Pay with</p>
             <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1">
-                {/* Paystack rail temporarily hidden — to be implemented later.
                 <button
                     type="button"
                     onClick={() => onChange('paystack')}
@@ -22,7 +21,6 @@ export default function PaymentMethodSelector({ value, onChange }: Props) {
                 >
                     Card / Bank (Paystack)
                 </button>
-                */}
                 <button
                     type="button"
                     onClick={() => onChange('stellar')}

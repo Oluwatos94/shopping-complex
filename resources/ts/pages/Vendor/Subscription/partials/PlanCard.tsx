@@ -24,15 +24,11 @@ interface Props {
 
 export default function PlanCard({ plan, isCurrentPlan, onSubscribe, processing, paymentMethod }: Props) {
     const isFree = plan.slug === 'free';
-    // Keep the button label rail-neutral for now (no crypto-revealing copy).
-    // Restore the per-rail label when the Paystack rail is brought back:
-    // const buttonLabel = processing
-    //     ? 'Redirecting…'
-    //     : paymentMethod === 'stellar'
-    //     ? 'Subscribe via NGNC'
-    //     : 'Subscribe';
-    void paymentMethod;
-    const buttonLabel = processing ? 'Redirecting…' : 'Subscribe';
+    const buttonLabel = processing
+        ? 'Redirecting…'
+        : paymentMethod === 'paystack'
+        ? 'Subscribe with Card / Bank'
+        : 'Subscribe via transfer';
 
     return (
         <div className={`bg-white rounded-2xl border-2 p-6 flex flex-col transition-shadow hover:shadow-md ${isCurrentPlan ? 'border-brand-green' : 'border-gray-200'}`}>
