@@ -31,6 +31,8 @@ class SupportConversation extends Model
 {
     use HasFactory, HasTableName;
 
+    public const GUEST_SESSION_KEY = 'support_conversation_id';
+
     /** {@inheritdoc} */
     protected $fillable = [
         'user_id',

@@ -170,13 +170,59 @@ class SupportEscalationTest extends TestCase
         $this->assertSame(0, SupportMessage::query()->count());
     }
 
-    public function test_bot_stays_silent_after_escalation(): void
+    public function test_bot_keeps_replying_while_awaiting_agent(): void
     {
-        $fake = $this->bindFakeAi();
+        $this->bindFakeAi('An agent is on the way — meanwhile, how can I help?');
         $user = User::factory()->create(['role' => 'customer']);
         $conversation = SupportConversation::factory()->forUser($user)->create([
             'status' => SupportConversationStatusEnum::AWAITING_AGENT,
             'escalated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson("/api/support/conversations/{$conversation->id}/messages", [
+                'content' => 'I need a product',
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('message.role', SupportMessageRoleEnum::ASSISTANT->value)
+            ->assertJsonPath('message.content', 'An agent is on the way — meanwhile, how can I help?');
+    }
+
+    public function test_bot_reply_during_awaiting_agent_broadcasts_both_messages(): void
+    {
+        Event::fake([SupportMessageSentEvent::class]);
+
+        $this->bindFakeAi('An agent is on the way — meanwhile, how can I help?');
+        $user = User::factory()->create(['role' => 'customer']);
+        $conversation = SupportConversation::factory()->forUser($user)->create([
+            'status' => SupportConversationStatusEnum::AWAITING_AGENT,
+            'escalated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/support/conversations/{$conversation->id}/messages", [
+                'content' => 'Some extra details for the agent',
+            ])
+            ->assertCreated();
+
+        Event::assertDispatched(SupportMessageSentEvent::class, function (SupportMessageSentEvent $event) {
+            return $event->message->role === SupportMessageRoleEnum::USER;
+        });
+        Event::assertDispatched(SupportMessageSentEvent::class, function (SupportMessageSentEvent $event) {
+            return $event->message->role === SupportMessageRoleEnum::ASSISTANT;
+        });
+    }
+
+    public function test_bot_hands_off_once_an_agent_joins(): void
+    {
+        $fake = $this->bindFakeAi();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'customer']);
+        $conversation = SupportConversation::factory()->forUser($user)->create([
+            'status' => SupportConversationStatusEnum::WITH_AGENT,
+            'escalated_at' => now(),
+            'agent_id' => $admin->id,
         ]);
 
         $response = $this->actingAs($user)

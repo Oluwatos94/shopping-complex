@@ -29,6 +29,16 @@ class SendSupportMessageRequest extends FormRequest
                 'string',
                 'max:5000',
             ],
+            'lat' => [
+                'nullable',
+                'numeric',
+                'between:-90,90',
+            ],
+            'lng' => [
+                'nullable',
+                'numeric',
+                'between:-180,180',
+            ],
         ];
     }
 

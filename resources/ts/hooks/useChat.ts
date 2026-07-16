@@ -1,27 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { fetchWithCsrf } from '@/utils/csrf';
 import { ChatMessage, PollResponse } from '@/types/chat';
-
-function getXsrfToken(): string {
-    const token = document.cookie
-        .split('; ')
-        .find(c => c.startsWith('XSRF-TOKEN='))
-        ?.split('=')[1];
-    return token ? decodeURIComponent(token) : '';
-}
-
-async function chatFetch(url: string, options: RequestInit = {}): Promise<Response> {
-    const headers: Record<string, string> = {
-        'X-XSRF-TOKEN': getXsrfToken(),
-        'Accept': 'application/json',
-        ...((options.headers as Record<string, string>) || {}),
-    };
-
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    return fetch(url, { ...options, headers });
-}
 
 const POLL_INTERVAL = 3000;
 
@@ -53,7 +32,7 @@ export function useChat(
         if (!isVisibleRef.current) return;
 
         try {
-            const res = await chatFetch(
+            const res = await fetchWithCsrf(
                 `/api/chat/conversations/${conversationId}/messages/poll?after_message_id=${lastMessageIdRef.current}`
             );
             if (!res.ok) return;
@@ -70,7 +49,7 @@ export function useChat(
                 // Mark as read if new messages are from the other user
                 const hasOtherMessages = data.messages.some(m => m.sender_id !== authUserId);
                 if (hasOtherMessages) {
-                    chatFetch(`/api/chat/conversations/${conversationId}/messages/read`, {
+                    fetchWithCsrf(`/api/chat/conversations/${conversationId}/messages/read`, {
                         method: 'PATCH',
                     });
                 }
@@ -108,7 +87,7 @@ export function useChat(
         if (attachment) formData.append('attachment', attachment);
 
         try {
-            const res = await chatFetch(
+            const res = await fetchWithCsrf(
                 `/api/chat/conversations/${conversationId}/messages`,
                 { method: 'POST', body: formData }
             );
@@ -135,7 +114,7 @@ export function useChat(
     // Mark all as read
     const markAsRead = useCallback(async () => {
         try {
-            await chatFetch(`/api/chat/conversations/${conversationId}/messages/read`, {
+            await fetchWithCsrf(`/api/chat/conversations/${conversationId}/messages/read`, {
                 method: 'PATCH',
             });
         } catch {
@@ -146,7 +125,7 @@ export function useChat(
     // Send typing indicator
     const sendTypingIndicator = useCallback(async () => {
         try {
-            await chatFetch(`/api/chat/conversations/${conversationId}/typing`, {
+            await fetchWithCsrf(`/api/chat/conversations/${conversationId}/typing`, {
                 method: 'POST',
             });
         } catch {

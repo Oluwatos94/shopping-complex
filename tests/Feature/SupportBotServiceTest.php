@@ -183,6 +183,120 @@ class SupportBotServiceTest extends TestCase
         );
     }
 
+    public function test_vendor_search_without_location_falls_back_to_platform_wide_search(): void
+    {
+        $fake = $this->bindFakeAi();
+        $fake->queueResponses([
+            [
+                'stop_reason' => 'tool_use',
+                'content' => [
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'Shoe Palace']],
+                ],
+            ],
+            [
+                'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => 'Shoe Palace is on Jiidaa — share your location for nearby options.']],
+            ],
+        ]);
+
+        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $vendor = User::factory()->create([
+            'role' => 'vendor',
+            'business_name' => 'Shoe Palace',
+            'category_id' => $category->id,
+        ]);
+        Product::factory()->create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'is_active' => true,
+            'name' => 'Leather shoes',
+            'tags' => ['shoes'],
+        ]);
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)->reply($conversation, 'Do you have Shoe Palace?');
+
+        $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
+        $this->assertStringContainsString('Shoe Palace', $toolResult);
+        $this->assertStringContainsString('has not shared their device location', $toolResult);
+        $this->assertStringContainsString('location pin button', $toolResult);
+    }
+
+    public function test_vendor_search_without_location_and_no_match_reports_nothing_found(): void
+    {
+        $fake = $this->bindFakeAi();
+        $fake->queueResponses([
+            [
+                'stop_reason' => 'tool_use',
+                'content' => [
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'unicorn saddles']],
+                ],
+            ],
+            [
+                'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => 'Nothing matches that yet.']],
+            ],
+        ]);
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)->reply($conversation, 'Any unicorn saddle vendors?');
+
+        $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
+        $this->assertStringContainsString('No vendor on Jiidaa currently matches', $toolResult);
+    }
+
+    public function test_vendor_search_with_location_returns_nearby_vendors_with_distance(): void
+    {
+        $fake = $this->bindFakeAi();
+        $fake->queueResponses([
+            [
+                'stop_reason' => 'tool_use',
+                'content' => [
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'shoes']],
+                ],
+            ],
+            [
+                'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => 'Shoe Palace is 0.0 km away.']],
+            ],
+        ]);
+
+        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $vendor = User::factory()->create([
+            'role' => 'vendor',
+            'business_name' => 'Shoe Palace',
+            'category_id' => $category->id,
+        ]);
+        \ModulesShoppingComplex\Models\Address::create([
+            'user_id' => $vendor->id,
+            'street' => '1 Marina Rd',
+            'city' => 'Lagos',
+            'state' => 'Lagos',
+            'country' => 'Nigeria',
+            'latitude' => 6.5244,
+            'longitude' => 3.3792,
+        ]);
+        Product::factory()->create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'is_active' => true,
+            'name' => 'Leather shoes',
+            'tags' => ['shoes'],
+        ]);
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)
+            ->reply($conversation, 'I need a shoe vendor', 6.5244, 3.3792);
+
+        $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
+        $this->assertStringContainsString('Shoe Palace', $toolResult);
+        $this->assertStringContainsString('km away', $toolResult);
+        $this->assertStringContainsString('/vendors/'.$vendor->slug, $toolResult);
+    }
+
     public function test_payment_status_is_scoped_to_the_conversations_user(): void
     {
         $owner = User::factory()->create(['role' => 'vendor']);

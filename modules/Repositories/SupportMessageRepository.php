@@ -8,6 +8,7 @@ use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Models\SupportMessage;
 
 class SupportMessageRepository extends BasePageRepository
@@ -75,6 +76,17 @@ class SupportMessageRepository extends BasePageRepository
             ->get()
             ->reverse()
             ->values();
+    }
+
+    /**
+     * Count messages with a given role in a support thread.
+     */
+    public function countByRole(int $conversationId, SupportMessageRoleEnum $role): int
+    {
+        return SupportMessage::query()
+            ->where('support_conversation_id', $conversationId)
+            ->where('role', $role)
+            ->count();
     }
 
     /**
