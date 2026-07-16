@@ -161,12 +161,20 @@ Route::middleware(['auth', 'throttle:auth'])->group(function () {
     Route::get('/chat/{conversation}', [ChatController::class, 'conversationPage'])->name('chat.conversation');
 });
 
-// Support Bot API Routes
-Route::middleware(['auth', 'throttle:support'])->prefix('api/support')->group(function () {
-    Route::post('/conversations', [SupportController::class, 'store'])->name('support.conversations.store');
+// Support Bot API Routes (guests allowed — conversations are session-bound)
+Route::middleware(['throttle:chat'])->prefix('api/support')->group(function () {
+    Route::post('/conversations', [SupportController::class, 'store'])
+        ->middleware('throttle:support-start')
+        ->name('support.conversations.store');
     Route::get('/conversations/{conversation}', [SupportController::class, 'show'])->name('support.conversations.show');
     Route::get('/conversations/{conversation}/messages', [SupportController::class, 'messages'])->name('support.messages');
+});
+
+Route::middleware(['throttle:support'])->prefix('api/support')->group(function () {
     Route::post('/conversations/{conversation}/messages', [SupportController::class, 'sendMessage'])->name('support.messages.send');
+});
+
+Route::middleware(['auth', 'throttle:support'])->prefix('api/support')->group(function () {
     Route::post('/conversations/{conversation}/escalate', [SupportController::class, 'escalate'])->name('support.conversations.escalate');
     Route::post('/conversations/{conversation}/resolve', [SupportController::class, 'resolve'])->name('support.conversations.resolve');
 });

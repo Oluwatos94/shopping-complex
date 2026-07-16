@@ -2,12 +2,14 @@ import { useEffect, useRef } from 'react';
 import type { SupportMessage } from '@/types/support';
 import EmptyState from './EmptyState';
 import MessageRow from './MessageRow';
-import TypingIndicator from './TypingIndicator';
+import TypingIndicator from '@/components/Chat/TypingIndicator';
 
 interface Props {
     messages: SupportMessage[];
     isTyping: boolean;
     onQuickPrompt?: (text: string) => void;
+    hasOlderMessages?: boolean;
+    onLoadOlder?: () => void;
 }
 
 function showTimestamp(messages: SupportMessage[], index: number): boolean {
@@ -22,7 +24,7 @@ function showTimestamp(messages: SupportMessage[], index: number): boolean {
     );
 }
 
-export default function SupportThread({ messages, isTyping, onQuickPrompt }: Props) {
+export default function SupportThread({ messages, isTyping, onQuickPrompt, hasOlderMessages, onLoadOlder }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const prevCountRef = useRef(messages.length);
@@ -53,6 +55,17 @@ export default function SupportThread({ messages, isTyping, onQuickPrompt }: Pro
                 <EmptyState onQuickPrompt={onQuickPrompt} />
             ) : (
                 <div className="space-y-3">
+                    {hasOlderMessages && onLoadOlder && (
+                        <div className="flex justify-center">
+                            <button
+                                type="button"
+                                onClick={onLoadOlder}
+                                className="rounded-full border border-brand-line bg-white px-3 py-1 text-xs text-brand-muted transition-colors hover:border-brand-green hover:text-brand-green focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                            >
+                                Load earlier messages
+                            </button>
+                        </div>
+                    )}
                     {messages.map((message, index) => (
                         <MessageRow
                             key={message.id}
@@ -61,7 +74,7 @@ export default function SupportThread({ messages, isTyping, onQuickPrompt }: Pro
                             timestamp={showTimestamp(messages, index) ? message.created_at : undefined}
                         />
                     ))}
-                    {isTyping && <TypingIndicator />}
+                    {isTyping && <TypingIndicator wrapperClassName="flex justify-start" bubbleClassName="bg-gray-100" />}
                 </div>
             )}
             <div ref={bottomRef} />
