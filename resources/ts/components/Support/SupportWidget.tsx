@@ -1,17 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SupportMessage } from '@/types/support';
-import MessageRow from './MessageRow';
+import SupportThread from './SupportThread';
 
 // Static scaffold content — replaced by real conversation data in the API wiring issue.
-const PLACEHOLDER_MESSAGES: Pick<SupportMessage, 'id' | 'role' | 'content'>[] = [
-    { id: 1, role: 'assistant', content: 'Hi! I’m the Jiidaa assistant. How can I help you today?' },
-    { id: 2, role: 'user', content: 'How do I find vendors near me?' },
-    {
-        id: 3,
-        role: 'assistant',
-        content: 'You can browse vendors on the website, or message our WhatsApp bot and share your location to see the closest vendors first.',
-    },
-];
+const PLACEHOLDER_MESSAGES: SupportMessage[] = [];
 
 export default function SupportWidget() {
     const [isOpen, setIsOpen] = useState(false);
@@ -119,11 +111,14 @@ export default function SupportWidget() {
                         </button>
                     </div>
 
-                    <div className="flex-1 space-y-3 overflow-y-auto bg-brand-surface px-4 py-4">
-                        {PLACEHOLDER_MESSAGES.map((message) => (
-                            <MessageRow key={message.id} role={message.role} content={message.content} />
-                        ))}
-                    </div>
+                    <SupportThread
+                        messages={PLACEHOLDER_MESSAGES}
+                        isTyping={false}
+                        onQuickPrompt={(text) => {
+                            setDraft(text);
+                            inputRef.current?.focus();
+                        }}
+                    />
 
                     <div className="border-t border-brand-line bg-white px-3 py-3">
                         <div className="flex items-end gap-2">
