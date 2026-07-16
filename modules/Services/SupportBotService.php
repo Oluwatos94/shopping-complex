@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Events\SupportMessageSentEvent;
+use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\SupportConversation;
@@ -20,6 +22,10 @@ final readonly class SupportBotService
     private const MAX_HISTORY_MESSAGES = 20;
 
     private const MAX_TOOL_ITERATIONS = 10;
+
+    private const SEARCH_RADII_KM = [5.0, 15.0, 30.0];
+
+    private const LOOSE_MATCH_NOTE = "\nIMPORTANT: These are CLOSE matches only — no vendor matched the exact product or tag, so these matched via their category or a product description and may NOT offer exactly what the buyer asked for. Tell the buyer these are the closest related vendors and that they should confirm with the vendor directly.";
 
     private const FALLBACK_REPLY = "Sorry, I'm having trouble replying right now. Please try again in a moment, or ask to speak with a human agent and I'll connect you.";
 
@@ -41,28 +47,39 @@ final readonly class SupportBotService
      * history (running tools as needed), and persist + return the
      * assistant message.
      */
-    public function reply(SupportConversation $conversation, string $userText): SupportMessage
+    public function reply(SupportConversation $conversation, string $userText, ?float $lat = null, ?float $lng = null): SupportMessage
     {
-        $this->messageRepository->create([
+
+        $escalated = $conversation->status === SupportConversationStatusEnum::AWAITING_AGENT;
+
+        $userMessage = $this->messageRepository->create([
             'support_conversation_id' => $conversation->id,
             'role' => SupportMessageRoleEnum::USER,
             'sender_id' => $conversation->user_id,
             'content' => $userText,
         ]);
 
+        if ($escalated) {
+            event(new SupportMessageSentEvent($userMessage));
+        }
+
         $assistantMessage = $this->messageRepository->create([
             'support_conversation_id' => $conversation->id,
             'role' => SupportMessageRoleEnum::ASSISTANT,
             'sender_id' => null,
-            'content' => $this->generateReply($conversation),
+            'content' => $this->generateReply($conversation, $lat, $lng),
         ]);
+
+        if ($escalated) {
+            event(new SupportMessageSentEvent($assistantMessage));
+        }
 
         $this->conversationRepository->updateLastMessageAt($conversation->id);
 
         return $assistantMessage;
     }
 
-    private function generateReply(SupportConversation $conversation): string
+    private function generateReply(SupportConversation $conversation, ?float $lat, ?float $lng): string
     {
         try {
             $messages = $this->buildHistory($conversation);
@@ -105,7 +122,7 @@ final readonly class SupportBotService
                     $toolResults[] = [
                         'type' => 'tool_result',
                         'tool_use_id' => $block['id'],
-                        'content' => $this->executeTool((string) $block['name'], $input, $conversation),
+                        'content' => $this->executeTool((string) $block['name'], $input, $conversation, $lat, $lng),
                     ];
                 }
 
@@ -137,14 +154,14 @@ final readonly class SupportBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function executeTool(string $name, array $input, SupportConversation $conversation): string
+    private function executeTool(string $name, array $input, SupportConversation $conversation, ?float $lat, ?float $lng): string
     {
         return match ($name) {
             'search_products' => $this->toolSearchProducts($input),
-            'search_vendors' => $this->toolSearchVendors($input),
+            'search_vendors' => $this->toolSearchVendors($input, $lat, $lng),
             'get_payment_status' => $this->toolGetPaymentStatus($input, $conversation),
             'get_my_subscription' => $this->toolGetMySubscription($conversation),
-            'request_human' => 'Human support agents have been notified and one will join this conversation shortly. Tell the user a human agent will be with them soon.',
+            'request_human' => 'Human support agents have been notified and one will join this conversation shortly. Tell the user a human agent will be with them soon, and keep helping them in the meantime if they ask further questions.',
             default => 'Unknown tool.',
         };
     }
@@ -177,26 +194,73 @@ final readonly class SupportBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function toolSearchVendors(array $input): string
+    private function toolSearchVendors(array $input, ?float $lat, ?float $lng): string
     {
         $query = trim((string) ($input['query'] ?? ''));
         if ($query === '') {
             return 'No search query given.';
         }
 
-        $vendors = $this->vendorService->findByQuery($query);
+        if ($lat === null || $lng === null) {
+            foreach ([false, true] as $loose) {
+                $vendors = $this->vendorService->findByQuery($query, loose: $loose);
 
-        if ($vendors->isEmpty()) {
-            return "No vendor on Jiidaa currently matches \"{$query}\". This only means nothing matches this term — suggest a related term; do NOT invent vendors.";
+                if ($vendors->isNotEmpty()) {
+                    return 'The user has not shared their device location, so these matches are NOT sorted by distance. Found '.count($vendors)." vendor(s) matching \"{$query}\":\n"
+                        .$this->presentVendors($vendors)
+                        .($loose ? self::LOOSE_MATCH_NOTE : '')
+                        ."\nInvite the user to tap the location pin button next to the message box if they want the nearest vendors to them.";
+                }
+            }
+
+            return $this->noVendorMatch($query);
         }
 
-        $lines = $vendors->map(fn (User $vendor) => sprintf(
-            '- %s%s',
-            $vendor->business_name ?? $vendor->name,
-            $vendor->slug ? ' | '.url('/vendors/'.$vendor->slug) : '',
-        ))->implode("\n");
+        foreach ([false, true] as $loose) {
+            foreach (self::SEARCH_RADII_KM as $radius) {
+                $vendors = $this->vendorService->findNearbyByQuery($lat, $lng, $query, $radius, $loose);
 
-        return "Vendors matching \"{$query}\":\n".$lines;
+                if ($vendors->isNotEmpty()) {
+                    return 'Found '.count($vendors)." vendor(s) within {$radius} km:\n"
+                        .$this->presentVendors($vendors)
+                        .($loose ? self::LOOSE_MATCH_NOTE : '');
+                }
+            }
+        }
+
+        foreach ([false, true] as $loose) {
+            $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng, loose: $loose);
+
+            if ($global->isNotEmpty()) {
+                return 'No vendors near the user, but found '.count($global)." elsewhere on the platform (distances shown):\n"
+                    .$this->presentVendors($global)
+                    .($loose ? self::LOOSE_MATCH_NOTE : '');
+            }
+        }
+
+        return $this->noVendorMatch($query);
+    }
+
+    private function noVendorMatch(string $query): string
+    {
+        return "No vendor on Jiidaa currently matches \"{$query}\". This only means nothing matches this term — suggest a related term; do NOT invent vendors.";
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $vendors
+     */
+    private function presentVendors($vendors): string
+    {
+        return $vendors->map(function (User $vendor) {
+            $distance = isset($vendor->distance_km) ? sprintf(' | %.1f km away', (float) $vendor->distance_km) : '';
+
+            return sprintf(
+                '- %s%s%s',
+                $vendor->business_name ?? $vendor->name,
+                $distance,
+                $vendor->slug ? ' | '.url('/vendors/'.$vendor->slug) : '',
+            );
+        })->implode("\n");
     }
 
     /**
@@ -275,7 +339,7 @@ final readonly class SupportBotService
             ],
             [
                 'name' => 'search_vendors',
-                'description' => "Search vendors on Jiidaa by business name, what they sell, or category. Returns each vendor's name, product count and profile link.",
+                'description' => "Search vendors on Jiidaa by business name, what they sell, or category. Automatically uses the buyer's shared device location to return the nearest vendors first, with distance and profile link.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -337,12 +401,13 @@ You are the customer support assistant for Jiidaa, a Nigerian GPS-powered, Whats
 
 WHAT YOU HELP WITH:
 - Finding vendors or products: buyers browse the website or message the Jiidaa WhatsApp bot, share their location, and get the nearest matching vendors. Buying, negotiation and delivery happen directly between buyer and vendor on WhatsApp — Jiidaa does not process orders, buyer payments, or delivery.
-- Becoming a vendor: register on the website, complete onboarding, wait for admin approval, add products and a business location, then choose a subscription plan to become discoverable.
-- Vendor subscriptions: an active paid subscription keeps a vendor's products discoverable; plans and payment are managed from the vendor dashboard.
+- Becoming a vendor: click "Become a vendor" on the website to register your profile, then start adding your products and business location. Subscribe to a plan to enjoy more features.
+- Vendor subscriptions: plans and payment are managed from the vendor dashboard.
 - Account issues and general questions about how Jiidaa works.
 
 TOOLS:
 - Use search_products / search_vendors to answer product or vendor questions with live platform data instead of guessing.
+- Vendor search works without location (by business name or category), but the buyer's device location lets you recommend the NEAREST vendors. If search_vendors reports that no location was shared, share any matches it returned and invite the buyer to tap the location pin button next to the message box to get vendors near them.
 - When the user asks about a subscription payment and gives its payment reference, use get_payment_status. For their current plan, use get_my_subscription. These tools are already scoped to the signed-in user — never ask for or accept another person's account details.
 - If a lookup returns nothing, say so plainly and suggest what to try next — never present invented data as a result.
 
@@ -350,6 +415,7 @@ TONE & LANGUAGE:
 - Be friendly, clear and concise.
 - Reply in the SAME language the user writes in (English, Nigerian Pidgin, Yoruba, Hausa or Igbo) and keep it consistent. When unsure, use simple English.
 - All prices are in Nigerian Naira (₦).
+- You are replying in a small chat window that renders PLAIN TEXT only: never use markdown (no **, *, #, or [text](url)). Write vendor profile links as full bare URLs on their own line.
 
 ACCURACY:
 - Never invent vendors, products, prices, order details or account information. Only state what the tools return or what you know about how Jiidaa works.

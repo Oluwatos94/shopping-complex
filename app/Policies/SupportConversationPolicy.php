@@ -11,11 +11,17 @@ class SupportConversationPolicy
 {
     /**
      * Determine if the user can view (and message in) the support conversation.
-     * Admins can view any conversation so agents can read the thread.
+     * Admins can view any conversation so agents can read the thread; guests
+     * may only touch the guest conversation bound to their own session.
      */
-    public function view(User $user, SupportConversation $conversation): bool
+    public function view(?User $user, SupportConversation $conversation): bool
     {
-        return $conversation->user_id === $user->id || $user->role === 'admin';
+        if ($user !== null) {
+            return $conversation->user_id === $user->id || $user->role === 'admin';
+        }
+
+        return $conversation->user_id === null
+            && (int) session()->get(SupportConversation::GUEST_SESSION_KEY, 0) === $conversation->id;
     }
 
     /**

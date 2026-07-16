@@ -1,16 +1,10 @@
+import { formatTime } from '@/utils/date';
 import { ChatMessage } from '@/types/chat';
 
 interface Props {
     message: ChatMessage;
     isOwn: boolean;
     showTimestamp: boolean;
-}
-
-function formatTime(dateString: string): string {
-    return new Date(dateString).toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-    });
 }
 
 function ReadReceipt({ message }: { message: ChatMessage }) {

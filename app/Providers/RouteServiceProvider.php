@@ -148,6 +148,10 @@ class RouteServiceProvider extends ServiceProvider
                 ->by($request->user()?->id ?: $request->ip());
         });
 
+        RateLimiter::for('support-start', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
+        });
+
         // Support bot interactions - limit to prevent spam
         RateLimiter::for('support', function (Request $request) {
             return [

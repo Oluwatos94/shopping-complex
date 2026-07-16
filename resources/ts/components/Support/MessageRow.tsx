@@ -1,3 +1,4 @@
+import { formatTime } from '@/utils/date';
 import type { SupportMessageRole } from '@/types/support';
 
 interface Props {
@@ -6,11 +7,34 @@ interface Props {
     timestamp?: string;
 }
 
-function formatTime(dateString: string): string {
-    return new Date(dateString).toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-    });
+function Linkified({ content, isUser }: { content: string; isUser: boolean }) {
+    const parts = content.split(/(https?:\/\/[^\s]+)/g);
+
+    return (
+        <>
+            {parts.map((part, i) => {
+                if (!/^https?:\/\//.test(part)) return part;
+
+                // Trailing punctuation belongs to the sentence, not the URL.
+                const trailing = part.match(/[.,!?;:'")\]]+$/)?.[0] ?? '';
+                const url = trailing ? part.slice(0, -trailing.length) : part;
+
+                return (
+                    <span key={i}>
+                        <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`break-all underline underline-offset-2 ${isUser ? 'text-white' : 'text-brand-green hover:text-brand-green-dark'}`}
+                        >
+                            {url}
+                        </a>
+                        {trailing}
+                    </span>
+                );
+            })}
+        </>
+    );
 }
 
 export default function MessageRow({ role, content, timestamp }: Props) {
@@ -33,8 +57,8 @@ export default function MessageRow({ role, content, timestamp }: Props) {
                     Agent
                 </span>
             )}
-            <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${bubbleStyle}`}>
-                {content}
+            <div className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${bubbleStyle}`}>
+                <Linkified content={content} isUser={isUser} />
             </div>
             {timestamp && (
                 <span className="mt-1 text-[10px] text-brand-muted">{formatTime(timestamp)}</span>

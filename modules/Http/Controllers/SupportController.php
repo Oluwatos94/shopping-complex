@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use ModulesShoppingComplex\Http\Requests\SendSupportMessageRequest;
 use ModulesShoppingComplex\Http\Requests\SupportConversationRequest;
 use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
+use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Repositories\SupportConversationRepository;
 use ModulesShoppingComplex\Repositories\SupportMessageRepository;
@@ -21,6 +22,8 @@ class SupportController extends Controller
 {
     use PaginatesResults;
 
+    private const GUEST_MESSAGE_LIMIT = 30;
+
     public function __construct(
         private readonly SupportBotService $supportBotService,
         private readonly SupportEscalationService $escalationService,
@@ -28,19 +31,27 @@ class SupportController extends Controller
         private readonly SupportMessageRepository $messageRepository,
     ) {}
 
-    /**
-     * POST /api/support/conversations
-     * Start a support conversation, reusing the user's open one if any.
-     */
     public function store(SupportConversationRequest $request): JsonResponse
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
 
-        $conversation = $this->conversationRepository->findOpenForUser($userId)
-            ?? $this->conversationRepository->create([
-                'user_id' => $userId,
-                'status' => SupportConversationStatusEnum::BOT,
-            ]);
+        if ($user !== null) {
+            $conversation = $this->conversationRepository->findOpenForUser($user->id)
+                ?? $this->conversationRepository->create([
+                    'user_id' => $user->id,
+                    'status' => SupportConversationStatusEnum::BOT,
+                ]);
+        } else {
+            $conversation = $this->findGuestConversation($request);
+
+            if ($conversation === null) {
+                $conversation = $this->conversationRepository->create([
+                    'user_id' => null,
+                    'status' => SupportConversationStatusEnum::BOT,
+                ]);
+                $request->session()->put(SupportConversation::GUEST_SESSION_KEY, $conversation->id);
+            }
+        }
 
         return response()->json([
             'conversation' => $conversation,
@@ -52,7 +63,7 @@ class SupportController extends Controller
      * GET /api/support/conversations/{conversation}
      * Get a support conversation and its status.
      */
-    public function show(SupportConversation $conversation): JsonResponse
+    public function show(SupportConversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
 
@@ -75,28 +86,36 @@ class SupportController extends Controller
         return $this->paginatedResponse($messages, 'messages');
     }
 
-    /**
-     * POST /api/support/conversations/{conversation}/messages
-     * Customers get a bot reply back (unless a human handoff is in progress);
-     * admins reply as the human agent, claiming the conversation.
-     */
     public function sendMessage(SendSupportMessageRequest $request, SupportConversation $conversation): JsonResponse
     {
         $user = $request->user();
         $content = (string) $request->validated('content');
 
-        if ($user->role === 'admin' && $conversation->user_id !== $user->id) {
+        if ($user !== null && $user->role === 'admin' && $conversation->user_id !== $user->id) {
             $this->authorize('actAsAgent', $conversation);
             $message = $this->escalationService->agentReply($conversation, $user, $content);
-        } elseif (in_array($conversation->status, [
-            SupportConversationStatusEnum::AWAITING_AGENT,
-            SupportConversationStatusEnum::WITH_AGENT,
-        ], true)) {
+        } elseif ($conversation->status === SupportConversationStatusEnum::WITH_AGENT) {
             $this->authorize('view', $conversation);
             $message = $this->escalationService->customerMessage($conversation, $content);
         } else {
             $this->authorize('view', $conversation);
-            $message = $this->supportBotService->reply($conversation, $content);
+
+            if ($conversation->user_id === null
+                && $this->messageRepository->countByRole($conversation->id, SupportMessageRoleEnum::USER) >= self::GUEST_MESSAGE_LIMIT) {
+                return response()->json([
+                    'message' => 'This guest chat has reached its limit. Please sign in to keep getting help.',
+                ], 429);
+            }
+
+            $lat = $request->validated('lat');
+            $lng = $request->validated('lng');
+
+            $message = $this->supportBotService->reply(
+                $conversation,
+                $content,
+                $lat !== null ? (float) $lat : null,
+                $lng !== null ? (float) $lng : null,
+            );
         }
 
         return response()->json([
@@ -135,5 +154,23 @@ class SupportController extends Controller
             'conversation' => $conversation,
             'message' => 'Conversation resolved',
         ]);
+    }
+
+    private function findGuestConversation(Request $request): ?SupportConversation
+    {
+        $id = (int) $request->session()->get(SupportConversation::GUEST_SESSION_KEY, 0);
+        if ($id === 0) {
+            return null;
+        }
+
+        $conversation = $this->conversationRepository->find($id);
+
+        if ($conversation === null
+            || $conversation->user_id !== null
+            || $conversation->status === SupportConversationStatusEnum::RESOLVED) {
+            return null;
+        }
+
+        return $conversation;
     }
 }
