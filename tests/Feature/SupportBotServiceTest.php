@@ -161,7 +161,7 @@ class SupportBotServiceTest extends TestCase
         Product::factory()->create(['name' => 'Red Sneakers', 'price' => 500]);
         $conversation = SupportConversation::factory()->create();
 
-        $reply = $this->app->make(SupportBotService::class)->reply($conversation, 'Do you sell sneakers?');
+        $reply = $this->app->make(SupportBotService::class)->reply($conversation, 'Do you sell sneakers?', 6.5244, 3.3792);
 
         $this->assertSame('Yes, we have Red Sneakers for ₦500.', $reply->content);
         $this->assertCount(2, $fake->payloads);
@@ -183,19 +183,61 @@ class SupportBotServiceTest extends TestCase
         );
     }
 
-    public function test_vendor_search_without_location_falls_back_to_platform_wide_search(): void
+    public function test_search_without_location_asks_for_location_first(): void
+    {
+        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $vendor = User::factory()->create([
+            'role' => 'vendor',
+            'business_name' => 'Shoe Palace',
+            'category_id' => $category->id,
+        ]);
+        Product::factory()->create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'is_active' => true,
+            'name' => 'Leather shoes',
+            'tags' => ['shoes'],
+        ]);
+
+        foreach (['search_vendors', 'search_products'] as $tool) {
+            $fake = $this->bindFakeAi();
+            $fake->queueResponses([
+                [
+                    'stop_reason' => 'tool_use',
+                    'content' => [
+                        ['type' => 'tool_use', 'id' => 'tool_1', 'name' => $tool, 'input' => ['query' => 'shoes']],
+                    ],
+                ],
+                [
+                    'stop_reason' => 'end_turn',
+                    'content' => [['type' => 'text', 'text' => 'Please tap the location pin so I can find shoes near you.']],
+                ],
+            ]);
+
+            $conversation = SupportConversation::factory()->create();
+
+            $this->app->make(SupportBotService::class)->reply($conversation, 'I need shoes');
+
+            $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
+            $this->assertStringContainsString('location pin button', $toolResult, $tool);
+            $this->assertStringContainsString('allow_global', $toolResult, $tool);
+            $this->assertStringNotContainsString('Shoe Palace', $toolResult, $tool);
+        }
+    }
+
+    public function test_vendor_search_without_location_with_allow_global_searches_platform_wide(): void
     {
         $fake = $this->bindFakeAi();
         $fake->queueResponses([
             [
                 'stop_reason' => 'tool_use',
                 'content' => [
-                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'Shoe Palace']],
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'Shoe Palace', 'allow_global' => true]],
                 ],
             ],
             [
                 'stop_reason' => 'end_turn',
-                'content' => [['type' => 'text', 'text' => 'Shoe Palace is on Jiidaa — share your location for nearby options.']],
+                'content' => [['type' => 'text', 'text' => 'Shoe Palace is on Jiidaa.']],
             ],
         ]);
 
@@ -219,8 +261,7 @@ class SupportBotServiceTest extends TestCase
 
         $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
         $this->assertStringContainsString('Shoe Palace', $toolResult);
-        $this->assertStringContainsString('has not shared their device location', $toolResult);
-        $this->assertStringContainsString('location pin button', $toolResult);
+        $this->assertStringContainsString('across all of Jiidaa', $toolResult);
     }
 
     public function test_vendor_search_without_location_and_no_match_reports_nothing_found(): void
@@ -230,7 +271,7 @@ class SupportBotServiceTest extends TestCase
             [
                 'stop_reason' => 'tool_use',
                 'content' => [
-                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'unicorn saddles']],
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'unicorn saddles', 'allow_global' => true]],
                 ],
             ],
             [

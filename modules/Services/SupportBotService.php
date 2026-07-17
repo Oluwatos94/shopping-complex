@@ -31,6 +31,8 @@ final readonly class SupportBotService
 
     private const NOT_SIGNED_IN = 'The user is not signed in, so account-specific data cannot be looked up. Ask them to log in to their Jiidaa account first.';
 
+    private const ASK_FOR_LOCATION = 'NO RESULTS YET — the buyer has not shared their device location. Do not suggest any vendors or products yet. First ask the buyer, in your own words, to tap the location pin button beside the message box and resend their request, so you can find the options nearest to them. Only if the buyer declines or cannot share their location, call the tool again with allow_global set to true to search all of Jiidaa instead.';
+
     public function __construct(
         private AiChatClient $ai,
         private SupportConversationRepository $conversationRepository,
@@ -157,7 +159,7 @@ final readonly class SupportBotService
     private function executeTool(string $name, array $input, SupportConversation $conversation, ?float $lat, ?float $lng): string
     {
         return match ($name) {
-            'search_products' => $this->toolSearchProducts($input),
+            'search_products' => $this->toolSearchProducts($input, $lat, $lng),
             'search_vendors' => $this->toolSearchVendors($input, $lat, $lng),
             'get_payment_status' => $this->toolGetPaymentStatus($input, $conversation),
             'get_my_subscription' => $this->toolGetMySubscription($conversation),
@@ -169,11 +171,15 @@ final readonly class SupportBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function toolSearchProducts(array $input): string
+    private function toolSearchProducts(array $input, ?float $lat, ?float $lng): string
     {
         $query = trim((string) ($input['query'] ?? ''));
         if ($query === '') {
             return 'No search query given.';
+        }
+
+        if (($lat === null || $lng === null) && ! (bool) ($input['allow_global'] ?? false)) {
+            return self::ASK_FOR_LOCATION;
         }
 
         $products = $this->productService->searchProducts($query, 5)->items();
@@ -188,7 +194,7 @@ final readonly class SupportBotService
             return sprintf('- %s | ₦%s | sold by %s', $product->name, number_format((float) $product->price, 0), $vendorName);
         }, $products);
 
-        return "Products matching \"{$query}\":\n".implode("\n", $lines);
+        return "Products matching \"{$query}\" (product listings are platform-wide and not distance-sorted; use search_vendors with the same query to find the vendors nearest the buyer):\n".implode("\n", $lines);
     }
 
     /**
@@ -202,14 +208,17 @@ final readonly class SupportBotService
         }
 
         if ($lat === null || $lng === null) {
+            if (! (bool) ($input['allow_global'] ?? false)) {
+                return self::ASK_FOR_LOCATION;
+            }
+
             foreach ([false, true] as $loose) {
                 $vendors = $this->vendorService->findByQuery($query, loose: $loose);
 
                 if ($vendors->isNotEmpty()) {
-                    return 'The user has not shared their device location, so these matches are NOT sorted by distance. Found '.count($vendors)." vendor(s) matching \"{$query}\":\n"
+                    return 'Found '.count($vendors)." vendor(s) matching \"{$query}\" across all of Jiidaa (buyer location unknown, so no distances are available):\n"
                         .$this->presentVendors($vendors)
-                        .($loose ? self::LOOSE_MATCH_NOTE : '')
-                        ."\nInvite the user to tap the location pin button next to the message box if they want the nearest vendors to them.";
+                        .($loose ? self::LOOSE_MATCH_NOTE : '');
                 }
             }
 
@@ -228,11 +237,13 @@ final readonly class SupportBotService
             }
         }
 
+        $maxRadius = max(self::SEARCH_RADII_KM);
+
         foreach ([false, true] as $loose) {
             $global = $this->vendorService->findByQuery($query, lat: $lat, lng: $lng, loose: $loose);
 
             if ($global->isNotEmpty()) {
-                return 'No vendors near the user, but found '.count($global)." elsewhere on the platform (distances shown):\n"
+                return "No matching vendors within {$maxRadius} km of the buyer, but ".count($global)." matching vendor(s) exist elsewhere on Jiidaa (distances shown where known). Tell the buyer both facts and share these:\n"
                     .$this->presentVendors($global)
                     .($loose ? self::LOOSE_MATCH_NOTE : '');
             }
@@ -328,22 +339,24 @@ final readonly class SupportBotService
         return [
             [
                 'name' => 'search_products',
-                'description' => 'Search products listed on Jiidaa by name, description or tag. Use this to answer "do you sell X?" or price questions with real data. Keep the query to the core keyword(s).',
+                'description' => 'Search products listed on Jiidaa by name, description or tag. Use this to answer "do you sell X?" or price questions with real data. Results are platform-wide, not distance-sorted. Keep the query to the core keyword(s).',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
                         'query' => ['type' => 'string', 'description' => 'The core product keyword(s), e.g. "sneakers".'],
+                        'allow_global' => ['type' => 'boolean', 'description' => 'Search without the buyer\'s location. Set true only after the buyer has declined or cannot share their location, or when proximity clearly does not matter to their question.'],
                     ],
                     'required' => ['query'],
                 ],
             ],
             [
                 'name' => 'search_vendors',
-                'description' => "Search vendors on Jiidaa by business name, what they sell, or category. Automatically uses the buyer's shared device location to return the nearest vendors first, with distance and profile link.",
+                'description' => "Search vendors on Jiidaa by business name, what they sell, or category. Uses the buyer's shared device location to return the nearest vendors first, with distance and profile link. Without a shared location it asks you to get the buyer to share it first.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
                         'query' => ['type' => 'string', 'description' => 'The vendor name, product or category to search for.'],
+                        'allow_global' => ['type' => 'boolean', 'description' => 'Search without the buyer\'s location. Set true only after the buyer has declined or cannot share their location, or when proximity clearly does not matter to their question.'],
                     ],
                     'required' => ['query'],
                 ],
@@ -406,8 +419,9 @@ WHAT YOU HELP WITH:
 - Account issues and general questions about how Jiidaa works.
 
 TOOLS:
-- Use search_products / search_vendors to answer product or vendor questions with live platform data instead of guessing.
-- Vendor search works without location (by business name or category), but the buyer's device location lets you recommend the NEAREST vendors. If search_vendors reports that no location was shared, share any matches it returned and invite the buyer to tap the location pin button next to the message box to get vendors near them.
+- Use search_products / search_vendors to answer product or vendor questions with live platform data instead of guessing. search_vendors also matches what vendors sell, so it is the tool for "who sells X near me".
+- LOCATION FIRST: Jiidaa connects buyers to vendors NEAR them. When a buyer asks for a product or vendor and has not shared their device location, do not suggest any vendors or products yet — first ask them to tap the location pin button next to the message box and resend their message, so you can recommend the nearest options. Only if they decline or cannot share it, search again with allow_global true and present platform-wide results.
+- Tool results are raw data plus notes addressed to YOU. Never repeat tool output word-for-word — always rewrite it as your own natural reply to the buyer.
 - When the user asks about a subscription payment and gives its payment reference, use get_payment_status. For their current plan, use get_my_subscription. These tools are already scoped to the signed-in user — never ask for or accept another person's account details.
 - If a lookup returns nothing, say so plainly and suggest what to try next — never present invented data as a result.
 

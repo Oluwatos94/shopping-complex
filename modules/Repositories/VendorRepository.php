@@ -34,13 +34,13 @@ class VendorRepository extends BasePageRepository
             ->where('role', 'vendor')
             ->with(['media', 'vendorOnboarding']);
 
-        // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula
+        // If GPS coordinates are provided, join addresses and calculate distance using Haversine formula.
         $haversine = "(6371 * acos(
             cos(radians(?)) *
-            cos(radians(COALESCE({$addressTable}.latitude, 0))) *
-            cos(radians(COALESCE({$addressTable}.longitude, 0)) - radians(?)) +
+            cos(radians({$addressTable}.latitude)) *
+            cos(radians({$addressTable}.longitude) - radians(?)) +
             sin(radians(?)) *
-            sin(radians(COALESCE({$addressTable}.latitude, 0)))
+            sin(radians({$addressTable}.latitude))
         ))";
 
         if ($latitude && $longitude) {
@@ -86,7 +86,7 @@ class VendorRepository extends BasePageRepository
 
         match ($sortBy) {
             'distance' => $latitude && $longitude
-                ? $query->orderBy('distance_km', 'asc')
+                ? $query->orderByRaw('distance_km IS NULL, distance_km asc')
                 : $query->orderBy('created_at', 'desc'),
             'rating' => $query->orderByDesc('reviews_avg_rating')->orderByDesc('created_at'),
             'relevance' => $query->orderByDesc('active_products_count')->orderByDesc('created_at'),
