@@ -73,10 +73,36 @@ export default function SupportWidget() {
     useEffect(() => {
         if (!isOpen || window.matchMedia('(min-width: 640px)').matches) return;
 
-        const original = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        const panel = panelRef.current;
+        const scrollY = window.scrollY;
+        const body = document.body.style;
+        const prev = { position: body.position, top: body.top, left: body.left, right: body.right, overflow: body.overflow };
+        body.position = 'fixed';
+        body.top = `-${scrollY}px`;
+        body.left = '0';
+        body.right = '0';
+        body.overflow = 'hidden';
+
+        const vv = window.visualViewport;
+        const update = () => {
+            if (!panel || !vv) return;
+            panel.style.height = `${vv.height}px`;
+            panel.style.transform = `translateY(${vv.offsetTop}px)`;
+        };
+
+        update();
+        vv?.addEventListener('resize', update);
+        vv?.addEventListener('scroll', update);
+
         return () => {
-            document.body.style.overflow = original;
+            vv?.removeEventListener('resize', update);
+            vv?.removeEventListener('scroll', update);
+            if (panel) {
+                panel.style.height = '';
+                panel.style.transform = '';
+            }
+            Object.assign(body, prev);
+            window.scrollTo(0, scrollY);
         };
     }, [isOpen]);
 
