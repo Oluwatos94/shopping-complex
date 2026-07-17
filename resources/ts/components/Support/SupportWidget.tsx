@@ -67,7 +67,17 @@ export default function SupportWidget() {
     }, [isOpen, close]);
 
     useEffect(() => {
-        if (isOpen) inputRef.current?.focus();
+        if (isOpen && window.matchMedia('(min-width: 640px)').matches) inputRef.current?.focus();
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen || window.matchMedia('(min-width: 640px)').matches) return;
+
+        const original = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = original;
+        };
     }, [isOpen]);
 
     if (auth?.user?.role === 'admin') return null;
@@ -98,7 +108,7 @@ export default function SupportWidget() {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Jiidaa support chat"
-                    className="fixed inset-0 z-50 flex flex-col bg-white sm:inset-auto sm:bottom-5 sm:right-5 sm:h-[560px] sm:max-h-[calc(100vh-2.5rem)] sm:w-[380px] sm:rounded-2xl sm:border sm:border-brand-line sm:shadow-2xl overflow-hidden"
+                    className="fixed inset-0 z-50 flex h-dvh flex-col bg-white sm:inset-auto sm:bottom-5 sm:right-5 sm:h-[560px] sm:max-h-[calc(100vh-2.5rem)] sm:w-[380px] sm:rounded-2xl sm:border sm:border-brand-line sm:shadow-2xl overflow-hidden"
                 >
                     <div className="flex items-center justify-between bg-brand-ink px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -171,7 +181,7 @@ export default function SupportWidget() {
                         </div>
                     )}
 
-                    <div className="border-t border-brand-line bg-white px-3 py-3">
+                    <div className="border-t border-brand-line bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                         <div className="flex items-end gap-2">
                             <button
                                 type="button"
