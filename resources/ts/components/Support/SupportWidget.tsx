@@ -14,6 +14,7 @@ export default function SupportWidget() {
     const { conversation, messages, isTyping, isLoading, error, hasLocation, hasOlderMessages, loadOlderMessages, shareLocation, sendMessage, retry } = useSupportChat(isOpen);
 
     const close = useCallback(() => {
+        inputRef.current?.blur();
         setIsOpen(false);
         launcherRef.current?.focus();
     }, []);
@@ -90,11 +91,17 @@ export default function SupportWidget() {
             panel.style.transform = `translateY(${vv.offsetTop}px)`;
         };
 
+        const keepTop = () => {
+            if (window.scrollY !== 0) window.scrollTo(0, 0);
+        };
+
         update();
         vv?.addEventListener('resize', update);
         vv?.addEventListener('scroll', update);
+        window.addEventListener('scroll', keepTop);
 
         return () => {
+            window.removeEventListener('scroll', keepTop);
             vv?.removeEventListener('resize', update);
             vv?.removeEventListener('scroll', update);
             if (panel) {
@@ -234,7 +241,7 @@ export default function SupportWidget() {
                                 rows={1}
                                 placeholder="Type your message…"
                                 aria-label="Type your message"
-                                className="max-h-28 flex-1 resize-none rounded-xl border border-brand-line bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-brand-muted focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green"
+                                className="max-h-28 flex-1 resize-none rounded-xl border border-brand-line bg-gray-50 px-3.5 py-2.5 text-base text-gray-900 placeholder-brand-muted focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green sm:text-sm"
                             />
                             <button
                                 type="button"
