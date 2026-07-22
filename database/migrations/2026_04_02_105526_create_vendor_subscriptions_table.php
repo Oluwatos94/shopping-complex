@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorSubscription;
 
 return new class extends Migration
 {

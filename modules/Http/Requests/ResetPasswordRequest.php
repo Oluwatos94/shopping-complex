@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Requests;
 
-use App\Http\Requests\BaseFormRequest;
 use Illuminate\Validation\Rules\Password;
+use ModulesShoppingComplex\Shared\Http\Requests\BaseFormRequest;
 
 class ResetPasswordRequest extends BaseFormRequest
 {

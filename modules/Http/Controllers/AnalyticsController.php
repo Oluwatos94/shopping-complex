@@ -10,8 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Services\AnalyticsService;
-use ModulesShoppingComplex\Services\SubscriptionService;
 
 class AnalyticsController extends Controller
 {

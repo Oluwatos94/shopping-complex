@@ -5,8 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\ProductView;
 use ModulesShoppingComplex\Models\User;
 

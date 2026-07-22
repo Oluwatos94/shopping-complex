@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Requests;
 
-use App\Http\Requests\BaseFormRequest;
+use ModulesShoppingComplex\Shared\Http\Requests\BaseFormRequest;
 
 class ImageUploadRequest extends BaseFormRequest
 {

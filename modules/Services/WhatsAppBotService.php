@@ -6,10 +6,10 @@ namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppSessionStateEnum;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\WhatsAppInteraction;
 use ModulesShoppingComplex\Models\WhatsAppSession;

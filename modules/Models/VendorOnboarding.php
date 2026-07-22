@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
  * @property int $id

@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;

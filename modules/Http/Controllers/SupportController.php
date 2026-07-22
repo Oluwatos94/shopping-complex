@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Controllers;
 
-use App\Http\Controllers\Concerns\PaginatesResults;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +16,7 @@ use ModulesShoppingComplex\Repositories\SupportConversationRepository;
 use ModulesShoppingComplex\Repositories\SupportMessageRepository;
 use ModulesShoppingComplex\Services\SupportBotService;
 use ModulesShoppingComplex\Services\SupportEscalationService;
+use ModulesShoppingComplex\Shared\Http\Concerns\PaginatesResults;
 
 class SupportController extends Controller
 {

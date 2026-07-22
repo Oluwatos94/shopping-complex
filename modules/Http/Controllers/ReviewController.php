@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Controllers;
 
-use App\Http\Controllers\Concerns\PaginatesResults;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +16,7 @@ use ModulesShoppingComplex\Models\Enums\UserEnum;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\ReviewService;
+use ModulesShoppingComplex\Shared\Http\Concerns\PaginatesResults;
 
 class ReviewController extends Controller
 {

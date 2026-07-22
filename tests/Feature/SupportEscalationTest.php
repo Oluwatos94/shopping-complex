@@ -14,7 +14,7 @@ use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Models\SupportMessage;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 use Tests\TestCase;
 
 class SupportEscalationTest extends TestCase

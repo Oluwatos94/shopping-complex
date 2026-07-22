@@ -7,7 +7,7 @@ namespace ModulesShoppingComplex\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use ModulesShoppingComplex\Models\Enums\WhatsAppSessionStateEnum;
-use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
  * @property int $id

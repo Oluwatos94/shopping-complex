@@ -5,17 +5,19 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Services;
 
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Catalog\Services\ProductService;
 use ModulesShoppingComplex\Events\SupportMessageSentEvent;
 use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Models\SupportMessage;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Repositories\SubscriptionRepository;
 use ModulesShoppingComplex\Repositories\SupportConversationRepository;
 use ModulesShoppingComplex\Repositories\SupportMessageRepository;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 
 final readonly class SupportBotService
 {

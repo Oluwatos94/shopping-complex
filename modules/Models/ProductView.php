@@ -9,8 +9,9 @@ use Database\Factories\ProductViewFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
-use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
  * @property int $id

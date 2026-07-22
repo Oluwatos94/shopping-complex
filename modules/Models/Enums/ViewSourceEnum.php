@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Models\Enums;
 
-use App\Traits\EnumToArray;
+use ModulesShoppingComplex\Shared\Support\EnumToArray;
 
 enum ViewSourceEnum: string
 {

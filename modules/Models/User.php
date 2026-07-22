@@ -13,9 +13,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
  * @property int $id

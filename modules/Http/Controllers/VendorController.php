@@ -15,21 +15,21 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
+use ModulesShoppingComplex\Catalog\Http\Requests\UploadProductRequest;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Http\Requests\SaveOnboardingRequest;
 use ModulesShoppingComplex\Http\Requests\SubmitOnboardingRequest;
 use ModulesShoppingComplex\Http\Requests\UpdateVendorProfileRequest;
-use ModulesShoppingComplex\Http\Requests\UploadProductRequest;
 use ModulesShoppingComplex\Http\Requests\VendorRegisterRequest;
 use ModulesShoppingComplex\Http\Requests\VendorRequest;
 use ModulesShoppingComplex\Models\Address;
-use ModulesShoppingComplex\Models\Category;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
 use ModulesShoppingComplex\Services\ReviewService;
-use ModulesShoppingComplex\Services\SubscriptionService;
 use ModulesShoppingComplex\Services\VendorService;
 
 class VendorController extends Controller
@@ -46,7 +46,7 @@ class VendorController extends Controller
     public function index(VendorRequest $request): Response
     {
         $filters = $request->getFilters();
-        $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 100);
+        $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 48);
 
         $vendorIds = $vendors->getCollection()->pluck('id')->all();
         $ratingStatsByVendor = $this->reviewService->getBulkVendorRatingStats($vendorIds);

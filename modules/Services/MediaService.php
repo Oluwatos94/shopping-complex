@@ -33,7 +33,7 @@ class MediaService
     /**
      * Upload and store a single image for a model
      *
-     * @param  string  $modelType  e.g., 'ModulesShoppingComplex\Models\Product'
+     * @param  string  $modelType  e.g., 'ModulesShoppingComplex\Catalog\Models\Product'
      * @return array{success: bool, media?: Media, error?: string}
      */
     public function uploadImage(

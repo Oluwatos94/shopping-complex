@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\ProductView;
 use ModulesShoppingComplex\Models\ProfileView;
 use ModulesShoppingComplex\Models\User;

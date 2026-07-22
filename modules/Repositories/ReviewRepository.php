@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\UserEnum;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\Review;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class ReviewRepository extends BasePageRepository
 {

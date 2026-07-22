@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Notification;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class NotificationRepository extends BasePageRepository
 {

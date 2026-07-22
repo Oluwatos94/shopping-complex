@@ -4,19 +4,19 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use ModulesShoppingComplex\Models\Category;
-use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Models\Product>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Catalog\Models\Product>
  */
 class ProductFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Models\Product>
+     * @var class-string<\ModulesShoppingComplex\Catalog\Models\Product>
      */
     protected $model = Product::class;
 

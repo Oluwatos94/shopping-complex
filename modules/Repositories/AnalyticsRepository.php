@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class AnalyticsRepository extends BasePageRepository
 {

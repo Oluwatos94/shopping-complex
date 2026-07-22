@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use ModulesShoppingComplex\Models\Category;
-use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\WhatsAppSession;
 use ModulesShoppingComplex\Repositories\WhatsAppSessionRepository;

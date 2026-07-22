@@ -11,7 +11,7 @@ use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Models\SupportConversation;
 use ModulesShoppingComplex\Models\SupportMessage;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 use Tests\TestCase;
 
 class SupportApiTest extends TestCase

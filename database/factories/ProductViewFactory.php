@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\Product;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\ProductView;
 use ModulesShoppingComplex\Models\User;
 

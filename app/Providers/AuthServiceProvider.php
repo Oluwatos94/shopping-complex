@@ -6,13 +6,13 @@ namespace App\Providers;
 
 use App\Policies\ConversationPolicy;
 use App\Policies\NotificationPolicy;
-use App\Policies\ProductPolicy;
 use App\Policies\ReviewPolicy;
 use App\Policies\SupportConversationPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Catalog\Policies\ProductPolicy;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Notification;
-use ModulesShoppingComplex\Models\Product;
 use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\SupportConversation;
 

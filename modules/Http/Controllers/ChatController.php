@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Controllers;
 
-use App\Http\Controllers\Concerns\PaginatesResults;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +14,7 @@ use ModulesShoppingComplex\Http\Requests\StartConversationRequest;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\ChatService;
+use ModulesShoppingComplex\Shared\Http\Concerns\PaginatesResults;
 
 class ChatController extends Controller
 {

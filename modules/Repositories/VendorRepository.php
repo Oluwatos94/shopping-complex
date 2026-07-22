@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,6 +11,7 @@ use ModulesShoppingComplex\Models\Address;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class VendorRepository extends BasePageRepository
 {

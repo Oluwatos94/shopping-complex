@@ -14,7 +14,7 @@ use ModulesShoppingComplex\Models\WhatsAppInteraction;
 use ModulesShoppingComplex\Models\WhatsAppSession;
 use ModulesShoppingComplex\Repositories\WhatsAppInteractionRepository;
 use ModulesShoppingComplex\Repositories\WhatsAppSessionRepository;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 
 final readonly class WhatsAppAiBotService
 {
@@ -447,7 +447,7 @@ final readonly class WhatsAppAiBotService
         }
 
         $lines = $products->map(function (\Illuminate\Database\Eloquent\Model $p) {
-            /** @var \ModulesShoppingComplex\Models\Product $p */
+            /** @var \ModulesShoppingComplex\Catalog\Models\Product $p */
             return sprintf(
                 '- %s | ₦%s',
                 $p->name,

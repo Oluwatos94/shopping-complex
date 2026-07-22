@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Support\Collection;
 use ModulesShoppingComplex\Models\NotificationPreference;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class NotificationPreferenceRepository extends BasePageRepository
 {

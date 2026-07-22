@@ -8,10 +8,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Jobs\SendWhatsAppMessage;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorSubscription;
 use Tests\TestCase;
 
 class PaystackWebhookTest extends TestCase

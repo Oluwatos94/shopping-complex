@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Http\Requests;
 
-use App\Http\Requests\BaseFormRequest;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use ModulesShoppingComplex\Shared\Http\Requests\BaseFormRequest;
 
 class LoginRequest extends BaseFormRequest
 {

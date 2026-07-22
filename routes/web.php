@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
+use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
+use ModulesShoppingComplex\Catalog\Http\Controllers\CategoryController;
+use ModulesShoppingComplex\Catalog\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
@@ -9,16 +13,12 @@ use ModulesShoppingComplex\Http\Controllers\Auth\ForgotPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\ResetPasswordController;
 use ModulesShoppingComplex\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
-use ModulesShoppingComplex\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\GeoController;
 use ModulesShoppingComplex\Http\Controllers\HomeController;
 use ModulesShoppingComplex\Http\Controllers\NotificationController;
-use ModulesShoppingComplex\Http\Controllers\PaystackWebhookController;
-use ModulesShoppingComplex\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
 use ModulesShoppingComplex\Http\Controllers\ReviewController;
-use ModulesShoppingComplex\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Http\Controllers\SupportController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
 use ModulesShoppingComplex\Http\Controllers\WhatsAppController;

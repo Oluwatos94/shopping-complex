@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Models\SupportMessage;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class SupportMessageRepository extends BasePageRepository
 {

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Models\SupportConversation;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class SupportConversationRepository extends BasePageRepository
 {
