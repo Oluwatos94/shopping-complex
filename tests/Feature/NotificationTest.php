@@ -7,9 +7,9 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use ModulesShoppingComplex\Events\MessageReceivedEvent;
-use ModulesShoppingComplex\Events\VendorContactRequestEvent;
-use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Notifications\Events\VendorContactRequestEvent;
+use ModulesShoppingComplex\Notifications\Models\Notification;
 use Tests\TestCase;
 
 class NotificationTest extends TestCase

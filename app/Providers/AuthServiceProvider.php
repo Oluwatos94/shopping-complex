@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Policies\ConversationPolicy;
-use App\Policies\NotificationPolicy;
-use App\Policies\ReviewPolicy;
-use App\Policies\SupportConversationPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Catalog\Policies\ProductPolicy;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Notification;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\SupportConversation;
+use ModulesShoppingComplex\Notifications\Models\Notification;
+use ModulesShoppingComplex\Notifications\Policies\NotificationPolicy;
+use ModulesShoppingComplex\Reviews\Models\Review;
+use ModulesShoppingComplex\Reviews\Policies\ReviewPolicy;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Policies\SupportConversationPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {

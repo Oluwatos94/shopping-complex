@@ -10,12 +10,12 @@ use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\SupportMessage;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\SupportBotService;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Models\SupportMessage;
+use ModulesShoppingComplex\Support\Services\SupportBotService;
 use RuntimeException;
 use Tests\TestCase;
 

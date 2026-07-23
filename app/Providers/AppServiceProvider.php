@@ -21,10 +21,11 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Services\GeoLocationService;
-use ModulesShoppingComplex\Services\WhatsAppApiService;
 use ModulesShoppingComplex\Shared\Ai\ClaudeClient;
 use ModulesShoppingComplex\Shared\Ai\GeminiClient;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use ModulesShoppingComplex\WhatsApp\Services\WhatsAppApiService;
 use Soneso\StellarSDK\Network;
 use Soneso\StellarSDK\Soroban\SorobanServer;
 use Soneso\StellarSDK\StellarSDK;
@@ -48,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerStellar();
 
         $this->app->singleton(WhatsAppApiService::class);
+        $this->app->bind(WhatsAppSender::class, WhatsAppApiService::class);
 
         $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
             apiKey: (string) config('services.claude.api_key'),

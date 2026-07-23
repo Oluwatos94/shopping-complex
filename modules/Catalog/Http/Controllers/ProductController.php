@@ -18,9 +18,9 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Catalog\Services\ProductService;
 use ModulesShoppingComplex\Http\Requests\ImageUploadRequest;
 use ModulesShoppingComplex\Models\Media;
+use ModulesShoppingComplex\Reviews\Services\ReviewService;
 use ModulesShoppingComplex\Services\AnalyticsService;
 use ModulesShoppingComplex\Services\MediaService;
-use ModulesShoppingComplex\Services\ReviewService;
 
 class ProductController extends Controller
 {

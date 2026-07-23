@@ -7,14 +7,14 @@ namespace ModulesShoppingComplex\Billing\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
-use ModulesShoppingComplex\Services\WhatsAppApiService;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
 
 class SendRenewalFailedWhatsApp implements ShouldQueue
 {
     use InteractsWithQueue;
 
     public function __construct(
-        private readonly WhatsAppApiService $whatsApp,
+        private readonly WhatsAppSender $whatsApp,
     ) {}
 
     public function handle(SubscriptionRenewalFailed $event): void

@@ -8,14 +8,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
-use ModulesShoppingComplex\Services\WhatsAppApiService;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
 
 class SendSubscriptionPaymentWhatsApp implements ShouldQueue
 {
     use InteractsWithQueue;
 
     public function __construct(
-        private readonly WhatsAppApiService $whatsApp,
+        private readonly WhatsAppSender $whatsApp,
     ) {}
 
     public function handle(SubscriptionPaymentSucceeded $event): void

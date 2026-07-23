@@ -6,9 +6,9 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
-use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Reviews\Models\Review;
 
 /**
  * @extends Factory<Review>

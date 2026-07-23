@@ -7,14 +7,11 @@ namespace ModulesShoppingComplex\Repositories;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
+use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 
 class AnalyticsRepository extends BasePageRepository
 {
-    /**
-     * Count conversations (chat contacts) for a vendor in a date range.
-     */
     public function getChatContactCount(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('conversations')
@@ -39,9 +36,6 @@ class AnalyticsRepository extends BasePageRepository
             ->get();
     }
 
-    /**
-     * Count profile views for a vendor in a date range.
-     */
     public function getProfileViewCount(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('profile_views')
@@ -66,9 +60,6 @@ class AnalyticsRepository extends BasePageRepository
             ->get();
     }
 
-    /**
-     * Count total product views for a vendor in a date range.
-     */
     public function getProductViewCount(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('product_views')
@@ -96,9 +87,6 @@ class AnalyticsRepository extends BasePageRepository
             ->get();
     }
 
-    /**
-     * Calculate average price of distinct viewed products.
-     */
     public function getAverageViewValue(int $vendorId, Carbon $startDate, Carbon $endDate): float
     {
         $subquery = DB::table('product_views')
@@ -117,9 +105,6 @@ class AnalyticsRepository extends BasePageRepository
         return round((float) ($result ?? 0), 2);
     }
 
-    /**
-     * Get follower count for vendor.
-     */
     public function getFollowerCount(int $vendorId): int
     {
         return DB::table('vendor_followers')
@@ -127,9 +112,6 @@ class AnalyticsRepository extends BasePageRepository
             ->count();
     }
 
-    /**
-     * Get active product count for vendor.
-     */
     public function getActiveProductCount(int $vendorId): int
     {
         return DB::table('products')
@@ -139,9 +121,6 @@ class AnalyticsRepository extends BasePageRepository
             ->count();
     }
 
-    /**
-     * Count how many times this vendor appeared in WhatsApp search results (VENDOR_VIEWED events).
-     */
     public function getWhatsAppSearchAppearances(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('whatsapp_interactions')
@@ -151,9 +130,6 @@ class AnalyticsRepository extends BasePageRepository
             ->count();
     }
 
-    /**
-     * Count how many buyers viewed this vendor's product catalogue via WhatsApp.
-     */
     public function getWhatsAppCatalogueViews(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('whatsapp_interactions')
@@ -163,9 +139,6 @@ class AnalyticsRepository extends BasePageRepository
             ->count();
     }
 
-    /**
-     * Count how many buyers requested this vendor's contact via WhatsApp.
-     */
     public function getWhatsAppContactRequests(int $vendorId, Carbon $startDate, Carbon $endDate): int
     {
         return DB::table('whatsapp_interactions')

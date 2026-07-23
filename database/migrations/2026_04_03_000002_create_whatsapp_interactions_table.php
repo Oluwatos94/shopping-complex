@@ -6,9 +6,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\WhatsAppInteraction;
+use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
+use ModulesShoppingComplex\WhatsApp\Models\WhatsAppInteraction;
 
 return new class extends Migration
 {

@@ -16,8 +16,10 @@ use Illuminate\Notifications\Notifiable;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Notifications\Models\Notification;
+use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Reviews\Models\Review;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**

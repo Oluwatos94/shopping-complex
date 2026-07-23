@@ -7,11 +7,11 @@ namespace ModulesShoppingComplex\Services\Auth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use ModulesShoppingComplex\Events\SystemAlertEvent;
-use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
+use ModulesShoppingComplex\Notifications\Models\Notification;
+use ModulesShoppingComplex\Notifications\Services\NotificationService;
 use ModulesShoppingComplex\Repositories\UserRepository;
-use ModulesShoppingComplex\Services\NotificationService;
 
 class AuthService
 {

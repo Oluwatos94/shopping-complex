@@ -14,15 +14,10 @@ use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Billing\Payments\PaymentResult;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
-use ModulesShoppingComplex\Jobs\SendWhatsAppMessage;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
 use Tests\TestCase;
 
-/**
- * The checkout side of Deliverable 3: a settled Stellar deposit fires
- * SubscriptionPaymentSucceeded, whose queued listener WhatsApps the vendor.
- * (The renewal side is covered in RenewVendorSubscriptionsTest.)
- */
 class SubscriptionWhatsAppNotificationTest extends TestCase
 {
     use RefreshDatabase;
@@ -31,8 +26,6 @@ class SubscriptionWhatsAppNotificationTest extends TestCase
     {
         parent::setUp();
 
-        // Capture only the WhatsApp job; the queued listener itself still runs
-        // (sync queue), exactly as it would in production.
         Queue::fake([SendWhatsAppMessage::class]);
     }
 

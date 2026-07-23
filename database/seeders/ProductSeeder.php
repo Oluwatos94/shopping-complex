@@ -12,9 +12,9 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Models\Conversation;
 use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Models\Media;
-use ModulesShoppingComplex\Models\Review;
 use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Reviews\Models\Review;
 
 class ProductSeeder extends Seeder
 {

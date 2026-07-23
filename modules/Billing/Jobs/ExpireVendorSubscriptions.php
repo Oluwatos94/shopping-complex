@@ -11,8 +11,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
-use ModulesShoppingComplex\Events\SystemAlertEvent;
-use ModulesShoppingComplex\Services\NotificationService;
+use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
+use ModulesShoppingComplex\Notifications\Services\NotificationService;
 
 class ExpireVendorSubscriptions implements ShouldBeUnique, ShouldQueue
 {

@@ -5,6 +5,7 @@ use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\ProductController;
+use ModulesShoppingComplex\Catalog\Http\Controllers\VendorProductController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminAuthController;
 use ModulesShoppingComplex\Http\Controllers\Admin\AdminController;
 use ModulesShoppingComplex\Http\Controllers\AnalyticsController;
@@ -16,12 +17,15 @@ use ModulesShoppingComplex\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Http\Controllers\ChatController;
 use ModulesShoppingComplex\Http\Controllers\GeoController;
 use ModulesShoppingComplex\Http\Controllers\HomeController;
-use ModulesShoppingComplex\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Http\Controllers\ProfileController;
-use ModulesShoppingComplex\Http\Controllers\ReviewController;
-use ModulesShoppingComplex\Http\Controllers\SupportController;
 use ModulesShoppingComplex\Http\Controllers\VendorController;
-use ModulesShoppingComplex\Http\Controllers\WhatsAppController;
+use ModulesShoppingComplex\Http\Controllers\VendorDashboardController;
+use ModulesShoppingComplex\Http\Controllers\VendorOnboardingController;
+use ModulesShoppingComplex\Http\Controllers\VendorRegistrationController;
+use ModulesShoppingComplex\Notifications\Http\Controllers\NotificationController;
+use ModulesShoppingComplex\Reviews\Http\Controllers\ReviewController;
+use ModulesShoppingComplex\Support\Http\Controllers\SupportController;
+use ModulesShoppingComplex\WhatsApp\Http\Controllers\WhatsAppController;
 
 // WhatsApp Webhook Routes (public — Meta servers cannot authenticate)
 Route::get('/webhook/whatsapp', [WhatsAppController::class, 'verify'])->name('whatsapp.webhook.verify');
@@ -234,25 +238,25 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
 
 // Vendor Dashboard & Product Management
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
-    Route::get('/', [VendorController::class, 'dashboard'])->name('vendor.dashboard');
-    Route::get('/products', [VendorController::class, 'vendorProducts'])->name('vendor.products.index');
+    Route::get('/', [VendorDashboardController::class, 'dashboard'])->name('vendor.dashboard');
+    Route::get('/products', [VendorDashboardController::class, 'vendorProducts'])->name('vendor.products.index');
 });
 
 // Vendor Registration & Onboarding Routes
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
-    Route::get('/register', [VendorController::class, 'register'])->name('vendor.register');
-    Route::get('/onboarding', [VendorController::class, 'onboarding'])->name('vendor.onboarding');
-    Route::get('/onboarding/success', [VendorController::class, 'onboardingSuccess'])->name('vendor.onboarding.success');
+    Route::get('/register', [VendorRegistrationController::class, 'register'])->name('vendor.register');
+    Route::get('/onboarding', [VendorOnboardingController::class, 'onboarding'])->name('vendor.onboarding');
+    Route::get('/onboarding/success', [VendorOnboardingController::class, 'onboardingSuccess'])->name('vendor.onboarding.success');
 });
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
-    Route::post('/register', [VendorController::class, 'storeRegistration'])->name('vendor.register.store');
-    Route::post('/profile/update', [VendorController::class, 'updateProfile'])->name('vendor.profile.update');
-    Route::post('/products/upload', [VendorController::class, 'uploadProduct'])->name('vendor.products.upload');
-    Route::post('/products/{productId}/update', [VendorController::class, 'updateProduct'])->name('vendor.products.update');
-    Route::delete('/products/{productId}', [VendorController::class, 'deleteProduct'])->name('vendor.products.delete');
-    Route::post('/onboarding/save', [VendorController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
-    Route::post('/onboarding/submit', [VendorController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
+    Route::post('/register', [VendorRegistrationController::class, 'storeRegistration'])->name('vendor.register.store');
+    Route::post('/profile/update', [VendorDashboardController::class, 'updateProfile'])->name('vendor.profile.update');
+    Route::post('/products/upload', [VendorProductController::class, 'uploadProduct'])->name('vendor.products.upload');
+    Route::post('/products/{productId}/update', [VendorProductController::class, 'updateProduct'])->name('vendor.products.update');
+    Route::delete('/products/{productId}', [VendorProductController::class, 'deleteProduct'])->name('vendor.products.delete');
+    Route::post('/onboarding/save', [VendorOnboardingController::class, 'saveOnboarding'])->name('vendor.onboarding.save');
+    Route::post('/onboarding/submit', [VendorOnboardingController::class, 'submitOnboarding'])->name('vendor.onboarding.submit');
 });
 
 // User Profile Routes

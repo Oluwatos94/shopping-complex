@@ -24,8 +24,8 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\ChargeFailedException;
 use ModulesShoppingComplex\Billing\Payments\Stellar\Contracts\RecurringCharger;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
 use ModulesShoppingComplex\Billing\Services\SubscriptionAuthorizationService;
-use ModulesShoppingComplex\Events\SystemAlertEvent;
-use ModulesShoppingComplex\Services\NotificationService;
+use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
+use ModulesShoppingComplex\Notifications\Services\NotificationService;
 
 class RenewVendorSubscriptions implements ShouldBeUnique, ShouldQueue
 {

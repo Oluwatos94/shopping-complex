@@ -3,18 +3,18 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\Notification;
 use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Notifications\Models\Notification;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Models\Notification>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Notifications\Models\Notification>
  */
 class NotificationFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Models\Notification>
+     * @var class-string<\ModulesShoppingComplex\Notifications\Models\Notification>
      */
     protected $model = Notification::class;
 
