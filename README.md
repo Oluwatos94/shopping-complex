@@ -1,27 +1,59 @@
-# Shopping Complex
+# Jiidaa
 
-A modern marketplace platform connecting customers with vendors in real-time. Built with Laravel 11, React, TypeScript, and Inertia.js.
+A GPS-powered marketplace that connects buyers with nearby vendors in real time — discover vendors around you, browse their products, and reach them straight through WhatsApp. Built with Laravel 12, React, TypeScript, and Inertia.js.
+
+> The repository/package name is `shopping-complex`; **Jiidaa** is the product brand.
 
 ## Features
 
-- 🛍️ **Real-time vendor connections** - Connect with vendors instantly like Uber/Bolt
-- **Category-based browsing** - Browse vendors by product categories
-- **Live chat** - Direct messaging between customers and vendors
-- **Order tracking** - Real-time order status updates
-- **Review system** - Customer reviews and ratings
-- **Modern UI** - Responsive design with TailwindCSS
+- **GPS vendor discovery** — find vendors near you, ranked by distance, rating, or relevance
+- **WhatsApp bot** — an AI-assisted bot lets buyers search for products and reach vendors over WhatsApp
+- **Product catalog** — vendors list products with images/video, organised by category
+- **Reviews & ratings** — customer reviews with helpful-vote support
+- **Payments** — vendor subscriptions via Paystack and Stellar (SEP-24 / on-chain recurring charges)
+- **Vendor onboarding** — self-service registration, onboarding flow, and a vendor dashboard
+- **Notifications & support** — in-app notifications, email fallback, and a support conversation channel
+- **Analytics** — product- and profile-view tracking for vendors and admins
+- **Real-time** — live updates over Laravel Reverb (WebSockets)
 
 ## Tech Stack
 
 ### Backend
-- **Laravel 11** - PHP framework
-- **MySQL** - Database
+- **Laravel 12** — PHP framework
+- **MySQL** — database
+- **Laravel Reverb** — WebSockets / broadcasting
+- **PHPStan** + **Laravel Pint** — static analysis & formatting
 
 ### Frontend
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Inertia.js** - SPA without API
-- **TailwindCSS** - Styling
+- **React 18** — UI library
+- **TypeScript** — type safety
+- **Inertia.js 2** — SPA without a separate API
+- **TailwindCSS 3** — styling
+
+## Architecture
+
+Jiidaa is a **modular monolith** organised into domain-oriented vertical slices. `app/` holds framework
+wiring only (providers, middleware, Inertia); all domain code lives in `modules/` under the
+`ModulesShoppingComplex\` namespace (PSR-4 → `modules/`). Each domain owns its full stack —
+`Models/ Enums/ Services/ Repositories/ Http/ Jobs/ Events/ Listeners/ Policies/` — and domains depend
+on one another only through published contracts and events, never by reaching into another domain's
+repositories or models.
+
+Domains:
+
+| Domain | Responsibility |
+| --- | --- |
+| `Shared/` | Cross-cutting kernel — base repository/request, pagination, AI chat clients, helpers |
+| `Identity/` | Users, addresses, auth, profiles, vendor registration & onboarding |
+| `Catalog/` | Products, categories, attributes |
+| `Discovery/` | GPS/geolocation search, nearby-vendor ranking, follow |
+| `Media/` | Polymorphic image/video storage (`morphs('model')`) |
+| `Reviews/` | Reviews, votes |
+| `Support/` | Support conversations, escalation, support bot |
+| `Notifications/` | In-app + email notifications and preferences |
+| `Analytics/` | Product- and profile-view tracking |
+| `Billing/` | Subscriptions and payments (Paystack + Stellar) |
+| `WhatsApp/` | WhatsApp API integration and AI bot |
 
 ## Prerequisites
 
@@ -72,9 +104,7 @@ php artisan key:generate
 
 ### 5. Database Setup
 
-#### Option A: MySQL (Recommended for Production)
-
-Update `.env` file with your MySQL credentials:
+Update `.env` with your MySQL credentials:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -86,7 +116,6 @@ DB_PASSWORD=your_password
 
 Create the database:
 ```bash
-# MySQL command line
 mysql -u your_username -p
 CREATE DATABASE shopping_complex;
 exit;
@@ -104,106 +133,90 @@ php artisan migrate
 php artisan db:seed
 ```
 
-### 8. Build Frontend Assets
+### 8. Link Storage
+
+Media (product images, avatars) is served from the public disk, so create the symlink:
+```bash
+php artisan storage:link
+```
+
+### 9. Build Frontend Assets
 
 Development mode with hot reload:
 ```bash
-bun run dev
-# or
-npm run dev
+bun run dev   # or: npm run dev
 ```
 
 Production build:
 ```bash
-bun run build
-# or
-npm run build
+bun run build   # or: npm run build
 ```
 
 ## Running the Application
 
-### Option 1: Using Composer Dev Script (Recommended)
+### Option 1: Using the Composer Dev Script (Recommended)
 
-This starts all services (Laravel server, Vite, queue worker, and logs):
+Starts every service at once — Laravel server, queue worker, log tail (Pail), Vite, and Reverb:
 ```bash
 composer dev
 ```
 
-The application will be available at: **http://localhost:8000**
+The application will be available at **http://localhost:8000**.
 
 ### Option 2: Manual Start
 
-In separate terminal windows:
+In separate terminals:
 
-**Terminal 1 - Laravel Server:**
 ```bash
-php artisan serve
-```
-
-**Terminal 2 - Vite Dev Server:**
-```bash
-bun run dev
-```
-
-**Terminal 3 - Queue Worker (Optional):**
-```bash
-php artisan queue:work
+php artisan serve        # Laravel server
+bun run dev              # Vite dev server
+php artisan queue:work   # Queue worker (payments, notifications, jobs)
+php artisan reverb:start  # WebSocket server (real-time)
 ```
 
 ## Project Structure
 
 ```
 shopping-complex/
-├── app/
-│   └── Http/
-│       ├── Controllers/      # Controllers
-│       └── Middleware/        # Middleware
-├── modules/                   # Modular architecture
-│   ├── User/
-│   │   ├── Models/           # User model
-│   │   ├── Controllers/      # User controllers
-│   │   ├── Services/         # Business logic
-│   │   └── Repositories/     # Data access
-│   ├── Product/
-│   ├── Order/
-│   ├── Customer/
-│   ├── Review/
-│   ├── Category/
-│   ├── Media/
-│   └── Notification/
+├── app/                         # Framework wiring only
+│   ├── Http/                    # Middleware, Inertia request handling
+│   └── Providers/               # Service providers (bindings, morph map, events)
+├── modules/                     # Domain-oriented modular monolith (ModulesShoppingComplex\)
+│   ├── Shared/                  # Cross-cutting kernel (base classes, AI clients, helpers)
+│   ├── Identity/                # Users, auth, profiles, vendor onboarding
+│   ├── Catalog/                 # Products, categories, attributes
+│   ├── Discovery/               # GPS search, nearby vendors, follow
+│   ├── Media/                   # Polymorphic media storage
+│   ├── Reviews/                 # Reviews & votes
+│   ├── Support/                 # Support conversations & bot
+│   ├── Notifications/           # Notifications & preferences
+│   ├── Analytics/               # Product/profile view tracking
+│   ├── Billing/                 # Subscriptions & payments (Paystack, Stellar)
+│   └── WhatsApp/                # WhatsApp API + AI bot
+│       ├── Models/  Enums/  Services/  Repositories/
+│       └── Http/  Jobs/  Events/  Listeners/  Policies/  Contracts/
 ├── database/
-│   ├── migrations/           # Database migrations
-│   └── seeders/              # Database seeders
+│   ├── migrations/              # Database migrations
+│   ├── factories/               # Model factories
+│   └── seeders/                 # Database seeders
 ├── resources/
-│   ├── css/
-│   │   └── app.css           # Global styles
-│   ├── ts/                   # TypeScript source
-│   │   ├── components/       # React components
-│   │   │   ├── Layout/       # Layout components
-│   │   │   ├── Header.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   └── ...
-│   │   ├── pages/            # Page components
-│   │   │   └── index.tsx     # Home page
-│   │   ├── types/            # TypeScript types
-│   │   │   ├── index.ts      # Central export
-│   │   │   ├── user.ts       # User types
-│   │   │   ├── product.ts    # Product types
-│   │   │   ├── common.ts     # Shared types
-│   │   │   └── landing.ts    # Landing types
-│   │   ├── app.tsx           # React entry point
-│   │   └── layouts.tsx       # Layout wrapper
-│   └── views/
-│       └── app.blade.php     # Main Blade template
+│   ├── css/app.css              # Global styles
+│   ├── ts/                      # TypeScript source
+│   │   ├── components/          # React components (incl. Layout/)
+│   │   ├── pages/               # Inertia page components
+│   │   ├── types/               # Shared TypeScript types
+│   │   ├── app.tsx              # React entry point
+│   │   └── layouts.tsx          # Layout wrapper
+│   └── views/app.blade.php      # Root Blade template
 ├── routes/
-│   ├── web.php               # Web routes
-│   └── api.php               # API routes
-├── public/                   # Public assets
-├── tailwind.config.js        # Tailwind configuration
-├── tsconfig.json             # TypeScript configuration
-├── vite.config.js            # Vite configuration
-├── phpstan.neon              # PHPStan configuration
-└── composer.json             # PHP dependencies
+│   ├── web.php                  # Web routes
+│   ├── api.php                  # API routes
+│   └── channels.php             # Broadcast channel authorization
+├── tailwind.config.js
+├── tsconfig.json
+├── vite.config.js
+├── phpstan.neon
+└── composer.json
 ```
 
 ## TypeScript Configuration
@@ -216,7 +229,6 @@ The project uses path aliases for cleaner imports:
 // Instead of: import { User } from '../../../types/user'
 import { User } from '@/types';
 
-// Available aliases:
 import Header from '@/components/Header';
 import { BaseLayout } from '@/layouts/BaseLayout';
 import { Product } from '@/types';
@@ -232,57 +244,61 @@ import { Product } from '@/types';
 
 ## Code Quality
 
-### Run PHPStan
+### PHPStan (static analysis)
 
 ```bash
 composer phpstan
 ```
 
+### Laravel Pint (formatting)
+
+```bash
+vendor/bin/pint          # format
+vendor/bin/pint --dirty  # only changed files
+```
+
+### Tests
+
+```bash
+php artisan test
+```
+
 ### TypeScript Type Checking
 
 ```bash
-bun run tsc --noEmit
-# or
-npm run tsc --noEmit
+bun run tsc --noEmit   # or: npm run tsc --noEmit
 ```
 
 ## Development Workflow
 
-### 1. Start Development Servers
+1. **Start dev servers**: `composer dev`
+2. **Make changes**:
+   - Backend: `modules/<Domain>/`, `app/`, `routes/`
+   - Frontend: `resources/ts/`
+3. **Hot reload**: Vite reloads the frontend automatically; restart the server for backend changes.
+4. **Database changes**:
+   ```bash
+   php artisan make:migration create_something_table
+   php artisan migrate
+   ```
 
-```bash
-composer dev
-```
+## Brand Palette
 
-### 2. Make Changes
+The rebrand uses the `brand.*` Tailwind tokens (see `tailwind.config.js`):
 
-- **Backend**: Edit files in `app/`, `modules/`, `routes/`
-- **Frontend**: Edit files in `resources/ts/`
+- **Ink**: `#0B1F3A`
+- **Green**: `#25D366` (primary action) / **Green-dark**: `#1EB85A`
+- **Surface**: `#F8FAFC`
+- **Muted**: `#667085`
+- **Line**: `#E4E7EC`
+- **Danger**: `#F04438`
+- **Star**: `#F5C518`
 
-### 3. Hot Reload
+## Troubleshooting
 
-Vite will automatically reload changes. For backend changes, restart the server.
+### Images not displaying
 
-### 4. Database Changes
-
-Create migration:
-```bash
-php artisan make:migration create_something_table
-```
-
-Run migrations:
-```bash
-php artisan migrate
-```
-## Color Scheme
-
-The application uses a custom color palette:
-
-- **Primary Olive**: `#86885e`
-- **Primary Dark**: `#272518`
-- **Primary Light**: `#cacfca`
-- **Primary Brown**: `#523026`
-- **Primary Peach**: `#d49f89`
+Ensure the storage symlink exists: `php artisan storage:link`.
 
 ### Database connection errors
 
