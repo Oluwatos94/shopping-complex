@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -20,7 +21,9 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Ai\ClaudeClient;
 use ModulesShoppingComplex\Shared\Ai\GeminiClient;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
@@ -79,6 +82,13 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        // Existing media.model_type rows store the pre-restructure FQCNs. Map them
+        // so polymorphic lookups keep matching after models moved to domain modules.
+        Relation::morphMap([
+            'ModulesShoppingComplex\Models\User' => User::class,
+            'ModulesShoppingComplex\Models\Product' => Product::class,
+        ]);
 
         Event::listen(SubscriptionPaymentSucceeded::class, SendSubscriptionPaymentWhatsApp::class);
         Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
