@@ -38,7 +38,7 @@ class ProductController extends Controller
         $userLat = isset($locationFilters['latitude']) ? (float) $locationFilters['latitude'] : null;
         $userLon = isset($locationFilters['longitude']) ? (float) $locationFilters['longitude'] : null;
 
-        $products = $this->productService->index(perPage: 100, locationFilters: $locationFilters);
+        $products = $this->productService->index(perPage: 48, locationFilters: $locationFilters);
         $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
         );
 
