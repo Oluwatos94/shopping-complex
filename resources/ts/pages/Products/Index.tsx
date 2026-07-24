@@ -5,6 +5,7 @@ import ProductGrid from '@/components/Products/partials/ProductGrid';
 import FilterSidebar from '@/components/Products/partials/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 interface ProductsPageProps {
     products: PaginatedProducts;
@@ -109,12 +110,12 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     ];
 
     return (
-        <div className="min-h-screen bg-brand-surface font-display text-brand-ink">
+        <div className="flex min-h-screen flex-col bg-brand-surface font-display text-brand-ink">
             <Head title="Products - jiidaa" />
 
             <Header />
 
-            <div className="mx-auto max-w-[1380px] px-5 pb-20 pt-8 lg:px-10">
+            <main className="mx-auto w-full max-w-[1380px] flex-1 px-5 pb-20 pt-8 lg:px-10">
                 {/* Page head */}
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -289,7 +290,9 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
                         )}
                     </section>
                 </div>
-            </div>
+            </main>
+
+            <Footer />
 
             {/* Mobile filter drawer */}
             {showMobileFilters && (

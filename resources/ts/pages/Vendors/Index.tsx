@@ -4,6 +4,7 @@ import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from 
 import { Category } from '@/types/product';
 import { VendorGrid } from '@/components/Vendors';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 interface VendorListingProps {
     vendors: PaginatedVendors;
@@ -123,6 +124,22 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
         );
     }, [searchQuery, radius, sortBy, categoryId, userLocation]);
 
+    const didMountSearch = useRef(false);
+    useEffect(() => {
+        if (!didMountSearch.current) {
+            didMountSearch.current = true;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            if (searchQuery !== (filters.search || '')) {
+                handleSearch({ search: searchQuery, page: 1 });
+            }
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     // Restore location from URL filters only (no auto-prompt)
     useEffect(() => {
         if (filters.latitude && filters.longitude) {
@@ -135,7 +152,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
     }, [filters.latitude, filters.longitude]);
 
     return (
-        <div className="min-h-screen bg-brand-surface font-display text-brand-ink">
+        <div className="flex min-h-screen flex-col bg-brand-surface font-display text-brand-ink">
             <Head title="Find Nearby Vendors" />
 
             <Header />
@@ -169,7 +186,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 </div>
             )}
 
-            <div className="mx-auto max-w-[1380px] px-5 pb-20 pt-8 lg:px-10">
+            <main className="mx-auto w-full max-w-[1380px] flex-1 px-5 pb-20 pt-8 lg:px-10">
                 {/* Page head */}
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -382,7 +399,9 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                         </button>
                     </div>
                 )}
-            </div>
+            </main>
+
+            <Footer />
         </div>
     );
 }
