@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ModulesShoppingComplex\Analytics\Models;
+
+use Carbon\Carbon;
+use Database\Factories\ProfileViewFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
+
+/**
+ * @property int $id
+ * @property int $vendor_id
+ * @property int|null $viewer_id
+ * @property string|null $ip_address
+ * @property ViewSourceEnum $source
+ * @property Carbon $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $vendor
+ * @property-read User|null $viewer
+ */
+class ProfileView extends Model
+{
+    use HasFactory, HasTableName;
+
+    /** {@inheritdoc} */
+    protected $fillable = [
+        'vendor_id',
+        'viewer_id',
+        'ip_address',
+        'source',
+    ];
+
+    /** {@inheritdoc} */
+    protected $casts = [
+        'source' => ViewSourceEnum::class,
+    ];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'vendor_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function viewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'viewer_id');
+    }
+
+    protected static function newFactory(): ProfileViewFactory
+    {
+        return ProfileViewFactory::new();
+    }
+}

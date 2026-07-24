@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 
 /**
  * @extends Factory<Conversation>

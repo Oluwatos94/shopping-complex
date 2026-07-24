@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Events;
 
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Notifications\Events\BaseNotificationEvent;
 
 class MessageReceivedEvent extends BaseNotificationEvent
 {

@@ -5,26 +5,27 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use ModulesShoppingComplex\Events\SubscriptionPaymentSucceeded;
-use ModulesShoppingComplex\Events\SubscriptionRenewalFailed;
-use ModulesShoppingComplex\Listeners\SendRenewalFailedWhatsApp;
-use ModulesShoppingComplex\Listeners\SendSubscriptionPaymentWhatsApp;
-use ModulesShoppingComplex\Services\ClaudeClient;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
-use ModulesShoppingComplex\Services\GeminiClient;
-use ModulesShoppingComplex\Services\GeoLocationService;
-use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
-use ModulesShoppingComplex\Services\Payments\PaystackProvider;
-use ModulesShoppingComplex\Services\Payments\Stellar\AnchorClient;
-use ModulesShoppingComplex\Services\Payments\Stellar\Contracts\RecurringCharger;
-use ModulesShoppingComplex\Services\Payments\Stellar\SorobanCharger;
-use ModulesShoppingComplex\Services\Payments\Stellar\StellarDepositService;
-use ModulesShoppingComplex\Services\Payments\Stellar\StellarProvider;
-use ModulesShoppingComplex\Services\Payments\Stellar\StellarSigner;
-use ModulesShoppingComplex\Services\Payments\Stellar\StellarTestnetFunder;
-use ModulesShoppingComplex\Services\Payments\Stellar\StellarWalletService;
-use ModulesShoppingComplex\Services\PaystackClient;
-use ModulesShoppingComplex\Services\WhatsAppApiService;
+use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
+use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
+use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
+use ModulesShoppingComplex\Billing\Listeners\SendSubscriptionPaymentWhatsApp;
+use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
+use ModulesShoppingComplex\Billing\Payments\PaystackProvider;
+use ModulesShoppingComplex\Billing\Payments\Stellar\AnchorClient;
+use ModulesShoppingComplex\Billing\Payments\Stellar\Contracts\RecurringCharger;
+use ModulesShoppingComplex\Billing\Payments\Stellar\SorobanCharger;
+use ModulesShoppingComplex\Billing\Payments\Stellar\StellarDepositService;
+use ModulesShoppingComplex\Billing\Payments\Stellar\StellarProvider;
+use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
+use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
+use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
+use ModulesShoppingComplex\Billing\Services\PaystackClient;
+use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
+use ModulesShoppingComplex\Shared\Ai\ClaudeClient;
+use ModulesShoppingComplex\Shared\Ai\GeminiClient;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use ModulesShoppingComplex\WhatsApp\Services\WhatsAppApiService;
 use Soneso\StellarSDK\Network;
 use Soneso\StellarSDK\Soroban\SorobanServer;
 use Soneso\StellarSDK\StellarSDK;
@@ -48,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerStellar();
 
         $this->app->singleton(WhatsAppApiService::class);
+        $this->app->bind(WhatsAppSender::class, WhatsAppApiService::class);
 
         $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
             apiKey: (string) config('services.claude.api_key'),

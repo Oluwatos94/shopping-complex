@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Reviews\Models\Review;
 
 return new class extends Migration
 {
@@ -26,7 +26,6 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->text('comment')->nullable();
 
-            // Moderation fields
             $table->enum('status', ReviewStatusEnum::values())->default(ReviewStatusEnum::PENDING->value);
             $table->foreignId('moderated_by')->nullable()->constrained(User::getTableName())->onDelete('set null');
             $table->timestamp('moderated_at')->nullable();
@@ -36,17 +35,14 @@ return new class extends Migration
             $table->unsignedInteger('helpful_count')->default(0);
             $table->unsignedInteger('not_helpful_count')->default(0);
 
-            // Vendor response
             $table->text('vendor_response')->nullable();
             $table->timestamp('vendor_responded_at')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
 
-            // Prevent duplicate reviews from same customer to same vendor
             $table->unique(['customer_id', 'vendor_id'], 'unique_customer_vendor_review');
 
-            // Indexes for efficient querying
             $table->index('customer_id');
             $table->index(['vendor_id', 'status', 'created_at']);
             $table->index(['vendor_id', 'rating']);

@@ -5,8 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorContact;
+use ModulesShoppingComplex\Discovery\Models\VendorContact;
+use ModulesShoppingComplex\Identity\Models\User;
 
 return new class extends Migration
 {

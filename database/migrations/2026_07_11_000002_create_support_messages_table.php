@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\SupportMessage;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Models\SupportMessage;
 
 return new class extends Migration
 {

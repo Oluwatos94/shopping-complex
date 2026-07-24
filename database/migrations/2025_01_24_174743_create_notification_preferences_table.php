@@ -5,8 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\NotificationPreference;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Notifications\Models\NotificationPreference;
 
 return new class extends Migration
 {

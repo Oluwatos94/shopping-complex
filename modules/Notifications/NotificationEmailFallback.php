@@ -8,7 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use ModulesShoppingComplex\Models\Notification as NotificationModel;
+use ModulesShoppingComplex\Notifications\Models\Notification as NotificationModel;
 
 class NotificationEmailFallback extends Notification implements ShouldQueue
 {

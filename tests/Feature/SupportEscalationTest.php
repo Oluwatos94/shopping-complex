@@ -7,14 +7,14 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Event;
-use ModulesShoppingComplex\Events\SupportMessageSentEvent;
-use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
-use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\Notification;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\SupportMessage;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Notifications\Models\Notification;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
+use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
+use ModulesShoppingComplex\Support\Events\SupportMessageSentEvent;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Models\SupportMessage;
 use Tests\TestCase;
 
 class SupportEscalationTest extends TestCase

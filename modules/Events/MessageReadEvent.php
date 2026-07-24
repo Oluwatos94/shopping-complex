@@ -9,8 +9,8 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 
 class MessageReadEvent implements ShouldBroadcast
 {

@@ -7,13 +7,13 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use ModulesShoppingComplex\Events\ReviewReceivedEvent;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Enums\ReviewStatusEnum;
-use ModulesShoppingComplex\Models\Enums\WhatsAppInteractionEventEnum;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\ReviewVote;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
+use ModulesShoppingComplex\Reviews\Events\ReviewReceivedEvent;
+use ModulesShoppingComplex\Reviews\Models\Review;
+use ModulesShoppingComplex\Reviews\Models\ReviewVote;
+use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 use Tests\TestCase;
 
 class ReviewTest extends TestCase

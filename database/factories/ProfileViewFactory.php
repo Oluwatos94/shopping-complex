@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\ProfileView;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Analytics\Models\ProfileView;
+use ModulesShoppingComplex\Identity\Models\User;
 
 /**
  * @extends Factory<ProfileView>

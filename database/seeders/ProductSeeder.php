@@ -7,14 +7,14 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use ModulesShoppingComplex\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
+use ModulesShoppingComplex\Media\Models\Media;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\Models\Media;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Reviews\Models\Review;
 
 class ProductSeeder extends Seeder
 {

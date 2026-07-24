@@ -10,8 +10,8 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\ChatMessage;
-use ModulesShoppingComplex\Models\User;
 
 class MessageSentEvent implements ShouldBroadcast
 {

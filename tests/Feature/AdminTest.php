@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorOnboarding;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
 use Tests\TestCase;
 
 class AdminTest extends TestCase

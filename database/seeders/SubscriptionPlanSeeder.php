@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 
 class SubscriptionPlanSeeder extends Seeder
 {

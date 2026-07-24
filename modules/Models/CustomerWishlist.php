@@ -5,7 +5,9 @@ namespace ModulesShoppingComplex\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use ModulesShoppingComplex\ModuleTraits\HasTableName;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
  * @property int $id

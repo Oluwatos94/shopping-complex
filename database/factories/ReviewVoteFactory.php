@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\ReviewVote;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Reviews\Models\Review;
+use ModulesShoppingComplex\Reviews\Models\ReviewVote;
 
 /**
  * @extends Factory<ReviewVote>

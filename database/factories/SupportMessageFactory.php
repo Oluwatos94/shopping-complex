@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\SupportMessage;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Models\SupportMessage;
 
 /**
  * @extends Factory<SupportMessage>

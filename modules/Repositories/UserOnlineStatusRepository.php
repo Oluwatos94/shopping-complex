@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use ModulesShoppingComplex\Models\UserOnlineStatus;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class UserOnlineStatusRepository extends BasePageRepository
 {
