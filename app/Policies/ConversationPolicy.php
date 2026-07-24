@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 
 class ConversationPolicy
 {

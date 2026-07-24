@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Address;
+use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;

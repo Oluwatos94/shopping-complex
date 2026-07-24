@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Reviews\Events;
 
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Events\BaseNotificationEvent;
 
 class ReviewReceivedEvent extends BaseNotificationEvent

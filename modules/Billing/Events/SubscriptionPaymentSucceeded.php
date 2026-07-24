@@ -7,7 +7,7 @@ namespace ModulesShoppingComplex\Billing\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 /**
  * A subscription payment settled — either an initial/manual checkout

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Notifications\Events;
 
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class VendorContactRequestEvent extends BaseNotificationEvent
 {

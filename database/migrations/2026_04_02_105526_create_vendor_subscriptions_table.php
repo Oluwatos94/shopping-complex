@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 return new class extends Migration
 {

@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Support\Models\SupportConversation;
 
 /*

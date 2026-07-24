@@ -14,7 +14,7 @@ use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Billing\Payments\PaymentResult;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
 use Tests\TestCase;
 

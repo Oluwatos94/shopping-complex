@@ -6,7 +6,7 @@ namespace ModulesShoppingComplex\Reviews\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class StoreReviewRequest extends FormRequest
 {

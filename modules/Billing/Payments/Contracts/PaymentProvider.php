@@ -8,7 +8,7 @@ use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\PaymentResult;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 /**
  * A swappable payment rail for vendor subscriptions.
@@ -20,10 +20,8 @@ use ModulesShoppingComplex\Models\User;
  */
 interface PaymentProvider
 {
-    /** The method this provider handles; its key in the PaymentProviderManager. */
     public function method(): PaymentMethodEnum;
 
-    /** Whether this rail can settle automatic recurring renewals (e.g. Stellar MPP). */
     public function supportsRecurring(): bool;
 
     /**

@@ -8,8 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use ModulesShoppingComplex\Http\Requests\VendorResponseRequest;
-use ModulesShoppingComplex\Models\Enums\UserEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Enums\UserEnum;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Reviews\Http\Requests\ModerateReviewRequest;
 use ModulesShoppingComplex\Reviews\Http\Requests\StoreReviewRequest;
@@ -26,10 +26,6 @@ class ReviewController extends Controller
         private readonly ReviewService $reviewService
     ) {}
 
-    /**
-     * GET /vendors/{vendorSlug}/reviews
-     * Get public reviews for a vendor.
-     */
     public function index(string $vendorSlug, Request $request): JsonResponse
     {
         $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
@@ -44,10 +40,6 @@ class ReviewController extends Controller
         return $this->paginatedResponse($reviews, 'reviews');
     }
 
-    /**
-     * GET /vendors/{vendorSlug}/reviews/stats
-     * Get rating statistics for a vendor.
-     */
     public function stats(string $vendorSlug): JsonResponse
     {
         $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
@@ -61,10 +53,6 @@ class ReviewController extends Controller
         return response()->json($stats);
     }
 
-    /**
-     * GET /vendors/{vendorSlug}/reviews/can-review
-     * Check if current user can review the vendor.
-     */
     public function canReview(string $vendorSlug, Request $request): JsonResponse
     {
         $user = $request->user();
@@ -94,10 +82,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * POST /reviews
-     * Submit a new review.
-     */
     public function store(StoreReviewRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -122,10 +106,6 @@ class ReviewController extends Controller
         }
     }
 
-    /**
-     * GET /reviews/{review}
-     * Get a specific review.
-     */
     public function show(Review $review, Request $request): JsonResponse
     {
         $this->authorize('view', $review);
@@ -144,10 +124,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * PUT /reviews/{review}
-     * Update an existing review.
-     */
     public function update(UpdateReviewRequest $request, Review $review): JsonResponse
     {
         $validated = $request->validated();
@@ -165,10 +141,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /reviews/{review}
-     * Delete a review.
-     */
     public function destroy(Review $review): JsonResponse
     {
         $this->authorize('delete', $review);
@@ -180,10 +152,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * POST /reviews/{review}/vote
-     * Vote on a review (helpful/not helpful).
-     */
     public function vote(Review $review, Request $request): JsonResponse
     {
         $this->authorize('vote', $review);
@@ -208,10 +176,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /reviews/{review}/vote
-     * Remove vote from a review.
-     */
     public function removeVote(Review $review, Request $request): JsonResponse
     {
         $this->authorize('vote', $review);
@@ -228,10 +192,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * POST /reviews/{review}/respond
-     * Add vendor response to a review.
-     */
     public function respond(VendorResponseRequest $request, Review $review): JsonResponse
     {
         $this->authorize('respond', $review);
@@ -246,10 +206,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * GET /my-reviews
-     * Get reviews written by the current user.
-     */
     public function myReviews(Request $request): JsonResponse
     {
         $perPage = $this->getPerPage($request);
@@ -258,10 +214,6 @@ class ReviewController extends Controller
         return $this->paginatedResponse($reviews, 'reviews');
     }
 
-    /**
-     * GET /admin/reviews/pending
-     * Get reviews pending moderation (admin only).
-     */
     public function pending(Request $request): JsonResponse
     {
         $this->authorize('moderate', Review::class);
@@ -272,10 +224,6 @@ class ReviewController extends Controller
         return $this->paginatedResponse($reviews, 'reviews');
     }
 
-    /**
-     * POST /admin/reviews/{review}/moderate
-     * Moderate a review (approve/reject).
-     */
     public function moderate(ModerateReviewRequest $request, Review $review): JsonResponse
     {
         $validated = $request->validated();
@@ -301,10 +249,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * GET /vendor/reviews
-     * Get all reviews for the authenticated vendor.
-     */
     public function vendorReviews(Request $request): JsonResponse
     {
         $user = $request->user();

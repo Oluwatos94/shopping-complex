@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Catalog\Policies;
 
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class ProductPolicy
 {
@@ -28,7 +28,6 @@ class ProductPolicy
             return true;
         }
 
-        // Vendors can only view their own products
         return $user->role === 'vendor' && $product->vendor_id === $user->id;
     }
 

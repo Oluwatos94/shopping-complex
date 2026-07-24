@@ -9,7 +9,7 @@ use Database\Factories\SupportMessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
 

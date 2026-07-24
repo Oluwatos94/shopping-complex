@@ -7,7 +7,7 @@ namespace ModulesShoppingComplex\Reviews\Services;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Services\NotificationService;
 use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Reviews\Events\ReviewReceivedEvent;

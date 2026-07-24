@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Media\Models\Media;
 use ModulesShoppingComplex\Models\CustomerWishlist;
-use ModulesShoppingComplex\Models\Media;
-use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**

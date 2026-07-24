@@ -11,7 +11,7 @@ use ModulesShoppingComplex\Billing\Models\AnchorTransaction;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 /**
  * Owns the Anchor (SEP-24) payment lifecycle: opening an interactive deposit and reconciling

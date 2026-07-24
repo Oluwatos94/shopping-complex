@@ -10,7 +10,7 @@ use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Support\Models\SupportConversation;
@@ -310,7 +310,7 @@ class SupportBotServiceTest extends TestCase
             'business_name' => 'Shoe Palace',
             'category_id' => $category->id,
         ]);
-        \ModulesShoppingComplex\Models\Address::create([
+        \ModulesShoppingComplex\Identity\Models\Address::create([
             'user_id' => $vendor->id,
             'street' => '1 Marina Rd',
             'city' => 'Lagos',

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationRepository;
 use Tests\TestCase;

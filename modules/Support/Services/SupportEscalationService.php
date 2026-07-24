@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Support\Services;
 
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Repositories\UserRepository;
 use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Notifications\Services\NotificationService;
-use ModulesShoppingComplex\Repositories\UserRepository;
 use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Support\Events\SupportMessageSentEvent;

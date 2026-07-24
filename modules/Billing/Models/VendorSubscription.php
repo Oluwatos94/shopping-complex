@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**

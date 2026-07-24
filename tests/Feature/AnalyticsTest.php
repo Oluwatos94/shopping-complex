@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use ModulesShoppingComplex\Analytics\Models\ProductView;
+use ModulesShoppingComplex\Analytics\Models\ProfileView;
 use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\ProductView;
-use ModulesShoppingComplex\Models\ProfileView;
-use ModulesShoppingComplex\Models\User;
 use Tests\TestCase;
 
 class AnalyticsTest extends TestCase

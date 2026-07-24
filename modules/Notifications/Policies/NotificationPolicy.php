@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Notifications\Policies;
 
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 
 class NotificationPolicy

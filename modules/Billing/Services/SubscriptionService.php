@@ -17,7 +17,7 @@ use ModulesShoppingComplex\Billing\Payments\AmountMismatchException;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 final readonly class SubscriptionService
 {

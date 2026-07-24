@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use ModulesShoppingComplex\Events\MessageReceivedEvent;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Events\VendorContactRequestEvent;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use Tests\TestCase;

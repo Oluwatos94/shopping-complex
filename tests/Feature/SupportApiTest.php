@@ -6,7 +6,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;

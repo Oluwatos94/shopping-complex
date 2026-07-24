@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 return new class extends Migration
 {

@@ -8,7 +8,7 @@ use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\Contracts\PaymentProvider;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 final readonly class PaystackProvider implements PaymentProvider
 {

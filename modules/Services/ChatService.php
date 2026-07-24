@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Storage;
 use ModulesShoppingComplex\Events\MessageReadEvent;
 use ModulesShoppingComplex\Events\MessageSentEvent;
 use ModulesShoppingComplex\Events\TypingIndicatorEvent;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\ChatMessage;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Repositories\ChatMessageRepository;
 use ModulesShoppingComplex\Repositories\ConversationRepository;
 

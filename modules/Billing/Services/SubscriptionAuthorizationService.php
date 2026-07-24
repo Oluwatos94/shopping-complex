@@ -9,7 +9,7 @@ use ModulesShoppingComplex\Billing\Enums\SubscriptionAuthorizationStatusEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionAuthorization;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 final readonly class SubscriptionAuthorizationService
 {

@@ -9,9 +9,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Enums\VendorOnboardingStatusEnum;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\MediaService;
+use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Media\Services\MediaService;
 
 class CategoryController extends Controller
 {

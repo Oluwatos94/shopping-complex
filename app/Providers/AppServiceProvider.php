@@ -20,7 +20,7 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
-use ModulesShoppingComplex\Services\GeoLocationService;
+use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
 use ModulesShoppingComplex\Shared\Ai\ClaudeClient;
 use ModulesShoppingComplex\Shared\Ai\GeminiClient;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;

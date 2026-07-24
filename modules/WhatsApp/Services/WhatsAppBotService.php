@@ -6,11 +6,11 @@ namespace ModulesShoppingComplex\WhatsApp\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
+use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Models\Enums\ViewSourceEnum;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Services\AnalyticsService;
-use ModulesShoppingComplex\Services\VendorService;
+use ModulesShoppingComplex\Discovery\Services\VendorService;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppSessionStateEnum;
 use ModulesShoppingComplex\WhatsApp\Models\WhatsAppInteraction;

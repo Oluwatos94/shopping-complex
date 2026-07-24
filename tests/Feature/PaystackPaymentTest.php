@@ -13,7 +13,7 @@ use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Billing\Payments\PaystackProvider;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
 use Tests\TestCase;
 

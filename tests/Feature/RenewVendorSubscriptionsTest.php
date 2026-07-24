@@ -20,7 +20,7 @@ use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Billing\Payments\Stellar\ChargeFailedException;
 use ModulesShoppingComplex\Billing\Payments\Stellar\Contracts\RecurringCharger;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
 use Tests\TestCase;
 

@@ -7,7 +7,7 @@ namespace ModulesShoppingComplex\Billing\Payments\Stellar;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Models\StellarWallet;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use Soneso\StellarSDK\Asset;
 use Soneso\StellarSDK\ChangeTrustOperationBuilder;
 use Soneso\StellarSDK\Crypto\KeyPair;

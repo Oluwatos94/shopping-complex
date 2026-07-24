@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\Queue;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\UserOnlineStatus;
 use ModulesShoppingComplex\Notifications\Jobs\SendNotificationEmailJob;
 use ModulesShoppingComplex\Notifications\Models\Notification;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Reviews\Models\Review;
 

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use ModulesShoppingComplex\Billing\Enums\AnchorReconciliationEnum;
 use ModulesShoppingComplex\Billing\Enums\AnchorTransactionKindEnum;
 use ModulesShoppingComplex\Billing\Enums\Sep24StatusEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**

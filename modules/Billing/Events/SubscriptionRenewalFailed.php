@@ -6,12 +6,8 @@ namespace ModulesShoppingComplex\Billing\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
-/**
- * A recurring auto-renew charge failed — the subscription will lapse
- * unless the vendor intervenes.
- */
 class SubscriptionRenewalFailed
 {
     use Dispatchable, SerializesModels;

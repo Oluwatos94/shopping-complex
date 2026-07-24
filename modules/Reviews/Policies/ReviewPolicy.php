@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Reviews\Policies;
 
-use ModulesShoppingComplex\Models\Enums\UserEnum;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Enums\UserEnum;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Reviews\Models\Review;
 
 class ReviewPolicy

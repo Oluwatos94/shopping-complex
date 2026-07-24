@@ -11,7 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
-use ModulesShoppingComplex\Repositories\UserRepository;
+use ModulesShoppingComplex\Identity\Repositories\UserRepository;
 
 class PaystackWebhookController extends Controller
 {

@@ -11,8 +11,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Http\Requests\SendMessageRequest;
 use ModulesShoppingComplex\Http\Requests\StartConversationRequest;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
-use ModulesShoppingComplex\Models\User;
 use ModulesShoppingComplex\Services\ChatService;
 use ModulesShoppingComplex\Shared\Http\Concerns\PaginatesResults;
 
@@ -24,10 +24,6 @@ class ChatController extends Controller
         private readonly ChatService $chatService
     ) {}
 
-    /**
-     * GET /api/conversations
-     * List all conversations for the authenticated user.
-     */
     public function index(Request $request): JsonResponse
     {
         $perPage = min((int) $request->get('per_page', 20), 50);
@@ -36,10 +32,6 @@ class ChatController extends Controller
         return $this->paginatedResponse($conversations, 'conversations');
     }
 
-    /**
-     * POST /api/conversations
-     * Start a new conversation or get existing one.
-     */
     public function store(StartConversationRequest $request): JsonResponse
     {
         $user = $request->user();
@@ -68,10 +60,6 @@ class ChatController extends Controller
         ], 200);
     }
 
-    /**
-     * GET /api/conversations/{conversation}
-     * Get a specific conversation with its details.
-     */
     public function show(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -84,10 +72,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/conversations/{conversation}/messages
-     * Get messages for a conversation with pagination.
-     */
     public function messages(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -98,10 +82,6 @@ class ChatController extends Controller
         return $this->paginatedResponse($messages, 'messages');
     }
 
-    /**
-     * POST /api/conversations/{conversation}/messages
-     * Send a new message in a conversation.
-     */
     public function sendMessage(SendMessageRequest $request, Conversation $conversation): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -119,10 +99,6 @@ class ChatController extends Controller
         ], 201);
     }
 
-    /**
-     * PATCH /api/conversations/{conversation}/messages/read
-     * Mark all messages in a conversation as read.
-     */
     public function markAsRead(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -135,10 +111,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/conversations/{conversation}/typing
-     * Send a typing indicator to the other participant.
-     */
     public function typing(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -150,10 +122,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/conversations/{conversation}/messages/poll
-     * Long polling endpoint for new messages (fallback if WebSockets unavailable).
-     */
     public function pollMessages(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
@@ -167,10 +135,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/chat/unread-count
-     * Get total unread message count for the authenticated user.
-     */
     public function unreadCount(Request $request): JsonResponse
     {
         $count = $this->chatService->getTotalUnreadCount($request->user());
@@ -180,10 +144,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * GET /chat
-     * Chat page (Inertia) - List of conversations.
-     */
     public function chatPage(Request $request): Response
     {
         $conversations = $this->chatService->getConversations($request->user(), 20);
@@ -198,10 +158,6 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * GET /chat/{conversation}
-     * Chat conversation page (Inertia).
-     */
     public function conversationPage(Conversation $conversation, Request $request): Response
     {
         $this->authorize('view', $conversation);

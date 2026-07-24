@@ -11,16 +11,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
+use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
+use ModulesShoppingComplex\Catalog\Http\Requests\ImageUploadRequest;
 use ModulesShoppingComplex\Catalog\Http\Requests\ProductFormRequest;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Catalog\Services\ProductService;
-use ModulesShoppingComplex\Http\Requests\ImageUploadRequest;
-use ModulesShoppingComplex\Models\Media;
+use ModulesShoppingComplex\Media\Models\Media;
+use ModulesShoppingComplex\Media\Services\MediaService;
 use ModulesShoppingComplex\Reviews\Services\ReviewService;
-use ModulesShoppingComplex\Services\AnalyticsService;
-use ModulesShoppingComplex\Services\MediaService;
 
 class ProductController extends Controller
 {

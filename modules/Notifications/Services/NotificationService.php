@@ -6,7 +6,7 @@ namespace ModulesShoppingComplex\Notifications\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Events\BaseNotificationEvent;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationPreferenceRepository;

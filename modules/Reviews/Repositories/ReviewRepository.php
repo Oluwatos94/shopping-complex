@@ -6,7 +6,7 @@ namespace ModulesShoppingComplex\Reviews\Repositories;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use ModulesShoppingComplex\Models\Enums\UserEnum;
+use ModulesShoppingComplex\Identity\Enums\UserEnum;
 use ModulesShoppingComplex\Reviews\Enums\ReviewStatusEnum;
 use ModulesShoppingComplex\Reviews\Models\Review;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;

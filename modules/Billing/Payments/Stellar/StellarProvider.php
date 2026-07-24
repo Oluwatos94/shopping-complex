@@ -9,7 +9,7 @@ use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\Contracts\PaymentProvider;
 use ModulesShoppingComplex\Billing\Payments\PaymentResult;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 final readonly class StellarProvider implements PaymentProvider
 {

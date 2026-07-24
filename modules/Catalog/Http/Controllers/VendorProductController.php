@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Catalog\Http\Requests\UploadProductRequest;
 use ModulesShoppingComplex\Catalog\Models\Product;
-use ModulesShoppingComplex\Services\MediaService;
+use ModulesShoppingComplex\Media\Services\MediaService;
 
 class VendorProductController extends Controller
 {

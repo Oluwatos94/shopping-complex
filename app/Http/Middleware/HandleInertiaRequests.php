@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
-use ModulesShoppingComplex\Models\Media;
+use ModulesShoppingComplex\Media\Models\Media;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 
 class HandleInertiaRequests extends Middleware
