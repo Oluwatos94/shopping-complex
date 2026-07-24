@@ -5,17 +5,17 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Identity\Models\User>
  */
 class UserFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Models\User>
+     * @var class-string<\ModulesShoppingComplex\Identity\Models\User>
      */
     protected $model = User::class;
 

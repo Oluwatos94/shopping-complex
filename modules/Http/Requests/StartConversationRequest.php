@@ -6,8 +6,8 @@ namespace ModulesShoppingComplex\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class StartConversationRequest extends FormRequest
 {

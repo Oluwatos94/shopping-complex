@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
-use ModulesShoppingComplex\Models\Enums\SupportMessageRoleEnum;
-use ModulesShoppingComplex\Models\Enums\VendorSubscriptionStatusEnum;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\SupportMessage;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorSubscription;
-use ModulesShoppingComplex\Services\Contracts\AiChatClient;
-use ModulesShoppingComplex\Services\SupportBotService;
+use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
+use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
+use ModulesShoppingComplex\Support\Models\SupportMessage;
+use ModulesShoppingComplex\Support\Services\SupportBotService;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -185,7 +185,7 @@ class SupportBotServiceTest extends TestCase
 
     public function test_search_without_location_asks_for_location_first(): void
     {
-        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
@@ -241,7 +241,7 @@ class SupportBotServiceTest extends TestCase
             ],
         ]);
 
-        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
@@ -304,13 +304,13 @@ class SupportBotServiceTest extends TestCase
             ],
         ]);
 
-        $category = \ModulesShoppingComplex\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
             'category_id' => $category->id,
         ]);
-        \ModulesShoppingComplex\Models\Address::create([
+        \ModulesShoppingComplex\Identity\Models\Address::create([
             'user_id' => $vendor->id,
             'street' => '1 Marina Rd',
             'city' => 'Lagos',

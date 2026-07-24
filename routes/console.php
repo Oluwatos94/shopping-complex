@@ -3,8 +3,8 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use ModulesShoppingComplex\Jobs\ExpireVendorSubscriptions;
-use ModulesShoppingComplex\Jobs\RenewVendorSubscriptions;
+use ModulesShoppingComplex\Billing\Jobs\ExpireVendorSubscriptions;
+use ModulesShoppingComplex\Billing\Jobs\RenewVendorSubscriptions;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

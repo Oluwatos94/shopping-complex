@@ -7,8 +7,8 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use ModulesShoppingComplex\Models\Product;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\User;
 use Tests\TestCase;
 
 class ProductImageUploadTest extends TestCase

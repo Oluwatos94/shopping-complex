@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ModulesShoppingComplex\Models\Enums\SupportConversationStatusEnum;
-use ModulesShoppingComplex\Models\SupportConversation;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
 
 /**
  * @extends Factory<SupportConversation>

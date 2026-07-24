@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\AnchorTransaction;
-use ModulesShoppingComplex\Models\Enums\AnchorTransactionKindEnum;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Billing\Enums\AnchorTransactionKindEnum;
+use ModulesShoppingComplex\Billing\Models\AnchorTransaction;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Identity\Models\User;
 
 return new class extends Migration
 {

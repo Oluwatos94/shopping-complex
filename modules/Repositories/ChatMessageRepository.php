@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Repositories;
 
-use App\Repositories\BasePageRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Models\ChatMessage;
+use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
 
 class ChatMessageRepository extends BasePageRepository
 {

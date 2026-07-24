@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use ModulesShoppingComplex\Models\Enums\PaymentMethodEnum;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Repositories\SubscriptionRepository;
-use ModulesShoppingComplex\Services\Payments\AmountMismatchException;
-use ModulesShoppingComplex\Services\Payments\CheckoutSession;
-use ModulesShoppingComplex\Services\Payments\Contracts\PaymentProvider;
-use ModulesShoppingComplex\Services\Payments\PaymentProviderManager;
-use ModulesShoppingComplex\Services\Payments\PaymentResult;
-use ModulesShoppingComplex\Services\SubscriptionService;
+use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Payments\AmountMismatchException;
+use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
+use ModulesShoppingComplex\Billing\Payments\Contracts\PaymentProvider;
+use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
+use ModulesShoppingComplex\Billing\Payments\PaymentResult;
+use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
+use ModulesShoppingComplex\Identity\Models\User;
 use Tests\TestCase;
 
 class SubscriptionPaymentTest extends TestCase

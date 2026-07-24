@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use ModulesShoppingComplex\Models\Review;
-use ModulesShoppingComplex\Models\ReviewVote;
-use ModulesShoppingComplex\Models\User;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Reviews\Models\Review;
+use ModulesShoppingComplex\Reviews\Models\ReviewVote;
 
 return new class extends Migration
 {
@@ -23,7 +23,6 @@ return new class extends Migration
             $table->boolean('is_helpful');
             $table->timestamps();
 
-            // Each user can only vote once per review
             $table->unique(['review_id', 'user_id'], 'unique_review_user_vote');
 
             $table->index(['review_id', 'is_helpful']);

@@ -8,13 +8,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
-use ModulesShoppingComplex\Jobs\SendWhatsAppMessage;
-use ModulesShoppingComplex\Models\SubscriptionPlan;
-use ModulesShoppingComplex\Models\User;
-use ModulesShoppingComplex\Models\VendorSubscription;
-use ModulesShoppingComplex\Services\Payments\CheckoutTypeEnum;
-use ModulesShoppingComplex\Services\Payments\PaystackProvider;
-use ModulesShoppingComplex\Services\PaystackClient;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
+use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
+use ModulesShoppingComplex\Billing\Payments\PaystackProvider;
+use ModulesShoppingComplex\Billing\Services\PaystackClient;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
 use Tests\TestCase;
 
 class PaystackPaymentTest extends TestCase
