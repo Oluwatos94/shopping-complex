@@ -13,6 +13,7 @@ export function useSupportChat(isOpen: boolean) {
     const [messages, setMessages] = useState<SupportMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isEscalating, setIsEscalating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [failedText, setFailedText] = useState<string | null>(null);
     const [hasLocation, setHasLocation] = useState(false);
@@ -163,6 +164,29 @@ export function useSupportChat(isOpen: boolean) {
         }
     }, [isTyping, refresh, syncConversation]);
 
+    const escalate = useCallback(async () => {
+        const target = conversationRef.current;
+        if (!target || isEscalating) return;
+
+        setIsEscalating(true);
+        setError(null);
+
+        try {
+            const res = await fetchWithCsrf(`/api/support/conversations/${target.id}/escalate`, { method: 'POST' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                throw new Error(typeof data?.message === 'string' ? data.message : '');
+            }
+
+            // Reflect awaiting_agent immediately; the status poll takes over from here.
+            await syncConversation(target.id);
+        } catch (e) {
+            setError(e instanceof Error && e.message !== '' ? e.message : 'Could not connect you to an agent. Please try again.');
+        } finally {
+            setIsEscalating(false);
+        }
+    }, [isEscalating, syncConversation]);
+
     const retry = useCallback(() => {
         if (failedText !== null) {
             sendMessage(failedText);
@@ -197,6 +221,7 @@ export function useSupportChat(isOpen: boolean) {
         messages,
         isTyping,
         isLoading,
+        isEscalating,
         error,
         failedText,
         hasLocation,
@@ -204,6 +229,7 @@ export function useSupportChat(isOpen: boolean) {
         loadOlderMessages,
         shareLocation,
         sendMessage,
+        escalate,
         retry,
     };
 }

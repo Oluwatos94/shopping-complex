@@ -1,5 +1,5 @@
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useSupportChat } from '@/hooks/useSupportChat';
 import SupportThread from './SupportThread';
 
@@ -11,7 +11,10 @@ export default function SupportWidget() {
     const launcherRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const { conversation, messages, isTyping, isLoading, error, hasLocation, hasOlderMessages, loadOlderMessages, shareLocation, sendMessage, retry } = useSupportChat(isOpen);
+    const { conversation, messages, isTyping, isLoading, isEscalating, error, hasLocation, hasOlderMessages, loadOlderMessages, shareLocation, sendMessage, escalate, retry } = useSupportChat(isOpen);
+
+    // Escalation ("Talk to a human") is auth-only — guests are routed to sign in.
+    const isAuthenticated = Boolean(auth?.user);
 
     const close = useCallback(() => {
         inputRef.current?.blur();
@@ -159,7 +162,6 @@ export default function SupportWidget() {
                                 <p className="text-xs text-brand-green">We typically reply right away</p>
                             </div>
                         </div>
-                        {/* "Talk to a human" control lands here in the escalation issue. */}
                         <button
                             type="button"
                             onClick={close}
@@ -172,18 +174,52 @@ export default function SupportWidget() {
                         </button>
                     </div>
 
+                    {/* "Talk to a human" control — available while the bot is handling the chat. */}
+                    {conversation?.status === 'bot' && (
+                        <div className="flex items-center justify-between gap-3 border-b border-brand-line bg-brand-surface px-4 py-2">
+                            <span className="text-xs text-brand-muted">Prefer a person?</span>
+                            {isAuthenticated ? (
+                                <button
+                                    type="button"
+                                    onClick={escalate}
+                                    disabled={isEscalating}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-brand-green px-3 py-1 text-xs font-semibold text-brand-green transition-colors hover:bg-brand-green hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {isEscalating ? 'Connecting…' : 'Talk to a human'}
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-brand-green px-3 py-1 text-xs font-semibold text-brand-green transition-colors hover:bg-brand-green hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                                >
+                                    Sign in to talk to a human
+                                </Link>
+                            )}
+                        </div>
+                    )}
                     {conversation?.status === 'awaiting_agent' && (
                         <div className="flex items-center gap-2 border-b border-brand-line bg-amber-50 px-4 py-2">
                             <span className="h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-amber-500" />
                             <span className="text-xs text-amber-800">
-                                A human agent has been notified — the bot will keep helping until they join.
+                                Connecting you to an agent — the bot will keep helping until they join.
                             </span>
                         </div>
                     )}
                     {conversation?.status === 'with_agent' && (
                         <div className="flex items-center gap-2 border-b border-brand-line bg-brand-green/10 px-4 py-2">
                             <span className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-green" />
-                            <span className="text-xs text-brand-ink">You're chatting with a human agent.</span>
+                            <span className="text-xs text-brand-ink">
+                                You're chatting with {conversation.agent?.name ?? 'a human agent'}.
+                            </span>
+                        </div>
+                    )}
+                    {conversation?.status === 'resolved' && (
+                        <div className="flex items-center gap-2 border-b border-brand-line bg-gray-50 px-4 py-2">
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-gray-400" />
+                            <span className="text-xs text-brand-muted">This conversation has been resolved.</span>
                         </div>
                     )}
 
