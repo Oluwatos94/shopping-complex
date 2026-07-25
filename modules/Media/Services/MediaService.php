@@ -74,6 +74,14 @@ class MediaService
                 throw $e;
             }
         } catch (\Exception $e) {
+            Log::channel('stderr')->error('Image upload failed', [
+                'disk' => $this->disk,
+                'type' => $type,
+                'model_type' => $modelType,
+                'model_id' => $modelId,
+                'error' => $e->getMessage(),
+            ]);
+
             return [
                 'success' => false,
                 'error' => 'Failed to upload image: '.$e->getMessage(),
@@ -147,6 +155,14 @@ class MediaService
                 throw $e;
             }
         } catch (\Exception $e) {
+            Log::channel('stderr')->error('Video upload failed', [
+                'disk' => $this->disk,
+                'type' => $type,
+                'model_type' => $modelType,
+                'model_id' => $modelId,
+                'error' => $e->getMessage(),
+            ]);
+
             return ['success' => false, 'error' => 'Failed to upload video: '.$e->getMessage()];
         }
     }
