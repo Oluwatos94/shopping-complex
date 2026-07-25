@@ -66,14 +66,14 @@ class MediaService
                     'success' => true,
                     'media' => $media,
                 ];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 if (Storage::disk($this->disk)->exists($path)) {
                     Storage::disk($this->disk)->delete($path);
                 }
 
                 throw $e;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::channel('stderr')->error('Image upload failed', [
                 'disk' => $this->disk,
                 'type' => $type,
@@ -148,13 +148,13 @@ class MediaService
                 ]);
 
                 return ['success' => true, 'media' => $media];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 if (Storage::disk($this->disk)->exists($filename)) {
                     Storage::disk($this->disk)->delete($filename);
                 }
                 throw $e;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::channel('stderr')->error('Video upload failed', [
                 'disk' => $this->disk,
                 'type' => $type,
@@ -221,7 +221,7 @@ class MediaService
             $this->mediaRepository->delete($mediaId);
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to delete media', [
                 'media_id' => $mediaId,
                 'error' => $e->getMessage(),

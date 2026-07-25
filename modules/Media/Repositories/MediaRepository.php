@@ -6,11 +6,18 @@ namespace ModulesShoppingComplex\Media\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Media\Models\Media;
 
 class MediaRepository
 {
+
+    private function morphType(string $modelType): string
+    {
+        return array_search($modelType, Relation::morphMap(), true) ?: $modelType;
+    }
+
     /**
      * Find a media by ID
      *
@@ -35,7 +42,7 @@ class MediaRepository
     public function getForModel(string $modelType, int $modelId): Collection
     {
         return Media::query()
-            ->where('model_type', $modelType)
+            ->where('model_type', $this->morphType($modelType))
             ->where('model_id', $modelId)
             ->orderBy('created_at', 'asc')
             ->get();
@@ -49,7 +56,7 @@ class MediaRepository
     public function getByTypeForModel(string $modelType, int $modelId, string $type): Collection
     {
         return Media::query()
-            ->where('model_type', $modelType)
+            ->where('model_type', $this->morphType($modelType))
             ->where('model_id', $modelId)
             ->where('type', $type)
             ->orderBy('created_at', 'asc')
@@ -64,6 +71,10 @@ class MediaRepository
     public function create(array $data): Media
     {
         return DB::transaction(function () use ($data) {
+            if (isset($data['model_type'])) {
+                $data['model_type'] = $this->morphType($data['model_type']);
+            }
+
             return Media::create($data);
         });
     }
@@ -89,7 +100,7 @@ class MediaRepository
     {
         return DB::transaction(function () use ($modelType, $modelId) {
             return Media::query()
-                ->where('model_type', $modelType)
+                ->where('model_type', $this->morphType($modelType))
                 ->where('model_id', $modelId)
                 ->delete();
         });
@@ -102,7 +113,7 @@ class MediaRepository
     {
         return DB::transaction(function () use ($modelType, $modelId, $type) {
             return Media::query()
-                ->where('model_type', $modelType)
+                ->where('model_type', $this->morphType($modelType))
                 ->where('model_id', $modelId)
                 ->where('type', $type)
                 ->delete();
@@ -115,7 +126,7 @@ class MediaRepository
     public function countForModel(string $modelType, int $modelId): int
     {
         return Media::query()
-            ->where('model_type', $modelType)
+            ->where('model_type', $this->morphType($modelType))
             ->where('model_id', $modelId)
             ->count();
     }
