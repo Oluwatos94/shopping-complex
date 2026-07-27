@@ -10,6 +10,7 @@ use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Billing\Models\AnchorTransaction;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
@@ -18,7 +19,7 @@ use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 final readonly class AdminAnalyticsService
 {
     /**
-     * Get platform-wide statistics using 3 aggregated queries.
+     * Get platform-wide statistics using aggregated queries.
      *
      * @return array<string, mixed>
      */
@@ -38,6 +39,9 @@ final readonly class AdminAnalyticsService
                 'admins' => (int) ($userCounts['admin'] ?? 0),
                 'vendors' => (int) ($userCounts['vendor'] ?? 0),
                 'customers' => (int) ($userCounts['customer'] ?? 0),
+            ],
+            'products' => [
+                'total' => Product::count(),
             ],
             'vendors' => [
                 'approved' => (int) ($onboardingCounts[VendorOnboardingStatusEnum::APPROVED->value] ?? 0),

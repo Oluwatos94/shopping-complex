@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 use ModulesShoppingComplex\Media\Models\Media;
 use ModulesShoppingComplex\Notifications\Models\Notification;
+use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
+use ModulesShoppingComplex\Support\Models\SupportConversation;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -49,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => fn () => $this->getAuthData($request),
             'notifications' => fn () => $this->getNotificationData($request)['notifications'],
             'unread_notifications_count' => fn () => $this->getNotificationData($request)['unread_count'],
+            'support_awaiting_count' => fn () => $this->getSupportAwaitingCount($request),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
@@ -89,6 +92,19 @@ class HandleInertiaRequests extends Middleware
         }
 
         return ['user' => $data];
+    }
+
+    private function getSupportAwaitingCount(Request $request): ?int
+    {
+        $user = $request->user();
+
+        if (! $user || $user->role !== 'admin') {
+            return null;
+        }
+
+        return SupportConversation::query()
+            ->where('status', SupportConversationStatusEnum::AWAITING_AGENT)
+            ->count();
     }
 
     /**

@@ -9,6 +9,7 @@ interface SharedProps {
         success?: string | null;
         error?: string | null;
     };
+    support_awaiting_count?: number | null;
     [key: string]: unknown;
 }
 
@@ -17,12 +18,14 @@ interface NavItem {
     href: string;
     match: string;
     icon: ReactNode;
+    badge?: number;
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const page = usePage<SharedProps>();
     const user = page.props.auth?.user;
     const flash = page.props.flash;
+    const supportAwaiting = page.props.support_awaiting_count ?? 0;
     const pathname = page.url.split('?')[0] ?? '';
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -94,6 +97,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             ),
         },
         {
+            label: 'Support',
+            href: '/admin/support',
+            match: '/admin/support',
+            badge: supportAwaiting,
+            icon: (
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 10c0 3.866-3.582 7-8 7a8.84 8.84 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M22 14c0 1.02-.28 1.978-.77 2.808L22 20l-3.15-.84A6.6 6.6 0 0116 20" />
+                </svg>
+            ),
+        },
+        {
             label: 'Settings',
             href: '/admin/settings',
             match: '/admin/settings',
@@ -137,6 +152,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                                 <span className="ml-3 text-[11px] tracking-wider uppercase font-medium">
                                     {item.label}
                                 </span>
+                                {item.badge !== undefined && item.badge > 0 && (
+                                    <span className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-olive text-white text-[10px] font-bold">
+                                        {item.badge > 99 ? '99+' : item.badge}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
