@@ -24,6 +24,7 @@ use ModulesShoppingComplex\Identity\Http\Controllers\VendorOnboardingController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorRegistrationController;
 use ModulesShoppingComplex\Notifications\Http\Controllers\NotificationController;
 use ModulesShoppingComplex\Reviews\Http\Controllers\ReviewController;
+use ModulesShoppingComplex\Support\Http\Controllers\AdminSupportController;
 use ModulesShoppingComplex\Support\Http\Controllers\SupportController;
 use ModulesShoppingComplex\WhatsApp\Http\Controllers\WhatsAppController;
 
@@ -222,12 +223,17 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/vendors/{user}/document/{field}', [AdminController::class, 'viewVendorDocument'])->name('admin.vendors.document');
     Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+
+    // Support agent inbox
+    Route::get('/support', [AdminSupportController::class, 'index'])->name('admin.support');
+    Route::get('/support/conversations', [AdminSupportController::class, 'conversations'])->name('admin.support.conversations');
 });
 
 Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
     Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
     Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
+    Route::post('/support/conversations/{conversation}/read', [AdminSupportController::class, 'markRead'])->name('admin.support.read');
 });
 
 // Review Moderation Routes - Admin only

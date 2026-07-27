@@ -48,6 +48,34 @@ class SupportConversationRepository extends BasePageRepository
         return $query->paginate($perPage);
     }
 
+    public function getForInbox(int $perPage = 30): LengthAwarePaginator
+    {
+        return SupportConversation::query()
+            ->where(function ($query) {
+                $query->whereIn('status', [
+                    SupportConversationStatusEnum::AWAITING_AGENT,
+                    SupportConversationStatusEnum::WITH_AGENT,
+                ])->orWhere(function ($resolved) {
+                    $resolved->where('status', SupportConversationStatusEnum::RESOLVED)
+                        ->where('last_message_at', '>=', now()->subDays(7));
+                });
+            })
+            ->with(['user:id,name', 'agent:id,name', 'lastMessage', 'lastCustomerMessage'])
+            ->orderByRaw('last_message_at IS NULL, last_message_at DESC')
+            ->orderByDesc('escalated_at')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Count threads currently waiting to be picked up by an agent.
+     */
+    public function countAwaitingAgent(): int
+    {
+        return SupportConversation::query()
+            ->where('status', SupportConversationStatusEnum::AWAITING_AGENT)
+            ->count();
+    }
+
     /**
      * Get the user's most recent open (non-resolved) support thread.
      */
