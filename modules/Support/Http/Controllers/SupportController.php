@@ -59,23 +59,17 @@ class SupportController extends Controller
         ], 200);
     }
 
-    /**
-     * GET /api/support/conversations/{conversation}
-     * Get a support conversation and its status.
-     */
     public function show(SupportConversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);
+
+        $conversation->load('agent:id,name');
 
         return response()->json([
             'conversation' => $conversation,
         ]);
     }
 
-    /**
-     * GET /api/support/conversations/{conversation}/messages
-     * Get messages for a support conversation with pagination.
-     */
     public function messages(SupportConversation $conversation, Request $request): JsonResponse
     {
         $this->authorize('view', $conversation);

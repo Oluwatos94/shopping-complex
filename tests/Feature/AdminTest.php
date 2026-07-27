@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -38,6 +39,21 @@ class AdminTest extends TestCase
         $this->customer = User::factory()->create([
             'role' => 'customer',
             'email_verified_at' => now(),
+        ]);
+    }
+
+    /**
+     * Approving a vendor assigns the free plan, so it must exist in the DB.
+     */
+    private function seedFreePlan(): void
+    {
+        SubscriptionPlan::firstOrCreate(['slug' => 'free'], [
+            'name' => 'Free',
+            'price' => 0.00,
+            'product_limit' => 10,
+            'search_priority' => 0,
+            'features' => ['List up to 10 products'],
+            'is_active' => true,
         ]);
     }
 
@@ -236,6 +252,8 @@ class AdminTest extends TestCase
 
     public function test_admin_can_approve_vendor(): void
     {
+        $this->seedFreePlan();
+
         $onboarding = VendorOnboarding::create([
             'user_id' => $this->vendor->id,
             'status' => VendorOnboardingStatusEnum::PENDING_REVIEW,
@@ -244,9 +262,9 @@ class AdminTest extends TestCase
         ]);
 
         $this->actingAs($this->admin)
-            ->postJson("/admin/vendors/{$this->vendor->id}/approve")
-            ->assertStatus(200)
-            ->assertJsonPath('message', 'Vendor approved successfully.');
+            ->post("/admin/vendors/{$this->vendor->id}/approve")
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Vendor approved successfully.');
 
         $this->assertDatabaseHas('vendor_onboardings', [
             'id' => $onboarding->id,
@@ -265,11 +283,11 @@ class AdminTest extends TestCase
         ]);
 
         $this->actingAs($this->admin)
-            ->postJson("/admin/vendors/{$this->vendor->id}/reject", [
+            ->post("/admin/vendors/{$this->vendor->id}/reject", [
                 'rejection_reason' => 'Documents are incomplete.',
             ])
-            ->assertStatus(200)
-            ->assertJsonPath('message', 'Vendor rejected successfully.');
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Vendor rejected successfully.');
 
         $this->assertDatabaseHas('vendor_onboardings', [
             'id' => $onboarding->id,
@@ -296,13 +314,15 @@ class AdminTest extends TestCase
     public function test_approve_fails_if_no_pending_application(): void
     {
         $this->actingAs($this->admin)
-            ->postJson("/admin/vendors/{$this->vendor->id}/approve")
-            ->assertStatus(422)
-            ->assertJsonPath('message', 'No pending application found for this vendor.');
+            ->post("/admin/vendors/{$this->vendor->id}/approve")
+            ->assertRedirect()
+            ->assertSessionHas('error', 'No pending application found for this vendor.');
     }
 
     public function test_cannot_approve_already_approved_vendor(): void
     {
+        $this->seedFreePlan();
+
         VendorOnboarding::create([
             'user_id' => $this->vendor->id,
             'status' => VendorOnboardingStatusEnum::PENDING_REVIEW,
@@ -312,14 +332,15 @@ class AdminTest extends TestCase
 
         // First approval succeeds
         $this->actingAs($this->admin)
-            ->postJson("/admin/vendors/{$this->vendor->id}/approve")
-            ->assertStatus(200);
+            ->post("/admin/vendors/{$this->vendor->id}/approve")
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Vendor approved successfully.');
 
         // Second approval (simulates race condition at application level) must fail
         $this->actingAs($this->admin)
-            ->postJson("/admin/vendors/{$this->vendor->id}/approve")
-            ->assertStatus(422)
-            ->assertJsonPath('message', 'No pending application found for this vendor.');
+            ->post("/admin/vendors/{$this->vendor->id}/approve")
+            ->assertRedirect()
+            ->assertSessionHas('error', 'No pending application found for this vendor.');
     }
 
     public function test_customer_cannot_approve_vendor(): void

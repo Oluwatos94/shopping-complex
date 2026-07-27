@@ -8,7 +8,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
 use Tests\TestCase;
 
 class ProductImageUploadTest extends TestCase
@@ -31,6 +33,14 @@ class ProductImageUploadTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
+        // The product policy requires an approved vendor to manage images.
+        VendorOnboarding::create([
+            'user_id' => $this->vendor->id,
+            'status' => VendorOnboardingStatusEnum::APPROVED,
+            'current_step' => 3,
+            'agreed_to_terms' => true,
+        ]);
+
         // Create a product owned by this vendor
         $this->product = Product::factory()->create([
             'vendor_id' => $this->vendor->id,
@@ -42,7 +52,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('product.jpg', 1000, 1000)->size(2048); // 2MB
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -53,7 +63,7 @@ class ProductImageUploadTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('media', [
-            'model_type' => Product::class,
+            'model_type' => (new Product)->getMorphClass(),
             'model_id' => $this->product->id,
             'type' => 'product_image',
         ]);
@@ -72,7 +82,7 @@ class ProductImageUploadTest extends TestCase
         ];
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => $files,
             ]);
 
@@ -95,7 +105,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->create('document.pdf', 1024);
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -108,7 +118,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('large.jpg')->size(6144); // 6MB (exceeds 5MB limit)
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -121,7 +131,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('small.jpg', 50, 50); // Too small (min 100x100)
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -137,7 +147,7 @@ class ProductImageUploadTest extends TestCase
         }
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => $files,
             ]);
 
@@ -148,7 +158,7 @@ class ProductImageUploadTest extends TestCase
     public function test_image_upload_requires_at_least_one_image(): void
     {
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [],
             ]);
 
@@ -162,7 +172,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('product.jpg', 1000, 1000)->size(2048);
 
         $uploadResponse = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -170,7 +180,7 @@ class ProductImageUploadTest extends TestCase
 
         // Delete the image
         $response = $this->actingAs($this->vendor)
-            ->deleteJson("/products/{$this->product->id}/images/{$mediaId}");
+            ->deleteJson("/products/{$this->product->slug}/images/{$mediaId}");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -192,13 +202,13 @@ class ProductImageUploadTest extends TestCase
         ];
 
         $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => $files,
             ]);
 
         // Get all images
         $response = $this->actingAs($this->vendor)
-            ->getJson("/products/{$this->product->id}/images");
+            ->getJson("/products/{$this->product->slug}/images");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -218,7 +228,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('product.jpg', 1000, 1000)->size(2048);
 
         $response = $this->actingAs($customer)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -235,7 +245,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('product.jpg', 1000, 1000)->size(2048);
 
         $response = $this->actingAs($otherVendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 
@@ -246,7 +256,7 @@ class ProductImageUploadTest extends TestCase
     {
         $file = UploadedFile::fake()->image('product.jpg', 1000, 1000)->size(2048);
 
-        $response = $this->postJson("/products/{$this->product->id}/images", [
+        $response = $this->postJson("/products/{$this->product->slug}/images", [
             'images' => [$file],
         ]);
 
@@ -261,7 +271,7 @@ class ProductImageUploadTest extends TestCase
             $file = UploadedFile::fake()->image("product.{$format}", 1000, 1000)->size(2048);
 
             $response = $this->actingAs($this->vendor)
-                ->postJson("/products/{$this->product->id}/images", [
+                ->postJson("/products/{$this->product->slug}/images", [
                     'images' => [$file],
                 ]);
 
@@ -275,7 +285,7 @@ class ProductImageUploadTest extends TestCase
         $file = UploadedFile::fake()->image('large-product.jpg', 5000, 5000)->size(4096);
 
         $response = $this->actingAs($this->vendor)
-            ->postJson("/products/{$this->product->id}/images", [
+            ->postJson("/products/{$this->product->slug}/images", [
                 'images' => [$file],
             ]);
 

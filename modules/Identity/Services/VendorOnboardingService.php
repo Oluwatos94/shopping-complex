@@ -158,12 +158,14 @@ final readonly class VendorOnboardingService
     public function approveOnboarding(User $vendor, User $reviewer): VendorOnboarding
     {
         return DB::transaction(function () use ($vendor, $reviewer) {
+
             $onboarding = VendorOnboarding::where('user_id', $vendor->id)
+                ->where('status', VendorOnboardingStatusEnum::PENDING_REVIEW)
                 ->lockForUpdate()
                 ->first();
 
             if (! $onboarding) {
-                throw new \RuntimeException('No application found for this vendor.');
+                throw new \RuntimeException('No pending application found for this vendor.');
             }
 
             $this->onboardingRepository->updateOnboarding($onboarding, [
