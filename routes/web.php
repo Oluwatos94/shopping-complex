@@ -231,6 +231,7 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
 
 Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(function () {
     Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::post('/vendors/reminders', [AdminController::class, 'sendReminders'])->name('admin.vendors.reminders');
     Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
     Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
     Route::post('/support/conversations/{conversation}/read', [AdminSupportController::class, 'markRead'])->name('admin.support.read');

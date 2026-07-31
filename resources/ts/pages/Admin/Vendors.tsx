@@ -6,6 +6,7 @@ import { Paginated } from '@/types/product';
 import VendorCard from '@/components/Admin/vendors/partials/VendorCard';
 import DetailPanel from '@/components/Admin/vendors/partials/DetailPanel';
 import RejectModal from '@/components/Admin/vendors/partials/RejectModal';
+import ReminderModal from '@/components/Admin/vendors/partials/ReminderModal';
 import { SkeletonCard } from '@/components/Loading';
 
 interface Props {
@@ -18,6 +19,12 @@ export default function Vendors({ vendors, activeStatus }: Props) {
     const [rejectingVendor, setRejectingVendor] = useState<VendorApplication | null>(null);
     const [processing, setProcessing] = useState<number | null>(null);
     const [listLoading, setListLoading] = useState(false);
+    const [reminderOpen, setReminderOpen] = useState(false);
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+    const toggleSelect = (id: number) =>
+        setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
     const filterTabs = [
         { label: 'Pending', value: 'pending_review' },
@@ -97,20 +104,43 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                             Vendor Approval
                         </h2>
                     </div>
-                    <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
-                        {filterTabs.map(tab => (
-                            <button
-                                key={tab.value}
-                                onClick={() => switchTab(tab.value)}
-                                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                                    activeStatus === tab.value
-                                        ? 'bg-primary-olive text-white font-bold shadow-md shadow-primary-olive/20'
-                                        : 'text-gray-500 hover:bg-white'
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                            {filterTabs.map(tab => (
+                                <button
+                                    key={tab.value}
+                                    onClick={() => switchTab(tab.value)}
+                                    className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        activeStatus === tab.value
+                                            ? 'bg-primary-olive text-white font-bold shadow-md shadow-primary-olive/20'
+                                            : 'text-gray-500 hover:bg-white'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                setSelectMode((v) => !v);
+                                setSelectedIds([]);
+                            }}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                selectMode
+                                    ? 'bg-primary-olive/10 text-primary-olive'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                        >
+                            {selectMode ? `Selecting (${selectedIds.length})` : 'Select'}
+                        </button>
+
+                        <button
+                            onClick={() => setReminderOpen(true)}
+                            className="px-5 py-2.5 rounded-xl bg-primary-olive text-white text-sm font-bold shadow-md shadow-primary-olive/20 hover:bg-primary-olive/90 transition-all"
+                        >
+                            Send reminder
+                        </button>
                     </div>
                 </div>
 
@@ -189,6 +219,9 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                                     onApprove={handleApprove}
                                     onReject={setRejectingVendor}
                                     processing={processing}
+                                    selectable={selectMode}
+                                    selected={selectedIds.includes(vendor.user_id)}
+                                    onToggleSelect={toggleSelect}
                                 />
                             ))}
 
@@ -238,6 +271,12 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                 vendor={rejectingVendor}
                 onClose={() => setRejectingVendor(null)}
                 onConfirm={handleRejectConfirm}
+            />
+
+            <ReminderModal
+                open={reminderOpen}
+                onClose={() => setReminderOpen(false)}
+                selectedIds={selectedIds}
             />
         </>
     );
