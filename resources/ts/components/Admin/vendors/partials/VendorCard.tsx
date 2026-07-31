@@ -8,12 +8,18 @@ export default function VendorCard({
     onApprove,
     onReject,
     processing,
+    selectable = false,
+    selected = false,
+    onToggleSelect,
 }: {
     vendor: VendorApplication;
     onSelect: (v: VendorApplication) => void;
     onApprove: (v: VendorApplication) => void;
     onReject: (v: VendorApplication) => void;
     processing: number | null;
+    selectable?: boolean;
+    selected?: boolean;
+    onToggleSelect?: (id: number) => void;
 }) {
     const docs: string[] = [
         vendor.certificate_of_incorporation ? 'Certificate of Incorp.' : '',
@@ -33,9 +39,27 @@ export default function VendorCard({
 
     return (
         <div
-            className="group bg-white p-6 rounded-xl border border-gray-100 hover:border-primary-olive/20 hover:shadow-xl hover:shadow-primary-olive/5 transition-all cursor-pointer relative overflow-hidden"
-            onClick={() => onSelect(vendor)}
+            className={`group bg-white p-6 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                selected
+                    ? 'border-primary-olive ring-1 ring-primary-olive shadow-xl shadow-primary-olive/10'
+                    : 'border-gray-100 hover:border-primary-olive/20 hover:shadow-xl hover:shadow-primary-olive/5'
+            }`}
+            onClick={() => (selectable ? onToggleSelect?.(vendor.user_id) : onSelect(vendor))}
         >
+            {selectable && (
+                <span
+                    className={`absolute top-4 right-4 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
+                        selected ? 'bg-primary-olive border-primary-olive text-white' : 'bg-white border-gray-300'
+                    }`}
+                >
+                    {selected && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                    )}
+                </span>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
                 <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:bg-primary-olive/5 transition-colors">

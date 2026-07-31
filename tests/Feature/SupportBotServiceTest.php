@@ -9,7 +9,9 @@ use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
@@ -185,7 +187,7 @@ class SupportBotServiceTest extends TestCase
 
     public function test_search_without_location_asks_for_location_first(): void
     {
-        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
@@ -241,7 +243,7 @@ class SupportBotServiceTest extends TestCase
             ],
         ]);
 
-        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
@@ -304,13 +306,13 @@ class SupportBotServiceTest extends TestCase
             ],
         ]);
 
-        $category = \ModulesShoppingComplex\Catalog\Models\Category::factory()->create(['name' => 'Footwear']);
+        $category = Category::factory()->create(['name' => 'Footwear']);
         $vendor = User::factory()->create([
             'role' => 'vendor',
             'business_name' => 'Shoe Palace',
             'category_id' => $category->id,
         ]);
-        \ModulesShoppingComplex\Identity\Models\Address::create([
+        Address::create([
             'user_id' => $vendor->id,
             'street' => '1 Marina Rd',
             'city' => 'Lagos',

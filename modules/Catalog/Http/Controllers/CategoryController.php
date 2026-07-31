@@ -36,7 +36,7 @@ class CategoryController extends Controller
             ->with(['media', 'products' => fn ($q) => $q->where('category_id', $id)->limit(3)])
             ->paginate(12);
 
-        $transformedVendors = $vendors->through(function ($vendor) {
+        $transformedVendors = $vendors->through(function (User $vendor) {
             $avatarMedia = $vendor->media->where('type', 'avatar')->first();
 
             return [
@@ -44,11 +44,11 @@ class CategoryController extends Controller
                 'name' => $vendor->name,
                 'slug' => $vendor->slug,
                 'profileImage' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
-                'products' => $vendor->products->map(fn ($p) => [
+                'products' => $vendor->products->map(fn (Product $p) => [
                     'id' => $p->id,
                     'name' => $p->name,
                     'price' => $p->price,
-                ]),
+                ])->all(),
             ];
         });
 
