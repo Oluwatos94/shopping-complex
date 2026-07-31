@@ -81,7 +81,7 @@ class UserRepository
         $validRoles = ['customer', 'vendor', 'admin'];
 
         if (! in_array($role, $validRoles)) {
-            throw new \InvalidArgumentException("Invalid role: {$role}. Must be one of: ".implode(', ', $validRoles));
+            throw new InvalidArgumentException("Invalid role: {$role}. Must be one of: ".implode(', ', $validRoles));
         }
 
         $query = User::query()->where('role', $role);

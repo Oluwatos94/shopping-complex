@@ -8,6 +8,7 @@ use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
 use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\PaymentResult;
+use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Identity\Models\User;
 
 /**
@@ -15,7 +16,7 @@ use ModulesShoppingComplex\Identity\Models\User;
  *
  * Implementations own only the transport + verification for their gateway; the
  * subscription lifecycle (activation, idempotency, expiry) stays in
- * {@see \ModulesShoppingComplex\Billing\Services\SubscriptionService}. Adding a new rail
+ * {@see SubscriptionService}. Adding a new rail
  * is one implementation of this contract plus one {@see PaymentMethodEnum} case.
  */
 interface PaymentProvider

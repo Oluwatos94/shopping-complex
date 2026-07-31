@@ -22,6 +22,25 @@ final readonly class WhatsAppApiService implements WhatsAppSender
         ]);
     }
 
+    public function sendTemplate(string $to, string $templateName, string $lang, array $components = []): void
+    {
+        $template = [
+            'name' => $templateName,
+            'language' => ['code' => $lang],
+        ];
+
+        if ($components !== []) {
+            $template['components'] = array_values($components);
+        }
+
+        SendWhatsAppMessage::dispatch($to, [
+            'messaging_product' => 'whatsapp',
+            'to' => $to,
+            'type' => 'template',
+            'template' => $template,
+        ]);
+    }
+
     /**
      * Send a WhatsApp interactive list message (used for vendor lists and product catalogues).
      *

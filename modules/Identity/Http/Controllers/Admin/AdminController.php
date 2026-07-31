@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Identity\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
@@ -111,7 +112,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function viewVendorDocument(User $user, string $field): HttpResponse|\Illuminate\Http\RedirectResponse
+    public function viewVendorDocument(User $user, string $field): HttpResponse|RedirectResponse
     {
         $allowed = ['certificate_of_incorporation', 'government_issued_id', 'proof_of_address'];
         abort_if(! in_array($field, $allowed, true), 404);
@@ -149,7 +150,7 @@ class AdminController extends Controller
         return Inertia::render('Admin/Vendors', $data);
     }
 
-    public function approveVendor(User $user): \Illuminate\Http\RedirectResponse
+    public function approveVendor(User $user): RedirectResponse
     {
         try {
             $this->onboardingService->approveOnboarding($user, Auth::user());
@@ -165,7 +166,7 @@ class AdminController extends Controller
         return back()->with('success', 'Vendor approved successfully.');
     }
 
-    public function rejectVendor(Request $request, User $user): \Illuminate\Http\RedirectResponse
+    public function rejectVendor(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => 'required|string|max:500',

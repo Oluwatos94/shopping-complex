@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Identity\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 class SaveOnboardingRequest extends FormRequest
 {
@@ -38,7 +40,7 @@ class SaveOnboardingRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -95,7 +97,7 @@ class SaveOnboardingRequest extends FormRequest
     /**
      * Get the uploaded files.
      *
-     * @return array<string, \Illuminate\Http\UploadedFile|null>
+     * @return array<string, UploadedFile|null>
      */
     public function getUploadedFiles(): array
     {

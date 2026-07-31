@@ -9,14 +9,14 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Catalog\Models\Product>
+ * @extends Factory<Product>
  */
 class ProductFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Catalog\Models\Product>
+     * @var class-string<Product>
      */
     protected $model = Product::class;
 
