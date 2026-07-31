@@ -58,7 +58,7 @@ final readonly class ReviewService
     /**
      * Submit a new review.
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function submitReview(
         User $customer,

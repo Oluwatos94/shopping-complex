@@ -8,14 +8,14 @@ use Illuminate\Support\Str;
 use ModulesShoppingComplex\Identity\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Identity\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Identity\Models\User>
+     * @var class-string<User>
      */
     protected $model = User::class;
 

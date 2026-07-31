@@ -7,14 +7,14 @@ use Illuminate\Support\Str;
 use ModulesShoppingComplex\Catalog\Models\Category;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Catalog\Models\Category>
+ * @extends Factory<Category>
  */
 class CategoryFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Catalog\Models\Category>
+     * @var class-string<Category>
      */
     protected $model = Category::class;
 

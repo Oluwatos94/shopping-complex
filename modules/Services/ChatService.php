@@ -193,7 +193,7 @@ final readonly class ChatService
     /**
      * Get messages after a specific message ID (for polling/real-time).
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, ChatMessage>
+     * @return Collection<int, ChatMessage>
      */
     public function getMessagesAfter(Conversation $conversation, int $afterMessageId): Collection
     {

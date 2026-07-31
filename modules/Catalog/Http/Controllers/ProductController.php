@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,7 @@ class ProductController extends Controller
         );
 
         // Eager-load vendor address so we can compute distance per product
-        /** @var \Illuminate\Database\Eloquent\Collection<int, \ModulesShoppingComplex\Catalog\Models\Product> $collection */
+        /** @var Collection<int, Product> $collection */
         $collection = $products->getCollection();
         $collection->loadMissing('vendor.address');
 

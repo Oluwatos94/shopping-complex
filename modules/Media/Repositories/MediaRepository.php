@@ -12,7 +12,6 @@ use ModulesShoppingComplex\Media\Models\Media;
 
 class MediaRepository
 {
-
     private function morphType(string $modelType): string
     {
         return array_search($modelType, Relation::morphMap(), true) ?: $modelType;

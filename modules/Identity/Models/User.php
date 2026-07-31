@@ -5,6 +5,7 @@ namespace ModulesShoppingComplex\Identity\Models;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -44,14 +45,14 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property-read Category|null $category
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Review> $reviews
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
- * @property-read \Illuminate\Database\Eloquent\Collection<int, CustomerWishlist> $wishlist
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Media> $media
+ * @property-read Collection<int, Product> $products
+ * @property-read Collection<int, Review> $reviews
+ * @property-read Collection<int, Notification> $notifications
+ * @property-read Collection<int, CustomerWishlist> $wishlist
+ * @property-read Collection<int, Media> $media
  * @property-read Address|null $address
  * @property-read VendorOnboarding|null $vendorOnboarding
- * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorSubscription> $subscriptions
+ * @property-read Collection<int, VendorSubscription> $subscriptions
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -94,7 +95,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function address(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function address(): HasOne
     {
         return $this->hasOne(Address::class);
     }

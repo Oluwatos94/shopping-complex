@@ -79,6 +79,12 @@ return [
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'platform_number' => env('PLATFORM_WHATSAPP_NUMBER', ''),
+
+        'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
+
+        'templates' => [
+            'vendor_update' => env('WHATSAPP_TEMPLATE_VENDOR_UPDATE', 'vendor_update'),
+        ],
     ],
 
     'claude' => [
