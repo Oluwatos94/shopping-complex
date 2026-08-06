@@ -13,6 +13,7 @@ use ModulesShoppingComplex\Notifications\Repositories\NotificationPreferenceRepo
 use ModulesShoppingComplex\Notifications\Repositories\NotificationRepository;
 use ModulesShoppingComplex\Notifications\VendorUpdateMail;
 use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 final readonly class VendorUpdateService
 {
@@ -33,8 +34,17 @@ final readonly class VendorUpdateService
 
     private function sendWhatsApp(User $vendor, VendorUpdate $update): void
     {
-        $to = $vendor->whatsapp_number;
-        if ($to === null || $to === '') {
+        $raw = (string) ($vendor->whatsapp_number ?? '');
+        if ($raw === '') {
+            return;
+        }
+
+        $to = WhatsAppPhone::toE164($raw);
+        if ($to === null) {
+            Log::warning('Vendor update WhatsApp skipped: unnormalizable number', [
+                'vendor_id' => $vendor->id,
+            ]);
+
             return;
         }
 
