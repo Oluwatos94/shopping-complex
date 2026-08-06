@@ -69,6 +69,7 @@ export interface VendorApplication {
     current_step: number;
     agreed_to_terms: boolean;
     rejection_reason: string | null;
+    products_count?: number;
     created_at: string;
     reviewed_at: string | null;
 }
