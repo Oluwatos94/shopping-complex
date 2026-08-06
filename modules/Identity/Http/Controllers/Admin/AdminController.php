@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Identity\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,15 +15,18 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Analytics\Services\AdminAnalyticsService;
+use ModulesShoppingComplex\Identity\Http\Requests\Admin\SendVendorReminderRequest;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
 use ModulesShoppingComplex\Identity\Services\VendorOnboardingService;
+use ModulesShoppingComplex\Identity\Services\VendorReminderService;
 
 class AdminController extends Controller
 {
     public function __construct(
         private readonly AdminAnalyticsService $adminAnalyticsService,
         private readonly VendorOnboardingService $onboardingService,
+        private readonly VendorReminderService $reminderService,
     ) {}
 
     public function stats(Request $request): Response|JsonResponse
@@ -111,7 +115,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function viewVendorDocument(User $user, string $field): HttpResponse|\Illuminate\Http\RedirectResponse
+    public function viewVendorDocument(User $user, string $field): HttpResponse|RedirectResponse
     {
         $allowed = ['certificate_of_incorporation', 'government_issued_id', 'proof_of_address'];
         abort_if(! in_array($field, $allowed, true), 404);
@@ -135,11 +139,16 @@ class AdminController extends Controller
     {
         $perPage = min(max((int) $request->get('per_page', 20), 1), 100);
         $status = (string) $request->get('status', 'pending_review');
-        $vendors = $this->adminAnalyticsService->getPendingVendors($perPage, $status);
+        $search = trim((string) $request->get('search', ''));
+
+        $vendors = $status === 'all'
+            ? $this->adminAnalyticsService->getAllVendors($perPage, $search)
+            : $this->adminAnalyticsService->getPendingVendors($perPage, $status);
 
         $data = [
             'vendors' => $vendors,
             'activeStatus' => $status,
+            'search' => $search,
         ];
 
         if ($request->wantsJson()) {
@@ -149,7 +158,7 @@ class AdminController extends Controller
         return Inertia::render('Admin/Vendors', $data);
     }
 
-    public function approveVendor(User $user): \Illuminate\Http\RedirectResponse
+    public function approveVendor(User $user): RedirectResponse
     {
         try {
             $this->onboardingService->approveOnboarding($user, Auth::user());
@@ -165,7 +174,24 @@ class AdminController extends Controller
         return back()->with('success', 'Vendor approved successfully.');
     }
 
-    public function rejectVendor(Request $request, User $user): \Illuminate\Http\RedirectResponse
+    public function sendReminders(SendVendorReminderRequest $request): RedirectResponse
+    {
+        $count = $this->reminderService->queueReminders($request->validated());
+
+        Log::info('Admin queued vendor reminders', [
+            'queued_for' => $count,
+            'target' => $request->validated('target'),
+            'queued_by' => Auth::id(),
+        ]);
+
+        if ($count === 0) {
+            return back()->with('error', 'No vendors matched — nothing was sent.');
+        }
+
+        return back()->with('success', "Reminder queued for {$count} vendor".($count === 1 ? '' : 's').'.');
+    }
+
+    public function rejectVendor(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => 'required|string|max:500',

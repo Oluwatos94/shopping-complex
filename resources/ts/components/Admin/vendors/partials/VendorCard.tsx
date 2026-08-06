@@ -8,12 +8,18 @@ export default function VendorCard({
     onApprove,
     onReject,
     processing,
+    selectable = false,
+    selected = false,
+    onToggleSelect,
 }: {
     vendor: VendorApplication;
     onSelect: (v: VendorApplication) => void;
     onApprove: (v: VendorApplication) => void;
     onReject: (v: VendorApplication) => void;
     processing: number | null;
+    selectable?: boolean;
+    selected?: boolean;
+    onToggleSelect?: (id: number) => void;
 }) {
     const docs: string[] = [
         vendor.certificate_of_incorporation ? 'Certificate of Incorp.' : '',
@@ -24,18 +30,43 @@ export default function VendorCard({
     const isProcessing = processing === vendor.user_id;
     const isApproved = vendor.status === 'approved';
     const isRejected = vendor.status === 'rejected';
+    const isRegistered = vendor.status === 'registered';
+    const isDraft = vendor.status === 'draft';
+    const isUnsubmitted = isRegistered || isDraft;
 
     const statusBadge = isApproved
         ? { label: 'Approved', className: 'bg-emerald-50 text-emerald-700' }
         : isRejected
         ? { label: 'Rejected', className: 'bg-red-50 text-red-600' }
+        : isRegistered
+        ? { label: 'Registered', className: 'bg-gray-100 text-gray-500' }
+        : isDraft
+        ? { label: 'Draft', className: 'bg-amber-50 text-amber-600' }
         : { label: vendor.current_step >= 4 ? 'Complete' : `Step ${vendor.current_step}/4`, className: 'bg-primary-brown/10 text-primary-brown' };
 
     return (
         <div
-            className="group bg-white p-6 rounded-xl border border-gray-100 hover:border-primary-olive/20 hover:shadow-xl hover:shadow-primary-olive/5 transition-all cursor-pointer relative overflow-hidden"
-            onClick={() => onSelect(vendor)}
+            className={`group bg-white p-6 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                selected
+                    ? 'border-primary-olive ring-1 ring-primary-olive shadow-xl shadow-primary-olive/10'
+                    : 'border-gray-100 hover:border-primary-olive/20 hover:shadow-xl hover:shadow-primary-olive/5'
+            }`}
+            onClick={() => (selectable ? onToggleSelect?.(vendor.user_id) : onSelect(vendor))}
         >
+            {selectable && (
+                <span
+                    className={`absolute top-4 right-4 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
+                        selected ? 'bg-primary-olive border-primary-olive text-white' : 'bg-white border-gray-300'
+                    }`}
+                >
+                    {selected && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                    )}
+                </span>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
                 <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:bg-primary-olive/5 transition-colors">
@@ -65,9 +96,15 @@ export default function VendorCard({
                     <p className="text-sm font-semibold text-gray-800">{formatDate(vendor.created_at)}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Location</p>
+                    <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">
+                        {vendor.products_count !== undefined ? 'Products' : 'Location'}
+                    </p>
                     <p className="text-sm font-semibold text-gray-800 truncate">
-                        {vendor.physical_address ? vendor.physical_address.split(',').at(-1)?.trim() || '—' : '—'}
+                        {vendor.products_count !== undefined
+                            ? vendor.products_count
+                            : vendor.physical_address
+                              ? vendor.physical_address.split(',').at(-1)?.trim() || '—'
+                              : '—'}
                     </p>
                 </div>
             </div>
@@ -88,7 +125,11 @@ export default function VendorCard({
 
             {/* Actions */}
             <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                {isApproved ? (
+                {isUnsubmitted ? (
+                    <p className="flex-1 py-3 text-center rounded-lg bg-gray-50 text-gray-400 font-semibold text-xs">
+                        Not submitted for verification yet
+                    </p>
+                ) : isApproved ? (
                     <button
                         disabled={isProcessing}
                         onClick={() => onReject(vendor)}

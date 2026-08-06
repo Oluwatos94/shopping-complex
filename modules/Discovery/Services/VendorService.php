@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Discovery\Services;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Discovery\Repositories\VendorRepository;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -69,7 +70,7 @@ final readonly class VendorService
     /**
      * Find a vendor by ID — used by the WhatsApp bot.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function getVendorById(int $vendorId): User
     {

@@ -57,7 +57,7 @@ class ForgotPasswordController extends Controller
      *
      * Maximum 3 attempts per hour per email + IP combination
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     protected function ensureIsNotRateLimited(Request $request): void
     {

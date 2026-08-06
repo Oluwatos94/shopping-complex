@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Support\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Repositories\SubscriptionRepository;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
@@ -261,7 +262,7 @@ final readonly class SupportBotService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, User>  $vendors
+     * @param  Collection<int, User>  $vendors
      */
     private function presentVendors($vendors): string
     {

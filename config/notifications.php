@@ -39,6 +39,13 @@ return [
             'default_push' => true,
             'groupable' => false,
         ],
+        'vendor_update' => [
+            'label' => 'Vendor Updates',
+            'description' => 'Reminders and updates about your store and subscription',
+            'default_email' => true,
+            'default_push' => true,
+            'groupable' => false,
+        ],
     ],
 
     /*

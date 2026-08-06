@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\WhatsApp\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
@@ -375,7 +376,7 @@ final readonly class WhatsAppBotService
         $profileUrl = config('app.url').'/vendors/'.$vendor->slug;
         $body = "Products from *{$vendor->business_name}* (page 1/{$totalPages}).{$nav}\nReply CONTACT for their WhatsApp number.\n\n🌐 View full profile:\n{$profileUrl}";
 
-        /** @var \Illuminate\Support\Collection<int, Product> $items */
+        /** @var Collection<int, Product> $items */
         $items = collect($products->items());
 
         $this->apiService->sendList(
@@ -526,7 +527,7 @@ final readonly class WhatsAppBotService
         $profileUrl = config('app.url').'/vendors/'.$vendor->slug;
         $body = "Products from *{$vendor->business_name}* (page {$page}/{$totalPages}).{$navText}\nReply CONTACT for their WhatsApp number.\n\n🌐 View full profile:\n{$profileUrl}";
 
-        /** @var \Illuminate\Support\Collection<int, Product> $items */
+        /** @var Collection<int, Product> $items */
         $items = collect($products->items());
 
         $this->apiService->sendList(

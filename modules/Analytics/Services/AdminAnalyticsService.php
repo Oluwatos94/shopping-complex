@@ -96,6 +96,103 @@ final readonly class AdminAnalyticsService
     }
 
     /**
+     * @return LengthAwarePaginator<int, array<string, mixed>>
+     */
+    public function getAllVendors(int $perPage, ?string $search = null): LengthAwarePaginator
+    {
+        $query = User::query()
+            ->where('role', 'vendor')
+            ->with('vendorOnboarding')
+            ->withCount('products');
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%");
+            });
+        }
+
+        $paginator = $query->latest()->paginate($perPage);
+
+        $items = $paginator->getCollection()
+            ->map(fn (User $user): array => $this->toApplicationShape($user))
+            ->all();
+
+        return new LengthAwarePaginator(
+            $items,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function toApplicationShape(User $user): array
+    {
+        $productsCount = (int) ($user->products_count ?? 0);
+
+        $base = [
+            'user_id' => $user->id,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'business_name' => $user->business_name,
+            ],
+            'products_count' => $productsCount,
+            'created_at' => $user->created_at?->toISOString(),
+        ];
+
+        $onboarding = $user->vendorOnboarding;
+
+        if ($onboarding === null) {
+            return [
+                ...$base,
+                'id' => $user->id,
+                'legal_entity_name' => null,
+                'business_category' => null,
+                'tax_identification_number' => null,
+                'physical_address' => null,
+                'bank_name' => null,
+                'bank_branch' => null,
+                'account_number' => null,
+                'certificate_of_incorporation' => null,
+                'government_issued_id' => null,
+                'proof_of_address' => null,
+                'status' => 'registered',
+                'current_step' => 0,
+                'agreed_to_terms' => false,
+                'rejection_reason' => null,
+                'reviewed_at' => null,
+            ];
+        }
+
+        return [
+            ...$base,
+            'id' => $onboarding->id,
+            'legal_entity_name' => $onboarding->legal_entity_name,
+            'business_category' => $onboarding->business_category,
+            'tax_identification_number' => $onboarding->tax_identification_number,
+            'physical_address' => $onboarding->physical_address,
+            'bank_name' => $onboarding->bank_name,
+            'bank_branch' => $onboarding->bank_branch,
+            'account_number' => $onboarding->account_number,
+            'certificate_of_incorporation' => $onboarding->certificate_of_incorporation,
+            'government_issued_id' => $onboarding->government_issued_id,
+            'proof_of_address' => $onboarding->proof_of_address,
+            'status' => $onboarding->status->value,
+            'current_step' => $onboarding->current_step,
+            'agreed_to_terms' => $onboarding->agreed_to_terms,
+            'rejection_reason' => $onboarding->rejection_reason,
+            'reviewed_at' => $onboarding->reviewed_at?->toISOString(),
+        ];
+    }
+
+    /**
      * Get paginated paid vendor subscriptions. Stellar-rail rows carry their on-chain
      * transaction history (deposit + each mpp_charge) with settled tx hashes.
      *

@@ -89,7 +89,7 @@ class ChatMessageRepository extends BasePageRepository
     /**
      * Get unread messages for a user in a conversation.
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, ChatMessage>
+     * @return Collection<int, ChatMessage>
      */
     public function getUnreadForUser(int $conversationId, int $userId): Collection
     {
@@ -125,7 +125,7 @@ class ChatMessageRepository extends BasePageRepository
     /**
      * Get messages after a specific message ID (for real-time updates).
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, ChatMessage>
+     * @return Collection<int, ChatMessage>
      */
     public function getMessagesAfter(int $conversationId, int $afterMessageId): Collection
     {

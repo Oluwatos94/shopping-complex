@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Discovery\Repositories;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -100,7 +101,7 @@ class VendorRepository extends BasePageRepository
      * business/vendor name, product names and tags; loose mode widens to
      * product descriptions and category names.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<User>  $query
+     * @param  Builder<User>  $query
      * @param  array<int, string>  $terms
      */
     private function applySearchTerms($query, array $terms, bool $loose): void

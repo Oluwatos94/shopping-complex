@@ -7,14 +7,14 @@ use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\ModulesShoppingComplex\Notifications\Models\Notification>
+ * @extends Factory<Notification>
  */
 class NotificationFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\ModulesShoppingComplex\Notifications\Models\Notification>
+     * @var class-string<Notification>
      */
     protected $model = Notification::class;
 

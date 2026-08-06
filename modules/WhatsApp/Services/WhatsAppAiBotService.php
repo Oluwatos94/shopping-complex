@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\WhatsApp\Services;
 
 use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -377,9 +380,9 @@ final readonly class WhatsAppAiBotService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, User>  $vendors
+     * @param  Collection<int, User>  $vendors
      */
-    private function presentVendors(WhatsAppSession $session, \Illuminate\Support\Collection $vendors): string
+    private function presentVendors(WhatsAppSession $session, Collection $vendors): string
     {
         $vendors = $vendors->values();
 
@@ -449,8 +452,8 @@ final readonly class WhatsAppAiBotService
             return 'This vendor has no active products listed.';
         }
 
-        $lines = $products->map(function (\Illuminate\Database\Eloquent\Model $p) {
-            /** @var \ModulesShoppingComplex\Catalog\Models\Product $p */
+        $lines = $products->map(function (Model $p) {
+            /** @var Product $p */
             return sprintf(
                 '- %s | ₦%s',
                 $p->name,
@@ -676,9 +679,9 @@ PROMPT;
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, User>  $vendors
+     * @param  Collection<int, User>  $vendors
      */
-    private function logVendorViews(\Illuminate\Support\Collection $vendors, string $from, string $query, ?float $lat, ?float $lng): void
+    private function logVendorViews(Collection $vendors, string $from, string $query, ?float $lat, ?float $lng): void
     {
         $now = now()->toDateTimeString();
 

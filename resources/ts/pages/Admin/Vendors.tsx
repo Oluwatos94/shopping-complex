@@ -6,23 +6,42 @@ import { Paginated } from '@/types/product';
 import VendorCard from '@/components/Admin/vendors/partials/VendorCard';
 import DetailPanel from '@/components/Admin/vendors/partials/DetailPanel';
 import RejectModal from '@/components/Admin/vendors/partials/RejectModal';
+import ReminderModal from '@/components/Admin/vendors/partials/ReminderModal';
 import { SkeletonCard } from '@/components/Loading';
 
 interface Props {
     vendors: Paginated<VendorApplication>;
     activeStatus: string;
+    search?: string;
 }
 
-export default function Vendors({ vendors, activeStatus }: Props) {
+export default function Vendors({ vendors, activeStatus, search = '' }: Props) {
     const [selectedVendor, setSelectedVendor] = useState<VendorApplication | null>(null);
     const [rejectingVendor, setRejectingVendor] = useState<VendorApplication | null>(null);
     const [processing, setProcessing] = useState<number | null>(null);
     const [listLoading, setListLoading] = useState(false);
+    const [reminderOpen, setReminderOpen] = useState(false);
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [searchTerm, setSearchTerm] = useState(search);
+
+    const toggleSelect = (id: number) =>
+        setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+    const runSearch = () => {
+        router.get('/admin/vendors/pending', { status: 'all', search: searchTerm }, {
+            preserveState: true,
+            preserveScroll: true,
+            onStart: () => setListLoading(true),
+            onFinish: () => setListLoading(false),
+        });
+    };
 
     const filterTabs = [
         { label: 'Pending', value: 'pending_review' },
         { label: 'Approved', value: 'approved' },
         { label: 'Rejected', value: 'rejected' },
+        { label: 'All', value: 'all' },
     ];
 
     const switchTab = (status: string) => {
@@ -97,20 +116,53 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                             Vendor Approval
                         </h2>
                     </div>
-                    <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
-                        {filterTabs.map(tab => (
-                            <button
-                                key={tab.value}
-                                onClick={() => switchTab(tab.value)}
-                                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                                    activeStatus === tab.value
-                                        ? 'bg-primary-olive text-white font-bold shadow-md shadow-primary-olive/20'
-                                        : 'text-gray-500 hover:bg-white'
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                            {filterTabs.map(tab => (
+                                <button
+                                    key={tab.value}
+                                    onClick={() => switchTab(tab.value)}
+                                    className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        activeStatus === tab.value
+                                            ? 'bg-primary-olive text-white font-bold shadow-md shadow-primary-olive/20'
+                                            : 'text-gray-500 hover:bg-white'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {activeStatus === 'all' && (
+                            <input
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+                                placeholder="Search name or email…"
+                                className="px-4 py-2.5 rounded-xl bg-gray-100 text-sm text-gray-700 placeholder:text-gray-400 focus:bg-white focus:ring-1 focus:ring-primary-olive outline-none transition-all w-56"
+                            />
+                        )}
+
+                        <button
+                            onClick={() => {
+                                setSelectMode((v) => !v);
+                                setSelectedIds([]);
+                            }}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                selectMode
+                                    ? 'bg-primary-olive/10 text-primary-olive'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                        >
+                            {selectMode ? `Selecting (${selectedIds.length})` : 'Select'}
+                        </button>
+
+                        <button
+                            onClick={() => setReminderOpen(true)}
+                            className="px-5 py-2.5 rounded-xl bg-primary-olive text-white text-sm font-bold shadow-md shadow-primary-olive/20 hover:bg-primary-olive/90 transition-all"
+                        >
+                            Send reminder
+                        </button>
                     </div>
                 </div>
 
@@ -176,7 +228,11 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                         <svg className="w-12 h-12 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-gray-400 font-medium">All caught up — no pending applications.</p>
+                        <p className="text-gray-400 font-medium">
+                            {activeStatus === 'all'
+                                ? 'No vendors match your search.'
+                                : 'All caught up — no pending applications.'}
+                        </p>
                     </div>
                 ) : (
                     <>
@@ -189,6 +245,9 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                                     onApprove={handleApprove}
                                     onReject={setRejectingVendor}
                                     processing={processing}
+                                    selectable={selectMode}
+                                    selected={selectedIds.includes(vendor.user_id)}
+                                    onToggleSelect={toggleSelect}
                                 />
                             ))}
 
@@ -238,6 +297,12 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                 vendor={rejectingVendor}
                 onClose={() => setRejectingVendor(null)}
                 onConfirm={handleRejectConfirm}
+            />
+
+            <ReminderModal
+                open={reminderOpen}
+                onClose={() => setReminderOpen(false)}
+                selectedIds={selectedIds}
             />
         </>
     );
