@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\WhatsApp\Services\WhatsAppAiBotService;
 
 class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
@@ -39,6 +40,15 @@ class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
 
     public function handle(WhatsAppAiBotService $botService): void
     {
+        /** @var array<string, mixed>|null $status */
+        $status = data_get($this->payload, 'entry.0.changes.0.value.statuses.0');
+        if (is_array($status) && ($status['status'] ?? '') === 'failed') {
+            Log::warning('WhatsApp delivery failed', [
+                'recipient' => '***'.substr((string) ($status['recipient_id'] ?? ''), -4),
+                'errors' => $status['errors'] ?? null,
+            ]);
+        }
+
         /** @var array<string, mixed>|null $message */
         $message = data_get($this->payload, 'entry.0.changes.0.value.messages.0');
 
