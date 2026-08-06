@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface Props {
     open: boolean;
@@ -34,6 +34,12 @@ export default function ReminderModal({ open, onClose, selectedIds }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    useEffect(() => {
+        if (open) {
+            setRecipient(selectedIds.length > 0 ? 'selection' : 'all');
+        }
+    }, [open, selectedIds.length]);
+
     const options = useMemo(() => {
         if (selectedIds.length === 0) return RECIPIENT_OPTIONS;
         return [
@@ -55,6 +61,14 @@ export default function ReminderModal({ open, onClose, selectedIds }: Props) {
     };
 
     const submit = () => {
+        if (recipient === 'all' && !confirm('Send this reminder to ALL vendors? This cannot be undone.')) {
+            return;
+        }
+        if (recipient === 'selection' && selectedIds.length === 0) {
+            setErrors({ vendor_ids: 'Select at least one vendor first.' });
+            return;
+        }
+
         setSubmitting(true);
         setErrors({});
         router.post('/admin/vendors/reminders', buildPayload(), {
