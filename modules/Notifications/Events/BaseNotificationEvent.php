@@ -11,16 +11,24 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Notifications\Jobs\Middleware\RescueBroadcast;
 
 abstract class BaseNotificationEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public int $tries = 1;
 
     public function __construct(
         public User $recipient,
         public string $message,
         public array $data = []
     ) {}
+
+    public function middleware(): array
+    {
+        return [new RescueBroadcast];
+    }
 
     /**
      * Get the notification type identifier

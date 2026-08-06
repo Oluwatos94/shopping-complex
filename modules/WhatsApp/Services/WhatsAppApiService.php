@@ -30,7 +30,7 @@ final readonly class WhatsAppApiService implements WhatsAppSender
         ];
 
         if ($components !== []) {
-            $template['components'] = array_values($components);
+            $template['components'] = $this->sanitizeComponents($components);
         }
 
         SendWhatsAppMessage::dispatch($to, [
@@ -39,6 +39,33 @@ final readonly class WhatsAppApiService implements WhatsAppSender
             'type' => 'template',
             'template' => $template,
         ]);
+    }
+
+    private function sanitizeComponents(array $components): array
+    {
+        return array_values(array_map(function (array $component): array {
+            if (isset($component['parameters']) && is_array($component['parameters'])) {
+                $component['parameters'] = array_map(
+                    fn ($parameter) => $this->sanitizeParameter($parameter),
+                    $component['parameters'],
+                );
+            }
+
+            return $component;
+        }, $components));
+    }
+
+    /**
+     * @param  mixed  $parameter
+     * @return mixed
+     */
+    private function sanitizeParameter($parameter)
+    {
+        if (is_array($parameter) && isset($parameter['text']) && is_string($parameter['text'])) {
+            $parameter['text'] = trim((string) preg_replace('/\s+/u', ' ', $parameter['text']));
+        }
+
+        return $parameter;
     }
 
     /**
