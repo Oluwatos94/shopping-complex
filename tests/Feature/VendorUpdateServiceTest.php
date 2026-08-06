@@ -78,6 +78,28 @@ class VendorUpdateServiceTest extends TestCase
         });
     }
 
+    public function test_send_template_flattens_newlines_in_parameters(): void
+    {
+        Queue::fake([SendWhatsAppMessage::class]);
+
+        app(WhatsAppApiService::class)->sendTemplate(
+            '2348012345678',
+            'vendor_update',
+            'en',
+            [['type' => 'body', 'parameters' => [
+                ['type' => 'text', 'text' => "Line one.\n\nLine two.\tTabbed.     Spaced."],
+            ]]],
+        );
+
+        Queue::assertPushed(SendWhatsAppMessage::class, function (SendWhatsAppMessage $job) {
+            $text = $job->payload['template']['components'][0]['parameters'][0]['text'];
+
+            return $text === 'Line one. Line two. Tabbed. Spaced.'
+                && ! str_contains($text, "\n")
+                && ! str_contains($text, "\t");
+        });
+    }
+
     // ==================== Channel fan-out ====================
 
     public function test_it_fans_out_to_whatsapp_email_and_in_app(): void
