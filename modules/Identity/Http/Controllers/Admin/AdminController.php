@@ -139,11 +139,16 @@ class AdminController extends Controller
     {
         $perPage = min(max((int) $request->get('per_page', 20), 1), 100);
         $status = (string) $request->get('status', 'pending_review');
-        $vendors = $this->adminAnalyticsService->getPendingVendors($perPage, $status);
+        $search = trim((string) $request->get('search', ''));
+
+        $vendors = $status === 'all'
+            ? $this->adminAnalyticsService->getAllVendors($perPage, $search)
+            : $this->adminAnalyticsService->getPendingVendors($perPage, $status);
 
         $data = [
             'vendors' => $vendors,
             'activeStatus' => $status,
+            'search' => $search,
         ];
 
         if ($request->wantsJson()) {

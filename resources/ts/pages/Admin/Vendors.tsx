@@ -12,9 +12,10 @@ import { SkeletonCard } from '@/components/Loading';
 interface Props {
     vendors: Paginated<VendorApplication>;
     activeStatus: string;
+    search?: string;
 }
 
-export default function Vendors({ vendors, activeStatus }: Props) {
+export default function Vendors({ vendors, activeStatus, search = '' }: Props) {
     const [selectedVendor, setSelectedVendor] = useState<VendorApplication | null>(null);
     const [rejectingVendor, setRejectingVendor] = useState<VendorApplication | null>(null);
     const [processing, setProcessing] = useState<number | null>(null);
@@ -22,14 +23,25 @@ export default function Vendors({ vendors, activeStatus }: Props) {
     const [reminderOpen, setReminderOpen] = useState(false);
     const [selectMode, setSelectMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [searchTerm, setSearchTerm] = useState(search);
 
     const toggleSelect = (id: number) =>
         setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+    const runSearch = () => {
+        router.get('/admin/vendors/pending', { status: 'all', search: searchTerm }, {
+            preserveState: true,
+            preserveScroll: true,
+            onStart: () => setListLoading(true),
+            onFinish: () => setListLoading(false),
+        });
+    };
 
     const filterTabs = [
         { label: 'Pending', value: 'pending_review' },
         { label: 'Approved', value: 'approved' },
         { label: 'Rejected', value: 'rejected' },
+        { label: 'All', value: 'all' },
     ];
 
     const switchTab = (status: string) => {
@@ -121,6 +133,16 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                             ))}
                         </div>
 
+                        {activeStatus === 'all' && (
+                            <input
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+                                placeholder="Search name or email…"
+                                className="px-4 py-2.5 rounded-xl bg-gray-100 text-sm text-gray-700 placeholder:text-gray-400 focus:bg-white focus:ring-1 focus:ring-primary-olive outline-none transition-all w-56"
+                            />
+                        )}
+
                         <button
                             onClick={() => {
                                 setSelectMode((v) => !v);
@@ -206,7 +228,11 @@ export default function Vendors({ vendors, activeStatus }: Props) {
                         <svg className="w-12 h-12 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-gray-400 font-medium">All caught up — no pending applications.</p>
+                        <p className="text-gray-400 font-medium">
+                            {activeStatus === 'all'
+                                ? 'No vendors match your search.'
+                                : 'All caught up — no pending applications.'}
+                        </p>
                     </div>
                 ) : (
                     <>
