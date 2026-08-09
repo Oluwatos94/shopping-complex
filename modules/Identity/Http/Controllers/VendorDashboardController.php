@@ -49,11 +49,21 @@ class VendorDashboardController extends Controller
         $chatContactMetrics = $this->analyticsService->getChatContactMetrics($user->id, $startOfWeek, $endOfWeek);
         $activeProductsCount = $user->products()->where('is_active', true)->count();
 
+        // The paired backend issue owns real code generation + referral capture.
+        // Until the referral_code column exists, derive a stable per-vendor code so
+        // the dashboard card is usable; the stored code wins as soon as it lands.
+        $referralCode = $user->referral_code
+            ?? 'JD'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT).strtoupper(substr(md5($user->email), 0, 4));
+
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
                 'name' => $user->name,
                 'business_name' => $user->business_name ?? $user->name,
                 'slug' => $user->slug,
+            ],
+            'referral' => [
+                'code' => $referralCode,
+                'link' => route('register', ['ref' => $referralCode]),
             ],
             'subscription' => [
                 'plan_name' => $subscription?->plan->name ?? null,
