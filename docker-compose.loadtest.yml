@@ -1,0 +1,54 @@
+# Local load-test stack. See loadtest/README.md.
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: loadtest
+      MYSQL_DATABASE: jiidaa
+      MYSQL_USER: jiidaa
+      MYSQL_PASSWORD: loadtest
+    # Must exceed pm.max_children + queue workers or saturation looks like
+    # connection errors instead.
+    command: --max-connections=200
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-P", "3306", "-uroot", "-ploadtest"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    tmpfs:
+      # Keeps host disk I/O out of the measurement.
+      - /var/lib/mysql
+
+  app:
+    image: jiidaa:loadtest
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 8000
+      APP_ENV: local
+      APP_DEBUG: "false"
+      APP_KEY: base64:7kJcA3s2n5w/409n3QiV6Sx9Bo/4DLf0ShqU7xU5zXQ=
+      APP_URL: http://localhost:8000
+
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: jiidaa
+      DB_USERNAME: jiidaa
+      DB_PASSWORD: loadtest
+
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+
+      MAIL_MAILER: log
+
+      BROADCAST_CONNECTION: "null"
+      BCRYPT_ROUNDS: "12"

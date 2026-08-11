@@ -1,15 +1,19 @@
-FROM php:8.2-cli
+FROM php:8.2-fpm
 
 # Use the reliable PHP extension installer
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install system dependencies
+# nginx terminates client connections; gettext-base provides envsubst, used by
+# the entrypoint to render the nginx config with Railway's $PORT.
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     zip \
     unzip \
     supervisor \
+    nginx \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions (pcntl is required by Reverb for signal handling)
@@ -24,7 +28,8 @@ RUN install-php-extensions \
     bcmath \
     gmp \
     pcntl \
-    sockets
+    sockets \
+    opcache
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -68,9 +73,20 @@ ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 # Install and build frontend
 RUN bun install && bun run build
 
-# Copy Supervisor config
+# Runtime configuration
+COPY docker/php.ini /usr/local/etc/php/php.ini
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.conf
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# The bundled pool config would otherwise be picked up alongside ours
+RUN rm -f /usr/local/etc/php-fpm.d/*.conf \
+    && chmod +x /usr/local/bin/entrypoint.sh
+
+# FPM children run as www-data and must be able to write caches, logs and sessions
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 EXPOSE ${PORT:-8000}
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
