@@ -42,9 +42,9 @@ Route::get('/terms', fn () => inertia('Terms'))->name('terms');
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:writes');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login-attempt');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:writes');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
     // Password Reset Routes
     Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');

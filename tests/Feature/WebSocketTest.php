@@ -24,6 +24,9 @@ class WebSocketTest extends TestCase
 
     protected function setUp(): void
     {
+
+        $this->setBroadcastConnection('reverb');
+
         parent::setUp();
 
         /** @var User $vendor */
@@ -51,6 +54,23 @@ class WebSocketTest extends TestCase
         $this->product = Product::factory()->create([
             'vendor_id' => $this->vendor->id,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->setBroadcastConnection('null');
+
+        parent::tearDown();
+    }
+
+    /**
+     * Set at env level, where config/broadcasting.php reads it during bootstrap.
+     */
+    private function setBroadcastConnection(string $connection): void
+    {
+        putenv("BROADCAST_CONNECTION={$connection}");
+        $_ENV['BROADCAST_CONNECTION'] = $connection;
+        $_SERVER['BROADCAST_CONNECTION'] = $connection;
     }
 
     public function test_user_can_authorize_for_their_own_private_channel(): void

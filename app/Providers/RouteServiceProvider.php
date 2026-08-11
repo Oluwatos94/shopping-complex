@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -38,16 +40,33 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Guest users (unauthenticated) - stricter limits
+        // Guest page loads - raised to tolerate shared carrier-NAT IPs
         RateLimiter::for('guest', function (Request $request) {
-            return Limit::perMinute(30)
+            return Limit::perMinute(120)
                 ->by($request->ip())
-                ->response(function (array $headers) {
-                    return response()->json([
-                        'message' => 'Too many requests. Please slow down.',
-                        'retry_after' => $headers['Retry-After'] ?? 60,
-                    ], 429, $headers);
-                });
+                ->response($this->throttledResponse('Too many requests. Please slow down.'));
+        });
+
+        RateLimiter::for('register', function (Request $request) {
+            $response = $this->throttledResponse(
+                'Too many registration attempts. Please wait a moment and try again.'
+            );
+
+            return [
+                Limit::perMinute(5)->by('register-email:'.$this->emailKey($request))->response($response),
+                Limit::perMinute(60)->by('register-ip:'.$request->ip())->response($response),
+            ];
+        });
+
+        RateLimiter::for('login-attempt', function (Request $request) {
+            $response = $this->throttledResponse(
+                'Too many login attempts. Please wait a moment and try again.'
+            );
+
+            return [
+                Limit::perMinute(6)->by('login-email:'.$this->emailKey($request))->response($response),
+                Limit::perMinute(60)->by('login-ip:'.$request->ip())->response($response),
+            ];
         });
 
         // Authenticated users - more generous limits
@@ -159,5 +178,35 @@ class RouteServiceProvider extends ServiceProvider
                 Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()),
             ];
         });
+    }
+
+    protected function throttledResponse(string $message): Closure
+    {
+        return function (Request $request, array $headers) use ($message) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                    'retry_after' => $headers['Retry-After'] ?? 60,
+                ], 429, $headers);
+            }
+
+            return back()
+                ->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['email' => $message]);
+        };
+    }
+
+    /**
+     * Normalised so casing and whitespace cannot mint fresh buckets.
+     */
+    protected function emailKey(Request $request): string
+    {
+        $email = $request->input('email');
+
+        if (! is_string($email) || trim($email) === '') {
+            return 'anonymous:'.$request->ip();
+        }
+
+        return Str::lower(trim($email));
     }
 }
