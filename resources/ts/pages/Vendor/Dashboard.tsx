@@ -1,11 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
+import ReferralCard, { Referral } from './partials/ReferralCard';
 
 interface Props {
     vendor: {
         name: string;
         business_name: string;
     };
+    referral?: Referral;
     subscription: {
         plan_name: string | null;
         plan_slug: string | null;
@@ -20,7 +22,7 @@ interface Props {
     };
 }
 
-export default function VendorDashboard({ vendor, subscription, stats }: Props) {
+export default function VendorDashboard({ vendor, referral, subscription, stats }: Props) {
     const isExpiringSoon = subscription.days_remaining !== null && subscription.days_remaining <= 7 && !subscription.is_expired;
 
     return (
@@ -99,6 +101,9 @@ export default function VendorDashboard({ vendor, subscription, stats }: Props) 
                         </div>
 
                     </div>
+
+                    {/* Refer & win */}
+                    <ReferralCard referral={referral} businessName={vendor.business_name} />
 
                     {/* Recent Activity */}
                     <div className="bg-white rounded-2xl p-6 shadow-sm">
