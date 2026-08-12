@@ -16,6 +16,7 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Http\Requests\UpdateVendorProfileRequest;
 use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Services\ReferralService;
 use ModulesShoppingComplex\Media\Services\MediaService;
 
 class VendorDashboardController extends Controller
@@ -24,6 +25,7 @@ class VendorDashboardController extends Controller
         private readonly MediaService $mediaService,
         private readonly AnalyticsService $analyticsService,
         private readonly SubscriptionService $subscriptionService,
+        private readonly ReferralService $referralService,
     ) {}
 
     public function dashboard(): Response
@@ -49,11 +51,7 @@ class VendorDashboardController extends Controller
         $chatContactMetrics = $this->analyticsService->getChatContactMetrics($user->id, $startOfWeek, $endOfWeek);
         $activeProductsCount = $user->products()->where('is_active', true)->count();
 
-        // The paired backend issue owns real code generation + referral capture.
-        // Until the referral_code column exists, derive a stable per-vendor code so
-        // the dashboard card is usable; the stored code wins as soon as it lands.
-        $referralCode = $user->referral_code
-            ?? 'JD'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT).strtoupper(substr(md5($user->email), 0, 4));
+        $referralCode = $this->referralService->codeFor($user);
 
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
@@ -63,7 +61,8 @@ class VendorDashboardController extends Controller
             ],
             'referral' => [
                 'code' => $referralCode,
-                'link' => route('register', ['ref' => $referralCode]),
+                'link' => $this->referralService->shareUrl($referralCode),
+                'count' => $user->referrals()->count(),
             ],
             'subscription' => [
                 'plan_name' => $subscription?->plan->name ?? null,

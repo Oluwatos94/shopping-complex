@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\UserRepository;
+use ModulesShoppingComplex\Identity\Services\ReferralService;
 use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Services\NotificationService;
@@ -18,6 +19,7 @@ class AuthService
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly NotificationService $notificationService,
+        private readonly ReferralService $referralService,
     ) {}
 
     /**
@@ -32,18 +34,15 @@ class AuthService
             $data['role'] = 'customer';
         }
 
-        // Create the user
         $user = $this->userRepository->create($data);
 
-        // Log the user in immediately after registration
+        $this->referralService->attachPendingReferral($user);
+
         Auth::login($user);
 
         return $user;
     }
 
-    /**
-     * Send a welcome notification after login
-     */
     public function sendWelcomeNotification(User $user, bool $isNewUser = false): void
     {
         $alreadySent = Notification::query()
@@ -67,17 +66,11 @@ class AuthService
         ));
     }
 
-    /**
-     * Logout the authenticated user
-     */
     public function logout(): void
     {
         Auth::guard('web')->logout();
     }
 
-    /**
-     * Verify user's email
-     */
     public function verifyEmail(int $userId): User
     {
         return $this->userRepository->verifyEmail($userId);
@@ -117,7 +110,7 @@ class AuthService
                 return $user->fresh();
             }
 
-            return $this->userRepository->create([
+            $user = $this->userRepository->create([
                 'name' => $name,
                 'email' => $email,
                 'google_id' => $providerId,
@@ -125,6 +118,10 @@ class AuthService
                 'email_verified_at' => now(),
                 'password' => Str::random(32),
             ]);
+
+            $this->referralService->attachPendingReferral($user);
+
+            return $user;
         });
     }
 }

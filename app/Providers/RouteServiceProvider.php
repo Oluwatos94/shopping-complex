@@ -190,6 +190,10 @@ class RouteServiceProvider extends ServiceProvider
                 ], 429, $headers);
             }
 
+            if ($request->isMethodSafe()) {
+                return response()->view('errors.429', ['message' => $message], 429, $headers);
+            }
+
             return back()
                 ->withInput($request->except(['password', 'password_confirmation']))
                 ->withErrors(['email' => $message]);

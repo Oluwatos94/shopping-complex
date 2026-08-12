@@ -19,6 +19,7 @@ use ModulesShoppingComplex\Identity\Http\Controllers\Auth\ResetPasswordControlle
 use ModulesShoppingComplex\Identity\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Identity\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Identity\Http\Controllers\ProfileController;
+use ModulesShoppingComplex\Identity\Http\Controllers\ReferralController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorDashboardController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorOnboardingController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorRegistrationController;
@@ -247,6 +248,7 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
     Route::get('/', [VendorDashboardController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/products', [VendorDashboardController::class, 'vendorProducts'])->name('vendor.products.index');
+    Route::get('/referral', [ReferralController::class, 'show'])->name('vendor.referral');
 });
 
 // Vendor Registration & Onboarding Routes
