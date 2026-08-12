@@ -41,6 +41,8 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property string|null $business_name
  * @property int|null $category_id
  * @property string|null $available_hours
+ * @property string|null $referral_code
+ * @property int|null $referred_by
  * @property string|null $session_id
  * @property-read Category|null $category
  * @property Carbon $created_at
@@ -53,6 +55,9 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property-read Address|null $address
  * @property-read VendorOnboarding|null $vendorOnboarding
  * @property-read Collection<int, VendorSubscription> $subscriptions
+ * @property-read User|null $referrer
+ * @property-read Collection<int, User> $referrals
+ * @property-read int|null $referrals_count
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -177,6 +182,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function subscriptions(): HasMany
     {
         return $this->hasMany(VendorSubscription::class, 'vendor_id');
+    }
+
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by');
     }
 
     /**

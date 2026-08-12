@@ -43,4 +43,8 @@ php artisan db:seed --class=CategorySeeder --force
 php artisan db:seed --class=SubscriptionPlanSeeder --force
 php artisan db:seed --class=AdminSeeder --force
 
+# The steps above run as root; anything they wrote (notably storage/logs) would
+# otherwise be unwritable by the www-data workers.
+chown -R www-data:www-data /app/storage /app/bootstrap/cache
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

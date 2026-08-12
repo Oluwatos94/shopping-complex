@@ -1,0 +1,153 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ModulesShoppingComplex\Identity\Services;
+
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Session;
+use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Repositories\ReferralRepository;
+use RuntimeException;
+
+final readonly class ReferralService
+{
+    public const QUERY_PARAM = 'ref';
+
+    public const SESSION_KEY = 'referral.pending_code';
+
+    private const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+    private const MAX_ATTEMPTS = 10;
+
+    public function __construct(
+        private ReferralRepository $referralRepository,
+    ) {}
+
+    /**
+     * Get the user's referral code, minting and persisting one on first access.
+     * Idempotent: repeated calls always return the same code.
+     */
+    public function codeFor(User $user): string
+    {
+        if ($user->referral_code !== null) {
+            return $user->referral_code;
+        }
+
+        $code = $this->mintCode($user->id);
+
+        $user->referral_code = $code;
+        $user->syncOriginalAttribute('referral_code');
+
+        return $code;
+    }
+
+    public function shareUrl(string $code): string
+    {
+        $path = (string) config('referral.share_path', '/register');
+
+        return url($path).'?'.http_build_query([self::QUERY_PARAM => $code]);
+    }
+
+    public function attachPendingReferral(User $user): bool
+    {
+        $code = Session::pull(self::SESSION_KEY);
+
+        return is_string($code) && $this->attachReferrer($user, $code);
+    }
+
+    public function attachReferrer(User $user, string $code): bool
+    {
+        $code = self::normalizeCode($code);
+
+        if ($code === null) {
+            return false;
+        }
+
+        $referrer = $this->referralRepository->findByCode($code);
+
+        if ($referrer === null || $referrer->id === $user->id) {
+            return false;
+        }
+
+        if (! $this->referralRepository->attachReferrer($user->id, $referrer->id)) {
+            return false;
+        }
+
+        $user->referred_by = $referrer->id;
+        $user->syncOriginalAttribute('referred_by');
+
+        return true;
+    }
+
+    /**
+     * Give every existing vendor a code so referral counts work from day one.
+     *
+     * @return int Number of vendors backfilled.
+     */
+    public function backfillVendorCodes(int $chunkSize = 500): int
+    {
+        $backfilled = 0;
+
+        $this->referralRepository->chunkVendorsWithoutCode(
+            $chunkSize,
+            function (Collection $vendors) use (&$backfilled): void {
+                foreach ($vendors as $vendor) {
+                    $this->mintCode($vendor->id);
+                    $backfilled++;
+                }
+            }
+        );
+
+        return $backfilled;
+    }
+
+    public static function normalizeCode(string $code): ?string
+    {
+        $code = strtoupper(trim($code));
+
+        return preg_match('/^[A-Z0-9]{4,32}$/', $code) === 1 ? $code : null;
+    }
+
+    /**
+     * Persist a fresh unique code for a user that holds none. The conditional
+     * write means a racing caller loses the update and re-reads the winner's
+     * code instead of overwriting it.
+     */
+    private function mintCode(int $userId): string
+    {
+        for ($attempt = 0; $attempt < self::MAX_ATTEMPTS; $attempt++) {
+            $code = $this->generateCode();
+
+            try {
+                if ($this->referralRepository->claimCode($userId, $code)) {
+                    return $code;
+                }
+            } catch (UniqueConstraintViolationException) {
+                continue;
+            }
+
+            $existing = $this->referralRepository->getCode($userId);
+
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
+        throw new RuntimeException("Unable to generate a unique referral code for user {$userId}.");
+    }
+
+    private function generateCode(): string
+    {
+        $length = max(4, (int) config('referral.code_length', 8));
+        $lastIndex = strlen(self::ALPHABET) - 1;
+
+        $code = '';
+        for ($i = 0; $i < $length; $i++) {
+            $code .= self::ALPHABET[random_int(0, $lastIndex)];
+        }
+
+        return $code;
+    }
+}

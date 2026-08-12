@@ -23,6 +23,7 @@ final readonly class VendorOnboardingService
         private OnboardingRepository $onboardingRepository,
         private MediaService $mediaService,
         private SubscriptionService $subscriptionService,
+        private ReferralService $referralService,
     ) {}
 
     /**
@@ -41,6 +42,8 @@ final readonly class VendorOnboardingService
                 'category_id' => $data['category_id'],
                 'whatsapp_number' => $data['whatsapp_number'],
             ]);
+
+            $this->referralService->codeFor($user);
 
             Address::updateOrCreate(
                 ['user_id' => $user->id],

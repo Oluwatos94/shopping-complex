@@ -9,6 +9,7 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Models\Conversation;
 use Tests\TestCase;
+use Throwable;
 
 class WebSocketTest extends TestCase
 {
@@ -24,11 +25,38 @@ class WebSocketTest extends TestCase
 
     protected function setUp(): void
     {
-
         $this->setBroadcastConnection('reverb');
 
-        parent::setUp();
+        try {
+            parent::setUp();
 
+            $this->seedFixtures();
+        } catch (Throwable $e) {
+            $this->setBroadcastConnection('null');
+
+            throw $e;
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        $this->setBroadcastConnection('null');
+
+        parent::tearDown();
+    }
+
+    /**
+     * Set at env level, where config/broadcasting.php reads it during bootstrap.
+     */
+    private function setBroadcastConnection(string $connection): void
+    {
+        putenv("BROADCAST_CONNECTION={$connection}");
+        $_ENV['BROADCAST_CONNECTION'] = $connection;
+        $_SERVER['BROADCAST_CONNECTION'] = $connection;
+    }
+
+    private function seedFixtures(): void
+    {
         /** @var User $vendor */
         $vendor = User::factory()->create([
             'role' => 'vendor',
@@ -50,27 +78,9 @@ class WebSocketTest extends TestCase
         ]);
         $this->otherVendor = $otherVendor;
 
-        // Create a product owned by the vendor
         $this->product = Product::factory()->create([
             'vendor_id' => $this->vendor->id,
         ]);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->setBroadcastConnection('null');
-
-        parent::tearDown();
-    }
-
-    /**
-     * Set at env level, where config/broadcasting.php reads it during bootstrap.
-     */
-    private function setBroadcastConnection(string $connection): void
-    {
-        putenv("BROADCAST_CONNECTION={$connection}");
-        $_ENV['BROADCAST_CONNECTION'] = $connection;
-        $_SERVER['BROADCAST_CONNECTION'] = $connection;
     }
 
     public function test_user_can_authorize_for_their_own_private_channel(): void

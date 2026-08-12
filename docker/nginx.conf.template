@@ -32,6 +32,12 @@ http {
     access_log /dev/stdout;
     error_log  /dev/stderr warn;
 
+    # PHP treats any non-empty HTTPS value as secure, so "http" must map to "".
+    map $http_x_forwarded_proto $fastcgi_https {
+        default "";
+        https   on;
+    }
+
     upstream php-fpm {
         server 127.0.0.1:9000;
         keepalive 32;
@@ -45,18 +51,16 @@ http {
 
         charset utf-8;
 
-        # Content-hashed by Vite, so it never needs revalidating.
-        location /build/ {
-            expires 1y;
+        # ^~ so the css/js regex below doesn't take precedence over this.
+        location ^~ /build/ {
             access_log off;
-            add_header Cache-Control "public, immutable";
+            add_header Cache-Control "public, max-age=31536000, immutable";
             try_files $uri =404;
         }
 
         location ~* \.(?:css|js|jpg|jpeg|png|gif|webp|avif|svg|ico|woff|woff2|ttf|eot)$ {
-            expires 30d;
             access_log off;
-            add_header Cache-Control "public";
+            add_header Cache-Control "public, max-age=2592000";
             try_files $uri /index.php?$query_string;
         }
 
@@ -67,14 +71,17 @@ http {
             try_files $uri $uri/ /index.php?$query_string;
         }
 
-        location ~ \.php$ {
+        # Front controller only — /storage symlinks to uploads whose extension
+        # comes from the client, so a broad \.php$ match would execute them.
+        location ~ ^/index\.php(/|$) {
             fastcgi_pass php-fpm;
             fastcgi_index index.php;
             include fastcgi_params;
 
+            fastcgi_split_path_info ^(.+\.php)(/.*)$;
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param PATH_INFO       $fastcgi_path_info;
-            fastcgi_param HTTPS           $http_x_forwarded_proto if_not_empty;
+            fastcgi_param HTTPS           $fastcgi_https if_not_empty;
             # Debian's fastcgi_params maps HTTP_HOST to $host, which drops the
             # port, so Laravel builds asset URLs without it on non-standard ports.
             fastcgi_param HTTP_HOST       $http_host;
@@ -84,6 +91,10 @@ http {
             fastcgi_buffer_size    32k;
             fastcgi_buffers        16 32k;
             fastcgi_busy_buffers_size 64k;
+        }
+
+        location ~ \.php$ {
+            return 404;
         }
 
         location ~ /\.(?!well-known).* {
