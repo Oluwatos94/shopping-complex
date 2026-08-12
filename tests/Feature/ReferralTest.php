@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Services\ReferralService;
@@ -253,6 +254,150 @@ class ReferralTest extends TestCase
 
         $this->assertSame(2, $referrer->referrals()->count());
         $this->assertSame($referrer->id, $referred->first()->fresh()->referrer->id);
+    }
+
+    // ==================== Referred count ====================
+
+    public function test_count_includes_only_verified_accounts(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+
+        $this->referredUsers($vendor, 3);
+        $this->referredUsers($vendor, 2, ['email_verified_at' => null]);
+
+        $this->assertSame(3, $this->referralService->referralCountFor($vendor));
+    }
+
+    public function test_count_is_zero_for_a_vendor_nobody_joined_through(): void
+    {
+        $this->assertSame(0, $this->referralService->referralCountFor($this->vendorWithoutCode()));
+    }
+
+    public function test_count_ignores_users_referred_by_someone_else(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $rival = $this->vendorWithoutCode();
+
+        $this->referredUsers($vendor, 2);
+        $this->referredUsers($rival, 5);
+
+        $this->assertSame(2, $this->referralService->referralCountFor($vendor));
+        $this->assertSame(5, $this->referralService->referralCountFor($rival));
+    }
+
+    public function test_count_rises_once_a_referred_signup_verifies_its_email(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $code = $this->referralService->codeFor($vendor);
+
+        $this->get('/?'.ReferralService::QUERY_PARAM.'='.$code);
+        $this->registerUser('counted@gmail.com');
+
+        $referred = User::where('email', 'counted@gmail.com')->firstOrFail();
+        $this->assertSame($vendor->id, $referred->referred_by);
+
+        // Registration alone does not count — the mailbox is still unproven.
+        $this->assertSame(0, $this->referralService->referralCountFor($vendor));
+
+        $referred->forceFill(['email_verified_at' => now()])->save();
+
+        $this->assertSame(1, $this->referralService->referralCountFor($vendor));
+    }
+
+    public function test_recent_referrals_are_newest_first_and_capped(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+
+        foreach (range(1, 12) as $index) {
+            User::factory()->create([
+                'role' => 'customer',
+                'name' => "Joiner {$index}",
+                'referred_by' => $vendor->id,
+                'email_verified_at' => now(),
+                'created_at' => now()->subDays(20 - $index),
+            ]);
+        }
+
+        $recent = $this->referralService->recentReferralsFor($vendor);
+
+        $this->assertCount(ReferralService::RECENT_LIMIT, $recent);
+        $this->assertSame('Joiner 12', $recent[0]['name']);
+        $this->assertSame(['name', 'joined_at'], array_keys($recent[0]));
+    }
+
+    public function test_recent_referrals_omit_unverified_accounts_and_contact_details(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+
+        User::factory()->create([
+            'role' => 'customer',
+            'name' => 'Verified Joiner',
+            'email' => 'verified-joiner@gmail.com',
+            'referred_by' => $vendor->id,
+            'email_verified_at' => now(),
+        ]);
+        $this->referredUsers($vendor, 1, ['email_verified_at' => null]);
+
+        $recent = $this->referralService->recentReferralsFor($vendor);
+
+        $this->assertCount(1, $recent);
+        $this->assertSame('Verified Joiner', $recent[0]['name']);
+        $this->assertStringNotContainsString('@', json_encode($recent, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_count_and_breakdown_cost_a_fixed_number_of_queries(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 15);
+
+        $queries = 0;
+        DB::listen(function () use (&$queries): void {
+            $queries++;
+        });
+
+        $this->referralService->referralCountFor($vendor);
+        $this->referralService->recentReferralsFor($vendor);
+
+        $this->assertSame(2, $queries);
+    }
+
+    public function test_endpoint_returns_the_count_and_breakdown(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 4);
+        $this->referredUsers($vendor, 1, ['email_verified_at' => null]);
+
+        $this->actingAs($vendor)->getJson('/vendor/referral')
+            ->assertOk()
+            ->assertJsonPath('count', 4)
+            ->assertJsonCount(4, 'recent')
+            ->assertJsonStructure(['count', 'recent' => [['name', 'joined_at']]]);
+    }
+
+    public function test_dashboard_exposes_the_count(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 3);
+        $this->referredUsers($vendor, 2, ['email_verified_at' => null]);
+
+        $this->actingAs($vendor)->get('/vendor')->assertInertia(
+            fn (AssertableInertia $page) => $page
+                ->component('Vendor/Dashboard', false)
+                ->where('referral.count', 3)
+                ->has('referral.recent', 3)
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function referredUsers(User $referrer, int $count, array $attributes = []): void
+    {
+        User::factory()->count($count)->create(array_merge([
+            'role' => 'customer',
+            'referred_by' => $referrer->id,
+            'email_verified_at' => now(),
+        ], $attributes));
     }
 
     private function registerUser(string $email): void

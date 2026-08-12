@@ -17,6 +17,8 @@ final readonly class ReferralService
 
     public const SESSION_KEY = 'referral.pending_code';
 
+    public const RECENT_LIMIT = 10;
+
     private const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
     private const MAX_ATTEMPTS = 10;
@@ -79,6 +81,28 @@ final readonly class ReferralService
         $user->syncOriginalAttribute('referred_by');
 
         return true;
+    }
+
+    public function referralCountFor(User $vendor): int
+    {
+        return $this->referralRepository->countReferrals($vendor->id);
+    }
+
+    /**
+     * A breakdown for the vendor's own dashboard. Deliberately name and join
+     * date only — a referrer has no claim to the email they referred.
+     *
+     * @return list<array{name: string, joined_at: string}>
+     */
+    public function recentReferralsFor(User $vendor, int $limit = self::RECENT_LIMIT): array
+    {
+        return $this->referralRepository
+            ->recentReferrals($vendor->id, $limit)
+            ->map(fn (User $referral): array => [
+                'name' => $referral->name,
+                'joined_at' => $referral->created_at->toDateString(),
+            ])
+            ->all();
     }
 
     /**

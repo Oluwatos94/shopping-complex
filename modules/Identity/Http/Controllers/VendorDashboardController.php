@@ -62,7 +62,8 @@ class VendorDashboardController extends Controller
             'referral' => [
                 'code' => $referralCode,
                 'link' => $this->referralService->shareUrl($referralCode),
-                'count' => $user->referrals()->count(),
+                'count' => $this->referralService->referralCountFor($user),
+                'recent' => $this->referralService->recentReferralsFor($user),
             ],
             'subscription' => [
                 'plan_name' => $subscription?->plan->name ?? null,
