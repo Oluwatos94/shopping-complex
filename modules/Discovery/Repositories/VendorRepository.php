@@ -88,7 +88,7 @@ class VendorRepository extends BasePageRepository
                 ? $query->orderByRaw('distance_km IS NULL, distance_km asc')
                 : $query->orderBy('created_at', 'desc'),
             'rating' => $query->orderByDesc('reviews_avg_rating')->orderByDesc('created_at'),
-            'relevance' => $query->orderByDesc('active_products_count')->orderByDesc('created_at'),
+            'relevance', 'products_count' => $query->orderByDesc('active_products_count')->orderByDesc('created_at'),
             'newest' => $query->orderBy('created_at', 'desc'),
             default => $query->orderBy('created_at', 'desc'),
         };
