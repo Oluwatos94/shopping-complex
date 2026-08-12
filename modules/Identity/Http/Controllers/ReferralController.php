@@ -30,7 +30,8 @@ class ReferralController extends Controller
         return response()->json([
             'code' => $code,
             'share_url' => $this->referralService->shareUrl($code),
-            'count' => $user->referrals()->count(),
+            'count' => $this->referralService->referralCountFor($user),
+            'recent' => $this->referralService->recentReferralsFor($user),
         ]);
     }
 }

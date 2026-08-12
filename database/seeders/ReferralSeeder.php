@@ -11,8 +11,18 @@ use ModulesShoppingComplex\Identity\Services\ReferralService;
 
 class ReferralSeeder extends Seeder
 {
-    /** Referral counts handed to the first vendors, highest first. */
-    private const REFERRALS_PER_VENDOR = [25, 12, 8, 3, 1];
+    /**
+     * Referrals handed to the first vendors, busiest first. The pending column
+     * seeds unverified signups, which are attributed but deliberately excluded
+     * from the vendor's count.
+     */
+    private const REFERRALS_PER_VENDOR = [
+        ['verified' => 25, 'pending' => 4],
+        ['verified' => 12, 'pending' => 2],
+        ['verified' => 8, 'pending' => 0],
+        ['verified' => 3, 'pending' => 1],
+        ['verified' => 1, 'pending' => 0],
+    ];
 
     public function run(): void
     {
@@ -34,22 +44,31 @@ class ReferralSeeder extends Seeder
 
         foreach ($vendors as $position => $vendor) {
             $code = $referralService->codeFor($vendor);
+            $plan = self::REFERRALS_PER_VENDOR[$position];
             $emails = [];
 
-            foreach (range(1, self::REFERRALS_PER_VENDOR[$position]) as $ignored) {
-                $index++;
-                $email = "referral-demo-{$index}@jiidaa.test";
-                $emails[] = $email;
+            foreach (['verified', 'pending'] as $state) {
+                for ($i = 0; $i < $plan[$state]; $i++) {
+                    $index++;
+                    $email = "referral-demo-{$index}@jiidaa.test";
+                    $emails[] = $email;
 
-                User::firstOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => "Referred User {$index}",
-                        'password' => Hash::make('password'),
-                        'role' => 'customer',
-                        'email_verified_at' => now(),
-                    ]
-                );
+                    $user = User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'name' => fake()->name(),
+                            'password' => Hash::make('password'),
+                            'role' => 'customer',
+                            'email_verified_at' => $state === 'verified' ? now() : null,
+                        ]
+                    );
+
+                    // Staggered so the newest-first breakdown has something to order.
+                    if ($user->wasRecentlyCreated) {
+                        $joinedAt = now()->subDays(random_int(0, 45))->subHours(random_int(0, 23));
+                        $user->forceFill(['created_at' => $joinedAt, 'updated_at' => $joinedAt])->save();
+                    }
+                }
             }
 
             User::query()
@@ -58,10 +77,11 @@ class ReferralSeeder extends Seeder
                 ->update(['referred_by' => $vendor->id]);
 
             $this->command?->info(sprintf(
-                '%s (%s) → %d referrals',
+                '%s (%s) → %d counted, %d awaiting verification',
                 $vendor->business_name ?? $vendor->name,
                 $code,
-                count($emails)
+                $plan['verified'],
+                $plan['pending']
             ));
         }
     }

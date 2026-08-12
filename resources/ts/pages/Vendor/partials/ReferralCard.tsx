@@ -1,23 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+export interface ReferredUser {
+    name: string;
+    joined_at: string;
+}
+
 export interface Referral {
     code: string | null;
     link: string | null;
     count?: number;
+    recent?: ReferredUser[];
 }
 
 interface Props {
-    /** Undefined while the backend has not supplied the prop yet — renders a skeleton. */
     referral?: Referral;
     businessName: string;
 }
 
 type CopyTarget = 'code' | 'link';
 
-/**
- * navigator.clipboard is unavailable on insecure origins and older browsers,
- * so fall back to a hidden textarea + execCommand before giving up.
- */
+
 async function copyText(value: string): Promise<boolean> {
     try {
         if (navigator.clipboard?.writeText) {
