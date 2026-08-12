@@ -8,15 +8,17 @@ use ModulesShoppingComplex\Shared\Http\Requests\BaseFormRequest;
 
 class VendorRequest extends BaseFormRequest
 {
+    public const MAX_RADIUS_KM = 50;
+
     public function rules(): array
     {
         return [
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'radius' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'radius' => ['nullable', 'integer', 'min:1', 'max:'.self::MAX_RADIUS_KM],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'search' => ['nullable', 'string', 'max:255'],
-            'sort_by' => ['nullable', 'string', 'in:distance,rating,response_time,newest'],
+            'sort_by' => ['nullable', 'string', 'in:distance,rating,products_count,newest'],
             'verified_only' => ['nullable', 'boolean'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -31,9 +33,9 @@ class VendorRequest extends BaseFormRequest
             'longitude.between' => 'Longitude must be between -180 and 180.',
             'radius.integer' => 'Radius must be a whole number.',
             'radius.min' => 'Radius must be at least 1 kilometer.',
-            'radius.max' => 'Radius cannot exceed 20 kilometers.',
+            'radius.max' => 'Radius cannot exceed '.self::MAX_RADIUS_KM.' kilometers.',
             'search.max' => 'Search query cannot exceed 255 characters.',
-            'sort_by.in' => 'Invalid sort option. Valid options are: distance, rating, response_time, newest.',
+            'sort_by.in' => 'Invalid sort option. Valid options are: distance, rating, products_count, newest.',
             'verified_only.boolean' => 'Verified filter must be true or false.',
             'page.integer' => 'Page must be a valid number.',
             'page.min' => 'Page number must be at least 1.',

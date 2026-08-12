@@ -148,7 +148,6 @@ export interface VendorFilters {
 export type VendorSortOption =
     | 'distance'    // Closest first
     | 'rating'      // Highest rated first
-    | 'response_time' // Fastest response first
     | 'newest'      // Recently joined
     | 'products_count'; // Most products
 

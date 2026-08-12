@@ -37,6 +37,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
     const [visibleCount, setVisibleCount] = useState(VENDOR_BATCH_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
+    const notificationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setVisibleCount(VENDOR_BATCH_SIZE);
@@ -63,10 +64,18 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
     const visibleVendors = vendors.data.slice(0, visibleCount);
     const allVendorsRevealed = visibleCount >= vendors.data.length;
 
-    const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const showNotification = useCallback((type: 'success' | 'error' | 'info', message: string) => {
         setNotification({ type, message });
-        setTimeout(() => setNotification(null), 5000);
-    };
+
+        if (notificationTimer.current) clearTimeout(notificationTimer.current);
+        notificationTimer.current = setTimeout(() => setNotification(null), 5000);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (notificationTimer.current) clearTimeout(notificationTimer.current);
+        };
+    }, []);
 
     // Get user's current location
     const getCurrentLocation = () => {
@@ -120,9 +129,13 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 preserveScroll: true,
                 onStart: () => setIsFiltering(true),
                 onFinish: () => setIsFiltering(false),
+                onError: (errors) => {
+                    const first = Object.values(errors)[0];
+                    showNotification('error', first || 'We could not apply that filter. Please try again.');
+                },
             }
         );
-    }, [searchQuery, radius, sortBy, categoryId, userLocation]);
+    }, [searchQuery, radius, sortBy, categoryId, userLocation, showNotification]);
 
     const didMountSearch = useRef(false);
     useEffect(() => {
@@ -157,32 +170,43 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
 
             <Header />
 
-            {/* Notification banner */}
             {notification && (
-                <div
-                    className={`fixed left-1/2 top-4 z-[60] mx-4 flex w-full max-w-sm -translate-x-1/2 items-center gap-3 rounded-xl px-4 py-3 shadow-lg ${
-                        notification.type === 'success'
-                            ? 'border border-brand-green/30 bg-brand-green/10 text-brand-green-dark'
-                            : notification.type === 'error'
-                              ? 'border border-brand-danger/30 bg-brand-danger/10 text-brand-danger'
-                              : 'border border-brand-line bg-white text-brand-ink'
-                    }`}
-                >
-                    {notification.type === 'success' ? (
-                        <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    ) : (
-                        <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    )}
-                    <p className="flex-1 text-sm font-medium">{notification.message}</p>
-                    <button onClick={() => setNotification(null)} className="flex-shrink-0 opacity-60 transition-opacity hover:opacity-100">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                <div className="pointer-events-none fixed inset-x-0 top-20 z-[60] flex justify-center px-4 sm:top-24">
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className={`pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border bg-white px-4 py-3 shadow-lg shadow-brand-ink/10 animate-dropdown-in ${
+                            notification.type === 'success'
+                                ? 'border-brand-green/40'
+                                : notification.type === 'error'
+                                  ? 'border-brand-danger/40'
+                                  : 'border-brand-line'
+                        }`}
+                    >
+                        {notification.type === 'success' ? (
+                            <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-green-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg
+                                className={`mt-0.5 h-5 w-5 flex-shrink-0 ${notification.type === 'error' ? 'text-brand-danger' : 'text-brand-muted'}`}
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
+                        <p className="flex-1 text-sm font-medium leading-snug text-brand-ink">{notification.message}</p>
+                        <button
+                            type="button"
+                            onClick={() => setNotification(null)}
+                            aria-label="Dismiss notification"
+                            className="-m-1 flex-shrink-0 rounded-md p-1 text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-ink"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             )}
 
