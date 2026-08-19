@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { PaginatedVendors, VendorFilters, UserLocation, VendorSortOption } from '@/types';
 import { Category } from '@/types/product';
+import { requestPosition, isUsableAccuracy } from '@/utils/geolocation';
 import { VendorGrid } from '@/components/Vendors';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -17,7 +18,7 @@ interface VendorListingProps {
 
 const VENDOR_BATCH_SIZE = 20;
 
-const radiusOptions = [5, 10, 25, 50];
+const radiusOptions = [5, 10, 20, 30];
 
 const sortOptions: { value: VendorSortOption; label: string }[] = [
     { value: 'distance', label: 'Nearest' },
@@ -79,36 +80,31 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
 
     // Get user's current location
     const getCurrentLocation = () => {
-        if (!navigator.geolocation) {
-            showNotification('error', 'Geolocation is not supported by your browser.');
-            return;
-        }
-
         setIsLoadingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const location: UserLocation = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: position.timestamp,
-                };
+        requestPosition()
+            .then((location) => {
                 setUserLocation(location);
                 setIsLoadingLocation(false);
-                showNotification('success', 'Location enabled! Showing vendors near you.');
 
-                // Automatically search with new location
+                // A desktop without a GPS radio resolves via WiFi or IP and can land
+                // kilometres off, which quietly empties a tight radius. Say so rather
+                // than letting the buyer read an empty list as "no vendors near me".
+                showNotification(
+                    'success',
+                    isUsableAccuracy(location.accuracy)
+                        ? 'Location enabled! Showing vendors near you.'
+                        : 'Location enabled, but only roughly — try a wider radius if the list looks short.',
+                );
+
                 handleSearch({
                     latitude: location.latitude,
                     longitude: location.longitude,
                 });
-            },
-            (error) => {
-                console.error('Error getting location:', error);
+            })
+            .catch(() => {
                 showNotification('error', 'Unable to retrieve your location. Please enable location services in your browser settings.');
                 setIsLoadingLocation(false);
-            }
-        );
+            });
     };
 
     // Handle search with filters
@@ -122,6 +118,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 category_id: categoryId,
                 latitude: userLocation?.latitude,
                 longitude: userLocation?.longitude,
+                accuracy: userLocation?.accuracy,
                 ...additionalFilters,
             },
             {
@@ -159,10 +156,11 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
             setUserLocation({
                 latitude: filters.latitude,
                 longitude: filters.longitude,
+                accuracy: filters.accuracy,
             });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters.latitude, filters.longitude]);
+    }, [filters.latitude, filters.longitude, filters.accuracy]);
 
     return (
         <div className="flex min-h-screen flex-col bg-brand-surface font-display text-brand-ink">

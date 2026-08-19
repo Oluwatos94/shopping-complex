@@ -133,6 +133,7 @@ export interface CategoryVendor {
 export interface VendorFilters {
     latitude?: number;
     longitude?: number;
+    accuracy?: number;
     radius?: number; // in km
     category_id?: number;
     verified_only?: boolean;

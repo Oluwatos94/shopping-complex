@@ -13,11 +13,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
         ? `https://wa.me/${vendor.whatsapp_number.replace(/[^0-9]/g, '')}?text=Hi, I found you on jiidaa`
         : null;
 
-    const distance = vendor.distance_km !== null && vendor.distance_km !== undefined
-        ? vendor.distance_km < 1
-            ? `${Math.round(vendor.distance_km * 1000)}m away`
-            : `${vendor.distance_km.toFixed(1)} km away`
-        : null;
+    const distance = vendor.distance_formatted;
 
     return (
         <div className="group flex flex-col overflow-hidden rounded-[20px] border border-brand-line bg-white font-display transition duration-150 hover:-translate-y-1 hover:border-[#D7DCE3] hover:shadow-[0_20px_42px_rgba(11,31,58,0.12)]">

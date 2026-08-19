@@ -74,14 +74,14 @@ class VendorProximityTest extends TestCase
     public function test_widening_the_radius_surfaces_vendors_the_narrower_search_missed(): void
     {
         $this->vendorKmNorth('Corner Shop', 3);
-        $this->vendorKmNorth('Across Town', 18);
-        $this->vendorKmNorth('Next City', 40);
+        $this->vendorKmNorth('Across Town', 15);
+        $this->vendorKmNorth('Next City', 25);
 
         $this->assertSame(['Corner Shop'], $this->listedVendors($this->nearMe(5)));
-        $this->assertSame(['Corner Shop', 'Across Town'], $this->listedVendors($this->nearMe(25)));
+        $this->assertSame(['Corner Shop', 'Across Town'], $this->listedVendors($this->nearMe(20)));
         $this->assertSame(
             ['Corner Shop', 'Across Town', 'Next City'],
-            $this->listedVendors($this->nearMe(50))
+            $this->listedVendors($this->nearMe(VendorRequest::MAX_RADIUS_KM))
         );
     }
 
@@ -90,7 +90,7 @@ class VendorProximityTest extends TestCase
         $this->vendorKmNorth('Corner Shop', 1);
 
         // Mirrors radiusOptions in resources/ts/pages/Vendors/Index.tsx.
-        foreach ([5, 10, 25, 50] as $radius) {
+        foreach ([5, 10, 20, 30] as $radius) {
             $this->get('/vendors?'.http_build_query($this->nearMe($radius)))
                 ->assertOk()
                 ->assertSessionHasNoErrors();
@@ -116,7 +116,7 @@ class VendorProximityTest extends TestCase
         $listed = $this->listedVendors([
             'latitude' => self::LAT,
             'longitude' => self::LNG,
-            'radius' => 25,
+            'radius' => 20,
             'sort_by' => 'products_count',
         ]);
 
@@ -128,7 +128,7 @@ class VendorProximityTest extends TestCase
         $this->vendorKmNorth('Mapped Vendor', 2);
         User::factory()->create(['role' => 'vendor', 'business_name' => 'Unmapped Vendor']);
 
-        $this->assertSame(['Mapped Vendor'], $this->listedVendors($this->nearMe(50)));
+        $this->assertSame(['Mapped Vendor'], $this->listedVendors($this->nearMe(VendorRequest::MAX_RADIUS_KM)));
 
         // They are only hidden by the distance filter, not missing from the listing.
         $this->assertContains('Unmapped Vendor', $this->listedVendors(['sort_by' => 'newest']));

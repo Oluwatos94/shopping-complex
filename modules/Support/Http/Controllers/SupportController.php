@@ -103,12 +103,14 @@ class SupportController extends Controller
 
             $lat = $request->validated('lat');
             $lng = $request->validated('lng');
+            $accuracy = $request->validated('accuracy');
 
             $message = $this->supportBotService->reply(
                 $conversation,
                 $content,
                 $lat !== null ? (float) $lat : null,
                 $lng !== null ? (float) $lng : null,
+                $accuracy !== null ? (float) $accuracy : null,
             );
         }
 
