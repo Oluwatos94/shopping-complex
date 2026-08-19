@@ -391,6 +391,48 @@ class SupportBotServiceTest extends TestCase
         $this->assertStringContainsString('approximate position', $toolResult);
     }
 
+    public function test_a_shared_location_is_stated_in_the_prompt_even_when_no_tool_runs(): void
+    {
+        $fake = $this->bindFakeAi('Thanks! Searching now.');
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)
+            ->reply($conversation, 'I have tapped it already', 6.5064, 3.3792, 30.0);
+
+        $system = (string) $fake->payloads[0]['system'];
+        $this->assertStringContainsString('shared and available for this message', $system);
+        $this->assertStringNotContainsString('not shared for this message', $system);
+        $this->assertStringNotContainsString('approximate position', $system);
+    }
+
+    public function test_a_missing_location_is_stated_in_the_prompt(): void
+    {
+        $fake = $this->bindFakeAi();
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)->reply($conversation, 'I need shoes');
+
+        $system = (string) $fake->payloads[0]['system'];
+        $this->assertStringContainsString('not shared for this message', $system);
+        $this->assertStringNotContainsString('shared and available for this message', $system);
+    }
+
+    public function test_a_coarse_shared_location_is_flagged_in_the_prompt(): void
+    {
+        $fake = $this->bindFakeAi();
+
+        $conversation = SupportConversation::factory()->create();
+
+        $this->app->make(SupportBotService::class)
+            ->reply($conversation, 'I need shoes', 6.5064, 3.3792, 4000.0);
+
+        $system = (string) $fake->payloads[0]['system'];
+        $this->assertStringContainsString('shared and available for this message', $system);
+        $this->assertStringContainsString('approximate position', $system);
+    }
+
     public function test_payment_status_is_scoped_to_the_conversations_user(): void
     {
         $owner = User::factory()->create(['role' => 'vendor']);
