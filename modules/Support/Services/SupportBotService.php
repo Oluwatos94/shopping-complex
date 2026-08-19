@@ -38,6 +38,10 @@ final readonly class SupportBotService
 
     private const COARSE_LOCATION_NOTE = "\nNOTE: the buyer's device only gave an approximate position (typical of a desktop, which has no GPS radio and resolves via WiFi or IP). These distances are rough and the search ring itself may be off by kilometres. Tell the buyer the distances are approximate, never quote an exact figure, and offer to look wider if nothing suits.";
 
+    private const LOCATION_AVAILABLE = 'BUYER LOCATION: shared and available for this message. Never tell the buyer you cannot see their location or ask them to share it again. If you asked for it earlier in this chat, acknowledge that you have it now and run the search straight away.';
+
+    private const LOCATION_MISSING = 'BUYER LOCATION: not shared for this message. Before suggesting any vendor or product, ask the buyer to tap the location pin button beside the message box and resend their request.';
+
     private const ASK_FOR_LOCATION = 'NO RESULTS YET — the buyer has not shared their device location. Do not suggest any vendors or products yet. First ask the buyer, in your own words, to tap the location pin button beside the message box and resend their request, so you can find the options nearest to them. Only if the buyer declines or cannot share their location, call the tool again with allow_global set to true to search all of Jiidaa instead.';
 
     public function __construct(
@@ -95,7 +99,7 @@ final readonly class SupportBotService
 
             $payload = [
                 'max_tokens' => 1024,
-                'system' => $this->systemPrompt(),
+                'system' => $this->systemPrompt()."\n\n".$this->locationContext($lat, $lng, $accuracy),
                 'messages' => $messages,
                 'tools' => $this->defineTools(),
             ];
@@ -158,6 +162,24 @@ final readonly class SupportBotService
         }
 
         return self::FALLBACK_REPLY;
+    }
+
+    /**
+     * Tool results only ever say the location is missing, so without this the model
+     * has no way to learn a fix arrived and keeps repeating its last request for one.
+     */
+    private function locationContext(?float $lat, ?float $lng, ?float $accuracy): string
+    {
+        if ($lat === null || $lng === null) {
+            return self::LOCATION_MISSING;
+        }
+
+        return self::LOCATION_AVAILABLE.$this->coarseNote($accuracy);
+    }
+
+    private function coarseNote(?float $accuracy): string
+    {
+        return DistanceLabel::isPrecise($accuracy) ? '' : self::COARSE_LOCATION_NOTE;
     }
 
     /**
@@ -240,7 +262,7 @@ final readonly class SupportBotService
                     return 'Found '.count($vendors)." vendor(s) within {$radius} km:\n"
                         .$this->presentVendors($vendors, $accuracy)
                         .($loose ? self::LOOSE_MATCH_NOTE : '')
-                        .(DistanceLabel::isPrecise($accuracy) ? '' : self::COARSE_LOCATION_NOTE);
+                        .$this->coarseNote($accuracy);
                 }
             }
         }
@@ -254,7 +276,7 @@ final readonly class SupportBotService
                 return "No matching vendors within {$maxRadius} km of the buyer, but ".count($global)." matching vendor(s) exist elsewhere on Jiidaa (distances shown where known). Tell the buyer both facts and share these:\n"
                     .$this->presentVendors($global, $accuracy)
                     .($loose ? self::LOOSE_MATCH_NOTE : '')
-                    .(DistanceLabel::isPrecise($accuracy) ? '' : self::COARSE_LOCATION_NOTE);
+                    .$this->coarseNote($accuracy);
             }
         }
 
