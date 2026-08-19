@@ -19,6 +19,7 @@ use ModulesShoppingComplex\Identity\Http\Controllers\Auth\ResetPasswordControlle
 use ModulesShoppingComplex\Identity\Http\Controllers\Auth\SocialAuthController;
 use ModulesShoppingComplex\Identity\Http\Controllers\Auth\VerifyEmailController;
 use ModulesShoppingComplex\Identity\Http\Controllers\ProfileController;
+use ModulesShoppingComplex\Identity\Http\Controllers\ReferralController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorDashboardController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorOnboardingController;
 use ModulesShoppingComplex\Identity\Http\Controllers\VendorRegistrationController;
@@ -42,9 +43,9 @@ Route::get('/terms', fn () => inertia('Terms'))->name('terms');
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:writes');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login-attempt');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:writes');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
     // Password Reset Routes
     Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -247,6 +248,7 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
 Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function () {
     Route::get('/', [VendorDashboardController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/products', [VendorDashboardController::class, 'vendorProducts'])->name('vendor.products.index');
+    Route::get('/referral', [ReferralController::class, 'show'])->name('vendor.referral');
 });
 
 // Vendor Registration & Onboarding Routes

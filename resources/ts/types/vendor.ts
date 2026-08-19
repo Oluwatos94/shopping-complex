@@ -133,6 +133,7 @@ export interface CategoryVendor {
 export interface VendorFilters {
     latitude?: number;
     longitude?: number;
+    accuracy?: number;
     radius?: number; // in km
     category_id?: number;
     verified_only?: boolean;
@@ -148,7 +149,6 @@ export interface VendorFilters {
 export type VendorSortOption =
     | 'distance'    // Closest first
     | 'rating'      // Highest rated first
-    | 'response_time' // Fastest response first
     | 'newest'      // Recently joined
     | 'products_count'; // Most products
 

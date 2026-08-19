@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchWithCsrf } from '@/utils/csrf';
+import { requestPosition } from '@/utils/geolocation';
 import type { SupportConversation, SupportMessage } from '@/types/support';
 
 const POLL_INTERVAL = 3000;
@@ -20,7 +21,7 @@ export function useSupportChat(isOpen: boolean) {
     const [hasOlderMessages, setHasOlderMessages] = useState(false);
     const conversationRef = useRef<SupportConversation | null>(null);
     const startedRef = useRef(false);
-    const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
+    const coordsRef = useRef<{ lat: number; lng: number; accuracy: number } | null>(null);
     const sendingRef = useRef(false);
     const oldestPageRef = useRef(1);
     const loadingOlderRef = useRef(false);
@@ -28,22 +29,17 @@ export function useSupportChat(isOpen: boolean) {
     conversationRef.current = conversation;
 
     const shareLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            setError('Location is not supported by this browser.');
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
+        requestPosition()
+            .then((position) => {
                 coordsRef.current = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
+                    lat: position.latitude,
+                    lng: position.longitude,
+                    accuracy: position.accuracy,
                 };
                 setHasLocation(true);
                 setError(null);
-            },
-            () => setError('Could not get your location. Please allow location access.'),
-        );
+            })
+            .catch(() => setError('Could not get your location. Please allow location access.'));
     }, []);
 
     const refresh = useCallback(async (conversationId: number, keepPending = true) => {

@@ -6,6 +6,7 @@ import FilterSidebar from '@/components/Products/partials/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { requestPosition } from '@/utils/geolocation';
 
 interface ProductsPageProps {
     products: PaginatedProducts;
@@ -13,6 +14,8 @@ interface ProductsPageProps {
 }
 
 const BATCH_SIZE = 20;
+
+const NEAR_ME_RADIUS_KM = 30;
 
 export default function ProductsIndex({ products, categories }: ProductsPageProps) {
     const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -35,26 +38,25 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
             const params = new URLSearchParams(window.location.search);
             params.delete('latitude');
             params.delete('longitude');
+            params.delete('accuracy');
             params.delete('radius');
             router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
             return;
         }
 
-        if (!navigator.geolocation) return;
         setIsLoadingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-                setUserLocation(loc);
+        requestPosition()
+            .then((loc) => {
+                setUserLocation({ latitude: loc.latitude, longitude: loc.longitude });
                 setIsLoadingLocation(false);
                 const params = new URLSearchParams(window.location.search);
                 params.set('latitude', String(loc.latitude));
                 params.set('longitude', String(loc.longitude));
-                params.set('radius', '50');
+                params.set('accuracy', String(Math.round(loc.accuracy)));
+                params.set('radius', String(NEAR_ME_RADIUS_KM));
                 router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
-            },
-            () => setIsLoadingLocation(false)
-        );
+            })
+            .catch(() => setIsLoadingLocation(false));
     }, [userLocation]);
 
     // Reset visible count when navigating to a different page

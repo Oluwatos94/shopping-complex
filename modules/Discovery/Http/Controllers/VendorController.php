@@ -20,6 +20,7 @@ use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\UserRepository;
 use ModulesShoppingComplex\Media\Services\MediaService;
 use ModulesShoppingComplex\Reviews\Services\ReviewService;
+use ModulesShoppingComplex\Shared\Support\DistanceLabel;
 
 class VendorController extends Controller
 {
@@ -35,12 +36,13 @@ class VendorController extends Controller
     public function index(VendorRequest $request): Response
     {
         $filters = $request->getFilters();
+        $accuracy = $filters['accuracy'];
         $vendors = $this->vendorService->getNearbyVendors($filters, perPage: 48);
 
         $vendorIds = $vendors->getCollection()->pluck('id')->all();
         $ratingStatsByVendor = $this->reviewService->getBulkVendorRatingStats($vendorIds);
 
-        $transformedVendors = $vendors->through(function ($vendor) use ($ratingStatsByVendor) {
+        $transformedVendors = $vendors->through(function ($vendor) use ($ratingStatsByVendor, $accuracy) {
             $avatarMedia = $vendor->media->where('type', 'avatar')->first();
             $ratingStats = $ratingStatsByVendor[$vendor->id] ?? ['average' => 0.0, 'count' => 0];
 
@@ -63,7 +65,9 @@ class VendorController extends Controller
                 'whatsapp_number' => $vendor->whatsapp_number ?? null,
 
                 'distance_km' => $vendor->distance_km !== null ? round((float) $vendor->distance_km, 2) : null,
-                'distance_formatted' => $vendor->distance_km !== null ? $this->formatDistance((float) $vendor->distance_km) : null,
+                'distance_formatted' => $vendor->distance_km !== null
+                    ? DistanceLabel::format((float) $vendor->distance_km, $accuracy)
+                    : null,
             ];
         });
 
@@ -203,15 +207,6 @@ class VendorController extends Controller
         $this->userRepository->recordVendorContact($user->id, $vendor->id);
 
         return response()->json(['recorded' => true]);
-    }
-
-    private function formatDistance(float $distanceKm): string
-    {
-        if ($distanceKm < 1) {
-            return round($distanceKm * 1000).' m';
-        }
-
-        return round($distanceKm, 1).' km';
     }
 
     private function findVendorBySlug(string $slug): User

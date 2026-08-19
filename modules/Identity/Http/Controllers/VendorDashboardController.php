@@ -16,6 +16,7 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Http\Requests\UpdateVendorProfileRequest;
 use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Identity\Services\ReferralService;
 use ModulesShoppingComplex\Media\Services\MediaService;
 
 class VendorDashboardController extends Controller
@@ -24,6 +25,7 @@ class VendorDashboardController extends Controller
         private readonly MediaService $mediaService,
         private readonly AnalyticsService $analyticsService,
         private readonly SubscriptionService $subscriptionService,
+        private readonly ReferralService $referralService,
     ) {}
 
     public function dashboard(): Response
@@ -49,11 +51,19 @@ class VendorDashboardController extends Controller
         $chatContactMetrics = $this->analyticsService->getChatContactMetrics($user->id, $startOfWeek, $endOfWeek);
         $activeProductsCount = $user->products()->where('is_active', true)->count();
 
+        $referralCode = $this->referralService->codeFor($user);
+
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
                 'name' => $user->name,
                 'business_name' => $user->business_name ?? $user->name,
                 'slug' => $user->slug,
+            ],
+            'referral' => [
+                'code' => $referralCode,
+                'link' => $this->referralService->shareUrl($referralCode),
+                'count' => $this->referralService->referralCountFor($user),
+                'recent' => $this->referralService->recentReferralsFor($user),
             ],
             'subscription' => [
                 'plan_name' => $subscription?->plan->name ?? null,

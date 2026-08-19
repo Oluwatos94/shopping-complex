@@ -16,6 +16,7 @@ use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Support\DistanceLabel;
 use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 use ModulesShoppingComplex\WhatsApp\Models\WhatsAppInteraction;
 use ModulesShoppingComplex\WhatsApp\Models\WhatsAppSession;
@@ -399,7 +400,7 @@ final readonly class WhatsAppAiBotService
             $i + 1,
             $vendor->business_name ?? $vendor->name,
             $vendor->active_products_count ?? 0,
-            isset($vendor->distance_km) ? ' | '.number_format((float) $vendor->distance_km, 1).' km away' : '',
+            isset($vendor->distance_km) ? ' | '.DistanceLabel::format((float) $vendor->distance_km) : '',
         ))->implode("\n");
     }
 

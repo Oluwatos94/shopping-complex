@@ -13,6 +13,7 @@ use ModulesShoppingComplex\Catalog\Services\ProductService;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Contracts\AiChatClient;
+use ModulesShoppingComplex\Shared\Support\DistanceLabel;
 use ModulesShoppingComplex\Support\Enums\SupportConversationStatusEnum;
 use ModulesShoppingComplex\Support\Enums\SupportMessageRoleEnum;
 use ModulesShoppingComplex\Support\Events\SupportMessageSentEvent;
@@ -35,6 +36,8 @@ final readonly class SupportBotService
 
     private const NOT_SIGNED_IN = 'The user is not signed in, so account-specific data cannot be looked up. Ask them to log in to their Jiidaa account first.';
 
+    private const COARSE_LOCATION_NOTE = "\nNOTE: the buyer's device only gave an approximate position (typical of a desktop, which has no GPS radio and resolves via WiFi or IP). These distances are rough and the search ring itself may be off by kilometres. Tell the buyer the distances are approximate, never quote an exact figure, and offer to look wider if nothing suits.";
+
     private const ASK_FOR_LOCATION = 'NO RESULTS YET — the buyer has not shared their device location. Do not suggest any vendors or products yet. First ask the buyer, in your own words, to tap the location pin button beside the message box and resend their request, so you can find the options nearest to them. Only if the buyer declines or cannot share their location, call the tool again with allow_global set to true to search all of Jiidaa instead.';
 
     public function __construct(
@@ -53,7 +56,7 @@ final readonly class SupportBotService
      * history (running tools as needed), and persist + return the
      * assistant message.
      */
-    public function reply(SupportConversation $conversation, string $userText, ?float $lat = null, ?float $lng = null): SupportMessage
+    public function reply(SupportConversation $conversation, string $userText, ?float $lat = null, ?float $lng = null, ?float $accuracy = null): SupportMessage
     {
 
         $escalated = $conversation->status === SupportConversationStatusEnum::AWAITING_AGENT;
@@ -73,7 +76,7 @@ final readonly class SupportBotService
             'support_conversation_id' => $conversation->id,
             'role' => SupportMessageRoleEnum::ASSISTANT,
             'sender_id' => null,
-            'content' => $this->generateReply($conversation, $lat, $lng),
+            'content' => $this->generateReply($conversation, $lat, $lng, $accuracy),
         ]);
 
         if ($escalated) {
@@ -85,7 +88,7 @@ final readonly class SupportBotService
         return $assistantMessage;
     }
 
-    private function generateReply(SupportConversation $conversation, ?float $lat, ?float $lng): string
+    private function generateReply(SupportConversation $conversation, ?float $lat, ?float $lng, ?float $accuracy): string
     {
         try {
             $messages = $this->buildHistory($conversation);
@@ -128,7 +131,7 @@ final readonly class SupportBotService
                     $toolResults[] = [
                         'type' => 'tool_result',
                         'tool_use_id' => $block['id'],
-                        'content' => $this->executeTool((string) $block['name'], $input, $conversation, $lat, $lng),
+                        'content' => $this->executeTool((string) $block['name'], $input, $conversation, $lat, $lng, $accuracy),
                     ];
                 }
 
@@ -160,11 +163,11 @@ final readonly class SupportBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function executeTool(string $name, array $input, SupportConversation $conversation, ?float $lat, ?float $lng): string
+    private function executeTool(string $name, array $input, SupportConversation $conversation, ?float $lat, ?float $lng, ?float $accuracy): string
     {
         return match ($name) {
             'search_products' => $this->toolSearchProducts($input, $lat, $lng),
-            'search_vendors' => $this->toolSearchVendors($input, $lat, $lng),
+            'search_vendors' => $this->toolSearchVendors($input, $lat, $lng, $accuracy),
             'get_payment_status' => $this->toolGetPaymentStatus($input, $conversation),
             'get_my_subscription' => $this->toolGetMySubscription($conversation),
             'request_human' => 'Human support agents have been notified and one will join this conversation shortly. Tell the user a human agent will be with them soon, and keep helping them in the meantime if they ask further questions.',
@@ -204,7 +207,7 @@ final readonly class SupportBotService
     /**
      * @param  array<string, mixed>  $input
      */
-    private function toolSearchVendors(array $input, ?float $lat, ?float $lng): string
+    private function toolSearchVendors(array $input, ?float $lat, ?float $lng, ?float $accuracy): string
     {
         $query = trim((string) ($input['query'] ?? ''));
         if ($query === '') {
@@ -221,7 +224,7 @@ final readonly class SupportBotService
 
                 if ($vendors->isNotEmpty()) {
                     return 'Found '.count($vendors)." vendor(s) matching \"{$query}\" across all of Jiidaa (buyer location unknown, so no distances are available):\n"
-                        .$this->presentVendors($vendors)
+                        .$this->presentVendors($vendors, null)
                         .($loose ? self::LOOSE_MATCH_NOTE : '');
                 }
             }
@@ -235,8 +238,9 @@ final readonly class SupportBotService
 
                 if ($vendors->isNotEmpty()) {
                     return 'Found '.count($vendors)." vendor(s) within {$radius} km:\n"
-                        .$this->presentVendors($vendors)
-                        .($loose ? self::LOOSE_MATCH_NOTE : '');
+                        .$this->presentVendors($vendors, $accuracy)
+                        .($loose ? self::LOOSE_MATCH_NOTE : '')
+                        .(DistanceLabel::isPrecise($accuracy) ? '' : self::COARSE_LOCATION_NOTE);
                 }
             }
         }
@@ -248,8 +252,9 @@ final readonly class SupportBotService
 
             if ($global->isNotEmpty()) {
                 return "No matching vendors within {$maxRadius} km of the buyer, but ".count($global)." matching vendor(s) exist elsewhere on Jiidaa (distances shown where known). Tell the buyer both facts and share these:\n"
-                    .$this->presentVendors($global)
-                    .($loose ? self::LOOSE_MATCH_NOTE : '');
+                    .$this->presentVendors($global, $accuracy)
+                    .($loose ? self::LOOSE_MATCH_NOTE : '')
+                    .(DistanceLabel::isPrecise($accuracy) ? '' : self::COARSE_LOCATION_NOTE);
             }
         }
 
@@ -264,10 +269,13 @@ final readonly class SupportBotService
     /**
      * @param  Collection<int, User>  $vendors
      */
-    private function presentVendors($vendors): string
+    private function presentVendors($vendors, ?float $accuracy): string
     {
-        return $vendors->map(function (User $vendor) {
-            $distance = isset($vendor->distance_km) ? sprintf(' | %.1f km away', (float) $vendor->distance_km) : '';
+        return $vendors->map(function (User $vendor) use ($accuracy) {
+            $label = isset($vendor->distance_km)
+                ? DistanceLabel::format((float) $vendor->distance_km, $accuracy)
+                : null;
+            $distance = $label !== null ? ' | '.$label : '';
 
             return sprintf(
                 '- %s%s%s',
