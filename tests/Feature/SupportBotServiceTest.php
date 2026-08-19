@@ -302,7 +302,7 @@ class SupportBotServiceTest extends TestCase
             ],
             [
                 'stop_reason' => 'end_turn',
-                'content' => [['type' => 'text', 'text' => 'Shoe Palace is 0.0 km away.']],
+                'content' => [['type' => 'text', 'text' => 'Shoe Palace is 2.0 km away.']],
             ],
         ]);
 
@@ -332,12 +332,63 @@ class SupportBotServiceTest extends TestCase
         $conversation = SupportConversation::factory()->create();
 
         $this->app->make(SupportBotService::class)
-            ->reply($conversation, 'I need a shoe vendor', 6.5244, 3.3792);
+            ->reply($conversation, 'I need a shoe vendor', 6.5064, 3.3792, 30.0);
 
         $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
         $this->assertStringContainsString('Shoe Palace', $toolResult);
-        $this->assertStringContainsString('km away', $toolResult);
+        $this->assertStringContainsString('2.0 km away', $toolResult);
         $this->assertStringContainsString('/vendors/'.$vendor->slug, $toolResult);
+    }
+
+    public function test_a_coarse_browser_fix_stops_the_bot_quoting_a_precise_distance(): void
+    {
+        $fake = $this->bindFakeAi();
+        $fake->queueResponses([
+            [
+                'stop_reason' => 'tool_use',
+                'content' => [
+                    ['type' => 'tool_use', 'id' => 'tool_1', 'name' => 'search_vendors', 'input' => ['query' => 'shoes']],
+                ],
+            ],
+            [
+                'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => 'Shoe Palace is roughly 2 km away.']],
+            ],
+        ]);
+
+        $category = Category::factory()->create(['name' => 'Footwear']);
+        $vendor = User::factory()->create([
+            'role' => 'vendor',
+            'business_name' => 'Shoe Palace',
+            'category_id' => $category->id,
+        ]);
+        Address::create([
+            'user_id' => $vendor->id,
+            'street' => '1 Marina Rd',
+            'city' => 'Lagos',
+            'state' => 'Lagos',
+            'country' => 'Nigeria',
+            'latitude' => 6.5244,
+            'longitude' => 3.3792,
+        ]);
+        Product::factory()->create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'is_active' => true,
+            'name' => 'Leather shoes',
+            'tags' => ['shoes'],
+        ]);
+
+        $conversation = SupportConversation::factory()->create();
+
+        // 4 km of uncertainty — a desktop resolving over WiFi rather than GPS.
+        $this->app->make(SupportBotService::class)
+            ->reply($conversation, 'I need a shoe vendor', 6.5064, 3.3792, 4000.0);
+
+        $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
+        $this->assertStringContainsString('about 2 km away', $toolResult);
+        $this->assertStringNotContainsString('2.0 km away', $toolResult);
+        $this->assertStringContainsString('approximate position', $toolResult);
     }
 
     public function test_payment_status_is_scoped_to_the_conversations_user(): void

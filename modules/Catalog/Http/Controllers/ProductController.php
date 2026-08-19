@@ -22,6 +22,7 @@ use ModulesShoppingComplex\Catalog\Services\ProductService;
 use ModulesShoppingComplex\Media\Models\Media;
 use ModulesShoppingComplex\Media\Services\MediaService;
 use ModulesShoppingComplex\Reviews\Services\ReviewService;
+use ModulesShoppingComplex\Shared\Support\DistanceLabel;
 
 class ProductController extends Controller
 {
@@ -38,6 +39,7 @@ class ProductController extends Controller
         $locationFilters = request()->only(['latitude', 'longitude', 'radius']);
         $userLat = isset($locationFilters['latitude']) ? (float) $locationFilters['latitude'] : null;
         $userLon = isset($locationFilters['longitude']) ? (float) $locationFilters['longitude'] : null;
+        $accuracy = request()->filled('accuracy') ? (float) request()->input('accuracy') : null;
 
         $products = $this->productService->index(perPage: 48, locationFilters: $locationFilters);
         $categories = Cache::remember('product_index_categories', 3600, fn () => Category::withCount('products')->get()
@@ -48,7 +50,7 @@ class ProductController extends Controller
         $collection = $products->getCollection();
         $collection->loadMissing('vendor.address');
 
-        $products->through(function ($product) use ($userLat, $userLon) {
+        $products->through(function ($product) use ($userLat, $userLon, $accuracy) {
             $product->images = $product->media->map(fn ($media) => [
                 'id' => $media->id,
                 'url' => $this->mediaService->getMediaUrl($media),
@@ -60,9 +62,7 @@ class ProductController extends Controller
                 $address = $product->vendor?->address;
                 if ($address !== null && $address->latitude && $address->longitude) {
                     $dist = $this->haversineKm($userLat, $userLon, (float) $address->latitude, (float) $address->longitude);
-                    $product->distance_formatted = $dist < 1
-                        ? round($dist * 1000).' m away'
-                        : round($dist, 1).' km away';
+                    $product->distance_formatted = DistanceLabel::format($dist, $accuracy);
                 }
             }
 
