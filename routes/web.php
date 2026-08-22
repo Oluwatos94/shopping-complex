@@ -249,6 +249,7 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
     Route::get('/', [VendorDashboardController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/products', [VendorDashboardController::class, 'vendorProducts'])->name('vendor.products.index');
     Route::get('/referral', [ReferralController::class, 'show'])->name('vendor.referral');
+    Route::get('/referral/leaderboard', [ReferralController::class, 'leaderboard'])->name('vendor.referral.leaderboard');
 });
 
 // Vendor Registration & Onboarding Routes

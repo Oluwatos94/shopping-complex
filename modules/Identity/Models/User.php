@@ -58,6 +58,9 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property-read User|null $referrer
  * @property-read Collection<int, User> $referrals
  * @property-read int|null $referrals_count
+ * @property-read Collection<int, User> $verifiedReferrals
+ * @property-read int|null $verified_referrals_count
+ * @property-read string|null $verified_referrals_max_created_at
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -192,6 +195,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function referrals(): HasMany
     {
         return $this->hasMany(User::class, 'referred_by');
+    }
+
+    public function verifiedReferrals(): HasMany
+    {
+        return $this->referrals()->whereNotNull('email_verified_at');
     }
 
     /**

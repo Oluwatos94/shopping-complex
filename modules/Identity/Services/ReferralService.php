@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Identity\Services;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Session;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\ReferralRepository;
@@ -19,6 +20,8 @@ final readonly class ReferralService
 
     public const RECENT_LIMIT = 10;
 
+    public const LEADERBOARD_LIMIT = 10;
+
     private const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
     private const MAX_ATTEMPTS = 10;
@@ -27,10 +30,6 @@ final readonly class ReferralService
         private ReferralRepository $referralRepository,
     ) {}
 
-    /**
-     * Get the user's referral code, minting and persisting one on first access.
-     * Idempotent: repeated calls always return the same code.
-     */
     public function codeFor(User $user): string
     {
         if ($user->referral_code !== null) {
@@ -103,6 +102,72 @@ final readonly class ReferralService
                 'joined_at' => $referral->created_at->toDateString(),
             ])
             ->all();
+    }
+
+    public function totalParticipants(): int
+    {
+        return $this->referralRepository->countParticipants();
+    }
+
+    /**
+     * @return list<array{rank: int, name: string, referral_count: int, is_you: bool}>
+     */
+    public function topReferrers(int $limit = self::LEADERBOARD_LIMIT, ?User $viewer = null): array
+    {
+        return $this->referralRepository
+            ->topStandings($limit)
+            ->map(fn (User $standing, int $position): array => [
+                'rank' => $position + 1,
+                'name' => $standing->business_name ?? $standing->name,
+                'referral_count' => (int) $standing->verified_referrals_count,
+                'is_you' => $viewer !== null && $standing->id === $viewer->id,
+            ])
+            ->all();
+    }
+
+    public function rankFor(User $vendor): ?int
+    {
+        $standing = $this->referralRepository->standingFor($vendor->id);
+
+        return $standing === null ? null : $this->rankOf($standing);
+    }
+
+    /**
+     * @return array{total_participants: int, top: list<array{rank: int, name: string, referral_count: int, is_you: bool}>, my_rank: int|null, my_referral_count: int}
+     */
+    public function leaderboardFor(User $vendor, int $limit = self::LEADERBOARD_LIMIT): array
+    {
+        $top = $this->topReferrers($limit, $vendor);
+        $mine = Arr::first($top, fn (array $entry): bool => $entry['is_you']) ?? $this->standingOutsideTop($vendor);
+
+        return [
+            'total_participants' => $this->totalParticipants(),
+            'top' => $top,
+            'my_rank' => $mine['rank'] ?? null,
+            'my_referral_count' => $mine['referral_count'] ?? 0,
+        ];
+    }
+
+    /**
+     * @return array{rank: int, referral_count: int}|null
+     */
+    private function standingOutsideTop(User $vendor): ?array
+    {
+        $standing = $this->referralRepository->standingFor($vendor->id);
+
+        return $standing === null ? null : [
+            'rank' => $this->rankOf($standing),
+            'referral_count' => (int) $standing->verified_referrals_count,
+        ];
+    }
+
+    private function rankOf(User $standing): int
+    {
+        return $this->referralRepository->countStandingsAhead(
+            $standing->id,
+            (int) $standing->verified_referrals_count,
+            (string) $standing->verified_referrals_max_created_at,
+        ) + 1;
     }
 
     /**

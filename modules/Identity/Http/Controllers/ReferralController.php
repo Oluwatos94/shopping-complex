@@ -7,6 +7,8 @@ namespace ModulesShoppingComplex\Identity\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Services\ReferralService;
 
@@ -18,12 +20,7 @@ class ReferralController extends Controller
 
     public function show(): JsonResponse
     {
-        /** @var User $user */
-        $user = Auth::user();
-
-        if ($user->role !== 'vendor') {
-            abort(403, 'Only vendors can access referral codes.');
-        }
+        $user = $this->vendor();
 
         $code = $this->referralService->codeFor($user);
 
@@ -33,5 +30,25 @@ class ReferralController extends Controller
             'count' => $this->referralService->referralCountFor($user),
             'recent' => $this->referralService->recentReferralsFor($user),
         ]);
+    }
+
+    public function leaderboard(): Response
+    {
+        return Inertia::render(
+            'Vendor/ReferralLeaderboard',
+            $this->referralService->leaderboardFor($this->vendor())
+        );
+    }
+
+    private function vendor(): User
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'vendor') {
+            abort(403, 'Only vendors can access the referral programme.');
+        }
+
+        return $user;
     }
 }
