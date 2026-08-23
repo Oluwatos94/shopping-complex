@@ -89,6 +89,15 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
             ),
         },
         {
+            label: 'Leaderboard',
+            href: '/vendor/referral/leaderboard',
+            icon: (
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 21h8m-4-4v4m6.5-17H21v2a4 4 0 01-4 4m-10-6H3v2a4 4 0 004 4m10-8v6a5 5 0 01-10 0V3h10z" />
+                </svg>
+            ),
+        },
+        {
             label: 'Settings',
             href: '/vendor/settings',
             icon: (

@@ -185,3 +185,28 @@ export interface VendorCategory {
     icon?: string;
     vendors_count: number;
 }
+
+export interface ReferredUser {
+    name: string;
+    joined_at: string;
+}
+export interface Referral {
+    code: string | null;
+    link: string | null;
+    count: number;
+    recent: ReferredUser[];
+}
+
+export interface LeaderboardEntry {
+    rank: number;
+    name: string;
+    referral_count: number;
+    is_you: boolean;
+}
+
+export interface ReferralLeaderboardProps {
+    total_participants: number;
+    top: LeaderboardEntry[];
+    my_rank: number | null;
+    my_referral_count: number;
+}

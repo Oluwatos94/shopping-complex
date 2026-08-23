@@ -1,13 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
-import ReferralCard, { Referral } from './partials/ReferralCard';
+import { Referral } from '@/types';
+import ReferralCard from './partials/ReferralCard';
 
 interface Props {
     vendor: {
         name: string;
         business_name: string;
     };
-    referral?: Referral;
+    referral: Referral;
     subscription: {
         plan_name: string | null;
         plan_slug: string | null;
@@ -24,6 +25,7 @@ interface Props {
 
 export default function VendorDashboard({ vendor, referral, subscription, stats }: Props) {
     const isExpiringSoon = subscription.days_remaining !== null && subscription.days_remaining <= 7 && !subscription.is_expired;
+    const referralCount = referral.count;
 
     return (
         <>
@@ -98,6 +100,22 @@ export default function VendorDashboard({ vendor, referral, subscription, stats 
                                 </svg>
                             </div>
                             <p className="text-xs text-gray-400">This week</p>
+                        </div>
+
+                        {/* Referrals */}
+                        <div className="bg-white rounded-2xl p-5 shadow-sm">
+                            <p className="text-xs text-gray-500 mb-3">Referrals</p>
+                            <div className="flex items-center gap-2 mb-1">
+                                <p className="text-3xl font-bold text-gray-900">{referralCount}</p>
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                {referralCount === 0
+                                    ? 'Share your referral code to start'
+                                    : `${referralCount === 1 ? 'Business' : 'Businesses'} joined`}
+                            </p>
                         </div>
 
                     </div>
