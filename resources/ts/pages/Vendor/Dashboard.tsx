@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
-import ReferralCard, { Referral } from './partials/ReferralCard';
+import { Referral } from '@/types';
+import ReferralCard from './partials/ReferralCard';
 
 interface Props {
     vendor: {

@@ -1,7 +1,9 @@
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+    month: 'short', day: 'numeric', year: 'numeric',
+};
+
 export function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    });
+    return new Date(iso).toLocaleDateString('en-US', DATE_FORMAT);
 }
 
 export function formatTime(iso: string): string {
@@ -11,11 +13,6 @@ export function formatTime(iso: string): string {
     });
 }
 
-/**
- * Formats a date-only string (YYYY-MM-DD). `new Date()` reads a bare date as UTC
- * midnight, which renders as the previous day west of GMT — so build the date
- * from its parts and let it stay local.
- */
 export function formatDateOnly(value: string): string {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
@@ -24,8 +21,11 @@ export function formatDateOnly(value: string): string {
     }
 
     const [, year, month, day] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
 
-    return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    });
+    if (date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) {
+        return formatDate(value);
+    }
+
+    return date.toLocaleDateString('en-US', DATE_FORMAT);
 }

@@ -1,23 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import StatCard from '@/components/Vendor/StatCard';
+import { ReferralLeaderboardProps } from '@/types';
 
-interface LeaderboardEntry {
-    rank: number;
-    name: string;
-    referral_count: number;
-    is_you: boolean;
-}
-
-interface Props {
-    total_participants: number;
-    top: LeaderboardEntry[];
-    my_rank: number | null;
-    my_referral_count: number;
-}
-
-/** Podium tints for the first three; everyone else gets the neutral chip. */
-const RANK_STYLES: Record<number, string> = {
+const RANK_STYLES: Partial<Record<number, string>> = {
     1: 'bg-amber-100 text-amber-800',
     2: 'bg-gray-200 text-gray-700',
     3: 'bg-orange-100 text-orange-800',
@@ -36,12 +22,13 @@ function RankBadge({ rank, highlighted }: { rank: number; highlighted: boolean }
 }
 
 function ReferralCount({ count }: { count: number }) {
+    const unit = count === 1 ? 'referral' : 'referrals';
+
     return (
         <span className="flex-shrink-0 text-sm font-semibold text-gray-900 tabular-nums">
             {count}
-            <span className="hidden sm:inline font-normal text-gray-500">
-                {count === 1 ? ' referral' : ' referrals'}
-            </span>
+            <span className="sr-only"> {unit}</span>
+            <span aria-hidden="true" className="hidden sm:inline font-normal text-gray-500"> {unit}</span>
         </span>
     );
 }
@@ -54,10 +41,14 @@ function YouBadge() {
     );
 }
 
-export default function ReferralLeaderboard({ total_participants, top, my_rank, my_referral_count }: Props) {
+export default function ReferralLeaderboard({
+    total_participants,
+    top,
+    my_rank,
+    my_referral_count,
+}: ReferralLeaderboardProps) {
     const inTop = top.some((entry) => entry.is_you);
-    // Ranked but below the cut — pin their standing under the list instead.
-    const showPinnedPosition = !inTop && my_rank !== null;
+    const pinnedRank = inTop ? null : my_rank;
 
     return (
         <>
@@ -118,9 +109,7 @@ export default function ReferralLeaderboard({ total_participants, top, my_rank, 
                     {/* Standings */}
                     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                         <div className="px-5 sm:px-6 py-4 border-b border-brand-line">
-                            <h2 className="text-base font-semibold text-gray-900">
-                                Top {top.length === 0 ? 10 : top.length}
-                            </h2>
+                            <h2 className="text-base font-semibold text-gray-900">Top referrers</h2>
                             <p className="text-xs text-gray-500 mt-0.5">Ranked by verified referrals.</p>
                         </div>
 
@@ -139,7 +128,6 @@ export default function ReferralLeaderboard({ total_participants, top, my_rank, 
                                 {top.map((entry) => (
                                     <li
                                         key={entry.rank}
-                                        aria-current={entry.is_you ? 'true' : undefined}
                                         className={`flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-3.5 ${entry.is_you ? 'bg-primary-olive/10' : ''}`}
                                     >
                                         <RankBadge rank={entry.rank} highlighted={entry.is_you} />
@@ -153,9 +141,9 @@ export default function ReferralLeaderboard({ total_participants, top, my_rank, 
                             </ul>
                         )}
 
-                        {showPinnedPosition && my_rank !== null && (
+                        {pinnedRank !== null && (
                             <div className="flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-3.5 bg-primary-olive/10 border-t-2 border-brand-line">
-                                <RankBadge rank={my_rank} highlighted />
+                                <RankBadge rank={pinnedRank} highlighted />
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-semibold text-gray-900 truncate">Your position</p>
                                     <p className="text-xs text-gray-500 mt-0.5">
