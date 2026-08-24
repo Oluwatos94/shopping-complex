@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import StatCard from '@/components/Vendor/StatCard';
+import { BagIcon, LinkIcon, SparkleIcon, UsersIcon } from '@/components/icons';
 import { ReferralLeaderboardProps } from '@/types';
 
 const RANK_STYLES: Partial<Record<number, string>> = {
@@ -60,19 +61,7 @@ export default function ReferralLeaderboard({
 
                     {/* Page Header */}
                     <div className="mb-6">
-                        <Link
-                            href="/vendor"
-                            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-3"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Back to dashboard
-                        </Link>
                         <h1 className="text-2xl font-bold text-gray-900">Referral Leaderboard</h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            The businesses bringing the most vendors onto jiidaa.
-                        </p>
                     </div>
 
                     {/* Standings summary */}
@@ -80,29 +69,17 @@ export default function ReferralLeaderboard({
                         <StatCard
                             label="Total participants"
                             value={total_participants}
-                            icon={
-                                <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            }
+                            icon={<UsersIcon className="w-6 h-6 text-brand-green" />}
                         />
                         <StatCard
                             label="Your position"
                             value={my_rank === null ? 'Unranked' : `#${my_rank}`}
-                            icon={
-                                <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
-                            }
+                            icon={<SparkleIcon className="w-6 h-6 text-brand-green" />}
                         />
                         <StatCard
                             label="Your referrals"
                             value={my_referral_count}
-                            icon={
-                                <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m4.5-4.5l1.5-1.5a4 4 0 015.656 5.656l-3 3" />
-                                </svg>
-                            }
+                            icon={<LinkIcon className="w-6 h-6 text-brand-green" />}
                         />
                     </div>
 
@@ -115,9 +92,7 @@ export default function ReferralLeaderboard({
 
                         {top.length === 0 ? (
                             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                <svg className="w-12 h-12 text-gray-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                </svg>
+                                <BagIcon className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.5} />
                                 <p className="text-sm text-gray-500">Leaderboard opens once referrals start.</p>
                                 <Link href="/vendor" className="mt-3 text-sm font-semibold text-primary-olive hover:underline">
                                     Share your referral code

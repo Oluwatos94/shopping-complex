@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Identity\Services;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Session;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\ReferralRepository;
 use RuntimeException;
+use stdClass;
 
 final readonly class ReferralService
 {
@@ -127,9 +130,50 @@ final readonly class ReferralService
 
     public function rankFor(User $vendor): ?int
     {
+        return $this->standingFor($vendor)['rank'] ?? null;
+    }
+
+    /**
+     * The vendor's own row on the campaign board, or null if they never enrolled.
+     *
+     * @return array{rank: int, referral_count: int}|null
+     */
+    public function standingFor(User $vendor): ?array
+    {
         $standing = $this->referralRepository->standingFor($vendor->id);
 
-        return $standing === null ? null : $this->rankOf($standing);
+        return $standing === null ? null : [
+            'rank' => (int) $standing->campaign_rank,
+            'referral_count' => (int) $standing->verified_referrals_count,
+        ];
+    }
+
+    public function participants(?string $search, int $perPage): LengthAwarePaginator
+    {
+        $participants = $this->referralRepository->paginateParticipants($search, $perPage);
+
+        return new LengthAwarePaginator(
+            $participants->getCollection()->map($this->toParticipantShape(...))->all(),
+            $participants->total(),
+            $participants->perPage(),
+            $participants->currentPage(),
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
+    }
+
+    private function toParticipantShape(stdClass $participant): array
+    {
+        return [
+            'user_id' => (int) $participant->id,
+            'name' => (string) ($participant->business_name ?? $participant->name),
+            'account_name' => (string) $participant->name,
+            'email' => (string) $participant->email,
+            'referral_count' => (int) $participant->verified_referrals_count,
+            'rank' => (int) $participant->campaign_rank,
+            'joined_at' => $participant->created_at === null
+                ? null
+                : Carbon::parse($participant->created_at)->toISOString(),
+        ];
     }
 
     /**
@@ -138,7 +182,7 @@ final readonly class ReferralService
     public function leaderboardFor(User $vendor, int $limit = self::LEADERBOARD_LIMIT): array
     {
         $top = $this->topReferrers($limit, $vendor);
-        $mine = Arr::first($top, fn (array $entry): bool => $entry['is_you']) ?? $this->standingOutsideTop($vendor);
+        $mine = Arr::first($top, fn (array $entry): bool => $entry['is_you']) ?? $this->standingFor($vendor);
 
         return [
             'total_participants' => $this->totalParticipants(),
@@ -146,28 +190,6 @@ final readonly class ReferralService
             'my_rank' => $mine['rank'] ?? null,
             'my_referral_count' => $mine['referral_count'] ?? 0,
         ];
-    }
-
-    /**
-     * @return array{rank: int, referral_count: int}|null
-     */
-    private function standingOutsideTop(User $vendor): ?array
-    {
-        $standing = $this->referralRepository->standingFor($vendor->id);
-
-        return $standing === null ? null : [
-            'rank' => $this->rankOf($standing),
-            'referral_count' => (int) $standing->verified_referrals_count,
-        ];
-    }
-
-    private function rankOf(User $standing): int
-    {
-        return $this->referralRepository->countStandingsAhead(
-            $standing->id,
-            (int) $standing->verified_referrals_count,
-            (string) $standing->verified_referrals_max_created_at,
-        ) + 1;
     }
 
     /**

@@ -14,10 +14,21 @@ use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
+use ModulesShoppingComplex\Identity\Services\ReferralService;
+use ModulesShoppingComplex\Shared\Pagination\PageSize;
+use ModulesShoppingComplex\Shared\Support\LikeTerm;
 use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
 
 final readonly class AdminAnalyticsService
 {
+    private const MAX_PER_PAGE = 100;
+
+    private const PARTICIPANT_REFERRALS_LIMIT = 50;
+
+    public function __construct(
+        private ReferralService $referralService,
+    ) {}
+
     /**
      * Get platform-wide statistics using aggregated queries.
      *
@@ -67,14 +78,14 @@ final readonly class AdminAnalyticsService
         }
 
         if (! empty($filters['search'])) {
-            $search = $filters['search'];
+            $search = LikeTerm::escape((string) $filters['search']);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        $perPage = min(max((int) ($filters['per_page'] ?? 20), 1), 100);
+        $perPage = PageSize::resolve($filters['per_page'] ?? null, max: self::MAX_PER_PAGE);
 
         return $query->latest()->paginate($perPage);
     }
@@ -106,7 +117,7 @@ final readonly class AdminAnalyticsService
             ->withCount('products');
 
         if ($search !== null && trim($search) !== '') {
-            $term = trim($search);
+            $term = LikeTerm::escape(trim($search));
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
                     ->orWhere('email', 'like', "%{$term}%");
@@ -126,6 +137,37 @@ final readonly class AdminAnalyticsService
             $paginator->currentPage(),
             ['path' => LengthAwarePaginator::resolveCurrentPath()]
         );
+    }
+
+    public function getCampaignParticipants(array $filters): array
+    {
+        $perPage = PageSize::resolve($filters['per_page'] ?? null, max: self::MAX_PER_PAGE);
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        return [
+            'total_participants' => $this->referralService->totalParticipants(),
+            'participants' => $this->referralService->participants($search === '' ? null : $search, $perPage),
+        ];
+    }
+
+    /**
+     * One participant's drill-in: the vendor application admins already review,
+     * plus their campaign standing and who they brought in.
+     *
+     * @return array<string, mixed>
+     */
+    public function getCampaignParticipant(User $user): array
+    {
+        $user->loadMissing('vendorOnboarding')->loadCount('products');
+
+        $standing = $this->referralService->standingFor($user);
+
+        return [
+            ...$this->toApplicationShape($user),
+            'referral_count' => $standing['referral_count'] ?? 0,
+            'rank' => $standing['rank'] ?? null,
+            'referrals' => $this->referralService->recentReferralsFor($user, self::PARTICIPANT_REFERRALS_LIMIT),
+        ];
     }
 
     /**
@@ -209,7 +251,7 @@ final readonly class AdminAnalyticsService
             $query->where('payment_method', $filters['method']);
         }
 
-        $perPage = min(max((int) ($filters['per_page'] ?? 20), 1), 100);
+        $perPage = PageSize::resolve($filters['per_page'] ?? null, max: self::MAX_PER_PAGE);
         $subscriptions = $query->latest()->paginate($perPage);
 
         $stellarVendorIds = $subscriptions->getCollection()

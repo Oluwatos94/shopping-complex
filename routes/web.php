@@ -222,6 +222,8 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');
     Route::get('/vendors/{user}/document/{field}', [AdminController::class, 'viewVendorDocument'])->name('admin.vendors.document');
+    Route::get('/referral/participants', [AdminController::class, 'referralParticipants'])->name('admin.referral.participants');
+    Route::get('/referral/participants/{user}', [AdminController::class, 'referralParticipant'])->name('admin.referral.participant');
     Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
 

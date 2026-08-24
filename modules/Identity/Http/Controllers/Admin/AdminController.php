@@ -20,9 +20,12 @@ use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
 use ModulesShoppingComplex\Identity\Services\VendorOnboardingService;
 use ModulesShoppingComplex\Identity\Services\VendorReminderService;
+use ModulesShoppingComplex\Shared\Pagination\PageSize;
 
 class AdminController extends Controller
 {
+    private const MAX_PER_PAGE = 100;
+
     public function __construct(
         private readonly AdminAnalyticsService $adminAnalyticsService,
         private readonly VendorOnboardingService $onboardingService,
@@ -50,7 +53,7 @@ class AdminController extends Controller
 
     public function botMonitor(Request $request): Response|JsonResponse
     {
-        $perPage = min(max((int) $request->get('per_page', 50), 1), 100);
+        $perPage = PageSize::resolve($request->get('per_page'), 50, self::MAX_PER_PAGE);
         $data = ['interactions' => $this->adminAnalyticsService->getRecentInteractions($perPage)];
 
         if ($request->wantsJson()) {
@@ -137,7 +140,7 @@ class AdminController extends Controller
 
     public function pendingVendors(Request $request): Response|JsonResponse
     {
-        $perPage = min(max((int) $request->get('per_page', 20), 1), 100);
+        $perPage = PageSize::resolve($request->get('per_page'), max: self::MAX_PER_PAGE);
         $status = (string) $request->get('status', 'pending_review');
         $search = trim((string) $request->get('search', ''));
 
@@ -156,6 +159,27 @@ class AdminController extends Controller
         }
 
         return Inertia::render('Admin/Vendors', $data);
+    }
+
+    public function referralParticipants(Request $request): Response|JsonResponse
+    {
+        $data = [
+            ...$this->adminAnalyticsService->getCampaignParticipants($request->only(['search', 'per_page'])),
+            'search' => trim((string) $request->get('search', '')),
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Admin/ReferralParticipants', $data);
+    }
+
+    public function referralParticipant(User $user): JsonResponse
+    {
+        abort_if($user->role !== 'vendor', 404);
+
+        return response()->json($this->adminAnalyticsService->getCampaignParticipant($user));
     }
 
     public function approveVendor(User $user): RedirectResponse
