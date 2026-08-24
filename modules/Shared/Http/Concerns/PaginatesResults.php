@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Shared\Http\Concerns;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use ModulesShoppingComplex\Shared\Pagination\PageSize;
 use ModulesShoppingComplex\Shared\Pagination\PaginatorServiceInterface;
 
 trait PaginatesResults
@@ -26,6 +27,6 @@ trait PaginatesResults
 
     protected function getPerPage(Request $request, int $default = PaginatorServiceInterface::PER_PAGE): int
     {
-        return min((int) $request->get('per_page', $default), 50);
+        return PageSize::resolve($request->get('per_page'), $default);
     }
 }

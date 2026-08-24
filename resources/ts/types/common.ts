@@ -207,3 +207,9 @@ export interface SearchResult {
     categories: any[];
     total_results: number;
 }
+
+/** Props every icon in `components/icons` accepts. */
+export interface IconProps {
+    className?: string;
+    strokeWidth?: number;
+}

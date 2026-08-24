@@ -7,11 +7,16 @@ namespace ModulesShoppingComplex\Identity\Repositories;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Support\LikeTerm;
+use stdClass;
 
 class ReferralRepository
 {
+    private const RANKING_ORDER = 'verified_referrals_count desc, verified_referrals_max_created_at asc, id asc';
+
     public function findByCode(string $code): ?User
     {
         return User::query()->where('referral_code', $code)->first();
@@ -83,29 +88,29 @@ class ReferralRepository
         return $this->orderedStandings()->limit($limit)->get();
     }
 
-    public function standingFor(int $vendorId): ?User
+    public function standingFor(int $vendorId): ?stdClass
     {
-        return $this->standings()->whereKey($vendorId)->first();
+        return $this->rankedStandings()->where('id', $vendorId)->first();
     }
 
-    public function countStandingsAhead(int $vendorId, int $referralCount, string $lastReferralAt): int
+    /**
+     * @return LengthAwarePaginator<int, stdClass>
+     */
+    public function paginateParticipants(?string $search, int $perPage): LengthAwarePaginator
     {
-        return DB::query()
-            ->fromSub($this->standings(), 'standings')
-            ->where(function (QueryBuilder $query) use ($vendorId, $referralCount, $lastReferralAt): void {
-                $query->where('verified_referrals_count', '>', $referralCount)
-                    ->orWhere(function (QueryBuilder $tied) use ($vendorId, $referralCount, $lastReferralAt): void {
-                        $tied->where('verified_referrals_count', $referralCount)
-                            ->where(function (QueryBuilder $sooner) use ($vendorId, $lastReferralAt): void {
-                                $sooner->where('verified_referrals_max_created_at', '<', $lastReferralAt)
-                                    ->orWhere(function (QueryBuilder $tiedMoment) use ($vendorId, $lastReferralAt): void {
-                                        $tiedMoment->where('verified_referrals_max_created_at', $lastReferralAt)
-                                            ->where('id', '<', $vendorId);
-                                    });
-                            });
-                    });
-            })
-            ->count();
+        $participants = $this->rankedStandings();
+
+        if ($search !== null && $search !== '') {
+            $escaped = LikeTerm::escape($search);
+
+            $participants->where(function (QueryBuilder $match) use ($escaped): void {
+                $match->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('email', 'like', "%{$escaped}%")
+                    ->orWhere('business_name', 'like', "%{$escaped}%");
+            });
+        }
+
+        return $participants->orderBy('campaign_rank')->paginate($perPage);
     }
 
     /**
@@ -136,7 +141,7 @@ class ReferralRepository
     private function standings(): Builder
     {
         return $this->participants()
-            ->select(['id', 'name', 'business_name'])
+            ->select(['id', 'name', 'business_name', 'email', 'created_at'])
             ->withCount('verifiedReferrals')
             ->withMax('verifiedReferrals', 'created_at');
     }
@@ -146,9 +151,16 @@ class ReferralRepository
      */
     private function orderedStandings(): Builder
     {
-        return $this->standings()
-            ->orderByDesc('verified_referrals_count')
-            ->orderBy('verified_referrals_max_created_at')
-            ->orderBy('id');
+        return $this->standings()->orderByRaw(self::RANKING_ORDER);
+    }
+
+    private function rankedStandings(): QueryBuilder
+    {
+        $ranked = DB::query()
+            ->fromSub($this->standings(), 'standings')
+            ->select('standings.*')
+            ->selectRaw('row_number() over (order by '.self::RANKING_ORDER.') as campaign_rank');
+
+        return DB::query()->fromSub($ranked, 'participants');
     }
 }

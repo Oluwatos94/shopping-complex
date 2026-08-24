@@ -210,3 +210,46 @@ export interface ReferralLeaderboardProps {
     my_rank: number | null;
     my_referral_count: number;
 }
+
+// ---------------------------------------------------------------------------
+// Vendor sidebar
+// ---------------------------------------------------------------------------
+
+/** One nav entry in the vendor sidebar. `exact` opts out of prefix matching. */
+export interface SidebarItem {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+    exact?: boolean;
+}
+
+/** Inertia shared props the sidebar reads when the page passes no overrides. */
+export interface SidebarPageProps {
+    [key: string]: unknown;
+    auth?: {
+        user?: {
+            id: number;
+            slug?: string;
+            name: string;
+            email: string;
+            role: string;
+            business_name?: string;
+            business_logo?: string | null;
+        } | null;
+    };
+}
+
+export interface VendorSidebarProps {
+    businessName?: string;
+    businessLogo?: string | null;
+}
+
+export interface SidebarContentProps {
+    items: SidebarItem[];
+    currentPath: string;
+    name: string;
+    email: string;
+    logo: string | null;
+    onSignOut: () => void;
+    onNavigate?: () => void;
+}

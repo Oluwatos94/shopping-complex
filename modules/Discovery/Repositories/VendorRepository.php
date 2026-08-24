@@ -11,6 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
+use ModulesShoppingComplex\Shared\Support\LikeTerm;
 
 class VendorRepository extends BasePageRepository
 {
@@ -107,7 +108,7 @@ class VendorRepository extends BasePageRepository
     private function applySearchTerms($query, array $terms, bool $loose): void
     {
         foreach ($terms as $term) {
-            $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $term);
+            $escaped = LikeTerm::escape($term);
 
             $query->where(function ($q) use ($escaped, $loose) {
                 $q->where('business_name', 'like', "%{$escaped}%")

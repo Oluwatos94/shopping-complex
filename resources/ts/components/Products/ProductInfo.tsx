@@ -1,6 +1,9 @@
 import { Link } from '@inertiajs/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CheckIcon } from '@/components/icons';
 import { Product, VendorRatingStats } from '@/types/product';
 import { Vendor } from '@/types/user';
+import { copyText } from '@/utils/clipboard';
 import { recordVendorContact } from '@/utils/contact';
 
 interface ProductInfoProps {
@@ -12,6 +15,22 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref }: ProductInfoProps) {
     const price = Number(product.price);
+    const [copyState, setCopyState] = useState<'copied' | 'failed' | null>(null);
+    const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (resetRef.current) clearTimeout(resetRef.current);
+        };
+    }, []);
+
+    const handleCopyLink = useCallback(async () => {
+        const ok = await copyText(window.location.href);
+
+        if (resetRef.current) clearTimeout(resetRef.current);
+        setCopyState(ok ? 'copied' : 'failed');
+        resetRef.current = setTimeout(() => setCopyState(null), 2000);
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -227,15 +246,24 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                         </svg>
                     </button>
                     <button
+                        type="button"
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        onClick={() => navigator.clipboard.writeText(window.location.href)}
-                        aria-label="Copy link"
+                        onClick={handleCopyLink}
+                        aria-label={copyState === 'copied' ? 'Link copied' : 'Copy link'}
                     >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                        </svg>
+                        {copyState === 'copied' ? (
+                            <CheckIcon className="w-5 h-5 text-brand-green" />
+                        ) : (
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                        )}
                     </button>
                 </div>
+
+                <p aria-live="polite" className="sr-only">
+                    {copyState === 'copied' ? 'Link copied to clipboard' : copyState === 'failed' ? 'Could not copy the link' : ''}
+                </p>
             </div>
         </div>
     );

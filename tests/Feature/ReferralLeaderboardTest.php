@@ -294,6 +294,16 @@ class ReferralLeaderboardTest extends TestCase
             );
     }
 
+    public function test_the_board_never_exposes_another_vendors_email(): void
+    {
+        $caller = $this->vendor(referrals: 1, name: 'Caller');
+        $this->vendor(referrals: 4, name: 'Rival');
+
+        $board = $this->referralService->leaderboardFor($caller);
+
+        $this->assertStringNotContainsString('@', json_encode($board, JSON_THROW_ON_ERROR));
+    }
+
     public function test_page_requires_authentication(): void
     {
         $this->get('/vendor/referral/leaderboard')->assertRedirect('/login');
@@ -333,7 +343,7 @@ class ReferralLeaderboardTest extends TestCase
         $overtaken = $this->vendor(referrals: 1, name: 'Overtaken');
 
         $this->assertSame(2, $onBoard);
-        $this->assertSame(4, $this->queriesForBoard($overtaken));
+        $this->assertSame(3, $this->queriesForBoard($overtaken));
     }
 
     public function test_a_caller_on_the_board_is_not_ranked_a_second_time(): void
