@@ -45,12 +45,17 @@ export default function ParticipantStanding({ participant }: { participant: Camp
                     </div>
 
                     <ul className="border border-gray-100 rounded-lg divide-y divide-gray-100 overflow-hidden">
-                        {referrals.map((referred, index) => (
+                        {referrals.map((referred) => (
                             <li
-                                key={`${referred.name}-${index}`}
+                                key={referred.email}
                                 className="flex items-center justify-between gap-3 bg-gray-50/60 px-4 py-2.5"
                             >
-                                <span className="text-sm text-gray-800 truncate">{referred.name}</span>
+                                <span className="min-w-0">
+                                    <span className="block text-sm text-gray-800 truncate">{referred.name}</span>
+                                    <span className="block text-xs text-gray-400 truncate" title={referred.email}>
+                                        {referred.email}
+                                    </span>
+                                </span>
                                 <span className="flex items-center gap-3 flex-shrink-0">
                                     <span
                                         className={`text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full border ${listingStyle(referred.products_count, min_products)}`}

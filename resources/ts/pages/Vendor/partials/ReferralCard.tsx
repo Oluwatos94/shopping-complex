@@ -179,9 +179,14 @@ export default function ReferralCard({ referral, businessName }: Props) {
 
                                 <div id="referral-breakdown" className="mt-3" hidden={!showReferrals}>
                                     <ul className="border border-brand-line rounded-xl divide-y divide-brand-line overflow-hidden">
-                                        {recent.map((referred, index) => (
-                                            <li key={index} className="flex items-center justify-between gap-3 bg-brand-surface px-4 py-2.5">
-                                                <span className="text-sm text-gray-900 truncate">{referred.name}</span>
+                                        {recent.map((referred) => (
+                                            <li key={referred.email} className="flex items-center justify-between gap-3 bg-brand-surface px-4 py-2.5">
+                                                <span className="min-w-0">
+                                                    <span className="block text-sm text-gray-900 truncate">{referred.name}</span>
+                                                    <span className="block text-xs text-gray-500 truncate" title={referred.email}>
+                                                        {referred.email}
+                                                    </span>
+                                                </span>
                                                 <span className="flex items-center gap-3 flex-shrink-0">
                                                     <span
                                                         className={`text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full ${
