@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Support\LikeTerm;
 
 class UserRepository
 {
@@ -275,18 +276,18 @@ class UserRepository
      */
     public function search(string $searchTerm, array $relations = []): Collection
     {
-        // Sanitize search term
         $searchTerm = trim($searchTerm);
 
-        // Return empty collection for empty search
         if (empty($searchTerm)) {
             return new Collection;
         }
 
+        $escaped = LikeTerm::escape($searchTerm);
+
         $query = User::query()
-            ->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                    ->orWhere('email', 'like', "%{$searchTerm}%");
+            ->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('email', 'like', "%{$escaped}%");
             });
 
         if (! empty($relations)) {

@@ -1,31 +1,86 @@
+import { ReactNode, useEffect, useRef } from 'react';
 import { VendorApplication } from '@/types/vendor';
 import { formatDate } from '@/utils/date';
 import { initials } from '@/utils/string';
-import DocumentPill from './DocumentPill';
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function DetailPanel({
     vendor,
     onClose,
     onApprove,
     onReject,
-    processing,
+    processing = null,
+    eyebrow = 'Details & Verification',
+    showOnboarding = true,
+    children,
 }: {
     vendor: VendorApplication | null;
     onClose: () => void;
-    onApprove: (v: VendorApplication) => void;
-    onReject: (v: VendorApplication) => void;
-    processing: number | null;
+    onApprove?: (v: VendorApplication) => void;
+    onReject?: (v: VendorApplication) => void;
+    processing?: number | null;
+    eyebrow?: string;
+    /** Hide the onboarding step meter where "ready for review" is meaningless. */
+    showOnboarding?: boolean;
+    children?: ReactNode;
 }) {
     const isOpen = vendor !== null;
     const isProcessing = vendor ? processing === vendor.user_id : false;
+    const hasActions = onApprove !== undefined && onReject !== undefined;
 
-    const docItems = vendor
-        ? [
-              vendor.certificate_of_incorporation && { label: 'Certificate of Incorporation', key: 'certificate_of_incorporation' },
-              vendor.government_issued_id && { label: 'Government Issued ID', key: 'government_issued_id' },
-              vendor.proof_of_address && { label: 'Proof of Address', key: 'proof_of_address' },
-          ].filter(Boolean as unknown as <T>(x: T | false) => x is T)
-        : [];
+    const panelRef = useRef<HTMLDivElement>(null);
+    const returnFocusRef = useRef<HTMLElement | null>(null);
+
+    // Held in a ref so an inline onClose does not re-run the effect every
+    // render, which would steal focus back into the panel on each keystroke.
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        returnFocusRef.current = document.activeElement as HTMLElement | null;
+        panelRef.current?.focus();
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onCloseRef.current();
+                return;
+            }
+
+            if (event.key !== 'Tab' || panelRef.current === null) return;
+
+            const targets = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+            const first = targets[0];
+            const last = targets[targets.length - 1];
+
+            if (first === undefined || last === undefined) return;
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            returnFocusRef.current?.focus();
+        };
+    }, [isOpen]);
+
+    const DOCUMENTS = [
+        { label: 'Certificate of Incorporation', key: 'certificate_of_incorporation' },
+        { label: 'Government Issued ID', key: 'government_issued_id' },
+        { label: 'Proof of Address', key: 'proof_of_address' },
+    ] as const;
+
+    const docItems = vendor === null ? [] : DOCUMENTS.filter((doc) => vendor[doc.key] !== null);
 
     const docUrl = (field: string) =>
         vendor ? `/admin/vendors/${vendor.user_id}/document/${field}` : '#';
@@ -42,7 +97,13 @@ export default function DetailPanel({
 
             {/* Panel */}
             <div
-                className={`fixed top-0 right-0 h-screen w-[480px] bg-white z-[60] shadow-2xl border-l border-gray-100 flex flex-col transition-transform duration-500 ease-in-out ${
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-hidden={!isOpen}
+                aria-labelledby="detail-panel-title"
+                tabIndex={-1}
+                className={`fixed top-0 right-0 h-screen w-[480px] bg-white z-[60] shadow-2xl border-l border-gray-100 flex flex-col outline-none transition-transform duration-500 ease-in-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
@@ -52,14 +113,16 @@ export default function DetailPanel({
                         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/60">
                             <div>
                                 <p className="text-[10px] uppercase tracking-[0.2em] text-primary-olive font-bold mb-1">
-                                    Details &amp; Verification
+                                    {eyebrow}
                                 </p>
-                                <h3 className="text-2xl font-bold text-gray-900">
+                                <h3 id="detail-panel-title" className="text-2xl font-bold text-gray-900">
                                     {vendor.user.business_name || vendor.legal_entity_name || vendor.user.name}
                                 </h3>
                             </div>
                             <button
+                                type="button"
                                 onClick={onClose}
+                                aria-label="Close details"
                                 className="p-2 rounded-full hover:bg-gray-100 transition-all text-gray-500"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,46 +243,52 @@ export default function DetailPanel({
                             </div>
 
                             {/* Onboarding Progress */}
-                            <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h4 className="text-xs uppercase tracking-widest font-bold text-gray-600">
-                                        Onboarding Progress
-                                    </h4>
-                                    <span className="text-xs font-bold text-primary-olive">
-                                        Step {vendor.current_step} / 4
-                                    </span>
+                            {showOnboarding && (
+                                <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-xs uppercase tracking-widest font-bold text-gray-600">
+                                            Onboarding Progress
+                                        </h4>
+                                        <span className="text-xs font-bold text-primary-olive">
+                                            Step {vendor.current_step} / 4
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div
+                                            className="bg-primary-olive h-1.5 rounded-full transition-all"
+                                            style={{ width: `${Math.min(100, (vendor.current_step / 4) * 100)}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 mt-2">
+                                        {vendor.current_step >= 4
+                                            ? 'Application complete — ready for review'
+                                            : 'Application partially submitted'}
+                                    </p>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div
-                                        className="bg-primary-olive h-1.5 rounded-full transition-all"
-                                        style={{ width: `${Math.min(100, (vendor.current_step / 4) * 100)}%` }}
-                                    />
-                                </div>
-                                <p className="text-[10px] text-gray-400 mt-2">
-                                    {vendor.current_step >= 4
-                                        ? 'Application complete — ready for review'
-                                        : 'Application partially submitted'}
-                                </p>
-                            </div>
+                            )}
+
+                            {children}
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="p-6 border-t border-gray-100 bg-gray-50/60 grid grid-cols-2 gap-3">
-                            <button
-                                disabled={isProcessing}
-                                onClick={() => onReject(vendor)}
-                                className="py-3.5 rounded-lg border border-red-200 text-red-500 font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all disabled:opacity-50"
-                            >
-                                Reject
-                            </button>
-                            <button
-                                disabled={isProcessing}
-                                onClick={() => onApprove(vendor)}
-                                className="py-3.5 rounded-lg bg-primary-olive text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary-olive/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
-                            >
-                                {isProcessing ? 'Processing…' : 'Approve'}
-                            </button>
-                        </div>
+                        {hasActions && (
+                            <div className="p-6 border-t border-gray-100 bg-gray-50/60 grid grid-cols-2 gap-3">
+                                <button
+                                    disabled={isProcessing}
+                                    onClick={() => onReject(vendor)}
+                                    className="py-3.5 rounded-lg border border-red-200 text-red-500 font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all disabled:opacity-50"
+                                >
+                                    Reject
+                                </button>
+                                <button
+                                    disabled={isProcessing}
+                                    onClick={() => onApprove(vendor)}
+                                    className="py-3.5 rounded-lg bg-primary-olive text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary-olive/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                                >
+                                    {isProcessing ? 'Processing…' : 'Approve'}
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

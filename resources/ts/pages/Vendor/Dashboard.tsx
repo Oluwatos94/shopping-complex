@@ -1,13 +1,15 @@
 import { Head, Link } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
-import ReferralCard, { Referral } from './partials/ReferralCard';
+import { AlertIcon, BoltIcon, EyeIcon, UsersIcon } from '@/components/icons';
+import { Referral } from '@/types';
+import ReferralCard from './partials/ReferralCard';
 
 interface Props {
     vendor: {
         name: string;
         business_name: string;
     };
-    referral?: Referral;
+    referral: Referral;
     subscription: {
         plan_name: string | null;
         plan_slug: string | null;
@@ -24,6 +26,7 @@ interface Props {
 
 export default function VendorDashboard({ vendor, referral, subscription, stats }: Props) {
     const isExpiringSoon = subscription.days_remaining !== null && subscription.days_remaining <= 7 && !subscription.is_expired;
+    const referralCount = referral.count;
 
     return (
         <>
@@ -42,9 +45,7 @@ export default function VendorDashboard({ vendor, referral, subscription, stats 
                     {/* Expiry / expired alert */}
                     {(subscription.is_expired || isExpiringSoon) && (
                         <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <AlertIcon className="w-4 h-4 flex-shrink-0" />
                             <span>
                                 {subscription.is_expired
                                     ? 'Your subscription has expired. '
@@ -92,12 +93,23 @@ export default function VendorDashboard({ vendor, referral, subscription, stats 
                             <p className="text-xs text-gray-500 mb-3">Catalogue Views</p>
                             <div className="flex items-center gap-2 mb-1">
                                 <p className="text-3xl font-bold text-gray-900">{stats.catalogue_views_this_week}</p>
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
+                                <EyeIcon className="w-4 h-4 text-gray-400" />
                             </div>
                             <p className="text-xs text-gray-400">This week</p>
+                        </div>
+
+                        {/* Referrals */}
+                        <div className="bg-white rounded-2xl p-5 shadow-sm">
+                            <p className="text-xs text-gray-500 mb-3">Referrals</p>
+                            <div className="flex items-center gap-2 mb-1">
+                                <p className="text-3xl font-bold text-gray-900">{referralCount}</p>
+                                <UsersIcon className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                {referralCount === 0
+                                    ? 'Share your referral code to start'
+                                    : `${referralCount === 1 ? 'Business' : 'Businesses'} joined`}
+                            </p>
                         </div>
 
                     </div>
@@ -110,9 +122,7 @@ export default function VendorDashboard({ vendor, referral, subscription, stats 
                         <h2 className="text-base font-semibold text-gray-900 mb-1">Recent Activity</h2>
                         <p className="text-xs text-gray-500 mb-6">Latest interactions with your business</p>
                         <div className="flex flex-col items-center justify-center py-10 text-center">
-                            <svg className="w-12 h-12 text-gray-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                            <BoltIcon className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.5} />
                             <p className="text-sm text-gray-500">No activity yet. Start adding products to get discovered!</p>
                         </div>
                     </div>

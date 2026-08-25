@@ -99,6 +99,7 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 handleSearch({
                     latitude: location.latitude,
                     longitude: location.longitude,
+                    accuracy: location.accuracy,
                 });
             })
             .catch(() => {

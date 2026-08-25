@@ -58,6 +58,9 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property-read User|null $referrer
  * @property-read Collection<int, User> $referrals
  * @property-read int|null $referrals_count
+ * @property-read int|null $referred_vendors_count
+ * @property-read int|null $qualified_referrals_count
+ * @property-read string|null $qualified_at
  * @property-read int|null $products_count
  * @property-read int|null $active_products_count
  * @property-read int|null $reviews_count
@@ -192,6 +195,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function referrals(): HasMany
     {
         return $this->hasMany(User::class, 'referred_by');
+    }
+
+    public static function minReferralProducts(): int
+    {
+        return (int) config('referral.min_products', 5);
     }
 
     /**

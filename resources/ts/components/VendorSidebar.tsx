@@ -1,124 +1,30 @@
 import { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
+import {
+    BagIcon,
+    BarsIcon,
+    ChevronLeftIcon,
+    CloseIcon,
+    CogIcon,
+    CubeIcon,
+    CardIcon,
+    GridIcon,
+    MenuIcon,
+    SignOutIcon,
+    TrophyIcon,
+    UserIcon,
+} from '@/components/icons';
+import { SidebarContentProps, SidebarItem, SidebarPageProps, VendorSidebarProps } from '@/types';
 
-interface SidebarItem {
-    label: string;
-    href: string;
-    icon: React.ReactNode;
-    exact?: boolean;
+const NAV_ICON = 'w-5 h-5 flex-shrink-0';
+
+function isActive(item: SidebarItem, currentPath: string) {
+    if (item.exact) return currentPath === item.href;
+    return currentPath === item.href || currentPath.startsWith(item.href + '/');
 }
 
-interface PageProps {
-    [key: string]: unknown;
-    auth?: {
-        user?: {
-            id: number;
-            slug?: string;
-            name: string;
-            email: string;
-            role: string;
-            business_name?: string;
-            business_logo?: string | null;
-        } | null;
-    };
-}
-
-interface Props {
-    businessName?: string;
-    businessLogo?: string | null;
-}
-
-export default function VendorSidebar({ businessName, businessLogo }: Props) {
-    const { auth } = usePage<PageProps>().props;
-    const user = auth?.user;
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-    const [drawerOpen, setDrawerOpen] = useState(false);
-
-    const slug = user?.slug || '';
-    const name = businessName || user?.business_name || user?.name || '';
-    const logo = businessLogo !== undefined ? businessLogo : (user?.business_logo ?? null);
-    const email = user?.email || '';
-    const storeHref = slug ? `/vendors/${slug}` : '/';
-
-    const items: SidebarItem[] = [
-        {
-            label: 'Dashboard',
-            href: '/vendor',
-            exact: true,
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'Store',
-            href: storeHref,
-            exact: true,
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'My Products',
-            href: '/vendor/products',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-            ),
-        },
-        {
-            label: 'Subscription',
-            href: '/vendor/subscription',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'Analytics',
-            href: '/vendor/analytics',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'Settings',
-            href: '/vendor/settings',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-            ),
-        },
-        {
-            label: 'My Profile',
-            href: '/profile',
-            icon: (
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            ),
-        },
-    ];
-
-    const isActive = (item: SidebarItem) => {
-        if (item.exact) return currentPath === item.href;
-        return currentPath === item.href || currentPath.startsWith(item.href + '/');
-    };
-
-    const handleSignOut = () => {
-        router.post('/logout');
-    };
-
-    const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+function SidebarContent({ items, currentPath, name, email, logo, onSignOut, onNavigate }: SidebarContentProps) {
+    return (
         <>
             {/* Top links */}
             <div className="px-5 pt-4 pb-2">
@@ -127,9 +33,7 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
                     onClick={onNavigate}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white transition-colors"
                 >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ChevronLeftIcon className="w-3.5 h-3.5" />
                     Back to home
                 </Link>
             </div>
@@ -160,7 +64,7 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
             {/* Nav Items */}
             <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
                 {items.map((item) => {
-                    const active = isActive(item);
+                    const active = isActive(item, currentPath);
                     return (
                         <Link
                             key={item.label}
@@ -183,24 +87,52 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
             <div className="px-3 pb-5">
                 <div className="border-t border-white/10 pt-3">
                     <button
-                        onClick={() => { onNavigate?.(); handleSignOut(); }}
+                        onClick={() => { onNavigate?.(); onSignOut(); }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-colors"
                     >
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <SignOutIcon className={NAV_ICON} />
                         Sign Out
                     </button>
                 </div>
             </div>
         </>
     );
+}
+
+export default function VendorSidebar({ businessName, businessLogo }: VendorSidebarProps) {
+    const { auth } = usePage<SidebarPageProps>().props;
+    const user = auth?.user;
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const slug = user?.slug || '';
+    const name = businessName || user?.business_name || user?.name || '';
+    const logo = businessLogo !== undefined ? businessLogo : (user?.business_logo ?? null);
+    const email = user?.email || '';
+    const storeHref = slug ? `/vendors/${slug}` : '/';
+
+    const items: SidebarItem[] = [
+        { label: 'Dashboard', href: '/vendor', exact: true, icon: <GridIcon className={NAV_ICON} /> },
+        { label: 'Store', href: storeHref, exact: true, icon: <BagIcon className={NAV_ICON} /> },
+        { label: 'My Products', href: '/vendor/products', icon: <CubeIcon className={NAV_ICON} /> },
+        { label: 'Subscription', href: '/vendor/subscription', icon: <CardIcon className={NAV_ICON} /> },
+        { label: 'Analytics', href: '/vendor/analytics', icon: <BarsIcon className={NAV_ICON} /> },
+        { label: 'Leaderboard', href: '/vendor/referral/leaderboard', icon: <TrophyIcon className={NAV_ICON} /> },
+        { label: 'Settings', href: '/vendor/settings', icon: <CogIcon className={NAV_ICON} /> },
+        { label: 'My Profile', href: '/profile', icon: <UserIcon className={NAV_ICON} /> },
+    ];
+
+    const handleSignOut = () => {
+        router.post('/logout');
+    };
+
+    const content = { items, currentPath, name, email, logo, onSignOut: handleSignOut };
 
     return (
         <>
         {/* Desktop sidebar */}
         <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] bg-brand-ink font-display flex-col z-40">
-            <SidebarContent />
+            <SidebarContent {...content} />
         </aside>
 
         {/* Mobile — hamburger button */}
@@ -209,9 +141,7 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
             className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 flex items-center justify-center bg-brand-ink text-white border border-white/10 rounded-xl shadow-sm"
             aria-label="Open menu"
         >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <MenuIcon className="w-5 h-5 text-white" />
         </button>
 
         {/* Mobile — backdrop */}
@@ -234,12 +164,10 @@ export default function VendorSidebar({ businessName, businessLogo }: Props) {
                 className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label="Close menu"
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <CloseIcon className="w-5 h-5" />
             </button>
 
-            <SidebarContent onNavigate={() => setDrawerOpen(false)} />
+            <SidebarContent {...content} onNavigate={() => setDrawerOpen(false)} />
         </aside>
         </>
     );

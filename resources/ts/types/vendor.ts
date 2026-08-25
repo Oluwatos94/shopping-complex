@@ -1,3 +1,4 @@
+import { Paginated } from './product';
 import { Vendor } from './user';
 
 // ---------------------------------------------------------------------------
@@ -184,4 +185,100 @@ export interface VendorCategory {
     slug: string;
     icon?: string;
     vendors_count: number;
+}
+
+export interface ReferredUser {
+    name: string;
+    joined_at: string;
+    products_count: number;
+}
+export interface Referral {
+    code: string | null;
+    link: string | null;
+    count: number;
+    referred_count: number;
+    min_products: number;
+    recent: ReferredUser[];
+}
+
+export interface LeaderboardEntry {
+    rank: number;
+    name: string;
+    referral_count: number;
+    is_you: boolean;
+}
+
+export interface ReferralLeaderboardProps {
+    total_participants: number;
+    top: LeaderboardEntry[];
+    my_rank: number | null;
+    my_referral_count: number;
+}
+
+// ---------------------------------------------------------------------------
+// Vendor sidebar
+// ---------------------------------------------------------------------------
+
+/** One nav entry in the vendor sidebar. `exact` opts out of prefix matching. */
+export interface SidebarItem {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+    exact?: boolean;
+}
+
+/** Inertia shared props the sidebar reads when the page passes no overrides. */
+export interface SidebarPageProps {
+    [key: string]: unknown;
+    auth?: {
+        user?: {
+            id: number;
+            slug?: string;
+            name: string;
+            email: string;
+            role: string;
+            business_name?: string;
+            business_logo?: string | null;
+        } | null;
+    };
+}
+
+export interface VendorSidebarProps {
+    businessName?: string;
+    businessLogo?: string | null;
+}
+
+export interface SidebarContentProps {
+    items: SidebarItem[];
+    currentPath: string;
+    name: string;
+    email: string;
+    logo: string | null;
+    onSignOut: () => void;
+    onNavigate?: () => void;
+}
+
+export interface CampaignParticipant {
+    user_id: number;
+    name: string;
+    account_name: string;
+    email: string;
+    referral_count: number;
+    referred_count: number;
+    rank: number;
+    joined_at: string | null;
+}
+
+export interface CampaignParticipantDetail extends VendorApplication {
+    referral_count: number;
+    referred_count: number;
+    min_products: number;
+    rank: number | null;
+    referrals: ReferredUser[];
+}
+
+export interface ReferralParticipantsProps {
+    total_participants: number;
+    participants: Paginated<CampaignParticipant>;
+    search: string;
 }

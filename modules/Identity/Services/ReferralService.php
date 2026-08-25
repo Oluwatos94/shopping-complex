@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Identity\Services;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Session;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\ReferralRepository;
 use RuntimeException;
+use stdClass;
 
 final readonly class ReferralService
 {
@@ -19,6 +23,8 @@ final readonly class ReferralService
 
     public const RECENT_LIMIT = 10;
 
+    public const LEADERBOARD_LIMIT = 10;
+
     private const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
     private const MAX_ATTEMPTS = 10;
@@ -27,10 +33,6 @@ final readonly class ReferralService
         private ReferralRepository $referralRepository,
     ) {}
 
-    /**
-     * Get the user's referral code, minting and persisting one on first access.
-     * Idempotent: repeated calls always return the same code.
-     */
     public function codeFor(User $user): string
     {
         if ($user->referral_code !== null) {
@@ -83,16 +85,28 @@ final readonly class ReferralService
         return true;
     }
 
+    /**
+     * Counted referrals, and how many joined in total. The gap between them is
+     * the vendor's to close — those businesses signed up but have not listed.
+     *
+     * @return array{qualified: int, referred: int}
+     */
+    public function referralTallyFor(User $vendor): array
+    {
+        return $this->referralRepository->referralTally($vendor->id);
+    }
+
     public function referralCountFor(User $vendor): int
     {
-        return $this->referralRepository->countReferrals($vendor->id);
+        return $this->referralTallyFor($vendor)['qualified'];
     }
 
     /**
-     * A breakdown for the vendor's own dashboard. Deliberately name and join
-     * date only — a referrer has no claim to the email they referred.
+     * A breakdown of who joined. Name, join date and listing count only — the
+     * listing count is already public on the vendor's profile, whereas the
+     * email is not, and a referrer has no claim to it.
      *
-     * @return list<array{name: string, joined_at: string}>
+     * @return list<array{name: string, joined_at: string, products_count: int}>
      */
     public function recentReferralsFor(User $vendor, int $limit = self::RECENT_LIMIT): array
     {
@@ -101,8 +115,97 @@ final readonly class ReferralService
             ->map(fn (User $referral): array => [
                 'name' => $referral->name,
                 'joined_at' => $referral->created_at->toDateString(),
+                'products_count' => (int) $referral->products_count,
             ])
             ->all();
+    }
+
+    public function totalParticipants(): int
+    {
+        return $this->referralRepository->countParticipants();
+    }
+
+    /**
+     * @return list<array{rank: int, name: string, referral_count: int, is_you: bool}>
+     */
+    public function topReferrers(int $limit = self::LEADERBOARD_LIMIT, ?User $viewer = null): array
+    {
+        return $this->referralRepository
+            ->topStandings($limit)
+            ->map(fn (User $standing, int $position): array => [
+                'rank' => $position + 1,
+                'name' => $standing->business_name ?? $standing->name,
+                'referral_count' => (int) $standing->qualified_referrals_count,
+                'is_you' => $viewer !== null && $standing->id === $viewer->id,
+            ])
+            ->all();
+    }
+
+    public function rankFor(User $vendor): ?int
+    {
+        return $this->standingFor($vendor)['rank'] ?? null;
+    }
+
+    /**
+     * The vendor's own row on the campaign board, or null if they never enrolled.
+     * Rank and both counts come from the one query, so they cannot disagree.
+     *
+     * @return array{rank: int, referral_count: int, referred_count: int}|null
+     */
+    public function standingFor(User $vendor): ?array
+    {
+        $standing = $this->referralRepository->standingFor($vendor->id);
+
+        return $standing === null ? null : [
+            'rank' => (int) $standing->campaign_rank,
+            'referral_count' => (int) $standing->qualified_referrals_count,
+            'referred_count' => (int) $standing->referred_vendors_count,
+        ];
+    }
+
+    public function participants(?string $search, int $perPage): LengthAwarePaginator
+    {
+        $participants = $this->referralRepository->paginateParticipants($search, $perPage);
+
+        return new LengthAwarePaginator(
+            $participants->getCollection()->map($this->toParticipantShape(...))->all(),
+            $participants->total(),
+            $participants->perPage(),
+            $participants->currentPage(),
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
+    }
+
+    private function toParticipantShape(stdClass $participant): array
+    {
+        return [
+            'user_id' => (int) $participant->id,
+            'name' => (string) ($participant->business_name ?? $participant->name),
+            'account_name' => (string) $participant->name,
+            'email' => (string) $participant->email,
+            'referral_count' => (int) $participant->qualified_referrals_count,
+            'referred_count' => (int) $participant->referred_vendors_count,
+            'rank' => (int) $participant->campaign_rank,
+            'joined_at' => $participant->created_at === null
+                ? null
+                : Carbon::parse($participant->created_at)->toISOString(),
+        ];
+    }
+
+    /**
+     * @return array{total_participants: int, top: list<array{rank: int, name: string, referral_count: int, is_you: bool}>, my_rank: int|null, my_referral_count: int}
+     */
+    public function leaderboardFor(User $vendor, int $limit = self::LEADERBOARD_LIMIT): array
+    {
+        $top = $this->topReferrers($limit, $vendor);
+        $mine = Arr::first($top, fn (array $entry): bool => $entry['is_you']) ?? $this->standingFor($vendor);
+
+        return [
+            'total_participants' => $this->totalParticipants(),
+            'top' => $top,
+            'my_rank' => $mine['rank'] ?? null,
+            'my_referral_count' => $mine['referral_count'] ?? 0,
+        ];
     }
 
     /**
@@ -134,11 +237,6 @@ final readonly class ReferralService
         return preg_match('/^[A-Z0-9]{4,32}$/', $code) === 1 ? $code : null;
     }
 
-    /**
-     * Persist a fresh unique code for a user that holds none. The conditional
-     * write means a racing caller loses the update and re-reads the winner's
-     * code instead of overwriting it.
-     */
     private function mintCode(int $userId): string
     {
         for ($attempt = 0; $attempt < self::MAX_ATTEMPTS; $attempt++) {

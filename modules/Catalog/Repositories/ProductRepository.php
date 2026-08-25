@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
+use ModulesShoppingComplex\Shared\Support\LikeTerm;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -52,7 +53,7 @@ class ProductRepository extends BasePageRepository
             ->allowedFilters([
                 AllowedFilter::exact('category_id'),
                 AllowedFilter::callback('name', function ($query, $value) {
-                    $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $value);
+                    $escaped = LikeTerm::escape((string) $value);
                     $query->where(function ($q) use ($escaped) {
                         $q->where('name', 'like', "%{$escaped}%")
                             ->orWhereRaw(
@@ -164,7 +165,7 @@ class ProductRepository extends BasePageRepository
     public function search(string $searchTerm, array $relations = [], int $perPage = 20): LengthAwarePaginator
     {
         $searchTerm = trim($searchTerm);
-        $escapedTerm = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
+        $escapedTerm = LikeTerm::escape($searchTerm);
 
         if (empty($searchTerm)) {
             return new LengthAwarePaginator([], 0, $perPage);
