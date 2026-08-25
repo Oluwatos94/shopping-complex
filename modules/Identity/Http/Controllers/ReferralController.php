@@ -23,11 +23,14 @@ class ReferralController extends Controller
         $user = $this->vendor();
 
         $code = $this->referralService->codeFor($user);
+        $tally = $this->referralService->referralTallyFor($user);
 
         return response()->json([
             'code' => $code,
             'share_url' => $this->referralService->shareUrl($code),
-            'count' => $this->referralService->referralCountFor($user),
+            'count' => $tally['qualified'],
+            'referred_count' => $tally['referred'],
+            'min_products' => User::minReferralProducts(),
             'recent' => $this->referralService->recentReferralsFor($user),
         ]);
     }

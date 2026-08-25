@@ -52,6 +52,7 @@ class VendorDashboardController extends Controller
         $activeProductsCount = $user->products()->where('is_active', true)->count();
 
         $referralCode = $this->referralService->codeFor($user);
+        $referralTally = $this->referralService->referralTallyFor($user);
 
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
@@ -62,7 +63,9 @@ class VendorDashboardController extends Controller
             'referral' => [
                 'code' => $referralCode,
                 'link' => $this->referralService->shareUrl($referralCode),
-                'count' => $this->referralService->referralCountFor($user),
+                'count' => $referralTally['qualified'],
+                'referred_count' => $referralTally['referred'],
+                'min_products' => User::minReferralProducts(),
                 'recent' => $this->referralService->recentReferralsFor($user),
             ],
             'subscription' => [

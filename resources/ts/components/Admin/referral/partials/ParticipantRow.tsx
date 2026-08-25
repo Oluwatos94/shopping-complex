@@ -54,8 +54,8 @@ export default function ParticipantRow({
                 <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight">
                     {participant.referral_count}
                 </p>
-                <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                    {participant.referral_count === 1 ? 'referral' : 'referrals'}
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 tabular-nums">
+                    of {participant.referred_count} invited
                 </p>
             </div>
 

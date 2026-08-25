@@ -196,6 +196,8 @@ export interface Referral {
     code: string | null;
     link: string | null;
     count: number;
+    referred_count: number;
+    min_products: number;
     recent: ReferredUser[];
 }
 
@@ -262,12 +264,15 @@ export interface CampaignParticipant {
     account_name: string;
     email: string;
     referral_count: number;
+    referred_count: number;
     rank: number;
     joined_at: string | null;
 }
 
 export interface CampaignParticipantDetail extends VendorApplication {
     referral_count: number;
+    referred_count: number;
+    min_products: number;
     rank: number | null;
     referrals: ReferredUser[];
 }

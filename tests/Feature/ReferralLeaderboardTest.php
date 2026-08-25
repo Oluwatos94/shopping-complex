@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Services\ReferralService;
 use Tests\TestCase;
@@ -18,11 +21,18 @@ class ReferralLeaderboardTest extends TestCase
 
     private ReferralService $referralService;
 
+    private ?Category $category = null;
+
+    private int $listingNumber = 0;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->referralService = app(ReferralService::class);
+
+        // Kept at one so fixtures stay cheap; the real bar has its own tests.
+        config(['referral.min_products' => 1]);
 
         Model::preventLazyLoading();
     }
@@ -127,10 +137,62 @@ class ReferralLeaderboardTest extends TestCase
         $slow = $this->vendor(referrals: 0, name: 'Slow');
         $fast = $this->vendor(referrals: 0, name: 'Fast');
 
-        $this->referredUsers($slow, 2, ['created_at' => now()->subDays(2)]);
-        $this->referredUsers($fast, 2, ['created_at' => now()->subDays(9)]);
+        $this->referredUsers($slow, 2, listedAt: now()->subDays(2));
+        $this->referredUsers($fast, 2, listedAt: now()->subDays(9));
 
         $this->assertSame(['Fast', 'Slow'], array_column($this->referralService->topReferrers(), 'name'));
+    }
+
+    public function test_reaching_the_count_is_dated_by_the_listing_not_the_signup(): void
+    {
+        config(['referral.min_products' => 5]);
+
+        $early = $this->vendor(referrals: 0, name: 'Listed Early');
+        $late = $this->vendor(referrals: 0, name: 'Listed Late');
+
+        // The straggler's referral signed up first but only stocked its shelves
+        // yesterday; the other signed up last and listed months ago.
+        $this->referredUsers($late, 1, ['created_at' => now()->subYear()], products: 5, listedAt: now()->subDay());
+        $this->referredUsers($early, 1, ['created_at' => now()->subWeek()], products: 5, listedAt: now()->subMonths(3));
+
+        $this->assertSame(['Listed Early', 'Listed Late'], array_column($this->referralService->topReferrers(), 'name'));
+    }
+
+    public function test_reaching_the_count_is_dated_by_the_last_referral_to_qualify(): void
+    {
+        $finishedFirst = $this->vendor(referrals: 0, name: 'Finished First');
+        $finishedLast = $this->vendor(referrals: 0, name: 'Finished Last');
+
+        // Both end on two, but one closed out its pair a month earlier.
+        $this->referredUsers($finishedFirst, 1, listedAt: now()->subYear());
+        $this->referredUsers($finishedFirst, 1, listedAt: now()->subMonths(2));
+
+        $this->referredUsers($finishedLast, 1, listedAt: now()->subYear());
+        $this->referredUsers($finishedLast, 1, listedAt: now()->subMonth());
+
+        $this->assertSame(
+            ['Finished First', 'Finished Last'],
+            array_column($this->referralService->topReferrers(), 'name')
+        );
+    }
+
+    public function test_unqualified_referrals_never_influence_the_tiebreak(): void
+    {
+        config(['referral.min_products' => 5]);
+
+        $leader = $this->vendor(referrals: 0, name: 'Leader');
+        $rival = $this->vendor(referrals: 0, name: 'Rival');
+
+        $this->referredUsers($leader, 1, products: 5, listedAt: now()->subMonths(2));
+        // A newer, still-unqualified referral must not push the leader's date forward.
+        $this->referredUsers($leader, 1, products: 4, listedAt: now()->subMinute());
+
+        $this->referredUsers($rival, 1, products: 5, listedAt: now()->subMonth());
+
+        $top = $this->referralService->topReferrers();
+
+        $this->assertSame(['Leader', 'Rival'], array_column($top, 'name'));
+        $this->assertSame([1, 1], array_column($top, 'referral_count'));
     }
 
     public function test_ordering_is_deterministic_when_even_the_timestamps_tie(): void
@@ -140,8 +202,8 @@ class ReferralLeaderboardTest extends TestCase
         $first = $this->vendor(referrals: 0, name: 'First');
         $second = $this->vendor(referrals: 0, name: 'Second');
 
-        $this->referredUsers($first, 1, ['created_at' => $moment]);
-        $this->referredUsers($second, 1, ['created_at' => $moment]);
+        $this->referredUsers($first, 1, listedAt: $moment);
+        $this->referredUsers($second, 1, listedAt: $moment);
 
         $this->assertLessThan($second->id, $first->id);
         $this->assertSame(['First', 'Second'], array_column($this->referralService->topReferrers(), 'name'));
@@ -329,7 +391,7 @@ class ReferralLeaderboardTest extends TestCase
 
         $this->manyVendors(40, from: 11);
 
-        $this->assertSame(51, User::query()->where('role', 'vendor')->count());
+        $this->assertSame(51, $this->referralService->totalParticipants());
         $this->assertSame($small, $this->queriesForBoard($caller));
     }
 
@@ -399,12 +461,40 @@ class ReferralLeaderboardTest extends TestCase
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function referredUsers(User $referrer, int $count, array $attributes = []): void
-    {
+    private function referredUsers(
+        User $referrer,
+        int $count,
+        array $attributes = [],
+        int $products = 1,
+        ?CarbonInterface $listedAt = null,
+    ): void {
         User::factory()->count($count)->create(array_merge([
-            'role' => 'customer',
+            'role' => 'vendor',
             'referred_by' => $referrer->id,
             'email_verified_at' => now(),
-        ], $attributes));
+        ], $attributes))->each(fn (User $vendor) => $this->listProducts($vendor, $products, $listedAt));
+    }
+
+    private function listProducts(User $vendor, int $count, ?CarbonInterface $listedAt = null): void
+    {
+        if ($count < 1) {
+            return;
+        }
+
+        $this->category ??= Category::factory()->create();
+
+        // products.slug is unique and the factory derives it from random words,
+        // which collides once fixtures run into the hundreds.
+        Product::factory()
+            ->count($count)
+            ->sequence(fn () => [
+                'name' => 'Listing '.++$this->listingNumber,
+                'slug' => 'listing-'.$this->listingNumber,
+            ])
+            ->create(array_filter([
+                'vendor_id' => $vendor->id,
+                'category_id' => $this->category->id,
+                'created_at' => $listedAt,
+            ], fn ($value) => $value !== null));
     }
 }

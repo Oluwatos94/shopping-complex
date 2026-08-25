@@ -162,10 +162,17 @@ final readonly class AdminAnalyticsService
 
         $standing = $this->referralService->standingFor($user);
 
+        if ($standing === null) {
+            $tally = $this->referralService->referralTallyFor($user);
+            $standing = ['rank' => null, 'referral_count' => $tally['qualified'], 'referred_count' => $tally['referred']];
+        }
+
         return [
             ...$this->toApplicationShape($user),
-            'referral_count' => $standing['referral_count'] ?? 0,
-            'rank' => $standing['rank'] ?? null,
+            'referral_count' => $standing['referral_count'],
+            'referred_count' => $standing['referred_count'],
+            'min_products' => User::minReferralProducts(),
+            'rank' => $standing['rank'],
             'referrals' => $this->referralService->recentReferralsFor($user, self::PARTICIPANT_REFERRALS_LIMIT),
         ];
     }

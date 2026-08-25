@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -25,12 +26,19 @@ class AdminReferralParticipantsTest extends TestCase
 
     private User $admin;
 
+    private ?Category $category = null;
+
+    private int $listingNumber = 0;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->referralService = app(ReferralService::class);
         $this->admin = User::factory()->create(['role' => 'admin']);
+
+        // Kept at one so fixtures stay cheap; the real bar has its own tests.
+        config(['referral.min_products' => 1]);
 
         Model::preventLazyLoading();
     }
@@ -111,6 +119,31 @@ class AdminReferralParticipantsTest extends TestCase
             ->assertJsonPath('total_participants', 1)
             ->assertJsonCount(1, 'participants.data')
             ->assertJsonPath('participants.data.0.name', 'Participating');
+    }
+
+    public function test_the_roster_excludes_a_vendor_whose_referrals_have_not_listed_enough(): void
+    {
+        config(['referral.min_products' => 5]);
+
+        $counted = $this->vendor(referrals: 0, name: 'Counted');
+        $this->referredUsers($counted, 1, products: 5);
+
+        $waiting = $this->vendor(referrals: 0, name: 'Still Waiting');
+        $this->referredUsers($waiting, 3, products: 4);
+
+        $this->actingAs($this->admin)->getJson('/admin/referral/participants')
+            ->assertOk()
+            ->assertJsonPath('total_participants', 1)
+            ->assertJsonCount(1, 'participants.data')
+            ->assertJsonPath('participants.data.0.name', 'Counted')
+            ->assertJsonPath('participants.data.0.referral_count', 1);
+
+        $this->actingAs($this->admin)->getJson("/admin/referral/participants/{$waiting->id}")
+            ->assertOk()
+            ->assertJsonPath('referral_count', 0)
+            ->assertJsonPath('referred_count', 3)
+            ->assertJsonPath('min_products', 5)
+            ->assertJsonCount(3, 'referrals');
     }
 
     public function test_the_roster_prefers_the_business_name_and_keeps_the_account_name(): void
@@ -389,12 +422,40 @@ class AdminReferralParticipantsTest extends TestCase
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function referredUsers(User $referrer, int $count, array $attributes = []): void
-    {
+    private function referredUsers(
+        User $referrer,
+        int $count,
+        array $attributes = [],
+        int $products = 1,
+        ?CarbonInterface $listedAt = null,
+    ): void {
         User::factory()->count($count)->create(array_merge([
-            'role' => 'customer',
+            'role' => 'vendor',
             'referred_by' => $referrer->id,
             'email_verified_at' => now(),
-        ], $attributes));
+        ], $attributes))->each(fn (User $vendor) => $this->listProducts($vendor, $products, $listedAt));
+    }
+
+    private function listProducts(User $vendor, int $count, ?CarbonInterface $listedAt = null): void
+    {
+        if ($count < 1) {
+            return;
+        }
+
+        $this->category ??= Category::factory()->create();
+
+        // products.slug is unique and the factory derives it from random words,
+        // which collides once fixtures run into the hundreds.
+        Product::factory()
+            ->count($count)
+            ->sequence(fn () => [
+                'name' => 'Listing '.++$this->listingNumber,
+                'slug' => 'listing-'.$this->listingNumber,
+            ])
+            ->create(array_filter([
+                'vendor_id' => $vendor->id,
+                'category_id' => $this->category->id,
+                'created_at' => $listedAt,
+            ], fn ($value) => $value !== null));
     }
 }

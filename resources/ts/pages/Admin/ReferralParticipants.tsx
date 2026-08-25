@@ -183,7 +183,7 @@ export default function ReferralParticipants({
                 <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
                     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/60">
                         <h3 className="text-xs uppercase tracking-widest font-bold text-gray-500">
-                            Ranked by verified referrals
+                            Ranked by counted referrals
                         </h3>
                         <span className="text-[10px] uppercase tracking-widest text-gray-400">
                             Click a row for details
