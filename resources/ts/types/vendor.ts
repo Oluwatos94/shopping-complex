@@ -189,6 +189,7 @@ export interface VendorCategory {
 
 export interface ReferredUser {
     name: string;
+    email: string;
     joined_at: string;
     products_count: number;
 }

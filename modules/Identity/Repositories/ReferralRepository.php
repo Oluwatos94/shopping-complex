@@ -116,7 +116,7 @@ class ReferralRepository
         $this->onlyReferredVendors($referred, 'users');
 
         return $referred
-            ->select(['id', 'name', 'created_at'])
+            ->select(['id', 'name', 'business_name', 'email', 'created_at'])
             ->withCount('products')
             ->latest('created_at')
             ->limit($limit)

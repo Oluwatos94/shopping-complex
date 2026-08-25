@@ -280,7 +280,7 @@ class AdminReferralParticipantsTest extends TestCase
             ->assertJsonPath('referral_count', 3)
             ->assertJsonPath('rank', 2)
             ->assertJsonCount(3, 'referrals')
-            ->assertJsonStructure(['referrals' => [['name', 'joined_at', 'products_count']]]);
+            ->assertJsonStructure(['referrals' => [['name', 'email', 'joined_at', 'products_count']]]);
     }
 
     public function test_the_drill_in_reports_how_much_each_referred_vendor_has_listed(): void
@@ -291,6 +291,8 @@ class AdminReferralParticipantsTest extends TestCase
         $stocked = User::factory()->create([
             'role' => 'vendor',
             'name' => 'Stocked Vendor',
+            'business_name' => 'Stocked Stores',
+            'email' => 'stocked@gmail.com',
             'referred_by' => $participant->id,
             'email_verified_at' => now(),
             'created_at' => now()->subDay(),
@@ -300,6 +302,8 @@ class AdminReferralParticipantsTest extends TestCase
         User::factory()->create([
             'role' => 'vendor',
             'name' => 'Empty Vendor',
+            'business_name' => 'Empty Stores',
+            'email' => 'empty@gmail.com',
             'referred_by' => $participant->id,
             'email_verified_at' => now(),
             'created_at' => now()->subDays(2),
@@ -310,7 +314,8 @@ class AdminReferralParticipantsTest extends TestCase
             ->assertOk()
             ->json('referrals');
 
-        $this->assertSame(['Stocked Vendor', 'Empty Vendor'], array_column($referrals, 'name'));
+        $this->assertSame(['Stocked Stores', 'Empty Stores'], array_column($referrals, 'name'));
+        $this->assertSame(['stocked@gmail.com', 'empty@gmail.com'], array_column($referrals, 'email'));
         $this->assertSame([5, 0], array_column($referrals, 'products_count'));
     }
 
@@ -342,16 +347,6 @@ class AdminReferralParticipantsTest extends TestCase
 
         $this->actingAs($this->admin)->getJson("/admin/referral/participants/{$customer->id}")
             ->assertNotFound();
-    }
-
-    public function test_the_drill_in_omits_the_referred_users_contact_details(): void
-    {
-        $vendor = $this->vendor(referrals: 0);
-        $this->referredUsers($vendor, 2);
-
-        $response = $this->actingAs($this->admin)->getJson("/admin/referral/participants/{$vendor->id}")->assertOk();
-
-        $this->assertStringNotContainsString('@', json_encode($response->json('referrals'), JSON_THROW_ON_ERROR));
     }
 
     // ==================== Cost ====================

@@ -101,19 +101,13 @@ final readonly class ReferralService
         return $this->referralTallyFor($vendor)['qualified'];
     }
 
-    /**
-     * A breakdown of who joined. Name, join date and listing count only — the
-     * listing count is already public on the vendor's profile, whereas the
-     * email is not, and a referrer has no claim to it.
-     *
-     * @return list<array{name: string, joined_at: string, products_count: int}>
-     */
     public function recentReferralsFor(User $vendor, int $limit = self::RECENT_LIMIT): array
     {
         return $this->referralRepository
             ->recentReferrals($vendor->id, $limit)
             ->map(fn (User $referral): array => [
-                'name' => $referral->name,
+                'name' => $referral->business_name ?? $referral->name,
+                'email' => $referral->email,
                 'joined_at' => $referral->created_at->toDateString(),
                 'products_count' => (int) $referral->products_count,
             ])
