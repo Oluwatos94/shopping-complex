@@ -9,6 +9,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use ModulesShoppingComplex\Analytics\Services\AdminAnalyticsService;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
@@ -245,7 +247,38 @@ class AdminReferralParticipantsTest extends TestCase
             ->assertJsonPath('referral_count', 3)
             ->assertJsonPath('rank', 2)
             ->assertJsonCount(3, 'referrals')
-            ->assertJsonStructure(['referrals' => [['name', 'joined_at']]]);
+            ->assertJsonStructure(['referrals' => [['name', 'joined_at', 'products_count']]]);
+    }
+
+    public function test_the_drill_in_reports_how_much_each_referred_vendor_has_listed(): void
+    {
+        $participant = $this->vendor(referrals: 0);
+        $category = Category::factory()->create();
+
+        $stocked = User::factory()->create([
+            'role' => 'vendor',
+            'name' => 'Stocked Vendor',
+            'referred_by' => $participant->id,
+            'email_verified_at' => now(),
+            'created_at' => now()->subDay(),
+        ]);
+        Product::factory()->count(5)->create(['vendor_id' => $stocked->id, 'category_id' => $category->id]);
+
+        User::factory()->create([
+            'role' => 'vendor',
+            'name' => 'Empty Vendor',
+            'referred_by' => $participant->id,
+            'email_verified_at' => now(),
+            'created_at' => now()->subDays(2),
+        ]);
+
+        $referrals = $this->actingAs($this->admin)
+            ->getJson("/admin/referral/participants/{$participant->id}")
+            ->assertOk()
+            ->json('referrals');
+
+        $this->assertSame(['Stocked Vendor', 'Empty Vendor'], array_column($referrals, 'name'));
+        $this->assertSame([5, 0], array_column($referrals, 'products_count'));
     }
 
     public function test_a_participants_detail_works_without_an_onboarding_record(): void

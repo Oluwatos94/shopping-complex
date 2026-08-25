@@ -78,6 +78,10 @@ export const SignOutIcon = (props: IconProps) => (
     <StrokeIcon {...props} d={['M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1']} />
 );
 
+export const SearchIcon = ({ strokeWidth = 2, ...props }: IconProps) => (
+    <StrokeIcon {...props} strokeWidth={strokeWidth} d={['M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z']} />
+);
+
 export const AlertIcon = ({ strokeWidth = 2, ...props }: IconProps) => (
     <StrokeIcon {...props} strokeWidth={strokeWidth} d={['M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z']} />
 );

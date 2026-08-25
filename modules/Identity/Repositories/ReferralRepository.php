@@ -58,6 +58,7 @@ class ReferralRepository
     {
         return $this->registeredReferrals($referrerId)
             ->select(['id', 'name', 'created_at'])
+            ->withCount('products')
             ->latest('created_at')
             ->limit($limit)
             ->get();

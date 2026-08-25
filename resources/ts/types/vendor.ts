@@ -1,3 +1,4 @@
+import { Paginated } from './product';
 import { Vendor } from './user';
 
 // ---------------------------------------------------------------------------
@@ -189,6 +190,7 @@ export interface VendorCategory {
 export interface ReferredUser {
     name: string;
     joined_at: string;
+    products_count: number;
 }
 export interface Referral {
     code: string | null;
@@ -252,4 +254,26 @@ export interface SidebarContentProps {
     logo: string | null;
     onSignOut: () => void;
     onNavigate?: () => void;
+}
+
+export interface CampaignParticipant {
+    user_id: number;
+    name: string;
+    account_name: string;
+    email: string;
+    referral_count: number;
+    rank: number;
+    joined_at: string | null;
+}
+
+export interface CampaignParticipantDetail extends VendorApplication {
+    referral_count: number;
+    rank: number | null;
+    referrals: ReferredUser[];
+}
+
+export interface ReferralParticipantsProps {
+    total_participants: number;
+    participants: Paginated<CampaignParticipant>;
+    search: string;
 }

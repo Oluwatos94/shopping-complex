@@ -201,7 +201,20 @@ export default function ReferralCard({ referral, businessName }: Props) {
                                         {recent.map((referred, index) => (
                                             <li key={index} className="flex items-center justify-between gap-3 bg-brand-surface px-4 py-2.5">
                                                 <span className="text-sm text-gray-900 truncate">{referred.name}</span>
-                                                <span className="text-xs text-gray-500 flex-shrink-0">{formatDateOnly(referred.joined_at)}</span>
+                                                <span className="flex items-center gap-3 flex-shrink-0">
+                                                    <span
+                                                        className={`text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full ${
+                                                            referred.products_count > 0
+                                                                ? 'bg-primary-olive/10 text-primary-olive'
+                                                                : 'bg-gray-100 text-gray-400'
+                                                        }`}
+                                                    >
+                                                        {referred.products_count === 0
+                                                            ? 'Nothing listed'
+                                                            : `${referred.products_count} listed`}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">{formatDateOnly(referred.joined_at)}</span>
+                                                </span>
                                             </li>
                                         ))}
                                     </ul>

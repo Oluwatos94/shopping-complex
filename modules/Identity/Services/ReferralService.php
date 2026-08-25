@@ -91,10 +91,11 @@ final readonly class ReferralService
     }
 
     /**
-     * A breakdown for the vendor's own dashboard. Deliberately name and join
-     * date only — a referrer has no claim to the email they referred.
+     * A breakdown of who joined. Name, join date and listing count only — the
+     * listing count is already public on the vendor's profile, whereas the
+     * email is not, and a referrer has no claim to it.
      *
-     * @return list<array{name: string, joined_at: string}>
+     * @return list<array{name: string, joined_at: string, products_count: int}>
      */
     public function recentReferralsFor(User $vendor, int $limit = self::RECENT_LIMIT): array
     {
@@ -103,6 +104,7 @@ final readonly class ReferralService
             ->map(fn (User $referral): array => [
                 'name' => $referral->name,
                 'joined_at' => $referral->created_at->toDateString(),
+                'products_count' => (int) $referral->products_count,
             ])
             ->all();
     }
@@ -221,11 +223,6 @@ final readonly class ReferralService
         return preg_match('/^[A-Z0-9]{4,32}$/', $code) === 1 ? $code : null;
     }
 
-    /**
-     * Persist a fresh unique code for a user that holds none. The conditional
-     * write means a racing caller loses the update and re-reads the winner's
-     * code instead of overwriting it.
-     */
     private function mintCode(int $userId): string
     {
         for ($attempt = 0; $attempt < self::MAX_ATTEMPTS; $attempt++) {

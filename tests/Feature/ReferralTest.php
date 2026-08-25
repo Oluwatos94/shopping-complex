@@ -7,6 +7,8 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
+use ModulesShoppingComplex\Catalog\Models\Category;
+use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Services\ReferralService;
 use Tests\TestCase;
@@ -322,7 +324,35 @@ class ReferralTest extends TestCase
 
         $this->assertCount(ReferralService::RECENT_LIMIT, $recent);
         $this->assertSame('Joiner 12', $recent[0]['name']);
-        $this->assertSame(['name', 'joined_at'], array_keys($recent[0]));
+        $this->assertSame(['name', 'joined_at', 'products_count'], array_keys($recent[0]));
+    }
+
+    public function test_recent_referrals_report_how_much_each_joiner_has_listed(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $category = Category::factory()->create();
+
+        $listed = User::factory()->create([
+            'role' => 'vendor',
+            'name' => 'Listed Plenty',
+            'referred_by' => $vendor->id,
+            'email_verified_at' => now(),
+            'created_at' => now()->subDay(),
+        ]);
+        Product::factory()->count(6)->create(['vendor_id' => $listed->id, 'category_id' => $category->id]);
+
+        User::factory()->create([
+            'role' => 'vendor',
+            'name' => 'Listed Nothing',
+            'referred_by' => $vendor->id,
+            'email_verified_at' => now(),
+            'created_at' => now()->subDays(2),
+        ]);
+
+        $recent = $this->referralService->recentReferralsFor($vendor);
+
+        $this->assertSame(['Listed Plenty', 'Listed Nothing'], array_column($recent, 'name'));
+        $this->assertSame([6, 0], array_column($recent, 'products_count'));
     }
 
     public function test_recent_referrals_omit_unverified_accounts_and_contact_details(): void
@@ -371,7 +401,7 @@ class ReferralTest extends TestCase
             ->assertOk()
             ->assertJsonPath('count', 4)
             ->assertJsonCount(4, 'recent')
-            ->assertJsonStructure(['count', 'recent' => [['name', 'joined_at']]]);
+            ->assertJsonStructure(['count', 'recent' => [['name', 'joined_at', 'products_count']]]);
     }
 
     public function test_dashboard_exposes_the_count(): void
