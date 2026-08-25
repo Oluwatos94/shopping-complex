@@ -1,19 +1,15 @@
 import { CampaignParticipantDetail } from '@/types';
 import { formatDateOnly } from '@/utils/date';
 
-/** A scanning aid only — nothing on the server enforces it. */
-const LISTING_TARGET = 5;
-
-function listingStyle(count: number): string {
+function listingStyle(count: number, target: number): string {
+    if (count >= target) return 'bg-primary-olive/10 text-primary-olive border-primary-olive/20';
     if (count === 0) return 'bg-red-50 text-red-600 border-red-100';
-    if (count < LISTING_TARGET) return 'bg-amber-50 text-amber-700 border-amber-100';
 
-    return 'bg-primary-olive/10 text-primary-olive border-primary-olive/20';
+    return 'bg-amber-50 text-amber-700 border-amber-100';
 }
 
 export default function ParticipantStanding({ participant }: { participant: CampaignParticipantDetail }) {
-    const { referral_count, rank, referrals } = participant;
-    const meetingTarget = referrals.filter((r) => r.products_count >= LISTING_TARGET).length;
+    const { referral_count, referred_count, min_products, rank, referrals } = participant;
 
     return (
         <div className="space-y-3">
@@ -23,8 +19,9 @@ export default function ParticipantStanding({ participant }: { participant: Camp
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="p-5 bg-primary-olive/5 rounded-xl border border-primary-olive/10">
-                    <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Referrals</p>
+                    <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Counted</p>
                     <p className="text-3xl font-bold text-gray-900 tabular-nums">{referral_count}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 tabular-nums">of {referred_count} invited</p>
                 </div>
                 <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Rank</p>
@@ -35,7 +32,7 @@ export default function ParticipantStanding({ participant }: { participant: Camp
             </div>
 
             {referrals.length === 0 ? (
-                <p className="text-sm text-gray-300 italic">No verified referrals yet.</p>
+                <p className="text-sm text-gray-300 italic">Nobody has joined through this vendor yet.</p>
             ) : (
                 <>
                     <div className="flex items-baseline justify-between gap-3 pt-2">
@@ -43,7 +40,7 @@ export default function ParticipantStanding({ participant }: { participant: Camp
                             Vendors they brought in
                         </p>
                         <p className="text-[10px] text-gray-400 tabular-nums">
-                            {meetingTarget} of {referrals.length} listed {LISTING_TARGET}+
+                            Counts at {min_products}+ products
                         </p>
                     </div>
 
@@ -56,8 +53,12 @@ export default function ParticipantStanding({ participant }: { participant: Camp
                                 <span className="text-sm text-gray-800 truncate">{referred.name}</span>
                                 <span className="flex items-center gap-3 flex-shrink-0">
                                     <span
-                                        className={`text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full border ${listingStyle(referred.products_count)}`}
-                                        title={`${referred.products_count} product${referred.products_count === 1 ? '' : 's'} listed`}
+                                        className={`text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full border ${listingStyle(referred.products_count, min_products)}`}
+                                        title={
+                                            referred.products_count >= min_products
+                                                ? 'Counts towards the campaign'
+                                                : `Needs ${min_products - referred.products_count} more to count`
+                                        }
                                     >
                                         {referred.products_count} listed
                                     </span>
@@ -69,9 +70,9 @@ export default function ParticipantStanding({ participant }: { participant: Camp
                         ))}
                     </ul>
 
-                    {referral_count > referrals.length && (
+                    {referred_count > referrals.length && (
                         <p className="text-[10px] text-gray-400">
-                            Showing the {referrals.length} most recent of {referral_count}.
+                            Showing the {referrals.length} most recent of {referred_count}.
                         </p>
                     )}
                 </>

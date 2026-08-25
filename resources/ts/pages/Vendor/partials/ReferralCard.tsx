@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { CheckIcon, ChevronDownIcon, ClipboardIcon, LinkIcon, ShareIcon, UsersIcon, WhatsAppIcon } from '@/components/icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CheckIcon, ChevronDownIcon, LinkIcon, ShareIcon, UsersIcon, WhatsAppIcon } from '@/components/icons';
 import { Referral } from '@/types';
 import { copyText } from '@/utils/clipboard';
 import { formatDateOnly } from '@/utils/date';
@@ -10,19 +10,30 @@ interface Props {
     businessName: string;
 }
 
-type CopyTarget = 'code' | 'link';
-
 export default function ReferralCard({ referral, businessName }: Props) {
-    const [copied, setCopied] = useState<CopyTarget | null>(null);
-    const [copyFailed, setCopyFailed] = useState<CopyTarget | null>(null);
+    const [copied, setCopied] = useState(false);
+    const [copyFailed, setCopyFailed] = useState(false);
     const [canNativeShare, setCanNativeShare] = useState(false);
+    const [shareFailed, setShareFailed] = useState(false);
     const [showReferrals, setShowReferrals] = useState(false);
     const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Checked after mount so the markup stays identical on first paint.
+    const { code, link, count, referred_count, min_products, recent } = referral;
+    const shareMessage = `${businessName} is on jiidaa. Join through my invite link and get discovered on WhatsApp: ${link}`;
+    const sharePayload = useMemo(
+        () => ({ title: 'Join jiidaa', text: shareMessage, url: link ?? '' }),
+        [shareMessage, link]
+    );
+
     useEffect(() => {
-        setCanNativeShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
-    }, []);
+        setCanNativeShare(
+            typeof navigator !== 'undefined' &&
+            typeof navigator.share === 'function' &&
+            typeof navigator.canShare === 'function' &&
+            link !== null &&
+            navigator.canShare(sharePayload)
+        );
+    }, [link, sharePayload]);
 
     useEffect(() => {
         return () => {
@@ -30,37 +41,33 @@ export default function ReferralCard({ referral, businessName }: Props) {
         };
     }, []);
 
-    const { code, link, count, recent } = referral;
-    const joinedLabel = count === 1 ? 'business has' : 'businesses have';
-    const shareMessage = `${businessName} is on jiidaa. Join with my referral code ${code} and get discovered on WhatsApp: ${link}`;
-
-    const handleCopy = useCallback(async (target: CopyTarget, value: string | null) => {
+    const handleCopy = useCallback(async (value: string | null) => {
         if (!value) return;
 
         const ok = await copyText(value);
 
         if (resetRef.current) clearTimeout(resetRef.current);
-        setCopied(ok ? target : null);
-        setCopyFailed(ok ? null : target);
+        setCopied(ok);
+        setCopyFailed(!ok);
         resetRef.current = setTimeout(() => {
-            setCopied(null);
-            setCopyFailed(null);
+            setCopied(false);
+            setCopyFailed(false);
         }, 2000);
     }, []);
 
     const handleNativeShare = useCallback(async () => {
         if (!link) return;
 
+        setShareFailed(false);
+
         try {
-            await navigator.share({
-                title: 'Join jiidaa',
-                text: shareMessage,
-                url: link,
-            });
-        } catch {
-            // The user dismissed the share sheet — nothing to report.
+            await navigator.share(sharePayload);
+        } catch (error) {
+            if (!(error instanceof DOMException && error.name === 'AbortError')) {
+                setShareFailed(true);
+            }
         }
-    }, [link, shareMessage]);
+    }, [link, sharePayload]);
 
     return (
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
@@ -94,52 +101,24 @@ export default function ReferralCard({ referral, businessName }: Props) {
             ) : (
                 <div className="space-y-3">
 
-                    {/* Code */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-brand-surface border border-brand-line rounded-xl px-4 py-3">
-                        <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Your referral code</p>
-                            <p className="text-lg font-bold tracking-widest text-gray-900 break-all">{code}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => handleCopy('code', code)}
-                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors flex-shrink-0"
-                            aria-label="Copy referral code"
-                        >
-                            {copied === 'code' ? (
-                                <>
-                                    <CheckIcon className="w-4 h-4 text-primary-olive" />
-                                    Copied
-                                </>
-                            ) : copyFailed === 'code' ? (
-                                'Copy failed'
-                            ) : (
-                                <>
-                                    <ClipboardIcon className="w-4 h-4" />
-                                    Copy code
-                                </>
-                            )}
-                        </button>
-                    </div>
-
                     {/* Link */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-brand-surface border border-brand-line rounded-xl px-4 py-3">
                         <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Invite link</p>
+                            <p className="text-xs text-gray-500 mb-1">Your invite link</p>
                             <p className="text-sm text-gray-700 truncate" title={link}>{link}</p>
                         </div>
                         <button
                             type="button"
-                            onClick={() => handleCopy('link', link)}
+                            onClick={() => handleCopy(link)}
                             className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors flex-shrink-0"
                             aria-label="Copy invite link"
                         >
-                            {copied === 'link' ? (
+                            {copied ? (
                                 <>
                                     <CheckIcon className="w-4 h-4 text-primary-olive" />
                                     Copied
                                 </>
-                            ) : copyFailed === 'link' ? (
+                            ) : copyFailed ? (
                                 'Copy failed'
                             ) : (
                                 <>
@@ -169,17 +148,17 @@ export default function ReferralCard({ referral, businessName }: Props) {
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                             >
                                 <ShareIcon className="w-4 h-4" />
-                                Share via&hellip;
+                                {shareFailed ? 'Sharing unavailable' : 'Share via…'}
                             </button>
                         )}
                     </div>
 
                     {/* Who joined */}
                     <div className="pt-4 border-t border-brand-line">
-                        {count === 0 ? (
+                        {referred_count === 0 ? (
                             <div className="flex items-start gap-3">
                                 <UsersIcon className="w-5 h-5 text-gray-300 flex-shrink-0" />
-                                <p className="text-sm text-gray-500">No referrals yet &mdash; share your code to get started.</p>
+                                <p className="text-sm text-gray-500">No referrals yet &mdash; share your link to get started.</p>
                             </div>
                         ) : (
                             <>
@@ -191,7 +170,9 @@ export default function ReferralCard({ referral, businessName }: Props) {
                                     className="flex w-full items-center justify-between gap-3 text-left"
                                 >
                                     <span className="text-sm text-gray-700">
-                                        <span className="font-semibold text-gray-900">{count}</span> {joinedLabel} joined with your code
+                                        <span className="font-semibold text-gray-900">{count}</span> of{' '}
+                                        <span className="font-semibold text-gray-900">{referred_count}</span>{' '}
+                                        {referred_count === 1 ? 'business has' : 'businesses have'} listed {min_products}+ products
                                     </span>
                                     <ChevronDownIcon className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${showReferrals ? 'rotate-180' : ''}`} />
                                 </button>
@@ -204,21 +185,21 @@ export default function ReferralCard({ referral, businessName }: Props) {
                                                 <span className="flex items-center gap-3 flex-shrink-0">
                                                     <span
                                                         className={`text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full ${
-                                                            referred.products_count > 0
+                                                            referred.products_count >= min_products
                                                                 ? 'bg-primary-olive/10 text-primary-olive'
-                                                                : 'bg-gray-100 text-gray-400'
+                                                                : 'bg-amber-50 text-amber-700'
                                                         }`}
                                                     >
-                                                        {referred.products_count === 0
-                                                            ? 'Nothing listed'
-                                                            : `${referred.products_count} listed`}
+                                                        {referred.products_count >= min_products
+                                                            ? 'Counted'
+                                                            : `${referred.products_count} of ${min_products} listed`}
                                                     </span>
                                                     <span className="text-xs text-gray-500">{formatDateOnly(referred.joined_at)}</span>
                                                 </span>
                                             </li>
                                         ))}
                                     </ul>
-                                    {count > recent.length && (
+                                    {referred_count > recent.length && (
                                         <p className="text-xs text-gray-400 mt-2">Showing your {recent.length} most recent referrals.</p>
                                     )}
                                 </div>
@@ -227,7 +208,7 @@ export default function ReferralCard({ referral, businessName }: Props) {
                     </div>
 
                     <p aria-live="polite" className="sr-only">
-                        {copied ? `${copied === 'code' ? 'Referral code' : 'Invite link'} copied to clipboard` : ''}
+                        {copied ? 'Invite link copied to clipboard' : copyFailed ? 'Could not copy the invite link' : ''}
                     </p>
 
                 </div>

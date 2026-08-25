@@ -85,9 +85,20 @@ final readonly class ReferralService
         return true;
     }
 
+    /**
+     * Counted referrals, and how many joined in total. The gap between them is
+     * the vendor's to close — those businesses signed up but have not listed.
+     *
+     * @return array{qualified: int, referred: int}
+     */
+    public function referralTallyFor(User $vendor): array
+    {
+        return $this->referralRepository->referralTally($vendor->id);
+    }
+
     public function referralCountFor(User $vendor): int
     {
-        return $this->referralRepository->countReferrals($vendor->id);
+        return $this->referralTallyFor($vendor)['qualified'];
     }
 
     /**
@@ -124,7 +135,7 @@ final readonly class ReferralService
             ->map(fn (User $standing, int $position): array => [
                 'rank' => $position + 1,
                 'name' => $standing->business_name ?? $standing->name,
-                'referral_count' => (int) $standing->verified_referrals_count,
+                'referral_count' => (int) $standing->qualified_referrals_count,
                 'is_you' => $viewer !== null && $standing->id === $viewer->id,
             ])
             ->all();
@@ -137,8 +148,9 @@ final readonly class ReferralService
 
     /**
      * The vendor's own row on the campaign board, or null if they never enrolled.
+     * Rank and both counts come from the one query, so they cannot disagree.
      *
-     * @return array{rank: int, referral_count: int}|null
+     * @return array{rank: int, referral_count: int, referred_count: int}|null
      */
     public function standingFor(User $vendor): ?array
     {
@@ -146,7 +158,8 @@ final readonly class ReferralService
 
         return $standing === null ? null : [
             'rank' => (int) $standing->campaign_rank,
-            'referral_count' => (int) $standing->verified_referrals_count,
+            'referral_count' => (int) $standing->qualified_referrals_count,
+            'referred_count' => (int) $standing->referred_vendors_count,
         ];
     }
 
@@ -170,7 +183,8 @@ final readonly class ReferralService
             'name' => (string) ($participant->business_name ?? $participant->name),
             'account_name' => (string) $participant->name,
             'email' => (string) $participant->email,
-            'referral_count' => (int) $participant->verified_referrals_count,
+            'referral_count' => (int) $participant->qualified_referrals_count,
+            'referred_count' => (int) $participant->referred_vendors_count,
             'rank' => (int) $participant->campaign_rank,
             'joined_at' => $participant->created_at === null
                 ? null

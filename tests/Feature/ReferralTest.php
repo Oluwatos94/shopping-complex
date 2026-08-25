@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
@@ -19,11 +20,17 @@ class ReferralTest extends TestCase
 
     private ReferralService $referralService;
 
+    private ?Category $category = null;
+
+    private int $listingNumber = 0;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->referralService = app(ReferralService::class);
+
+        config(['referral.min_products' => 1]);
     }
 
     private function vendorWithoutCode(): User
@@ -270,6 +277,33 @@ class ReferralTest extends TestCase
         $this->assertSame(3, $this->referralService->referralCountFor($vendor));
     }
 
+    public function test_a_referral_only_counts_once_the_business_has_listed_enough(): void
+    {
+        config(['referral.min_products' => 5]);
+
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 1, products: 4);
+
+        $referred = User::query()->where('referred_by', $vendor->id)->firstOrFail();
+
+        $this->assertSame(0, $this->referralService->referralCountFor($vendor));
+        $this->assertSame(1, $this->referralService->referralTallyFor($vendor)['referred']);
+
+        $this->listProducts($referred, 1);
+
+        $this->assertSame(1, $this->referralService->referralCountFor($vendor));
+    }
+
+    public function test_a_referred_customer_never_counts_however_it_is_dressed_up(): void
+    {
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 3, ['role' => 'customer']);
+
+        $this->assertSame(0, $this->referralService->referralCountFor($vendor));
+        $this->assertSame(0, $this->referralService->referralTallyFor($vendor)['referred']);
+        $this->assertSame([], $this->referralService->recentReferralsFor($vendor));
+    }
+
     public function test_count_is_zero_for_a_vendor_nobody_joined_through(): void
     {
         $this->assertSame(0, $this->referralService->referralCountFor($this->vendorWithoutCode()));
@@ -298,7 +332,9 @@ class ReferralTest extends TestCase
         $referred = User::where('email', 'counted@gmail.com')->firstOrFail();
         $this->assertSame($vendor->id, $referred->referred_by);
 
-        // Registration alone does not count — the mailbox is still unproven.
+        // A listed business, but the mailbox is still unproven.
+        $referred->forceFill(['role' => 'vendor'])->save();
+        $this->listProducts($referred, 1);
         $this->assertSame(0, $this->referralService->referralCountFor($vendor));
 
         $referred->forceFill(['email_verified_at' => now()])->save();
@@ -311,13 +347,13 @@ class ReferralTest extends TestCase
         $vendor = $this->vendorWithoutCode();
 
         foreach (range(1, 12) as $index) {
-            User::factory()->create([
-                'role' => 'customer',
+            $this->listProducts(User::factory()->create([
+                'role' => 'vendor',
                 'name' => "Joiner {$index}",
                 'referred_by' => $vendor->id,
                 'email_verified_at' => now(),
                 'created_at' => now()->subDays(20 - $index),
-            ]);
+            ]), 1);
         }
 
         $recent = $this->referralService->recentReferralsFor($vendor);
@@ -359,13 +395,13 @@ class ReferralTest extends TestCase
     {
         $vendor = $this->vendorWithoutCode();
 
-        User::factory()->create([
-            'role' => 'customer',
+        $this->listProducts(User::factory()->create([
+            'role' => 'vendor',
             'name' => 'Verified Joiner',
             'email' => 'verified-joiner@gmail.com',
             'referred_by' => $vendor->id,
             'email_verified_at' => now(),
-        ]);
+        ]), 1);
         $this->referredUsers($vendor, 1, ['email_verified_at' => null]);
 
         $recent = $this->referralService->recentReferralsFor($vendor);
@@ -421,13 +457,41 @@ class ReferralTest extends TestCase
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function referredUsers(User $referrer, int $count, array $attributes = []): void
-    {
+    private function referredUsers(
+        User $referrer,
+        int $count,
+        array $attributes = [],
+        int $products = 1,
+        ?CarbonInterface $listedAt = null,
+    ): void {
         User::factory()->count($count)->create(array_merge([
-            'role' => 'customer',
+            'role' => 'vendor',
             'referred_by' => $referrer->id,
             'email_verified_at' => now(),
-        ], $attributes));
+        ], $attributes))->each(fn (User $vendor) => $this->listProducts($vendor, $products, $listedAt));
+    }
+
+    private function listProducts(User $vendor, int $count, ?CarbonInterface $listedAt = null): void
+    {
+        if ($count < 1) {
+            return;
+        }
+
+        $this->category ??= Category::factory()->create();
+
+        // products.slug is unique and the factory derives it from random words,
+        // which collides once fixtures run into the hundreds.
+        Product::factory()
+            ->count($count)
+            ->sequence(fn () => [
+                'name' => 'Listing '.++$this->listingNumber,
+                'slug' => 'listing-'.$this->listingNumber,
+            ])
+            ->create(array_filter([
+                'vendor_id' => $vendor->id,
+                'category_id' => $this->category->id,
+                'created_at' => $listedAt,
+            ], fn ($value) => $value !== null));
     }
 
     private function registerUser(string $email): void
