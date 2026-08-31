@@ -178,6 +178,14 @@ class RouteServiceProvider extends ServiceProvider
                 Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()),
             ];
         });
+
+        RateLimiter::for('geo', function (Request $request) {
+            $user = $request->user();
+
+            return $user
+                ? Limit::perMinute(30)->by($user->id)
+                : Limit::perMinute(12)->by($request->ip());
+        });
     }
 
     protected function throttledResponse(string $message): Closure

@@ -20,9 +20,39 @@ final readonly class GeoLocationService
 
     private const REVERSE_CACHE_TTL_SECONDS = 86400; // 1 day
 
+    private const MAX_REGION_CODES = 15;
+
+    /** @var list<string> */
+    private array $regionCodes;
+
+    /**
+     * @param  array<int|string, mixed>  $regionCodes
+     */
     public function __construct(
         private string $apiKey,
-    ) {}
+        array $regionCodes = ['ng'],
+    ) {
+        $this->regionCodes = self::validRegionCodes($regionCodes);
+    }
+
+    private static function validRegionCodes(array $codes): array
+    {
+        $valid = [];
+
+        foreach ($codes as $code) {
+            if (! is_string($code)) {
+                continue;
+            }
+
+            $code = strtolower(trim($code));
+
+            if (preg_match('/^[a-z]{2}$/', $code) === 1) {
+                $valid[$code] = true;
+            }
+        }
+
+        return array_slice(array_keys($valid), 0, self::MAX_REGION_CODES);
+    }
 
     /**
      * Turn raw coordinates into a short, human-readable area label
@@ -103,9 +133,11 @@ final readonly class GeoLocationService
 
         $body = [
             'input' => $query,
-            'includedRegionCodes' => ['ng'],
             'languageCode' => 'en',
         ];
+        if ($this->regionCodes !== []) {
+            $body['includedRegionCodes'] = $this->regionCodes;
+        }
         if ($sessionToken !== null && $sessionToken !== '') {
             $body['sessionToken'] = $sessionToken;
         }

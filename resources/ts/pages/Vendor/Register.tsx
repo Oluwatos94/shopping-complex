@@ -1,24 +1,11 @@
 import { useRef, useState, useCallback, useEffect, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { Category } from '@/types/product';
+import { AddressSuggestion, PlaceDetails } from '@/types/common';
 import { resizeImage } from '@/utils/imageResize';
 
 interface Props {
     categories: Pick<Category, 'id' | 'name' | 'slug'>[];
-}
-
-interface AddressSuggestion {
-    place_id: string;
-    description: string;
-}
-
-interface PlaceDetails {
-    formatted: string;
-    street: string;
-    city: string;
-    state: string;
-    lat: number;
-    lng: number;
 }
 
 interface SelectedAddress {

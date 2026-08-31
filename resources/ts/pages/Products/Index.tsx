@@ -6,7 +6,9 @@ import FilterSidebar from '@/components/Products/partials/FilterSidebar';
 import { useProducts } from '@/hooks/useProducts';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { requestPosition } from '@/utils/geolocation';
+import { SearchOrigin, isSameCoordinate, originQueryParams } from '@/utils/geolocation';
+import { useSearchOrigin } from '@/hooks/useSearchOrigin';
+import { LocationField } from '@/components/Location';
 
 interface ProductsPageProps {
     products: PaginatedProducts;
@@ -21,50 +23,96 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
-    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+    const { origin, locateDevice, confirm, clear, adoptDeviceOrigin } = useSearchOrigin();
+    const appliedConfirmedOrigin = useRef(false);
 
-    // Restore location from URL on mount
+    const navigateWithOrigin = useCallback((next: SearchOrigin | null, onFailure?: () => void) => {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('latitude');
+        params.delete('longitude');
+        params.delete('accuracy');
+        params.delete('radius');
+        params.delete('page');
+
+        if (next !== null) {
+            const query = originQueryParams(next);
+            params.set('latitude', String(query.latitude));
+            params.set('longitude', String(query.longitude));
+            if (query.accuracy !== undefined) params.set('accuracy', String(Math.round(query.accuracy)));
+            params.set('radius', String(NEAR_ME_RADIUS_KM));
+        }
+
+        router.get(`/products?${params.toString()}`, {}, {
+            preserveState: true,
+            preserveScroll: false,
+            onError: onFailure,
+            onCancel: onFailure,
+        });
+    }, []);
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const lat = params.get('latitude');
         const lon = params.get('longitude');
-        if (lat && lon) setUserLocation({ latitude: Number(lat), longitude: Number(lon) });
-    }, []);
+        const accuracy = params.get('accuracy');
 
-    const handleNearMe = useCallback(() => {
-        if (userLocation) {
-            setUserLocation(null);
-            const params = new URLSearchParams(window.location.search);
-            params.delete('latitude');
-            params.delete('longitude');
-            params.delete('accuracy');
-            params.delete('radius');
-            router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+        if (lat === null || lon === null) {
+            adoptDeviceOrigin(null);
+
             return;
         }
 
-        setIsLoadingLocation(true);
-        requestPosition()
-            .then((loc) => {
-                setUserLocation({ latitude: loc.latitude, longitude: loc.longitude });
-                setIsLoadingLocation(false);
-                const params = new URLSearchParams(window.location.search);
-                params.set('latitude', String(loc.latitude));
-                params.set('longitude', String(loc.longitude));
-                params.set('accuracy', String(Math.round(loc.accuracy)));
-                params.set('radius', String(NEAR_ME_RADIUS_KM));
-                router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
-            })
-            .catch(() => setIsLoadingLocation(false));
-    }, [userLocation]);
+        adoptDeviceOrigin({
+            latitude: Number(lat),
+            longitude: Number(lon),
+            accuracy: accuracy === null ? null : Number(accuracy),
+            source: 'device',
+        });
+    }, [products, adoptDeviceOrigin]);
 
-    // Reset visible count when navigating to a different page
+    const handleConfirmOrigin = useCallback((latitude: number, longitude: number, label?: string) => {
+        // Claimed up front so the effect below does not send a second visit, and
+        // released again if this one never lands.
+        appliedConfirmedOrigin.current = true;
+
+        navigateWithOrigin(confirm(latitude, longitude, label), () => {
+            appliedConfirmedOrigin.current = false;
+        });
+    }, [confirm, navigateWithOrigin]);
+
+    const handleUseDevice = useCallback(() => {
+        return locateDevice().then((next) => {
+            if (next !== null) navigateWithOrigin(next);
+        });
+    }, [locateDevice, navigateWithOrigin]);
+
+    const handleClearOrigin = useCallback(() => {
+        clear();
+        navigateWithOrigin(null);
+    }, [clear, navigateWithOrigin]);
+
+    useEffect(() => {
+        if (appliedConfirmedOrigin.current) return;
+        if (origin === null || origin.source !== 'confirmed') return;
+
+        appliedConfirmedOrigin.current = true;
+
+        const params = new URLSearchParams(window.location.search);
+        const lat = params.get('latitude');
+        const lon = params.get('longitude');
+        const inUrl = lat === null || lon === null ? null : { latitude: Number(lat), longitude: Number(lon) };
+
+        if (isSameCoordinate(inUrl, origin) && params.get('accuracy') === null) return;
+
+        navigateWithOrigin(origin, () => {
+            appliedConfirmedOrigin.current = false;
+        });
+    }, [origin]);
+
     useEffect(() => {
         setVisibleCount(BATCH_SIZE);
     }, [products.current_page]);
 
-    // Progressive reveal via IntersectionObserver
     useEffect(() => {
         if (visibleCount >= products.data.length) return;
         if (!('IntersectionObserver' in window)) {
@@ -119,81 +167,70 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
 
             <main className="mx-auto w-full max-w-[1380px] flex-1 px-5 pb-20 pt-8 lg:px-10">
                 {/* Page head */}
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => window.history.back()}
-                            className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-brand-line bg-white text-brand-ink transition hover:bg-brand-surface"
-                            aria-label="Go back"
-                        >
-                            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                        </button>
-                        <h1 className="font-serif text-[28px] font-bold tracking-tight sm:text-[34px]">Products</h1>
-                        <span className="hidden text-[15px] font-medium text-brand-muted sm:inline">
-                            {products.total} {products.total === 1 ? 'product' : 'products'} found
-                        </span>
-                    </div>
+                <div className="mb-6 flex items-center gap-4">
                     <button
-                        onClick={handleNearMe}
-                        disabled={isLoadingLocation}
-                        className={`inline-flex items-center gap-2.5 rounded-full border px-5 py-2.5 text-[15px] font-semibold transition disabled:opacity-50 ${
-                            userLocation
-                                ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
-                                : 'border-brand-line bg-white text-brand-ink hover:border-brand-green'
-                        }`}
+                        onClick={() => window.history.back()}
+                        className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-brand-line bg-white text-brand-ink transition hover:bg-brand-surface"
+                        aria-label="Go back"
                     >
-                        {isLoadingLocation ? (
-                            <svg className="h-[17px] w-[17px] animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                        ) : (
-                            <svg className="h-[17px] w-[17px] text-brand-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                <circle cx="12" cy="10" r="2.6" />
-                            </svg>
-                        )}
-                        {isLoadingLocation ? 'Locating...' : 'Near Me'}
+                        <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
                     </button>
+                    <h1 className="font-serif text-[28px] font-bold tracking-tight sm:text-[34px]">Products</h1>
+                    <span className="hidden text-[15px] font-medium text-brand-muted sm:inline">
+                        {products.total} {products.total === 1 ? 'product' : 'products'} found
+                    </span>
                 </div>
 
-                {/* Search + Sort */}
-                <div className="mb-7 flex flex-wrap gap-4">
-                    <div className="relative min-w-[260px] flex-1">
-                        <svg className="absolute left-5 top-1/2 -translate-y-1/2" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="7" />
-                            <path d="M21 21l-4.3-4.3" />
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Search products..."
-                            value={searchTerm}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            className="h-14 w-full rounded-[14px] border border-brand-line bg-white pl-[52px] pr-5 text-base text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
+                {/* Search row: what you are looking for, and where you are looking from. */}
+                <div className="mb-7 flex flex-col gap-2 rounded-2xl border border-brand-line bg-white p-2 shadow-sm lg:flex-row lg:items-center">
+                    <div className="flex flex-1 flex-col divide-y divide-brand-line lg:flex-row lg:items-center lg:divide-x lg:divide-y-0">
+                        <div className="relative min-w-0 flex-1">
+                            <svg className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="M21 21l-4.3-4.3" />
+                            </svg>
+                            <input
+                                type="text"
+                                placeholder="Search products…"
+                                value={searchTerm}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                className="h-12 w-full rounded-xl bg-transparent pl-11 pr-4 text-[15px] text-brand-ink outline-none placeholder:text-brand-muted focus-visible:ring-2 focus-visible:ring-brand-green/25"
+                            />
+                        </div>
+
+                        <LocationField
+                            origin={origin}
+                            onConfirm={handleConfirmOrigin}
+                            onUseDevice={handleUseDevice}
+                            onClear={handleClearOrigin}
+                            className="flex-1 lg:max-w-[300px]"
                         />
+
+                        <div className="relative lg:w-[196px]">
+                            <select
+                                value={filters.sort_by || 'name_asc'}
+                                onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
+                                aria-label="Sort products"
+                                className="h-12 w-full appearance-none rounded-xl bg-transparent pl-4 pr-9 text-sm font-medium text-brand-ink outline-none focus-visible:ring-2 focus-visible:ring-brand-green/25"
+                            >
+                                {sortOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </div>
                     </div>
-                    <div className="relative w-full sm:w-[240px]">
-                        <select
-                            value={filters.sort_by || 'name_asc'}
-                            onChange={(e) => handleSortChange(e.target.value as ProductSortOption)}
-                            className="h-14 w-full appearance-none rounded-[14px] border border-brand-line bg-white pl-5 pr-11 text-base font-medium text-brand-ink outline-none transition focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
-                        >
-                            {sortOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <svg className="pointer-events-none absolute right-[18px] top-1/2 -translate-y-1/2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
-                    </div>
+
                     {/* Mobile filter button */}
                     <button
                         onClick={() => setShowMobileFilters(true)}
-                        className="inline-flex h-14 items-center justify-center gap-2 rounded-[14px] border border-brand-line bg-white px-5 text-base font-semibold text-brand-ink transition hover:border-brand-green lg:hidden"
+                        className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-brand-line bg-white px-5 text-[15px] font-semibold text-brand-ink transition hover:border-brand-green lg:hidden"
                     >
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />

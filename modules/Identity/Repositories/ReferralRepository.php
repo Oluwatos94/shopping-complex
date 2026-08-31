@@ -57,8 +57,8 @@ class ReferralRepository
             ->first();
 
         return [
-            'qualified' => (int) ($tally?->qualified_referrals_count ?? 0),
-            'referred' => (int) ($tally?->referred_vendors_count ?? 0),
+            'qualified' => (int) ($tally->qualified_referrals_count ?? 0),
+            'referred' => (int) ($tally->referred_vendors_count ?? 0),
         ];
     }
 
@@ -111,7 +111,7 @@ class ReferralRepository
      */
     public function recentReferrals(int $referrerId, int $limit): Collection
     {
-        $referred = User::query()->where('users.referred_by', $referrerId);
+        $referred = User::query()->where('referred_by', $referrerId);
 
         $this->onlyReferredVendors($referred, 'users');
 
@@ -181,10 +181,14 @@ class ReferralRepository
      */
     private function standings(): Builder
     {
-        return User::query()
-            ->joinSub($this->tallyByReferrer(), 'tally', 'tally.referred_by', '=', 'users.id')
+        $standings = User::query()
+            ->joinSub($this->tallyByReferrer(), 'tally', 'tally.referred_by', '=', 'users.id');
+
+        $standings->getQuery()
             ->where('users.role', 'vendor')
-            ->where('tally.qualified_referrals_count', '>=', 1)
+            ->where('tally.qualified_referrals_count', '>=', 1);
+
+        return $standings
             ->select([
                 'users.id',
                 'users.name',
