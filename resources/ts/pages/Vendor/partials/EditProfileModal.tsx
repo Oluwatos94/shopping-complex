@@ -1,25 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
 import { VendorProfile } from '@/types/vendor';
+import { AddressSuggestion, PlaceDetails } from '@/types/common';
 import { resizeImage } from '@/utils/imageResize';
 
 interface Props {
     vendor: VendorProfile;
     onClose: () => void;
-}
-
-interface AddressSuggestion {
-    place_id: string;
-    description: string;
-}
-
-interface PlaceDetails {
-    formatted: string;
-    street: string;
-    city: string;
-    state: string;
-    lat: number;
-    lng: number;
 }
 
 interface SelectedAddress {

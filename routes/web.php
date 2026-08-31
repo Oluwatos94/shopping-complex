@@ -124,9 +124,11 @@ Route::middleware(['auth', 'throttle:writes'])->group(function () {
     Route::delete('/products/{product}/images/{mediaId}', [ProductController::class, 'deleteImage'])->name('products.images.delete');
 });
 
-Route::middleware(['auth', 'throttle:30,1'])->prefix('api/geo')->group(function () {
+// Guest-reachable: a buyer sets their location before there is any reason to sign in.
+Route::middleware(['throttle:geo'])->prefix('api/geo')->group(function () {
     Route::get('/autocomplete', [GeoController::class, 'autocomplete'])->name('geo.autocomplete');
     Route::get('/place', [GeoController::class, 'place'])->name('geo.place');
+    Route::get('/reverse', [GeoController::class, 'reverse'])->name('geo.reverse');
 });
 
 Route::middleware(['auth', 'throttle:notifications'])->prefix('api/notifications')->group(function () {

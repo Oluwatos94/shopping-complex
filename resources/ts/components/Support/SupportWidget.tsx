@@ -1,6 +1,7 @@
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { useSupportChat } from '@/hooks/useSupportChat';
+import { LocationField } from '@/components/Location';
 import SupportThread from './SupportThread';
 
 export default function SupportWidget() {
@@ -11,7 +12,7 @@ export default function SupportWidget() {
     const launcherRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const { conversation, messages, isTyping, isLoading, isEscalating, error, hasLocation, hasOlderMessages, loadOlderMessages, shareLocation, sendMessage, escalate, retry } = useSupportChat(isOpen);
+    const { conversation, messages, isTyping, isLoading, isEscalating, error, origin, hasOlderMessages, loadOlderMessages, locateDevice, setLocation, sendMessage, escalate, retry } = useSupportChat(isOpen);
 
     // Escalation ("Talk to a human") is auth-only — guests are routed to sign in.
     const isAuthenticated = Boolean(auth?.user);
@@ -250,25 +251,19 @@ export default function SupportWidget() {
                         </div>
                     )}
 
+                    <div className="border-t border-brand-line bg-brand-surface px-3 py-2">
+                        <LocationField
+                            origin={origin}
+                            onConfirm={setLocation}
+                            onUseDevice={locateDevice}
+                            size="sm"
+                            menuPlacement="top"
+                            className="rounded-xl border border-brand-line bg-white"
+                        />
+                    </div>
+
                     <div className="border-t border-brand-line bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                         <div className="flex items-end gap-2">
-                            <button
-                                type="button"
-                                onClick={shareLocation}
-                                aria-label={hasLocation ? 'Location shared' : 'Share your location'}
-                                aria-pressed={hasLocation}
-                                title={hasLocation ? 'Location shared' : 'Share your location so we can find vendors near you'}
-                                className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green ${
-                                    hasLocation
-                                        ? 'border-brand-green bg-brand-green/10 text-brand-green'
-                                        : 'border-brand-line text-gray-400 hover:border-brand-green hover:text-brand-green'
-                                }`}
-                            >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
                             <textarea
                                 ref={inputRef}
                                 value={draft}

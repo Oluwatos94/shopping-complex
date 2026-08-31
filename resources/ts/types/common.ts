@@ -180,22 +180,23 @@ export interface Media {
 }
 
 /**
- * OpenStreetMap Nominatim address suggestion (filtered to Nigeria)
+ * Google Places autocomplete result, as returned by /api/geo/autocomplete.
  */
 export interface AddressSuggestion {
-    display_name: string;
-    lat: string;
-    lon: string;
-    address: {
-        road?: string;
-        neighbourhood?: string;
-        suburb?: string;
-        city?: string;
-        town?: string;
-        village?: string;
-        state?: string;
-        country?: string;
-    };
+    place_id: string;
+    description: string;
+}
+
+/**
+ * Resolved place, as returned by /api/geo/place.
+ */
+export interface PlaceDetails {
+    formatted: string;
+    street: string;
+    city: string;
+    state: string;
+    lat: number;
+    lng: number;
 }
 
 /**

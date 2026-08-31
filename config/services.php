@@ -71,6 +71,11 @@ return [
 
     'google_maps' => [
         'key' => env('GOOGLE_MAPS_API_KEY'),
+
+        'region_codes' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('GOOGLE_MAPS_REGION_CODES', 'ng'))
+        ))),
     ],
 
     'whatsapp' => [

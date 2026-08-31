@@ -71,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(GeoLocationService::class, fn () => new GeoLocationService(
             apiKey: (string) config('services.google_maps.key'),
+            regionCodes: (array) config('services.google_maps.region_codes', ['ng']),
         ));
     }
 

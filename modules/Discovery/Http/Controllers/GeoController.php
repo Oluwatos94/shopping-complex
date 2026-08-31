@@ -37,6 +37,25 @@ class GeoController extends Controller
         return response()->json($details);
     }
 
+    public function reverse(Request $request): JsonResponse
+    {
+        $lat = $request->query('lat');
+        $lng = $request->query('lng');
+
+        if (! is_numeric($lat) || ! is_numeric($lng)) {
+            return response()->json(['error' => 'Invalid coordinates.'], 422);
+        }
+
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return response()->json(['error' => 'Invalid coordinates.'], 422);
+        }
+
+        return response()->json(['label' => $this->geo->reverseGeocode($lat, $lng)]);
+    }
+
     private function sessionToken(Request $request): ?string
     {
         $token = mb_substr((string) $request->query('session', ''), 0, 64);

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchWithCsrf } from '@/utils/csrf';
-import { requestPosition } from '@/utils/geolocation';
+import type { SearchOrigin } from '@/utils/geolocation';
+import { useSearchOrigin } from '@/hooks/useSearchOrigin';
 import type { SupportConversation, SupportMessage } from '@/types/support';
 
 const POLL_INTERVAL = 3000;
@@ -8,6 +9,20 @@ const POLL_INTERVAL = 3000;
 const ESCALATED_STATUSES: SupportConversation['status'][] = ['awaiting_agent', 'with_agent'];
 
 let tempId = -1;
+
+/**
+ * A wrong origin here re-centres the bot's search ring, not just the number it
+ * prints: a vendor 2 km away can fall outside it while one 8 km away is offered.
+ */
+function locationBody(origin: SearchOrigin | null): Record<string, number> {
+    if (origin === null) return {};
+
+    return {
+        lat: origin.latitude,
+        lng: origin.longitude,
+        ...(origin.accuracy === null ? {} : { accuracy: origin.accuracy }),
+    };
+}
 
 export function useSupportChat(isOpen: boolean) {
     const [conversation, setConversation] = useState<SupportConversation | null>(null);
@@ -17,30 +32,20 @@ export function useSupportChat(isOpen: boolean) {
     const [isEscalating, setIsEscalating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [failedText, setFailedText] = useState<string | null>(null);
-    const [hasLocation, setHasLocation] = useState(false);
     const [hasOlderMessages, setHasOlderMessages] = useState(false);
+    const { origin, originRef, locateDevice, confirm } = useSearchOrigin();
     const conversationRef = useRef<SupportConversation | null>(null);
     const startedRef = useRef(false);
-    const coordsRef = useRef<{ lat: number; lng: number; accuracy: number } | null>(null);
     const sendingRef = useRef(false);
     const oldestPageRef = useRef(1);
     const loadingOlderRef = useRef(false);
 
     conversationRef.current = conversation;
 
-    const shareLocation = useCallback(() => {
-        requestPosition()
-            .then((position) => {
-                coordsRef.current = {
-                    lat: position.latitude,
-                    lng: position.longitude,
-                    accuracy: position.accuracy,
-                };
-                setHasLocation(true);
-                setError(null);
-            })
-            .catch(() => setError('Could not get your location. Please allow location access.'));
-    }, []);
+    const setLocation = useCallback((latitude: number, longitude: number, label?: string) => {
+        confirm(latitude, longitude, label);
+        setError(null);
+    }, [confirm]);
 
     const refresh = useCallback(async (conversationId: number, keepPending = true) => {
         const res = await fetchWithCsrf(`/api/support/conversations/${conversationId}/messages`);
@@ -141,7 +146,7 @@ export function useSupportChat(isOpen: boolean) {
         try {
             const res = await fetchWithCsrf(`/api/support/conversations/${target.id}/messages`, {
                 method: 'POST',
-                body: JSON.stringify({ content, ...(coordsRef.current ?? {}) }),
+                body: JSON.stringify({ content, ...locationBody(originRef.current) }),
             });
 
             if (!res.ok) {
@@ -158,7 +163,7 @@ export function useSupportChat(isOpen: boolean) {
             setIsTyping(false);
             sendingRef.current = false;
         }
-    }, [isTyping, refresh, syncConversation]);
+    }, [isTyping, refresh, syncConversation, originRef]);
 
     const escalate = useCallback(async () => {
         const target = conversationRef.current;
@@ -220,10 +225,11 @@ export function useSupportChat(isOpen: boolean) {
         isEscalating,
         error,
         failedText,
-        hasLocation,
+        origin,
         hasOlderMessages,
         loadOlderMessages,
-        shareLocation,
+        locateDevice,
+        setLocation,
         sendMessage,
         escalate,
         retry,
