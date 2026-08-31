@@ -28,8 +28,13 @@ export function useSearchOrigin(initialDeviceOrigin: SearchOrigin | null = null)
         originRef.current = origin;
     }, [origin]);
 
-    const locateDevice = useCallback(async (): Promise<SearchOrigin> => {
+    const selection = useRef(0);
+
+    const locateDevice = useCallback(async (): Promise<SearchOrigin | null> => {
+        const generation = ++selection.current;
         const next = toDeviceOrigin(await requestPosition());
+
+        if (generation !== selection.current) return null;
 
         originRef.current = next;
         clearConfirmedOrigin();
@@ -39,6 +44,8 @@ export function useSearchOrigin(initialDeviceOrigin: SearchOrigin | null = null)
     }, []);
 
     const confirm = useCallback((latitude: number, longitude: number, label?: string): SearchOrigin => {
+        selection.current += 1;
+
         const next = toSearchOrigin(saveConfirmedOrigin(latitude, longitude, label));
         originRef.current = next;
 
@@ -46,6 +53,8 @@ export function useSearchOrigin(initialDeviceOrigin: SearchOrigin | null = null)
     }, []);
 
     const clear = useCallback(() => {
+        selection.current += 1;
+
         originRef.current = null;
         clearConfirmedOrigin();
         setDeviceOrigin(null);

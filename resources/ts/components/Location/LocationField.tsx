@@ -44,6 +44,7 @@ export default function LocationField({
     const optionId = (index: number) => `${listboxId}-option-${index}`;
 
     const field = useRef<HTMLInputElement>(null);
+    const isEditingRef = useRef(false);
     const sessionTokenRef = useRef(newSessionToken());
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const abortRef = useRef<AbortController | null>(null);
@@ -79,6 +80,8 @@ export default function LocationField({
     const activeLabel = confirmedLabel !== '' ? confirmedLabel : deviceLabel;
 
     useEffect(() => {
+        if (isEditingRef.current) return;
+
         setQuery(activeLabel);
     }, [activeLabel]);
 
@@ -88,6 +91,7 @@ export default function LocationField({
     }, []);
 
     const handleChange = useCallback((value: string) => {
+        isEditingRef.current = true;
         setQuery(value);
         setError(null);
         setFoundNothing(false);
@@ -146,6 +150,7 @@ export default function LocationField({
             }
 
             const label = place.label === '' ? suggestion.description : place.label;
+            isEditingRef.current = false;
             setQuery(label);
             field.current?.blur();
             onConfirm(place.latitude, place.longitude, label);
@@ -164,6 +169,7 @@ export default function LocationField({
 
         try {
             await onUseDevice();
+            isEditingRef.current = false;
             setSuggestions([]);
             setFoundNothing(false);
             setIsOpen(false);
@@ -188,6 +194,10 @@ export default function LocationField({
 
     const handleKeyDown = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Escape') {
+
+            if (isOpen) event.nativeEvent.stopImmediatePropagation();
+
+            isEditingRef.current = false;
             setIsOpen(false);
             setQuery(activeLabel);
 
@@ -214,9 +224,10 @@ export default function LocationField({
             event.preventDefault();
             void (picked.kind === 'device' ? useDevice() : choose(picked.suggestion));
         }
-    }, [activeIndex, activeLabel, choose, items, useDevice]);
+    }, [activeIndex, activeLabel, choose, isOpen, items, useDevice]);
 
     const handleClear = useCallback(() => {
+        isEditingRef.current = false;
         setQuery('');
         setSuggestions([]);
         setError(null);

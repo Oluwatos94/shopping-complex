@@ -109,7 +109,11 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
                 preserveScroll: true,
                 onStart: () => setIsFiltering(true),
                 onFinish: () => setIsFiltering(false),
+
+                onCancel: () => { appliedConfirmedOrigin.current = false; },
                 onError: (errors) => {
+                    appliedConfirmedOrigin.current = false;
+
                     const first = Object.values(errors)[0];
                     showNotification('error', first || 'We could not apply that filter. Please try again.');
                 },
@@ -127,6 +131,8 @@ export default function VendorListing({ vendors, filters, categories }: VendorLi
 
     const handleUseDevice = useCallback(() => {
         return locateDevice().then((next) => {
+            if (next === null) return;
+
             if (!isUsableAccuracy(next.accuracy)) {
                 // A coarse fix quietly empties a tight radius; say so.
                 showNotification('info', 'Your device gave a rough position. Type your area for exact distances.');

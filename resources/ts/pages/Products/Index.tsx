@@ -26,7 +26,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     const { origin, locateDevice, confirm, clear, adoptDeviceOrigin } = useSearchOrigin();
     const appliedConfirmedOrigin = useRef(false);
 
-    const navigateWithOrigin = useCallback((next: SearchOrigin | null) => {
+    const navigateWithOrigin = useCallback((next: SearchOrigin | null, onFailure?: () => void) => {
         const params = new URLSearchParams(window.location.search);
         params.delete('latitude');
         params.delete('longitude');
@@ -42,7 +42,12 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
             params.set('radius', String(NEAR_ME_RADIUS_KM));
         }
 
-        router.get(`/products?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+        router.get(`/products?${params.toString()}`, {}, {
+            preserveState: true,
+            preserveScroll: false,
+            onError: onFailure,
+            onCancel: onFailure,
+        });
     }, []);
 
     useEffect(() => {
@@ -66,12 +71,19 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     }, [products, adoptDeviceOrigin]);
 
     const handleConfirmOrigin = useCallback((latitude: number, longitude: number, label?: string) => {
+        // Claimed up front so the effect below does not send a second visit, and
+        // released again if this one never lands.
         appliedConfirmedOrigin.current = true;
-        navigateWithOrigin(confirm(latitude, longitude, label));
+
+        navigateWithOrigin(confirm(latitude, longitude, label), () => {
+            appliedConfirmedOrigin.current = false;
+        });
     }, [confirm, navigateWithOrigin]);
 
     const handleUseDevice = useCallback(() => {
-        return locateDevice().then(navigateWithOrigin);
+        return locateDevice().then((next) => {
+            if (next !== null) navigateWithOrigin(next);
+        });
     }, [locateDevice, navigateWithOrigin]);
 
     const handleClearOrigin = useCallback(() => {
@@ -92,7 +104,9 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
 
         if (isSameCoordinate(inUrl, origin) && params.get('accuracy') === null) return;
 
-        navigateWithOrigin(origin);
+        navigateWithOrigin(origin, () => {
+            appliedConfirmedOrigin.current = false;
+        });
     }, [origin]);
 
     useEffect(() => {

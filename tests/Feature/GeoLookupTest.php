@@ -64,6 +64,17 @@ class GeoLookupTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_autocomplete_drops_region_codes_google_would_reject(): void
+    {
+        config()->set('services.google_maps.region_codes', ['NG', 'nigeria', 'gh', 'ng', '', 'g1']);
+
+        Http::fake(['places.googleapis.com/*' => Http::response(['suggestions' => []])]);
+
+        $this->getJson('/api/geo/autocomplete?q=accra')->assertOk();
+
+        Http::assertSent(fn ($request) => $request['includedRegionCodes'] === ['ng', 'gh']);
+    }
+
     public function test_autocomplete_is_biased_to_the_configured_regions(): void
     {
         config()->set('services.google_maps.region_codes', ['ng', 'gh']);
