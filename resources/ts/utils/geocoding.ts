@@ -53,24 +53,28 @@ export async function suggestPlaces(
 }
 
 export async function resolvePlace(placeId: string, sessionToken: string): Promise<PlaceLocation | null> {
-    const response = await fetch(
-        `/api/geo/place?place_id=${encodeURIComponent(placeId)}&session=${encodeURIComponent(sessionToken)}`,
-        { headers: { Accept: 'application/json' } },
-    );
+    try {
+        const response = await fetch(
+            `/api/geo/place?place_id=${encodeURIComponent(placeId)}&session=${encodeURIComponent(sessionToken)}`,
+            { headers: { Accept: 'application/json' } },
+        );
 
-    if (!response.ok) return null;
+        if (!response.ok) return null;
 
-    const data: PlaceDetailsResponse = await response.json();
-    if (typeof data.lat !== 'number' || typeof data.lng !== 'number') return null;
+        const data: PlaceDetailsResponse = await response.json();
+        if (typeof data.lat !== 'number' || typeof data.lng !== 'number') return null;
 
-    const label = [data.street, data.city].find((part) => typeof part === 'string' && part !== '')
-        ?? data.formatted;
+        const label = [data.street, data.city].find((part) => typeof part === 'string' && part !== '')
+            ?? data.formatted;
 
-    return {
-        latitude: data.lat,
-        longitude: data.lng,
-        label: typeof label === 'string' ? label : '',
-    };
+        return {
+            latitude: data.lat,
+            longitude: data.lng,
+            label: typeof label === 'string' ? label : '',
+        };
+    } catch {
+        return null;
+    }
 }
 
 /** Names a dragged pin. Returns null when the lookup fails; coordinates then stand in. */

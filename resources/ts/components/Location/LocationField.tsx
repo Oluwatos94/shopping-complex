@@ -1,4 +1,4 @@
-import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PlaceSuggestion, describeCoordinates, newSessionToken, resolvePlace, suggestPlaces } from '@/utils/geocoding';
 import { SearchOrigin, describeOrigin, isUsableAccuracy } from '@/utils/geolocation';
 import { hasSatelliteFix } from '@/utils/device';
@@ -39,6 +39,9 @@ export default function LocationField({
     const [error, setError] = useState<string | null>(null);
     const [foundNothing, setFoundNothing] = useState(false);
     const [canUseDevice, setCanUseDevice] = useState(false);
+
+    const listboxId = `location-suggestions-${useId()}`;
+    const optionId = (index: number) => `${listboxId}-option-${index}`;
 
     const field = useRef<HTMLInputElement>(null);
     const sessionTokenRef = useRef(newSessionToken());
@@ -153,32 +156,6 @@ export default function LocationField({
         }
     }, [onConfirm]);
 
-    const handleKeyDown = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Escape') {
-            setIsOpen(false);
-            setQuery(activeLabel);
-
-            return;
-        }
-
-        if (suggestions.length === 0) return;
-
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-            setIsOpen(true);
-            setActiveIndex((current) => (current + 1) % suggestions.length);
-        } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            setActiveIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
-        } else if (event.key === 'Enter') {
-            const picked = suggestions[activeIndex === -1 ? 0 : activeIndex];
-            if (picked === undefined) return;
-
-            event.preventDefault();
-            void choose(picked);
-        }
-    }, [activeIndex, activeLabel, choose, suggestions]);
-
     const useDevice = useCallback(async () => {
         if (onUseDevice === undefined) return;
 
@@ -198,6 +175,46 @@ export default function LocationField({
             setIsLocating(false);
         }
     }, [onUseDevice]);
+
+    const showDeviceRow = canUseDevice && onUseDevice !== undefined;
+
+    const items = useMemo(
+        () => [
+            ...(showDeviceRow ? [{ kind: 'device' as const }] : []),
+            ...suggestions.map((suggestion) => ({ kind: 'place' as const, suggestion })),
+        ],
+        [showDeviceRow, suggestions],
+    );
+
+    const handleKeyDown = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Escape') {
+            setIsOpen(false);
+            setQuery(activeLabel);
+
+            return;
+        }
+
+        if (items.length === 0) return;
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setIsOpen(true);
+            setActiveIndex((current) => (current + 1) % items.length);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setIsOpen(true);
+            setActiveIndex((current) => (current <= 0 ? items.length - 1 : current - 1));
+        } else if (event.key === 'Enter') {
+            const picked = activeIndex === -1
+                ? items.find((item) => item.kind === 'place')
+                : items[activeIndex];
+
+            if (picked === undefined) return;
+
+            event.preventDefault();
+            void (picked.kind === 'device' ? useDevice() : choose(picked.suggestion));
+        }
+    }, [activeIndex, activeLabel, choose, items, useDevice]);
 
     const handleClear = useCallback(() => {
         setQuery('');
@@ -221,12 +238,16 @@ export default function LocationField({
           : 'text-brand-muted';
 
     const small = size === 'sm';
-    const showDeviceRow = canUseDevice && onUseDevice !== undefined;
     const showStatusRow = suggestions.length === 0 && (isBusy || foundNothing || error !== null);
-    const showMenu = isOpen && (suggestions.length > 0 || showStatusRow || showDeviceRow);
+    const showMenu = isOpen && (items.length > 0 || showStatusRow);
 
     return (
-        <div className={`relative min-w-0 ${className}`}>
+        <div
+            className={`relative min-w-0 ${className}`}
+            onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
+            }}
+        >
             <svg
                 className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${small ? 'left-3 h-4 w-4' : 'left-4 h-[18px] w-[18px]'} ${pinTone}`}
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"
@@ -241,7 +262,6 @@ export default function LocationField({
                 value={query}
                 onChange={(e) => handleChange(e.target.value)}
                 onFocus={(e) => { setIsOpen(true); e.target.select(); }}
-                onBlur={() => setIsOpen(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={isCoarse ? 'Set your exact location' : 'Where are you?'}
                 aria-label="Your location"
@@ -249,7 +269,8 @@ export default function LocationField({
                 role="combobox"
                 aria-expanded={showMenu}
                 aria-autocomplete="list"
-                aria-controls="location-suggestions"
+                aria-controls={listboxId}
+                aria-activedescendant={activeIndex === -1 ? undefined : optionId(activeIndex)}
                 className={`w-full rounded-xl bg-transparent outline-none placeholder:text-brand-muted focus-visible:ring-2 focus-visible:ring-brand-green/25 ${
                     small ? 'h-9 pl-9 pr-8 text-xs' : 'h-12 pl-11 pr-9 text-[15px]'
                 } ${
@@ -279,44 +300,42 @@ export default function LocationField({
 
             {showMenu && (
                 <ul
-                    id="location-suggestions"
+                    id={listboxId}
                     role="listbox"
                     className={`absolute inset-x-0 z-30 max-h-64 overflow-y-auto rounded-xl border border-brand-line bg-white py-1 shadow-lg ${
                         menuPlacement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
                     }`}
                 >
-                    {showDeviceRow && (
-                        <li>
+                    {items.map((item, index) => (
+                        <li
+                            key={item.kind === 'device' ? 'device' : item.suggestion.placeId}
+                            id={optionId(index)}
+                            role="option"
+                            aria-selected={index === activeIndex}
+                        >
                             <button
                                 type="button"
                                 onMouseDown={(e) => e.preventDefault()}
-                                onClick={useDevice}
-                                disabled={isLocating}
-                                className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-brand-green-dark transition disabled:opacity-60 ${
-                                    small ? 'text-xs' : 'text-sm'
-                                }`}
-                            >
-                                <svg className={small ? 'h-3.5 w-3.5' : 'h-4 w-4'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="7" />
-                                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-                                </svg>
-                                {isLocating ? 'Locating…' : 'Use my current location'}
-                            </button>
-                        </li>
-                    )}
-
-                    {suggestions.map((suggestion, index) => (
-                        <li key={suggestion.placeId} role="option" aria-selected={index === activeIndex}>
-                            <button
-                                type="button"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => choose(suggestion)}
+                                onClick={() => (item.kind === 'device' ? useDevice() : choose(item.suggestion))}
                                 onMouseEnter={() => setActiveIndex(index)}
-                                className={`block w-full px-4 py-2.5 text-left leading-snug transition ${small ? 'text-xs' : 'text-sm'} ${
-                                    index === activeIndex ? 'bg-brand-surface text-brand-ink' : 'text-brand-ink'
+                                disabled={item.kind === 'device' && isLocating}
+                                className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left leading-snug transition disabled:opacity-60 ${
+                                    small ? 'text-xs' : 'text-sm'
+                                } ${index === activeIndex ? 'bg-brand-surface' : ''} ${
+                                    item.kind === 'device' ? 'font-semibold text-brand-green-dark' : 'text-brand-ink'
                                 }`}
                             >
-                                {suggestion.description}
+                                {item.kind === 'device' ? (
+                                    <>
+                                        <svg className={small ? 'h-3.5 w-3.5' : 'h-4 w-4'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="12" cy="12" r="7" />
+                                            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                                        </svg>
+                                        {isLocating ? 'Locating…' : 'Use my current location'}
+                                    </>
+                                ) : (
+                                    item.suggestion.description
+                                )}
                             </button>
                         </li>
                     ))}

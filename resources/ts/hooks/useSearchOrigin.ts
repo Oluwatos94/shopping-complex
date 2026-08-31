@@ -23,7 +23,10 @@ export function useSearchOrigin(initialDeviceOrigin: SearchOrigin | null = null)
     );
 
     const originRef = useRef<SearchOrigin | null>(origin);
-    originRef.current = origin;
+
+    useEffect(() => {
+        originRef.current = origin;
+    }, [origin]);
 
     const locateDevice = useCallback(async (): Promise<SearchOrigin> => {
         const next = toDeviceOrigin(await requestPosition());

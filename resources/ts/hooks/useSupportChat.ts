@@ -33,14 +33,16 @@ export function useSupportChat(isOpen: boolean) {
     const [error, setError] = useState<string | null>(null);
     const [failedText, setFailedText] = useState<string | null>(null);
     const [hasOlderMessages, setHasOlderMessages] = useState(false);
-    const { origin, originRef, locateDevice, confirm } = useSearchOrigin();
+    const { origin, originRef, locateDevice, confirm, clear } = useSearchOrigin();
     const conversationRef = useRef<SupportConversation | null>(null);
     const startedRef = useRef(false);
     const sendingRef = useRef(false);
     const oldestPageRef = useRef(1);
     const loadingOlderRef = useRef(false);
 
-    conversationRef.current = conversation;
+    useEffect(() => {
+        conversationRef.current = conversation;
+    }, [conversation]);
 
     const setLocation = useCallback((latitude: number, longitude: number, label?: string) => {
         confirm(latitude, longitude, label);
@@ -230,6 +232,7 @@ export function useSupportChat(isOpen: boolean) {
         loadOlderMessages,
         locateDevice,
         setLocation,
+        clearLocation: clear,
         sendMessage,
         escalate,
         retry,

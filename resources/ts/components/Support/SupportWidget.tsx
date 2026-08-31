@@ -12,7 +12,7 @@ export default function SupportWidget() {
     const launcherRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const { conversation, messages, isTyping, isLoading, isEscalating, error, origin, hasOlderMessages, loadOlderMessages, locateDevice, setLocation, sendMessage, escalate, retry } = useSupportChat(isOpen);
+    const { conversation, messages, isTyping, isLoading, isEscalating, error, origin, hasOlderMessages, loadOlderMessages, locateDevice, setLocation, clearLocation, sendMessage, escalate, retry } = useSupportChat(isOpen);
 
     // Escalation ("Talk to a human") is auth-only — guests are routed to sign in.
     const isAuthenticated = Boolean(auth?.user);
@@ -256,6 +256,7 @@ export default function SupportWidget() {
                             origin={origin}
                             onConfirm={setLocation}
                             onUseDevice={locateDevice}
+                            onClear={clearLocation}
                             size="sm"
                             menuPlacement="top"
                             className="rounded-xl border border-brand-line bg-white"

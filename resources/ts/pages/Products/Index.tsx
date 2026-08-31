@@ -24,7 +24,6 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
     const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const { origin, locateDevice, confirm, clear, adoptDeviceOrigin } = useSearchOrigin();
-    const [isDistanceFiltered, setIsDistanceFiltered] = useState(false);
     const appliedConfirmedOrigin = useRef(false);
 
     const navigateWithOrigin = useCallback((next: SearchOrigin | null) => {
@@ -53,13 +52,11 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
         const accuracy = params.get('accuracy');
 
         if (lat === null || lon === null) {
-            setIsDistanceFiltered(false);
             adoptDeviceOrigin(null);
 
             return;
         }
 
-        setIsDistanceFiltered(true);
         adoptDeviceOrigin({
             latitude: Number(lat),
             longitude: Number(lon),
@@ -79,13 +76,11 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
 
     const handleClearOrigin = useCallback(() => {
         clear();
-        setIsDistanceFiltered(false);
         navigateWithOrigin(null);
     }, [clear, navigateWithOrigin]);
 
     useEffect(() => {
-
-        if (appliedConfirmedOrigin.current || !isDistanceFiltered) return;
+        if (appliedConfirmedOrigin.current) return;
         if (origin === null || origin.source !== 'confirmed') return;
 
         appliedConfirmedOrigin.current = true;
@@ -98,7 +93,7 @@ export default function ProductsIndex({ products, categories }: ProductsPageProp
         if (isSameCoordinate(inUrl, origin) && params.get('accuracy') === null) return;
 
         navigateWithOrigin(origin);
-    }, [origin, isDistanceFiltered]);
+    }, [origin]);
 
     useEffect(() => {
         setVisibleCount(BATCH_SIZE);
