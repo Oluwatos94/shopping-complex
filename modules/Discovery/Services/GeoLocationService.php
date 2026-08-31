@@ -22,6 +22,7 @@ final readonly class GeoLocationService
 
     public function __construct(
         private string $apiKey,
+        private array $regionCodes = ['ng'],
     ) {}
 
     /**
@@ -103,9 +104,11 @@ final readonly class GeoLocationService
 
         $body = [
             'input' => $query,
-            'includedRegionCodes' => ['ng'],
             'languageCode' => 'en',
         ];
+        if ($this->regionCodes !== []) {
+            $body['includedRegionCodes'] = $this->regionCodes;
+        }
         if ($sessionToken !== null && $sessionToken !== '') {
             $body['sessionToken'] = $sessionToken;
         }
