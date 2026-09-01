@@ -39,6 +39,7 @@ Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handle'])->
 // Static pages
 Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');
 Route::get('/terms', fn () => inertia('Terms'))->name('terms');
+Route::get('/referral-program', fn () => inertia('ReferralProgram'))->name('referral.program');
 
 // Authentication Routes (guest only with rate limiting)
 Route::middleware(['guest', 'throttle:guest'])->group(function () {
