@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ResetPasswordNotification extends Notification implements ShouldQueue
+class ResetPasswordNotification extends Notification implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 
