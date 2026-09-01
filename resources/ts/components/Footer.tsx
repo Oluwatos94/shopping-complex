@@ -24,7 +24,7 @@ const supportLinks: FooterLink[] = [
 const socials: { label: string; href: string; icon: React.ReactNode }[] = [
     {
         label: 'Instagram',
-        href: 'https://www.instagram.com/jiidaa_app?igsh=MXU1NHk2anFvd2FvdA==',
+        href: 'https://www.instagram.com/jiidaa_ng?igsh=MXU1NHk2anFvd2FvdA==',
         icon: (
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                 <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -44,7 +44,7 @@ const socials: { label: string; href: string; icon: React.ReactNode }[] = [
     },
     {
         label: 'X',
-        href: 'https://x.com/JiidaaSupport',
+        href: 'https://x.com/Jiidaa_ng',
         icon: (
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.2 2H21l-6.6 7.5L22 22h-6.8l-4.8-6.3L4.8 22H2l7.1-8.1L2 2h6.9l4.3 5.8L18.2 2Zm-1.2 18h1.6L7.1 3.8H5.4L17 20Z" />
@@ -60,15 +60,15 @@ const socials: { label: string; href: string; icon: React.ReactNode }[] = [
             </svg>
         ),
     },
-    {
-        label: 'TikTok',
-        href: 'https://www.tiktok.com/@jiidaa700?_r=1&_t=ZS-97Rc5Pknt7F',
-        icon: (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 3c.3 2.2 1.7 3.7 3.8 4v2.4c-1.3 0-2.6-.4-3.8-1.1v5.9a5.6 5.6 0 1 1-5.6-5.6c.3 0 .6 0 .9.1v2.5a3.1 3.1 0 1 0 2.2 3V3H16Z" />
-            </svg>
-        ),
-    },
+    // {
+    //     label: 'TikTok',
+    //     href: 'https://www.tiktok.com/@jiidaa700?_r=1&_t=ZS-97Rc5Pknt7F',
+    //     icon: (
+    //         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+    //             <path d="M16 3c.3 2.2 1.7 3.7 3.8 4v2.4c-1.3 0-2.6-.4-3.8-1.1v5.9a5.6 5.6 0 1 1-5.6-5.6c.3 0 .6 0 .9.1v2.5a3.1 3.1 0 1 0 2.2 3V3H16Z" />
+    //         </svg>
+    //     ),
+    // },
 ];
 
 const Footer: React.FC = () => {
