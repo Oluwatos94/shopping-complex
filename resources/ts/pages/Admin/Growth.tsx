@@ -81,7 +81,7 @@ export default function Growth({
                 </div>
 
                 <div className="mb-5">
-                    <CumulativeChart data={chartData} />
+                    <CumulativeChart data={series} />
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">

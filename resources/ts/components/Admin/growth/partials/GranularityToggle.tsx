@@ -17,6 +17,7 @@ export default function GranularityToggle({ value, onChange }: Props) {
                 <button
                     key={option.value}
                     type="button"
+                    aria-pressed={value === option.value}
                     onClick={() => onChange(option.value)}
                     className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                         value === option.value ? 'bg-primary-olive text-white' : 'text-gray-600 hover:bg-gray-50'
