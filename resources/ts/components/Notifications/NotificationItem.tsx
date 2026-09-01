@@ -112,7 +112,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {relativeTime(timestamp)}
           </span>
         </div>
-        <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words">
+        <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words whitespace-pre-line">
           {body}
         </p>
       </div>

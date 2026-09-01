@@ -55,17 +55,25 @@ final readonly class WhatsAppApiService implements WhatsAppSender
         }, $components));
     }
 
-    /**
-     * @param  mixed  $parameter
-     * @return mixed
-     */
     private function sanitizeParameter($parameter)
     {
         if (is_array($parameter) && isset($parameter['text']) && is_string($parameter['text'])) {
-            $parameter['text'] = trim((string) preg_replace('/\s+/u', ' ', $parameter['text']));
+            $parameter['text'] = $this->flatten($parameter['text']);
         }
 
         return $parameter;
+    }
+
+    private function flatten(string $text): string
+    {
+        $lines = preg_split('/\R+/u', $text) ?: [];
+
+        $lines = array_filter(array_map(
+            fn (string $line): string => trim((string) preg_replace('/[^\S\r\n]+/u', ' ', $line)),
+            $lines,
+        ), fn (string $line): bool => $line !== '');
+
+        return implode(' · ', $lines);
     }
 
     /**
@@ -91,10 +99,6 @@ final readonly class WhatsAppApiService implements WhatsAppSender
         ]);
     }
 
-    /**
-     * Send a location request interactive message.
-     * Renders a "Send Location" button the user can tap to share GPS coordinates.
-     */
     public function sendLocationRequest(string $to, string $body): void
     {
         SendWhatsAppMessage::dispatch($to, [

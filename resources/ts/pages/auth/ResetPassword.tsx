@@ -1,10 +1,17 @@
 import { useForm } from "@inertiajs/react";
 import { useState } from "react";
 
-function ResetPassword() {
+interface Props {
+    token: string;
+    email: string;
+}
+
+function ResetPassword({ token, email }: Props) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const { data, setData, post, processing, errors } = useForm({
+        token,
+        email,
         password: "",
         password_confirmation: "",
     });
@@ -47,6 +54,12 @@ function ResetPassword() {
                             Kindly set your new password
                         </p>
                     </div>
+
+                    {errors.email && (
+                        <div className="rounded-lg border border-red-400/60 bg-red-500/20 px-4 py-3 text-sm text-white">
+                            {errors.email}
+                        </div>
+                    )}
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         {/* Password Input */}
@@ -134,7 +147,7 @@ function ResetPassword() {
                                     className={`w-full px-4 py-3 pr-12 bg-transparent border rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${errors.password_confirmation ? 'border-red-400' : 'border-white'}`}
                                 />
                                 {errors.password_confirmation && (
-                                    <p className="text-red-400 text-sm mt-1\">{errors.password_confirmation}</p>
+                                    <p className="text-red-400 text-sm mt-1">{errors.password_confirmation}</p>
                                 )}
                                 <button
                                     type="button"

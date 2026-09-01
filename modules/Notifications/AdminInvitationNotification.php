@@ -10,19 +10,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ResetPasswordNotification extends Notification implements ShouldBeEncrypted, ShouldQueue
+class AdminInvitationNotification extends Notification implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 
-    public string $token;
-
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(string $token)
-    {
-        $this->token = $token;
-    }
+    public function __construct(
+        private readonly string $token,
+        private readonly string $invitedBy,
+    ) {}
 
     /**
      * Get the notification's delivery channels.
@@ -34,32 +29,27 @@ class ResetPasswordNotification extends Notification implements ShouldBeEncrypte
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        $resetUrl = url(route('password.reset', [
+        $inviteUrl = url(route('password.reset', [
             'token' => $this->token,
-            'email' => $notifiable->getEmailForPasswordReset(),
+            'email' => $notifiable->email,
         ], false));
 
         return (new MailMessage)
-            ->subject('Reset Password Notification')
-            ->view('emails.reset-password', [
-                'resetUrl' => $resetUrl,
+            ->subject('You have been invited to the jiidaa admin portal')
+            ->view('emails.admin-invitation', [
+                'inviteUrl' => $inviteUrl,
+                'name' => $notifiable->name,
+                'invitedBy' => $this->invitedBy,
             ]);
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 }
