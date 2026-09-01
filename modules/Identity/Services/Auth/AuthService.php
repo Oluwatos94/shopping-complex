@@ -7,9 +7,11 @@ namespace ModulesShoppingComplex\Identity\Services\Auth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use ModulesShoppingComplex\Identity\Enums\UserEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Repositories\UserRepository;
 use ModulesShoppingComplex\Identity\Services\ReferralService;
+use ModulesShoppingComplex\Notifications\AdminInvitationNotification;
 use ModulesShoppingComplex\Notifications\Events\SystemAlertEvent;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Services\NotificationService;
@@ -20,7 +22,26 @@ class AuthService
         private readonly UserRepository $userRepository,
         private readonly NotificationService $notificationService,
         private readonly ReferralService $referralService,
+        private readonly PasswordResetService $passwordResetService,
     ) {}
+
+    public function inviteAdmin(string $name, string $email, string $invitedBy): User
+    {
+        $user = $this->userRepository->create([
+            'name' => $name,
+            'email' => $email,
+            'role' => UserEnum::ADMIN->value,
+            'password' => Str::random(64),
+            'email_verified_at' => now(),
+        ]);
+
+        $user->notify(new AdminInvitationNotification(
+            token: $this->passwordResetService->createToken($user),
+            invitedBy: $invitedBy,
+        ));
+
+        return $user;
+    }
 
     /**
      * Register a new user
@@ -76,15 +97,6 @@ class AuthService
         return $this->userRepository->verifyEmail($userId);
     }
 
-    /**
-     * Handle social login (Google, Facebook, etc.)
-     *
-     * This method will:
-     * 1. Check if user exists with the provider ID
-     * 2. If not, check if user exists with the email
-     * 3. If user exists with email, link the social account
-     * 4. If user doesn't exist, create a new user
-     */
     public function handleSocialLogin(
         string $provider,
         string $providerId,

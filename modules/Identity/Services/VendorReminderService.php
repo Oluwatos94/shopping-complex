@@ -71,11 +71,11 @@ final readonly class VendorReminderService
      */
     private function updateFor(User $vendor, array $data): VendorUpdate
     {
-        $body = (string) $data['body'];
+        $subject = (string) $data['subject'];
 
         return new VendorUpdate(
-            subject: (string) $data['subject'],
-            body: $body,
+            subject: $subject,
+            body: (string) $data['body'],
             ctaLabel: $data['cta_label'] ?? null,
             ctaUrl: $data['cta_url'] ?? null,
             templateComponents: [
@@ -83,11 +83,11 @@ final readonly class VendorReminderService
                     'type' => 'body',
                     'parameters' => [
                         ['type' => 'text', 'text' => $vendor->name],
-                        ['type' => 'text', 'text' => $body],
+                        ['type' => 'text', 'text' => $subject],
                     ],
                 ],
             ],
-            data: ['action' => 'admin_reminder'],
+            data: ['action' => 'admin_reminder', 'subject' => $subject],
         );
     }
 }

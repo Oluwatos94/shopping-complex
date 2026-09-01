@@ -1,6 +1,7 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AdminLayout from '@/components/Admin/AdminLayout';
+import FlashBanner from '@/components/FlashBanner';
 import RoleDropdown from '@/components/Admin/users/partials/RoleDropdown';
 import InviteModal from '@/components/Admin/users/partials/InviteModal';
 import { AdminUser, UserSummary } from '@/types/user';
@@ -12,6 +13,11 @@ import { SkeletonTable } from '@/components/Loading';
 interface Props {
     users: Paginated<AdminUser>;
     summary: UserSummary;
+}
+
+interface SharedProps {
+    flash: { success?: string; error?: string };
+    [key: string]: unknown;
 }
 
 const ROLE_BADGE: Record<string, string> = {
@@ -27,6 +33,7 @@ export default function Users({ users, summary }: Props) {
     const [openDropdown, setOpenDropdown] = useState<number | null>(null);
     const [inviteOpen, setInviteOpen] = useState(false);
     const [tableLoading, setTableLoading] = useState(false);
+    const { flash } = usePage<SharedProps>().props;
 
     const applyFilters = (overrides: { role?: string; search?: string; page?: number } = {}) => {
         const params: Record<string, string | number> = {};
@@ -82,6 +89,9 @@ export default function Users({ users, summary }: Props) {
         <>
             <Head title="User Management — Admin" />
             <AdminLayout>
+                {flash?.success && <FlashBanner message={flash.success} type="success" />}
+                {flash?.error && <FlashBanner message={flash.error} type="error" />}
+
                 {/* Page Header */}
                 <div className="flex justify-between items-end mb-10">
                     <div>

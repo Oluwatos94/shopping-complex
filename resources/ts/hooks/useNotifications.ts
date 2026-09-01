@@ -25,10 +25,19 @@ const TYPE_TITLES: Record<string, string> = {
     vendor_contact_request:'Contact Request',
     review_received:       'New Review',
     system_alert:          'System Alert',
+    vendor_update:         'Update from jiidaa',
 };
 
 function titleForType(type: string): string {
     return TYPE_TITLES[type] ?? 'Notification';
+}
+
+function titleFor(type: string, data?: Record<string, unknown> | null): string {
+    const subject = data?.subject;
+
+    return typeof subject === 'string' && subject.trim() !== ''
+        ? subject.trim()
+        : titleForType(type);
 }
 
 function playNotificationSound() {
@@ -55,7 +64,7 @@ function mapRaw(raw: RawNotification): Notification {
     return {
         id:         raw.id,
         type:       raw.type,
-        title:      titleForType(raw.type),
+        title:      titleFor(raw.type, raw.data),
         body:       raw.message,
         timestamp:  new Date(raw.created_at),
         read:       raw.read,
@@ -121,6 +130,7 @@ export function useNotifications(
             'vendor_contact_request',
             'review_received',
             'system_alert',
+            'vendor_update',
         ];
 
         notificationTypes.forEach((type) => {
@@ -128,7 +138,7 @@ export function useNotifications(
                 const newNotif: Notification = {
                     id:        payload.id ?? `rt_${Date.now()}`,
                     type:      payload.type,
-                    title:     titleForType(payload.type),
+                    title:     titleFor(payload.type, payload.data),
                     body:      payload.message,
                     timestamp: new Date(payload.created_at),
                     read:      false,
