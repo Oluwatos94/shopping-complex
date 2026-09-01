@@ -12,3 +12,5 @@ export * from './vendor';
 export * from './common';
 
 export * from './landing';
+
+export * from './growth';
