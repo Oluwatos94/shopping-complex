@@ -49,6 +49,7 @@ const terms: string[] = [
     'Jiidaa reserves the right to disqualify any entry that shows fraudulent or abusive activity.',
     'Prizes are paid to each winner after we verify their referred accounts.',
     'Programme start and end dates are announced on this page and through Jiidaa’s official channels.',
+    'Follow us on all our social handles — @jiidaa_ng on X and Instagram.',
 ];
 
 interface FAQItem {
