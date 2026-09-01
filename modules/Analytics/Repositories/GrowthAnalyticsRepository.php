@@ -118,6 +118,7 @@ class GrowthAnalyticsRepository extends BasePageRepository
         return DB::table(self::SUBSCRIPTIONS)
             ->where('status', VendorSubscriptionStatusEnum::ACTIVE->value)
             ->where('expires_at', '>', $asOf)
+            ->where('amount_paid', '>', 0)
             ->select('amount_paid', 'started_at', 'expires_at')
             ->get();
     }
