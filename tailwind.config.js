@@ -120,6 +120,7 @@ export default {
                 'pin-float-2':   'pinFloat 9s ease-in-out 0.6s infinite',
                 'pin-float-3':   'pinFloat 8s ease-in-out 1.2s infinite',
                 'marquee':       'marqueeX 50s linear infinite',
+                'marquee-banner': 'marqueeX 90s linear infinite',
                 'auth-ripple':   'authRipple 4.5s ease-out infinite',
                 'auth-drop':     'authDrop 2s ease-out infinite',
                 'auth-bob':      'authBob 5s ease-in-out infinite',
