@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Analytics\Services\AdminAnalyticsService;
+use ModulesShoppingComplex\Analytics\Services\GrowthAnalyticsService;
 use ModulesShoppingComplex\Identity\Http\Requests\Admin\SendVendorReminderRequest;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
@@ -28,6 +29,7 @@ class AdminController extends Controller
 
     public function __construct(
         private readonly AdminAnalyticsService $adminAnalyticsService,
+        private readonly GrowthAnalyticsService $growthAnalyticsService,
         private readonly VendorOnboardingService $onboardingService,
         private readonly VendorReminderService $reminderService,
     ) {}
@@ -44,6 +46,17 @@ class AdminController extends Controller
         }
 
         return Inertia::render('Admin/Dashboard', $data);
+    }
+
+    public function growth(Request $request): Response|JsonResponse
+    {
+        $data = $this->growthAnalyticsService->getGrowthMetrics((string) $request->query('granularity', 'week'));
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Admin/Growth', $data);
     }
 
     public function settings(): Response

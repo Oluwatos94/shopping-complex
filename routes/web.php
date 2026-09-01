@@ -221,6 +221,7 @@ Route::middleware(['guest', 'throttle:guest'])->prefix('admin')->group(function 
 // Admin Dashboard Routes
 Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'stats'])->name('admin.dashboard');
+    Route::get('/growth', [AdminController::class, 'growth'])->name('admin.growth');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/vendors/pending', [AdminController::class, 'pendingVendors'])->name('admin.vendors.pending');
     Route::get('/subscriptions', [AdminController::class, 'subscriptions'])->name('admin.subscriptions');
