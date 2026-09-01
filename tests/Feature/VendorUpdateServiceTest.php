@@ -94,7 +94,7 @@ class VendorUpdateServiceTest extends TestCase
         Queue::assertPushed(SendWhatsAppMessage::class, function (SendWhatsAppMessage $job) {
             $text = $job->payload['template']['components'][0]['parameters'][0]['text'];
 
-            return $text === 'Line one. Line two. Tabbed. Spaced.'
+            return $text === 'Line one. · Line two. Tabbed. Spaced.'
                 && ! str_contains($text, "\n")
                 && ! str_contains($text, "\t");
         });

@@ -16,9 +16,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Analytics\Services\AdminAnalyticsService;
 use ModulesShoppingComplex\Analytics\Services\GrowthAnalyticsService;
+use ModulesShoppingComplex\Identity\Http\Requests\Admin\SendAdminInviteRequest;
 use ModulesShoppingComplex\Identity\Http\Requests\Admin\SendVendorReminderRequest;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Identity\Models\VendorOnboarding;
+use ModulesShoppingComplex\Identity\Services\Auth\AuthService;
 use ModulesShoppingComplex\Identity\Services\VendorOnboardingService;
 use ModulesShoppingComplex\Identity\Services\VendorReminderService;
 use ModulesShoppingComplex\Shared\Pagination\PageSize;
@@ -32,6 +34,7 @@ class AdminController extends Controller
         private readonly GrowthAnalyticsService $growthAnalyticsService,
         private readonly VendorOnboardingService $onboardingService,
         private readonly VendorReminderService $reminderService,
+        private readonly AuthService $authService,
     ) {}
 
     public function stats(Request $request): Response|JsonResponse
@@ -129,6 +132,22 @@ class AdminController extends Controller
             'message' => 'User updated successfully.',
             'user' => $user,
         ]);
+    }
+
+    public function inviteAdmin(SendAdminInviteRequest $request): RedirectResponse
+    {
+        $invitee = $this->authService->inviteAdmin(
+            name: $request->validated('name'),
+            email: $request->validated('email'),
+            invitedBy: (string) Auth::user()?->name,
+        );
+
+        Log::info('Admin invited a new administrator', [
+            'invited_user_id' => $invitee->id,
+            'invited_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', "Invitation sent to {$invitee->email}.");
     }
 
     public function viewVendorDocument(User $user, string $field): HttpResponse|RedirectResponse

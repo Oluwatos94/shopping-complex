@@ -35,7 +35,10 @@ const TYPE_COLORS: Record<string, string> = {
   vendor_contact_request: "#86885e",  // olive
   review_received:        "#F5C518",  // star gold
   system_alert:           "#ffffff",  // white
+  vendor_update:          "#25D366",  // brand green
 };
+
+const DEFAULT_COLOR = "#667085";
 
 const DEFAULT_ICON = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -70,7 +73,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   onRemove,
 }) => {
   const { id, type, title, body, timestamp, read } = notification;
-  const color = TYPE_COLORS[type];
+  const color = TYPE_COLORS[type] ?? DEFAULT_COLOR;
 
   const handleClick = useCallback(() => {
     if (!read) onMarkAsRead(id);
@@ -112,7 +115,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {relativeTime(timestamp)}
           </span>
         </div>
-        <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words">
+        <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words whitespace-pre-line">
           {body}
         </p>
       </div>

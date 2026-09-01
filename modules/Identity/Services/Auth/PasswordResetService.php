@@ -40,16 +40,12 @@ class PasswordResetService
         return true;
     }
 
-    /**
-     * Create a password reset token for the user
-     */
-    protected function createToken(User $user): string
+    public function createToken(User $user): string
     {
         DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
         $token = Str::random(64);
 
-        // Store the token (will expire in 1 hour as per migration)
         DB::table('password_reset_tokens')->insert([
             'email' => $user->email,
             'token' => Hash::make($token),

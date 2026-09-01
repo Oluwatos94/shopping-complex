@@ -107,6 +107,28 @@ class AdminVendorReminderTest extends TestCase
         Queue::assertPushed(SendVendorReminder::class, fn (SendVendorReminder $j) => $j->vendor->id === $v2->id);
     }
 
+    public function test_whatsapp_template_carries_the_subject_not_the_multiline_body(): void
+    {
+        Queue::fake([SendVendorReminder::class]);
+
+        $vendor = $this->vendor();
+
+        $this->actingAs($this->admin)->post('/admin/vendors/reminders', $this->payload([
+            'subject' => 'Referral giveaway',
+            'body' => "🔥 REFERRAL GIVEAWAY\n\n1st place — ₦100,000\n2nd place — ₦50,000",
+        ]));
+
+        Queue::assertPushed(SendVendorReminder::class, function (SendVendorReminder $job) use ($vendor) {
+            $parameters = $job->update->templateComponents[0]['parameters'];
+
+            return $job->vendor->id === $vendor->id
+                && $parameters[0]['text'] === $vendor->name
+                && $parameters[1]['text'] === 'Referral giveaway'
+                && $job->update->data['subject'] === 'Referral giveaway'
+                && str_contains($job->update->body, "\n");
+        });
+    }
+
     public function test_target_selection_queues_only_selected_vendors(): void
     {
         Queue::fake([SendVendorReminder::class]);
