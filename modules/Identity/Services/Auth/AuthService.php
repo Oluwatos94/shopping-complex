@@ -27,16 +27,20 @@ class AuthService
 
     public function inviteAdmin(string $name, string $email, string $invitedBy): User
     {
-        $user = $this->userRepository->create([
-            'name' => $name,
-            'email' => $email,
-            'role' => UserEnum::ADMIN->value,
-            'password' => Str::random(64),
-            'email_verified_at' => now(),
-        ]);
+        [$user, $token] = DB::transaction(function () use ($name, $email): array {
+            $user = $this->userRepository->create([
+                'name' => $name,
+                'email' => $email,
+                'role' => UserEnum::ADMIN->value,
+                'password' => Str::random(64),
+                'email_verified_at' => now(),
+            ]);
+
+            return [$user, $this->passwordResetService->createToken($user)];
+        });
 
         $user->notify(new AdminInvitationNotification(
-            token: $this->passwordResetService->createToken($user),
+            token: $token,
             invitedBy: $invitedBy,
         ));
 
