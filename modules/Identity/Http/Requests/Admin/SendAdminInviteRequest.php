@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Identity\Http\Requests\Admin;
 
+use Illuminate\Validation\Rule;
+use ModulesShoppingComplex\Identity\Enums\UserEnum;
 use ModulesShoppingComplex\Shared\Http\Requests\BaseFormRequest;
 
 class SendAdminInviteRequest extends BaseFormRequest
@@ -15,7 +17,12 @@ class SendAdminInviteRequest extends BaseFormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->where('role', UserEnum::ADMIN->value),
+            ],
         ];
     }
 
@@ -25,7 +32,7 @@ class SendAdminInviteRequest extends BaseFormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'An account with that email address already exists.',
+            'email.unique' => 'That account is already an administrator.',
         ];
     }
 }
