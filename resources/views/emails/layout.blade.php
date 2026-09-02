@@ -90,6 +90,74 @@
             line-height: 1.6;
         }
 
+        /* ── Campaign banner ── */
+        .campaign-banner {
+            margin: 0 0 28px;
+        }
+        .campaign-banner img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border: 0;
+            border-radius: 12px;
+        }
+
+        /* ── Rich text (admin-authored Markdown) ── */
+        .rich-text {
+            margin: 20px 0 8px;
+        }
+        .rich-text h1,
+        .rich-text h2,
+        .rich-text h3,
+        .rich-text h4 {
+            color: #0B1F3A;
+            font-weight: 700;
+            line-height: 1.35;
+            margin: 26px 0 10px;
+        }
+        .rich-text h1 { font-size: 20px; }
+        .rich-text h2 { font-size: 18px; }
+        .rich-text h3 { font-size: 16px; }
+        .rich-text h4 { font-size: 15px; }
+        .rich-text p {
+            color: #475467;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 12px 0;
+        }
+        .rich-text ul,
+        .rich-text ol {
+            margin: 12px 0;
+            padding-left: 22px;
+        }
+        .rich-text li {
+            color: #475467;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 6px 0;
+        }
+        .rich-text strong { color: #0B1F3A; font-weight: 700; }
+        .rich-text a { color: #1EB85A; text-decoration: underline; }
+        .rich-text blockquote {
+            margin: 18px 0;
+            padding: 2px 0 2px 16px;
+            border-left: 4px solid #25D366;
+            color: #667085;
+        }
+        .rich-text hr {
+            border: none;
+            border-top: 1px solid #e4e7ec;
+            margin: 24px 0;
+        }
+        .rich-text img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border: 0;
+            border-radius: 12px;
+            margin: 18px 0;
+        }
+
         /* ── Divider ── */
         .divider {
             border: none;

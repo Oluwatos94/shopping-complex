@@ -242,7 +242,14 @@ class AdminController extends Controller
 
     public function sendReminders(SendVendorReminderRequest $request): RedirectResponse
     {
-        $count = $this->reminderService->queueReminders($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('banner')) {
+            $path = $request->file('banner')->store('campaign-banners', 'public');
+            $data['banner_url'] = Storage::disk('public')->url($path);
+        }
+
+        $count = $this->reminderService->queueReminders($data);
 
         Log::info('Admin queued vendor reminders', [
             'queued_for' => $count,

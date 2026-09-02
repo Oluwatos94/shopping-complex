@@ -72,7 +72,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   onMarkAsRead,
   onRemove,
 }) => {
-  const { id, type, title, body, timestamp, read } = notification;
+  const { id, type, title, body, timestamp, read, imageUrl } = notification;
   const color = TYPE_COLORS[type] ?? DEFAULT_COLOR;
 
   const handleClick = useCallback(() => {
@@ -115,6 +115,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {relativeTime(timestamp)}
           </span>
         </div>
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            className="mt-2 w-full max-h-28 object-cover rounded-lg border border-gray-100"
+          />
+        )}
         <p className="mt-1 mb-0 text-xs text-gray-500 leading-relaxed break-words whitespace-pre-line">
           {body}
         </p>

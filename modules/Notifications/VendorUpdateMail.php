@@ -12,6 +12,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Data\VendorUpdate;
+use ModulesShoppingComplex\Shared\Support\MarkdownRenderer;
 
 class VendorUpdateMail extends Mailable implements ShouldQueue
 {
@@ -34,6 +35,7 @@ class VendorUpdateMail extends Mailable implements ShouldQueue
             with: [
                 'vendor' => $this->vendor,
                 'update' => $this->update,
+                'bodyHtml' => MarkdownRenderer::toHtml($this->update->body),
             ],
         );
     }

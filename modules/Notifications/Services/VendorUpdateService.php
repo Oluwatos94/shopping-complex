@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Data\VendorUpdate;
+use ModulesShoppingComplex\Notifications\Enums\NotificationChannelEnum;
 use ModulesShoppingComplex\Notifications\Events\VendorUpdateEvent;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationPreferenceRepository;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationRepository;
 use ModulesShoppingComplex\Notifications\VendorUpdateMail;
+use ModulesShoppingComplex\Shared\Support\MarkdownRenderer;
 use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
 use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
@@ -27,9 +29,17 @@ final readonly class VendorUpdateService
 
     public function send(User $vendor, VendorUpdate $update): void
     {
-        $this->sendWhatsApp($vendor, $update);
-        $this->sendEmail($vendor, $update);
-        $this->sendInApp($vendor, $update);
+        if ($update->sendsTo(NotificationChannelEnum::WHATSAPP)) {
+            $this->sendWhatsApp($vendor, $update);
+        }
+
+        if ($update->sendsTo(NotificationChannelEnum::EMAIL)) {
+            $this->sendEmail($vendor, $update);
+        }
+
+        if ($update->sendsTo(NotificationChannelEnum::IN_APP)) {
+            $this->sendInApp($vendor, $update);
+        }
     }
 
     private function sendWhatsApp(User $vendor, VendorUpdate $update): void
@@ -85,15 +95,17 @@ final readonly class VendorUpdateService
             return;
         }
 
+        $message = MarkdownRenderer::toPlainText($update->body);
+
         try {
             $this->notifications->create([
                 'user_id' => $vendor->id,
                 'type' => self::TYPE,
-                'message' => $update->body,
+                'message' => $message,
                 'data' => $update->data,
             ]);
 
-            event(new VendorUpdateEvent($vendor, $update->body, $update->data));
+            event(new VendorUpdateEvent($vendor, $message, $update->data));
         } catch (\Throwable $e) {
             Log::warning('Vendor update in-app delivery failed', [
                 'vendor_id' => $vendor->id,

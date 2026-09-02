@@ -3,12 +3,18 @@
 @section('title', $update->subject)
 
 @section('content')
+    @if($update->bannerUrl)
+        <div class="campaign-banner">
+            <img src="{{ $update->bannerUrl }}" alt="{{ $update->subject }}">
+        </div>
+    @endif
+
     <h2>{{ $update->subject }}</h2>
 
     <p>Hello {{ $vendor->name }},</p>
 
-    <div class="info-box">
-        <p>{!! nl2br(e($update->body)) !!}</p>
+    <div class="rich-text">
+        {!! $bodyHtml !!}
     </div>
 
     @if($update->ctaUrl && $update->ctaLabel)

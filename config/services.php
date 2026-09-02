@@ -89,6 +89,7 @@ return [
 
         'templates' => [
             'vendor_update' => env('WHATSAPP_TEMPLATE_VENDOR_UPDATE', 'vendor_update'),
+            'vendor_update_has_image_header' => env('WHATSAPP_TEMPLATE_VENDOR_UPDATE_IMAGE_HEADER', false),
         ],
     ],
 
