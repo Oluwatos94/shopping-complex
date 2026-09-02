@@ -72,22 +72,49 @@ final readonly class VendorReminderService
     private function updateFor(User $vendor, array $data): VendorUpdate
     {
         $subject = (string) $data['subject'];
+        $bannerUrl = $data['banner_url'] ?? null;
 
         return new VendorUpdate(
             subject: $subject,
             body: (string) $data['body'],
             ctaLabel: $data['cta_label'] ?? null,
             ctaUrl: $data['cta_url'] ?? null,
-            templateComponents: [
-                [
-                    'type' => 'body',
-                    'parameters' => [
-                        ['type' => 'text', 'text' => $vendor->name],
-                        ['type' => 'text', 'text' => $subject],
-                    ],
-                ],
-            ],
-            data: ['action' => 'admin_reminder', 'subject' => $subject],
+            templateComponents: $this->templateComponents($vendor, $subject, $bannerUrl),
+            data: array_filter([
+                'action' => 'admin_reminder',
+                'subject' => $subject,
+                'banner_url' => $bannerUrl,
+            ], fn ($value) => $value !== null),
+            bannerUrl: $bannerUrl,
+            channels: $data['channels'] ?? [],
         );
+    }
+
+    /**
+     * The image header is only sent when the approved Meta template actually
+     * declares one — otherwise Meta rejects the whole message.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function templateComponents(User $vendor, string $subject, ?string $bannerUrl): array
+    {
+        $components = [];
+
+        if ($bannerUrl !== null && config('services.whatsapp.templates.vendor_update_has_image_header')) {
+            $components[] = [
+                'type' => 'header',
+                'parameters' => [['type' => 'image', 'image' => ['link' => $bannerUrl]]],
+            ];
+        }
+
+        $components[] = [
+            'type' => 'body',
+            'parameters' => [
+                ['type' => 'text', 'text' => $vendor->name],
+                ['type' => 'text', 'text' => $subject],
+            ],
+        ];
+
+        return $components;
     }
 }

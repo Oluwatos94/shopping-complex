@@ -58,6 +58,7 @@ export interface Notification {
     timestamp: Date;
     read: boolean;
     actionUrl?: string;
+    imageUrl?: string;
     groupCount?: number;
     isGrouped?: boolean;
 }

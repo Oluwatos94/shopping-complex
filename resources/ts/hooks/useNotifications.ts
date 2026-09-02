@@ -71,6 +71,7 @@ function mapRaw(raw: RawNotification): Notification {
         groupCount: raw.group_count,
         isGrouped:  raw.is_grouped,
         actionUrl:  (raw.data?.action_url as string | undefined),
+        imageUrl:   (raw.data?.banner_url as string | undefined),
     };
 }
 
@@ -143,6 +144,7 @@ export function useNotifications(
                     timestamp: new Date(payload.created_at),
                     read:      false,
                     actionUrl: payload.data?.action_url as string | undefined,
+                    imageUrl:  payload.data?.banner_url as string | undefined,
                 };
 
                 setNotifications((prev) => [newNotif, ...prev].slice(0, 50));
