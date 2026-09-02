@@ -86,7 +86,9 @@ class SendVendorReminderRequest extends BaseFormRequest
             'cta_url.required_with' => 'A link is required when a button label is provided.',
             'banner.required' => 'The WhatsApp template needs a banner image — attach one, or untick WhatsApp.',
             'banner.image' => 'The banner must be an image.',
-            'banner.mimes' => 'WhatsApp only accepts a JPG or PNG banner.',
+            'banner.mimes' => $this->whatsAppTemplateNeedsBanner()
+                ? 'WhatsApp only accepts a JPG or PNG banner.'
+                : 'The banner must be a JPG, PNG, GIF or WebP image.',
             'banner.max' => 'The banner must be 2 MB or smaller.',
             'channels.min' => 'Pick at least one channel to send on.',
             'channels.*.in' => 'That is not a channel we can send on.',

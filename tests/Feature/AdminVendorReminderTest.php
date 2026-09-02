@@ -326,6 +326,27 @@ class AdminVendorReminderTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_the_banner_format_message_matches_the_active_rule(): void
+    {
+        $this->withImageHeaderTemplate();
+
+        $this->actingAs($this->admin)
+            ->postJson('/admin/vendors/reminders', $this->payload([
+                'banner' => UploadedFile::fake()->image('hero.webp'),
+            ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.banner.0', 'WhatsApp only accepts a JPG or PNG banner.');
+
+        config(['services.whatsapp.templates.vendor_update_has_image_header' => false]);
+
+        $this->actingAs($this->admin)
+            ->postJson('/admin/vendors/reminders', $this->payload([
+                'banner' => UploadedFile::fake()->create('hero.bmp', 10, 'image/bmp'),
+            ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.banner.0', 'The banner must be a JPG, PNG, GIF or WebP image.');
+    }
+
     public function test_no_image_header_is_sent_while_the_template_is_text_only(): void
     {
         Storage::fake('public');
