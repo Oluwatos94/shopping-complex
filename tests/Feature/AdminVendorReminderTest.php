@@ -254,6 +254,93 @@ class AdminVendorReminderTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    // ==================== WhatsApp image-header template ====================
+
+    private function withImageHeaderTemplate(): void
+    {
+        config(['services.whatsapp.templates.vendor_update_has_image_header' => true]);
+    }
+
+    public function test_a_banner_is_required_when_the_whatsapp_template_declares_an_image_header(): void
+    {
+        $this->withImageHeaderTemplate();
+        Queue::fake([SendVendorReminder::class]);
+
+        $this->actingAs($this->admin)
+            ->postJson('/admin/vendors/reminders', $this->payload())
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('banner');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_no_banner_is_required_when_whatsapp_is_not_one_of_the_channels(): void
+    {
+        $this->withImageHeaderTemplate();
+        Queue::fake([SendVendorReminder::class]);
+
+        $this->vendor();
+
+        $this->actingAs($this->admin)
+            ->post('/admin/vendors/reminders', $this->payload(['channels' => ['email', 'in_app']]))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        Queue::assertPushed(SendVendorReminder::class);
+    }
+
+    public function test_the_image_header_component_is_sent_ahead_of_the_body(): void
+    {
+        $this->withImageHeaderTemplate();
+        Storage::fake('public');
+        Queue::fake([SendVendorReminder::class]);
+
+        $this->vendor();
+
+        $this->actingAs($this->admin)->post('/admin/vendors/reminders', $this->payload([
+            'banner' => UploadedFile::fake()->image('hero.png', 1200, 630),
+        ]))->assertSessionHasNoErrors();
+
+        Queue::assertPushed(SendVendorReminder::class, function (SendVendorReminder $job) {
+            $components = $job->update->templateComponents;
+
+            return $components[0]['type'] === 'header'
+                && $components[0]['parameters'][0]['type'] === 'image'
+                && str_contains($components[0]['parameters'][0]['image']['link'], 'campaign-banners')
+                && $components[1]['type'] === 'body';
+        });
+    }
+
+    public function test_it_rejects_a_webp_banner_when_the_image_header_template_is_active(): void
+    {
+        $this->withImageHeaderTemplate();
+        Queue::fake([SendVendorReminder::class]);
+
+        $this->actingAs($this->admin)
+            ->postJson('/admin/vendors/reminders', $this->payload([
+                'banner' => UploadedFile::fake()->image('hero.webp'),
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('banner');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_no_image_header_is_sent_while_the_template_is_text_only(): void
+    {
+        Storage::fake('public');
+        Queue::fake([SendVendorReminder::class]);
+
+        $this->vendor();
+
+        $this->actingAs($this->admin)->post('/admin/vendors/reminders', $this->payload([
+            'banner' => UploadedFile::fake()->image('hero.png'),
+        ]))->assertSessionHasNoErrors();
+
+        Queue::assertPushed(SendVendorReminder::class, fn (SendVendorReminder $job) => count($job->update->templateComponents) === 1
+            && $job->update->templateComponents[0]['type'] === 'body');
+    }
+
     public function test_target_selection_queues_only_selected_vendors(): void
     {
         Queue::fake([SendVendorReminder::class]);

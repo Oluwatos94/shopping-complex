@@ -103,6 +103,7 @@ export default function ReminderModal({ open, onClose, selectedIds }: Props) {
                 setCtaLabel('');
                 setCtaUrl('');
                 setBanner(null);
+                setChannels(['whatsapp', 'email', 'in_app']);
                 onClose();
             },
             onFinish: () => setSubmitting(false),
