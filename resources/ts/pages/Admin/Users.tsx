@@ -13,6 +13,7 @@ import { SkeletonTable } from '@/components/Loading';
 interface Props {
     users: Paginated<AdminUser>;
     summary: UserSummary;
+    filters: { role: string; search: string };
 }
 
 interface SharedProps {
@@ -27,20 +28,19 @@ const ROLE_BADGE: Record<string, string> = {
 };
 
 
-export default function Users({ users, summary }: Props) {
-    const [activeRole, setActiveRole] = useState('');
-    const [search, setSearch] = useState('');
+export default function Users({ users, summary, filters }: Props) {
     const [openDropdown, setOpenDropdown] = useState<number | null>(null);
     const [inviteOpen, setInviteOpen] = useState(false);
     const [tableLoading, setTableLoading] = useState(false);
     const { flash } = usePage<SharedProps>().props;
 
-    const applyFilters = (overrides: { role?: string; search?: string; page?: number } = {}) => {
+    const activeRole = filters.role;
+
+    const applyFilters = (overrides: { role?: string; page?: number } = {}) => {
         const params: Record<string, string | number> = {};
         const r = overrides.role !== undefined ? overrides.role : activeRole;
-        const q = overrides.search !== undefined ? overrides.search : search;
         if (r) params.role = r;
-        if (q) params.search = q;
+        if (filters.search) params.search = filters.search;
         if (overrides.page) params.page = overrides.page;
         router.get('/admin/users', params, {
             preserveScroll: true,
@@ -49,15 +49,7 @@ export default function Users({ users, summary }: Props) {
         });
     };
 
-    const handleRoleFilter = (role: string) => {
-        setActiveRole(role);
-        applyFilters({ role, page: 1 });
-    };
-
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        applyFilters({ search: value, page: 1 });
-    };
+    const handleRoleFilter = (role: string) => applyFilters({ role, page: 1 });
 
     const handleChangeRole = (userId: number, role: string) => {
         router.patch(`/admin/users/${userId}`, { role }, { preserveScroll: true });
@@ -167,7 +159,7 @@ export default function Users({ users, summary }: Props) {
 
                 {/* Filters Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-5 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                         {roleTabs.map((tab) => (
                             <button
                                 key={tab.value}
@@ -182,23 +174,11 @@ export default function Users({ users, summary }: Props) {
                             </button>
                         ))}
                     </div>
-                    <div className="relative">
-                        <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Search accounts, emails..."
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            className="bg-white border border-gray-200/60 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/20 placeholder:text-gray-300 w-60"
-                        />
-                    </div>
+                    {filters.search && (
+                        <p className="text-xs text-gray-500">
+                            Matching <span className="font-bold text-gray-700">“{filters.search}”</span>
+                        </p>
+                    )}
                 </div>
 
                 {/* Table */}

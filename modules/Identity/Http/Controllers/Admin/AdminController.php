@@ -85,6 +85,10 @@ class AdminController extends Controller
         $data = [
             'users' => $this->adminAnalyticsService->getUserList($filters),
             'summary' => $this->adminAnalyticsService->getPlatformStats(),
+            'filters' => [
+                'role' => (string) $request->get('role', ''),
+                'search' => trim((string) $request->get('search', '')),
+            ],
         ];
 
         if ($request->wantsJson()) {
@@ -136,18 +140,24 @@ class AdminController extends Controller
 
     public function inviteAdmin(SendAdminInviteRequest $request): RedirectResponse
     {
+        $email = $request->validated('email');
+        $previousRole = User::where('email', $email)->value('role');
+
         $invitee = $this->authService->inviteAdmin(
             name: $request->validated('name'),
-            email: $request->validated('email'),
+            email: $email,
             invitedBy: (string) Auth::user()?->name,
         );
 
         Log::info('Admin invited a new administrator', [
             'invited_user_id' => $invitee->id,
             'invited_by' => Auth::id(),
+            'previous_role' => $previousRole,
         ]);
 
-        return back()->with('success', "Invitation sent to {$invitee->email}.");
+        return back()->with('success', $previousRole === null
+            ? "Invitation sent to {$invitee->email}."
+            : "{$invitee->name} was promoted from {$previousRole} to admin — an invitation was sent to {$invitee->email}. Their {$previousRole} access has been replaced.");
     }
 
     public function viewVendorDocument(User $user, string $field): HttpResponse|RedirectResponse

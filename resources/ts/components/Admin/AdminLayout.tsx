@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { TrophyIcon } from '@/components/icons';
 
@@ -22,14 +22,56 @@ interface NavItem {
     badge?: number;
 }
 
+/**
+ * Admin pages whose controller reads a `search` query param. The header search
+ * drives the current page's list; on any other page there is nothing to search,
+ * so the field is hidden rather than left inert.
+ */
+const SEARCHABLE: { path: string; placeholder: string; force?: Record<string, string> }[] = [
+    { path: '/admin/users', placeholder: 'Search users by name or email...' },
+    { path: '/admin/vendors/pending', placeholder: 'Search vendors...', force: { status: 'all' } },
+    { path: '/admin/referral/participants', placeholder: 'Search participants...' },
+];
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const page = usePage<SharedProps>();
     const user = page.props.auth?.user;
     const flash = page.props.flash;
     const supportAwaiting = page.props.support_awaiting_count ?? 0;
     const pathname = page.url.split('?')[0] ?? '';
+    const queryString = page.url.split('?')[1] ?? '';
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const searchable = SEARCHABLE.find((entry) => entry.path === pathname);
+    const appliedSearch = new URLSearchParams(queryString).get('search') ?? '';
+    const [term, setTerm] = useState(appliedSearch);
+
+    useEffect(() => setTerm(appliedSearch), [appliedSearch]);
+
+    useEffect(() => {
+        if (!searchable || term === appliedSearch) return undefined;
+
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(queryString);
+            if (term.trim()) {
+                params.set('search', term.trim());
+            } else {
+                params.delete('search');
+            }
+            params.delete('page');
+            Object.entries(searchable.force ?? {}).forEach(([key, value]) => params.set(key, value));
+
+            const query = params.toString();
+            router.get(query ? `${pathname}?${query}` : pathname, {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [term, appliedSearch, pathname, queryString, searchable]);
 
     useEffect(() => {
         if (flash?.success) {
@@ -197,16 +239,31 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             {/* Top Header */}
             <header className="fixed top-0 left-64 right-0 h-16 bg-white/80 backdrop-blur-xl z-40 flex justify-between items-center px-8 border-b border-gray-100">
                 <div className="flex items-center flex-1 max-w-md">
-                    <div className="relative w-full">
-                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Search users, vendors, or reports..."
-                            className="w-full bg-gray-50 border border-gray-200/60 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/20 placeholder:text-gray-400"
-                        />
-                    </div>
+                    {searchable && (
+                        <div className="relative w-full">
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input
+                                type="text"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
+                                placeholder={searchable.placeholder}
+                                className="w-full bg-gray-50 border border-gray-200/60 rounded-full py-2 pl-10 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary-olive/20 placeholder:text-gray-400"
+                            />
+                            {term && (
+                                <button
+                                    onClick={() => setTerm('')}
+                                    title="Clear search"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-5">
                     <button className="relative text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors">

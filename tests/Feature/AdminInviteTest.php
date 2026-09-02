@@ -76,7 +76,52 @@ class AdminInviteTest extends TestCase
         ]));
     }
 
-    public function test_invite_is_rejected_for_an_existing_email(): void
+    public function test_inviting_an_existing_vendor_promotes_them_instead_of_failing(): void
+    {
+        Notification::fake();
+
+        $vendor = User::factory()->create([
+            'name' => 'Ada Vendor',
+            'email' => 'ada@jiidaa.com',
+            'role' => 'vendor',
+            'password' => 'Existing!Passw0rd#2026',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post('/admin/users/invite', [
+                'name' => 'Ignored Name',
+                'email' => 'ada@jiidaa.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        $vendor->refresh();
+
+        $this->assertSame('admin', $vendor->role);
+        $this->assertSame('Ada Vendor', $vendor->name);
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'ada@jiidaa.com']);
+        $this->assertTrue(Hash::check('Existing!Passw0rd#2026', $vendor->password));
+
+        Notification::assertSentTo($vendor, AdminInvitationNotification::class);
+    }
+
+    public function test_promoted_customer_keeps_a_single_user_record(): void
+    {
+        Notification::fake();
+
+        User::factory()->create(['email' => 'buyer@jiidaa.com', 'role' => 'customer']);
+
+        $this->actingAs($this->admin)->post('/admin/users/invite', [
+            'name' => 'Buyer',
+            'email' => 'buyer@jiidaa.com',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(1, User::where('email', 'buyer@jiidaa.com')->count());
+    }
+
+    public function test_invite_is_rejected_when_the_account_is_already_an_admin(): void
     {
         $this->actingAs($this->admin)
             ->post('/admin/users/invite', [
