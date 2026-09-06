@@ -1,5 +1,5 @@
 import React from 'react';
-import ReferralBanner from '@/components/ReferralBanner';
+// import ReferralBanner from '@/components/ReferralBanner';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import TrustBar from '@/components/TrustBar';
@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
 const Index: React.FC = () => {
     return (
         <div className="min-h-screen bg-white">
-            <ReferralBanner />
+            {/* <ReferralBanner /> */}
             <Header />
             <main>
                 <HeroSection />
