@@ -31,17 +31,20 @@
         }
 
         /* ── Header ── */
+
         .email-header {
             background-color: #0B1F3A;
-            padding: 28px 40px;
+            padding: 0;
             text-align: center;
+            font-size: 0;
+            line-height: 0;
         }
         .email-header img {
             display: block;
-            margin: 0 auto;
-            width: 150px;
-            max-width: 60%;
+            width: 100%;
+            max-width: 580px;
             height: auto;
+            border: 0;
         }
 
         /* ── Body ── */
@@ -195,7 +198,7 @@
 
         @media only screen and (max-width: 600px) {
             .wrapper { padding: 20px 12px; }
-            .email-header { padding: 24px 24px 20px; }
+            .email-header { padding: 0; }
             .email-body { padding: 28px 24px; }
             .email-footer { padding: 20px 24px; }
             .action-button { padding: 14px 32px; font-size: 14px; }
@@ -235,8 +238,9 @@
         <!-- Header -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0B1F3A">
             <tr>
-                <td class="email-header" align="center" bgcolor="#0B1F3A" style="background-color: #0B1F3A;">
-                    <img src="{{ asset('logo/whiteLogo.png') }}" alt="jiidaa" width="150">
+                <td class="email-header" align="center" bgcolor="#0B1F3A" style="background-color: #0B1F3A; padding: 0;">
+                    <img src="{{ asset('logo/emailLogo.png') }}" alt="jiidaa" width="580"
+                         style="display: block; width: 100%; max-width: 580px; height: auto; border: 0;">
                 </td>
             </tr>
         </table>
