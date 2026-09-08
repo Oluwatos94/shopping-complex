@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <title>@yield('title', 'jiidaa')</title>
     <style>
+        :root { color-scheme: light dark; supported-color-schemes: light dark; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -197,6 +200,32 @@
             .email-footer { padding: 20px 24px; }
             .action-button { padding: 14px 32px; font-size: 14px; }
         }
+
+        @media (prefers-color-scheme: dark) {
+            .email-header,
+            .email-footer {
+                background-color: #0B1F3A !important;
+            }
+            .action-button {
+                background-color: #25D366 !important;
+                color: #ffffff !important;
+            }
+        }
+
+        [data-ogsc] .email-header,
+        [data-ogsb] .email-header,
+        [data-ogsc] .email-footer,
+        [data-ogsb] .email-footer {
+            background-color: #0B1F3A !important;
+        }
+        [data-ogsc] .email-footer p {
+            color: rgba(255,255,255,0.6) !important;
+        }
+        [data-ogsc] .action-button,
+        [data-ogsb] .action-button {
+            background-color: #25D366 !important;
+            color: #ffffff !important;
+        }
     </style>
 </head>
 <body>
@@ -204,9 +233,13 @@
     <div class="email-container">
 
         <!-- Header -->
-        <div class="email-header">
-            <img src="{{ asset('logo/whiteLogo.png') }}" alt="jiidaa" width="150">
-        </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0B1F3A">
+            <tr>
+                <td class="email-header" align="center" bgcolor="#0B1F3A" style="background-color: #0B1F3A;">
+                    <img src="{{ asset('logo/whiteLogo.png') }}" alt="jiidaa" width="150">
+                </td>
+            </tr>
+        </table>
 
         <!-- Body -->
         <div class="email-body">
@@ -214,10 +247,14 @@
         </div>
 
         <!-- Footer -->
-        <div class="email-footer">
-            <p>&copy; {{ date('Y') }} jiidaa. All rights reserved.</p>
-            <p>This is an automated email — please do not reply to this message.</p>
-        </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0B1F3A">
+            <tr>
+                <td class="email-footer" align="center" bgcolor="#0B1F3A" style="background-color: #0B1F3A;">
+                    <p>&copy; {{ date('Y') }} jiidaa. All rights reserved.</p>
+                    <p>This is an automated email — please do not reply to this message.</p>
+                </td>
+            </tr>
+        </table>
 
     </div>
 </div>
