@@ -8,11 +8,15 @@ use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Identity\Models\User;
 
 /**
- * Takes the coins for a charged lead. Called inside the same transaction as
- * the lead insert, so an implementation that throws rolls the lead back too.
- * The coin wallet supplies the real implementation; until then it is a no-op.
+ * Takes the coins for a lead. Called inside the same transaction as the lead
+ * insert, so an implementation that throws rolls the lead back too. Returning
+ * 0 leaves the lead recorded as unbilled — the coin wallet supplies the real
+ * implementation; until then nothing is taken.
  */
 interface LeadDebitor
 {
-    public function debit(User $vendor, BillableLead $lead): void;
+    /**
+     * @return int coins actually taken
+     */
+    public function debit(User $vendor, BillableLead $lead, int $coins): int;
 }

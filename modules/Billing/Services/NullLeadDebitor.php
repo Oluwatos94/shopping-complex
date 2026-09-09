@@ -10,5 +10,8 @@ use ModulesShoppingComplex\Identity\Models\User;
 
 final class NullLeadDebitor implements LeadDebitor
 {
-    public function debit(User $vendor, BillableLead $lead): void {}
+    public function debit(User $vendor, BillableLead $lead, int $coins): int
+    {
+        return 0;
+    }
 }

@@ -43,14 +43,21 @@ final class LeadBillingService
                 'vendor_id' => $click->vendor_id,
                 'buyer_identity' => $click->buyer_identity,
                 'channel' => $click->source,
-                'coins_charged' => (int) config('billing.leads.coin_cost'),
-                'state' => BillableLeadStateEnum::CHARGED,
+                'coins_charged' => 0,
+                'state' => BillableLeadStateEnum::UNBILLED,
                 'window_start' => now(),
                 'repeat_count' => 0,
                 'last_click_at' => now(),
             ]);
 
-            $this->debitor->debit($vendor, $lead);
+            $charged = $this->debitor->debit($vendor, $lead, (int) config('billing.leads.coin_cost'));
+
+            if ($charged > 0) {
+                $lead->forceFill([
+                    'coins_charged' => $charged,
+                    'state' => BillableLeadStateEnum::CHARGED,
+                ])->save();
+            }
 
             return $lead;
         });

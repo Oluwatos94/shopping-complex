@@ -18,6 +18,7 @@ use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\LeadBillingService;
+use ModulesShoppingComplex\Billing\Services\NullLeadDebitor;
 use ModulesShoppingComplex\Identity\Models\User;
 use Tests\TestCase;
 
@@ -166,7 +167,7 @@ class BillableLeadTest extends TestCase
 
         $this->app->instance(LeadDebitor::class, new class implements LeadDebitor
         {
-            public function debit(User $vendor, BillableLead $lead): void
+            public function debit(User $vendor, BillableLead $lead, int $coins): int
             {
                 throw new \RuntimeException('wallet unavailable');
             }
@@ -180,6 +181,25 @@ class BillableLeadTest extends TestCase
 
         $this->assertSame(0, BillableLead::count());
         $this->assertTrue($click->fresh()?->is_billable);
+    }
+
+    public function test_without_a_wallet_the_lead_is_unbilled_but_still_deduplicated(): void
+    {
+        $this->withoutBillingListener();
+        $this->app->bind(LeadDebitor::class, NullLeadDebitor::class);
+        $vendor = $this->vendor();
+
+        $lead = app(LeadBillingService::class)->bill($this->click($vendor));
+
+        $this->assertSame(BillableLeadStateEnum::UNBILLED, $lead?->state);
+        $this->assertSame(0, $lead?->coins_charged);
+
+        // The introduction still happened, so the pair is not charged when the wallet arrives.
+        $second = $this->click($vendor);
+        app(LeadBillingService::class)->bill($second);
+
+        $this->assertSame(1, BillableLead::count());
+        $this->assertFalse($second->fresh()?->is_billable);
     }
 
     public function test_redelivering_the_opening_click_is_idempotent(): void
@@ -245,8 +265,10 @@ final class SpyLeadDebitor implements LeadDebitor
     /** @var array<int, array{0: int, 1: int}> */
     public array $debits = [];
 
-    public function debit(User $vendor, BillableLead $lead): void
+    public function debit(User $vendor, BillableLead $lead, int $coins): int
     {
-        $this->debits[] = [$vendor->id, $lead->coins_charged];
+        $this->debits[] = [$vendor->id, $coins];
+
+        return $coins;
     }
 }

@@ -11,4 +11,5 @@ enum BillableLeadStateEnum: string
     use EnumToArray;
 
     case CHARGED = 'charged';
+    case UNBILLED = 'unbilled';
 }
