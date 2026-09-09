@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
+use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -35,6 +36,7 @@ final readonly class WhatsAppBotService
         private WhatsAppInteractionRepository $interactionRepository,
         private VendorService $vendorService,
         private AnalyticsService $analyticsService,
+        private ContactLinkService $contactLinks,
     ) {}
 
     /**
@@ -472,8 +474,20 @@ final readonly class WhatsAppBotService
             'vendor_id' => $vendorId,
         ]);
 
-        $waNumber = $this->normalizeWhatsAppNumber((string) $vendor->whatsapp_number);
-        $waLink = "https://wa.me/{$waNumber}";
+        $waLink = $this->contactLinks->urlFor(
+            $vendor,
+            ViewSourceEnum::WHATSAPP,
+            buyerIdentity: $session->phone_number,
+        );
+
+        if ($waLink === null) {
+            $this->apiService->sendText(
+                $session->phone_number,
+                "This vendor hasn't set up a WhatsApp contact yet. Try another vendor or type MENU to search again."
+            );
+
+            return;
+        }
 
         $this->apiService->sendText(
             $session->phone_number,
@@ -569,24 +583,6 @@ final readonly class WhatsAppBotService
     private function productDescription(Product $product): string
     {
         return '₦'.number_format((float) $product->price, 0);
-    }
-
-    /**
-     * Normalize a WhatsApp number to E.164 format (digits only, with country code).
-     *
-     * wa.me and Meta's API both require E.164 format — no leading zero, no plus sign.
-     * Nigerian local numbers starting with 0 are converted to 234XXXXXXXXXX.
-     */
-    private function normalizeWhatsAppNumber(string $number): string
-    {
-        $digits = (string) preg_replace('/[^0-9]/', '', $number);
-
-        // Convert Nigerian local format: 0XXXXXXXXXX (11 digits) → 234XXXXXXXXXX
-        if (str_starts_with($digits, '0') && strlen($digits) === 11) {
-            $digits = '234'.substr($digits, 1);
-        }
-
-        return $digits;
     }
 
     private function welcomeMessage(): string
