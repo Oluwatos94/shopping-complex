@@ -182,11 +182,11 @@ class ContactRedirectTest extends TestCase
     public function test_a_click_outside_the_repeat_window_bills_again(): void
     {
         $vendor = $this->vendor();
-        $url = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
 
-        $this->get($url);
-        $this->travel(2)->hours();
-        $this->get($url);
+        // A returning buyer asks the bot again and receives a fresh link.
+        $this->get((string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER));
+        $this->travel(31)->days();
+        $this->get((string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER));
 
         $this->assertSame(2, ContactClick::where('is_billable', true)->count());
     }

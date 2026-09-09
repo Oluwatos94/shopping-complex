@@ -22,7 +22,7 @@ final class ContactLinkService
 
     private const MAX_PREFILLED_MESSAGE = 500;
 
-    private const REPEAT_CLICK_MINUTES = 60;
+    private const ANONYMOUS_REPEAT_MINUTES = 60;
 
     public function mint(
         User $vendor,
@@ -89,7 +89,7 @@ final class ContactLinkService
                     'vendor_id' => $link->vendor_id,
                     'source' => $link->source,
                     'buyer_identity' => $link->buyer_identity,
-                    'is_billable' => ! $link->hasExpired() && ! $this->billedRecently($link, $ipAddress),
+                    'is_billable' => ! $link->hasExpired() && ! $this->anonymousRepeat($link, $ipAddress),
                     'ip_address' => $ipAddress,
                     'created_at' => now(),
                 ]);
@@ -109,21 +109,22 @@ final class ContactLinkService
         return $click;
     }
 
-    private function billedRecently(ContactLink $link, ?string $ipAddress): bool
+    /**
+     * Identified buyers are deduplicated by the lead ledger. Anonymous web
+     * buyers have no identity to key on yet, so they get a short IP window.
+     */
+    private function anonymousRepeat(ContactLink $link, ?string $ipAddress): bool
     {
-        $query = ContactClick::where('vendor_id', $link->vendor_id)
-            ->where('is_billable', true)
-            ->where('created_at', '>=', now()->subMinutes(self::REPEAT_CLICK_MINUTES));
-
-        if ($link->buyer_identity !== null) {
-            $query->where('buyer_identity', $link->buyer_identity);
-        } elseif ($ipAddress !== null) {
-            $query->whereNull('buyer_identity')->where('ip_address', $ipAddress);
-        } else {
+        if ($link->buyer_identity !== null || $ipAddress === null) {
             return false;
         }
 
-        return $query->exists();
+        return ContactClick::where('vendor_id', $link->vendor_id)
+            ->whereNull('buyer_identity')
+            ->where('ip_address', $ipAddress)
+            ->where('is_billable', true)
+            ->where('created_at', '>=', now()->subMinutes(self::ANONYMOUS_REPEAT_MINUTES))
+            ->exists();
     }
 
     public function destinationFor(User $vendor, ?string $prefilledMessage = null): ?string
