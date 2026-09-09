@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
+use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
+use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
 use ModulesShoppingComplex\Billing\Listeners\SendSubscriptionPaymentWhatsApp;
 use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
@@ -20,6 +23,7 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarProvider;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
+use ModulesShoppingComplex\Billing\Services\NullLeadDebitor;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
@@ -53,6 +57,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(WhatsAppApiService::class);
         $this->app->bind(WhatsAppSender::class, WhatsAppApiService::class);
+
+        $this->app->bind(LeadDebitor::class, NullLeadDebitor::class);
 
         $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
             apiKey: (string) config('services.claude.api_key'),
@@ -93,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(SubscriptionPaymentSucceeded::class, SendSubscriptionPaymentWhatsApp::class);
         Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
+        Event::listen(VendorContactClicked::class, RecordBillableLead::class);
     }
 
     /**
