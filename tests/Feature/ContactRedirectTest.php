@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
@@ -153,6 +153,32 @@ class ContactRedirectTest extends TestCase
         $this->assertSame(1, ContactClick::where('is_billable', true)->count());
     }
 
+    public function test_a_second_link_to_the_same_vendor_is_not_billed_twice(): void
+    {
+        $vendor = $this->vendor();
+
+        $first = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+        $second = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+
+        $this->assertNotSame($first, $second);
+
+        $this->get($first);
+        $this->get($second);
+
+        $this->assertSame(2, ContactClick::count());
+        $this->assertSame(1, ContactClick::where('is_billable', true)->count());
+    }
+
+    public function test_a_different_buyer_is_billed_separately(): void
+    {
+        $vendor = $this->vendor();
+
+        $this->get((string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER));
+        $this->get((string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, '2348099998888'));
+
+        $this->assertSame(2, ContactClick::where('is_billable', true)->count());
+    }
+
     public function test_a_click_outside_the_repeat_window_bills_again(): void
     {
         $vendor = $this->vendor();
@@ -169,12 +195,19 @@ class ContactRedirectTest extends TestCase
     {
         $vendor = $this->vendor();
 
-        Schema::drop(ContactClick::getTableName());
-        Schema::drop(ContactLink::getTableName());
+        // Force the second mint to collide with the unique token index.
+        Str::createRandomStringsUsing(fn () => str_repeat('a', 32));
 
-        $url = $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+        try {
+            $this->assertNotNull($this->links()->mint($vendor, ViewSourceEnum::WHATSAPP, self::BUYER));
+
+            $url = $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+        } finally {
+            Str::createRandomStringsNormally();
+        }
 
         $this->assertSame('https://wa.me/2348031234567', $url);
+        $this->assertDatabaseCount(ContactLink::getTableName(), 1);
     }
 
     public function test_a_link_preview_fetch_is_not_recorded_as_a_click(): void

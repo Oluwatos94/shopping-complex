@@ -82,14 +82,14 @@ final class ContactLinkService
         try {
             $click = DB::transaction(function () use ($link, $ipAddress): ContactClick {
 
-                ContactLink::whereKey($link->id)->lockForUpdate()->first();
+                User::whereKey($link->vendor_id)->lockForUpdate()->first();
 
                 return ContactClick::create([
                     'contact_link_id' => $link->id,
                     'vendor_id' => $link->vendor_id,
                     'source' => $link->source,
                     'buyer_identity' => $link->buyer_identity,
-                    'is_billable' => ! $link->hasExpired() && ! $this->billedRecently($link),
+                    'is_billable' => ! $link->hasExpired() && ! $this->billedRecently($link, $ipAddress),
                     'ip_address' => $ipAddress,
                     'created_at' => now(),
                 ]);
@@ -109,12 +109,21 @@ final class ContactLinkService
         return $click;
     }
 
-    private function billedRecently(ContactLink $link): bool
+    private function billedRecently(ContactLink $link, ?string $ipAddress): bool
     {
-        return ContactClick::where('contact_link_id', $link->id)
+        $query = ContactClick::where('vendor_id', $link->vendor_id)
             ->where('is_billable', true)
-            ->where('created_at', '>=', now()->subMinutes(self::REPEAT_CLICK_MINUTES))
-            ->exists();
+            ->where('created_at', '>=', now()->subMinutes(self::REPEAT_CLICK_MINUTES));
+
+        if ($link->buyer_identity !== null) {
+            $query->where('buyer_identity', $link->buyer_identity);
+        } elseif ($ipAddress !== null) {
+            $query->whereNull('buyer_identity')->where('ip_address', $ipAddress);
+        } else {
+            return false;
+        }
+
+        return $query->exists();
     }
 
     public function destinationFor(User $vendor, ?string $prefilledMessage = null): ?string
