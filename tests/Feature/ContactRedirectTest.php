@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schema;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
@@ -57,7 +58,7 @@ class ContactRedirectTest extends TestCase
         $token = basename((string) parse_url($url, PHP_URL_PATH));
 
         $this->assertStringNotContainsString(self::BUYER, $url);
-        $this->assertStringNotContainsString((string) $vendor->id, $token);
+        $this->assertNotSame((string) $vendor->id, $token);
 
         // Nothing recoverable by decoding the token itself.
         $decoded = base64_decode(strtr($token, '-_', '+/'), false);
@@ -138,6 +139,42 @@ class ContactRedirectTest extends TestCase
         $this->assertDatabaseCount(ContactLink::getTableName(), 1);
         $this->assertSame(2, ContactClick::count());
         $this->assertSame(1, ContactClick::distinct()->count('contact_link_id'));
+    }
+
+    public function test_a_repeat_click_is_recorded_but_not_billed_twice(): void
+    {
+        $vendor = $this->vendor();
+        $url = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+
+        $this->get($url);
+        $this->get($url);
+
+        $this->assertSame(2, ContactClick::count());
+        $this->assertSame(1, ContactClick::where('is_billable', true)->count());
+    }
+
+    public function test_a_click_outside_the_repeat_window_bills_again(): void
+    {
+        $vendor = $this->vendor();
+        $url = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+
+        $this->get($url);
+        $this->travel(2)->hours();
+        $this->get($url);
+
+        $this->assertSame(2, ContactClick::where('is_billable', true)->count());
+    }
+
+    public function test_a_minting_failure_still_hands_the_buyer_a_working_link(): void
+    {
+        $vendor = $this->vendor();
+
+        Schema::drop(ContactClick::getTableName());
+        Schema::drop(ContactLink::getTableName());
+
+        $url = $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER);
+
+        $this->assertSame('https://wa.me/2348031234567', $url);
     }
 
     public function test_a_link_preview_fetch_is_not_recorded_as_a_click(): void

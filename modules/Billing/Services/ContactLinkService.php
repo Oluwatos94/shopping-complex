@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Billing\Services;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
+use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
+use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
-/**
- * Mints the /c/{token} links that make a buyer's move to WhatsApp an event we
- * can observe, and therefore bill for. A raw wa.me link is invisible to us:
- * Meta does not report the click and it is not our domain.
- */
 final class ContactLinkService
 {
     public const TOKEN_TTL_DAYS = 30;
@@ -22,6 +21,8 @@ final class ContactLinkService
     private const TOKEN_LENGTH = 32;
 
     private const MAX_PREFILLED_MESSAGE = 500;
+
+    private const REPEAT_CLICK_MINUTES = 60;
 
     public function mint(
         User $vendor,
@@ -33,15 +34,25 @@ final class ContactLinkService
             return null;
         }
 
-        return ContactLink::create([
-            'token' => Str::random(self::TOKEN_LENGTH),
-            'vendor_id' => $vendor->id,
-            'source' => $source,
-            'buyer_identity' => $this->trimToNull($buyerIdentity, 64),
-            'prefilled_message' => $this->trimToNull($prefilledMessage, self::MAX_PREFILLED_MESSAGE),
-            'expires_at' => now()->addDays(self::TOKEN_TTL_DAYS),
-            'created_at' => now(),
-        ]);
+        try {
+            return ContactLink::create([
+                'token' => Str::random(self::TOKEN_LENGTH),
+                'vendor_id' => $vendor->id,
+                'source' => $source,
+                'buyer_identity' => $this->trimToNull($buyerIdentity, 64),
+                'prefilled_message' => $this->trimToNull($prefilledMessage, self::MAX_PREFILLED_MESSAGE),
+                'expires_at' => now()->addDays(self::TOKEN_TTL_DAYS),
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Contact link could not be minted', [
+                'vendor_id' => $vendor->id,
+                'source' => $source->value,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     public function urlFor(
@@ -50,14 +61,60 @@ final class ContactLinkService
         ?string $buyerIdentity = null,
         ?string $prefilledMessage = null,
     ): ?string {
+        if ($this->vendorDigits($vendor) === null) {
+            return null;
+        }
+
         $link = $this->mint($vendor, $source, $buyerIdentity, $prefilledMessage);
 
-        return $link === null ? null : route('contact.redirect', ['token' => $link->token]);
+        return $link === null
+            ? $this->destinationFor($vendor, $prefilledMessage)
+            : route('contact.redirect', ['token' => $link->token]);
     }
 
     public function resolve(string $token): ?ContactLink
     {
         return ContactLink::where('token', $token)->first();
+    }
+
+    public function recordClick(ContactLink $link, ?string $ipAddress = null): ?ContactClick
+    {
+        try {
+            $click = DB::transaction(function () use ($link, $ipAddress): ContactClick {
+
+                ContactLink::whereKey($link->id)->lockForUpdate()->first();
+
+                return ContactClick::create([
+                    'contact_link_id' => $link->id,
+                    'vendor_id' => $link->vendor_id,
+                    'source' => $link->source,
+                    'buyer_identity' => $link->buyer_identity,
+                    'is_billable' => ! $link->hasExpired() && ! $this->billedRecently($link),
+                    'ip_address' => $ipAddress,
+                    'created_at' => now(),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Contact click was not recorded', [
+                'contact_link_id' => $link->id,
+                'vendor_id' => $link->vendor_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        VendorContactClicked::dispatch($click);
+
+        return $click;
+    }
+
+    private function billedRecently(ContactLink $link): bool
+    {
+        return ContactClick::where('contact_link_id', $link->id)
+            ->where('is_billable', true)
+            ->where('created_at', '>=', now()->subMinutes(self::REPEAT_CLICK_MINUTES))
+            ->exists();
     }
 
     public function destinationFor(User $vendor, ?string $prefilledMessage = null): ?string

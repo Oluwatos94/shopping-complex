@@ -7,10 +7,6 @@ namespace ModulesShoppingComplex\Billing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
-use ModulesShoppingComplex\Billing\Models\ContactClick;
-use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 
 class ContactRedirectController extends Controller
@@ -32,35 +28,9 @@ class ContactRedirectController extends Controller
 
         // A HEAD request is a link preview or a scanner, never a buyer.
         if (! $request->isMethod('HEAD')) {
-            $this->record($request, $link);
+            $this->links->recordClick($link, $request->ip());
         }
 
         return redirect()->away($destination);
-    }
-
-    /**
-     * Never let a billing failure stand between the buyer and the vendor.
-     */
-    private function record(Request $request, ContactLink $link): void
-    {
-        try {
-            $click = ContactClick::create([
-                'contact_link_id' => $link->id,
-                'vendor_id' => $link->vendor_id,
-                'source' => $link->source,
-                'buyer_identity' => $link->buyer_identity,
-                'is_billable' => ! $link->hasExpired(),
-                'ip_address' => $request->ip(),
-                'created_at' => now(),
-            ]);
-
-            VendorContactClicked::dispatch($click);
-        } catch (\Throwable $e) {
-            Log::error('Contact click was not recorded', [
-                'contact_link_id' => $link->id,
-                'vendor_id' => $link->vendor_id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }
