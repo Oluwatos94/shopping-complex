@@ -7,43 +7,44 @@ namespace ModulesShoppingComplex\Billing\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
- * An observed buyer click on a vendor contact link — the event billing is
- * charged against. Append-only: every hit on /c/{token} writes a row.
+ * A minted /c/{token} link. The buyer identity lives here rather than inside
+ * the token so it never travels in a URL that can be forwarded, proxied or
+ * written to an access log.
  *
  * @property int $id
- * @property int $contact_link_id
+ * @property string $token
  * @property int $vendor_id
  * @property ViewSourceEnum $source
- * @property string|null $buyer_identity E.164 phone for bot leads, visitor_id for web
- * @property bool $is_billable
- * @property string|null $ip_address
+ * @property string|null $buyer_identity
+ * @property string|null $prefilled_message
+ * @property Carbon $expires_at
  * @property Carbon $created_at
  * @property-read User|null $vendor
- * @property-read ContactLink|null $link
  */
-class ContactClick extends Model
+class ContactLink extends Model
 {
     use HasTableName;
 
     /** {@inheritdoc} */
-    protected $table = 'contact_clicks';
+    protected $table = 'contact_links';
 
     /** {@inheritdoc} */
     public $timestamps = false;
 
     /** {@inheritdoc} */
     protected $fillable = [
-        'contact_link_id',
+        'token',
         'vendor_id',
         'source',
         'buyer_identity',
-        'is_billable',
-        'ip_address',
+        'prefilled_message',
+        'expires_at',
         'created_at',
     ];
 
@@ -52,9 +53,14 @@ class ContactClick extends Model
     {
         return [
             'source' => ViewSourceEnum::class,
-            'is_billable' => 'boolean',
+            'expires_at' => 'datetime',
             'created_at' => 'datetime',
         ];
+    }
+
+    public function hasExpired(): bool
+    {
+        return $this->expires_at->isPast();
     }
 
     public function vendor(): BelongsTo
@@ -62,8 +68,8 @@ class ContactClick extends Model
         return $this->belongsTo(User::class, 'vendor_id');
     }
 
-    public function link(): BelongsTo
+    public function clicks(): HasMany
     {
-        return $this->belongsTo(ContactLink::class, 'contact_link_id');
+        return $this->hasMany(ContactClick::class);
     }
 }

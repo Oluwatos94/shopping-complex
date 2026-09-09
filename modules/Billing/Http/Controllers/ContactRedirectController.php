@@ -8,12 +8,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
-use ModulesShoppingComplex\Billing\Data\ContactLinkPayload;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
+use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
-use ModulesShoppingComplex\Identity\Models\User;
 
 class ContactRedirectController extends Controller
 {
@@ -23,18 +21,19 @@ class ContactRedirectController extends Controller
 
     public function __invoke(Request $request, string $token): RedirectResponse
     {
-        abort_unless(URL::hasCorrectSignature($request), 404);
+        $link = $this->links->resolve($token);
+        abort_if($link === null, 404);
 
-        $payload = $this->links->decode($token);
-        abort_if($payload === null, 404);
-
-        $vendor = User::find($payload->vendorId);
+        $vendor = $link->vendor;
         abort_if($vendor === null, 404);
 
-        $destination = $this->links->destinationFor($vendor, $payload->prefilledMessage);
+        $destination = $this->links->destinationFor($vendor, $link->prefilled_message);
         abort_if($destination === null, 404);
 
-        $this->record($request, $payload, URL::signatureHasNotExpired($request));
+        // A HEAD request is a link preview or a scanner, never a buyer.
+        if (! $request->isMethod('HEAD')) {
+            $this->record($request, $link);
+        }
 
         return redirect()->away($destination);
     }
@@ -42,24 +41,24 @@ class ContactRedirectController extends Controller
     /**
      * Never let a billing failure stand between the buyer and the vendor.
      */
-    private function record(Request $request, ContactLinkPayload $payload, bool $isBillable): void
+    private function record(Request $request, ContactLink $link): void
     {
         try {
             $click = ContactClick::create([
-                'vendor_id' => $payload->vendorId,
-                'source' => $payload->source,
-                'buyer_identity' => $payload->buyerIdentity,
-                'is_billable' => $isBillable,
+                'contact_link_id' => $link->id,
+                'vendor_id' => $link->vendor_id,
+                'source' => $link->source,
+                'buyer_identity' => $link->buyer_identity,
+                'is_billable' => ! $link->hasExpired(),
                 'ip_address' => $request->ip(),
-                'token_issued_at' => $payload->issuedAt,
                 'created_at' => now(),
             ]);
 
             VendorContactClicked::dispatch($click);
         } catch (\Throwable $e) {
             Log::error('Contact click was not recorded', [
-                'vendor_id' => $payload->vendorId,
-                'source' => $payload->source->value,
+                'contact_link_id' => $link->id,
+                'vendor_id' => $link->vendor_id,
                 'error' => $e->getMessage(),
             ]);
         }

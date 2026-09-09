@@ -4,21 +4,45 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Billing\Services;
 
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
-use ModulesShoppingComplex\Billing\Data\ContactLinkPayload;
+use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 /**
- * Mints the signed /c/{token} links that make a buyer's move to WhatsApp an
- * event we can observe, and therefore bill for. A raw wa.me link is invisible
- * to us: Meta does not report the click and it is not our domain.
+ * Mints the /c/{token} links that make a buyer's move to WhatsApp an event we
+ * can observe, and therefore bill for. A raw wa.me link is invisible to us:
+ * Meta does not report the click and it is not our domain.
  */
 final class ContactLinkService
 {
     public const TOKEN_TTL_DAYS = 30;
+
+    private const TOKEN_LENGTH = 32;
+
+    private const MAX_PREFILLED_MESSAGE = 500;
+
+    public function mint(
+        User $vendor,
+        ViewSourceEnum $source,
+        ?string $buyerIdentity = null,
+        ?string $prefilledMessage = null,
+    ): ?ContactLink {
+        if ($this->vendorDigits($vendor) === null) {
+            return null;
+        }
+
+        return ContactLink::create([
+            'token' => Str::random(self::TOKEN_LENGTH),
+            'vendor_id' => $vendor->id,
+            'source' => $source,
+            'buyer_identity' => $this->trimToNull($buyerIdentity, 64),
+            'prefilled_message' => $this->trimToNull($prefilledMessage, self::MAX_PREFILLED_MESSAGE),
+            'expires_at' => now()->addDays(self::TOKEN_TTL_DAYS),
+            'created_at' => now(),
+        ]);
+    }
 
     public function urlFor(
         User $vendor,
@@ -26,59 +50,14 @@ final class ContactLinkService
         ?string $buyerIdentity = null,
         ?string $prefilledMessage = null,
     ): ?string {
-        if ($this->vendorDigits($vendor) === null) {
-            return null;
-        }
+        $link = $this->mint($vendor, $source, $buyerIdentity, $prefilledMessage);
 
-        $payload = [
-            'v' => $vendor->id,
-            's' => $source->value,
-            'i' => CarbonImmutable::now()->getTimestamp(),
-        ];
-
-        if ($buyerIdentity !== null && $buyerIdentity !== '') {
-            $payload['b'] = $buyerIdentity;
-        }
-
-        if ($prefilledMessage !== null && $prefilledMessage !== '') {
-            $payload['m'] = $prefilledMessage;
-        }
-
-        return URL::temporarySignedRoute(
-            'contact.redirect',
-            CarbonImmutable::now()->addDays(self::TOKEN_TTL_DAYS),
-            ['token' => $this->encode($payload)],
-        );
+        return $link === null ? null : route('contact.redirect', ['token' => $link->token]);
     }
 
-    public function decode(string $token): ?ContactLinkPayload
+    public function resolve(string $token): ?ContactLink
     {
-        $json = base64_decode($this->fromBase64Url($token), true);
-
-        if ($json === false) {
-            return null;
-        }
-
-        $payload = json_decode($json, true);
-
-        if (! is_array($payload) || ! isset($payload['v'], $payload['s'])) {
-            return null;
-        }
-
-        $source = ViewSourceEnum::tryFrom((string) $payload['s']);
-        $vendorId = filter_var($payload['v'], FILTER_VALIDATE_INT);
-
-        if ($source === null || $vendorId === false || $vendorId < 1) {
-            return null;
-        }
-
-        return new ContactLinkPayload(
-            vendorId: $vendorId,
-            source: $source,
-            buyerIdentity: isset($payload['b']) ? (string) $payload['b'] : null,
-            prefilledMessage: isset($payload['m']) ? (string) $payload['m'] : null,
-            issuedAt: isset($payload['i']) ? CarbonImmutable::createFromTimestamp((int) $payload['i']) : null,
-        );
+        return ContactLink::where('token', $token)->first();
     }
 
     public function destinationFor(User $vendor, ?string $prefilledMessage = null): ?string
@@ -105,18 +84,10 @@ final class ContactLinkService
         return $number === '' ? null : WhatsAppPhone::toE164($number);
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function encode(array $payload): string
+    private function trimToNull(?string $value, int $limit): ?string
     {
-        return rtrim(strtr(base64_encode((string) json_encode($payload)), '+/', '-_'), '=');
-    }
+        $value = trim((string) $value);
 
-    private function fromBase64Url(string $token): string
-    {
-        $padding = strlen($token) % 4;
-
-        return strtr($token, '-_', '+/').($padding === 0 ? '' : str_repeat('=', 4 - $padding));
+        return $value === '' ? null : mb_substr($value, 0, $limit);
     }
 }

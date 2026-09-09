@@ -39,6 +39,7 @@ Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handle'])->
 
 // Signed vendor contact redirect (public — the buyer is anonymous)
 Route::get('/c/{token}', ContactRedirectController::class)
+    ->where('token', '[A-Za-z0-9]{32}')
     ->middleware('throttle:guest')
     ->name('contact.redirect');
 
