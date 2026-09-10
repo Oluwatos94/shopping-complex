@@ -83,7 +83,10 @@ class CoinLedgerRepository
     /**
      * Sold coins are revenue only once redeemed; until then they are a liability.
      *
-     * @return array{coins_sold: int, coins_granted: int, coins_redeemed: int, coins_expired: int, outstanding_liability: int}
+     * Redeemed is gross, with refunds reported alongside rather than netted off,
+     * so a refund never reads as a fresh grant and never hides a redemption.
+     *
+     * @return array{coins_sold: int, coins_granted: int, coins_refunded: int, coins_redeemed: int, coins_expired: int, outstanding_liability: int}
      */
     public function report(CarbonInterface $from, CarbonInterface $to): array
     {
@@ -93,7 +96,8 @@ class CoinLedgerRepository
 
         return [
             'coins_sold' => $sumOf([CoinLedgerTypeEnum::PURCHASE]),
-            'coins_granted' => $sumOf([CoinLedgerTypeEnum::BONUS, CoinLedgerTypeEnum::PROMO, CoinLedgerTypeEnum::CREDIT]),
+            'coins_granted' => $sumOf([CoinLedgerTypeEnum::BONUS, CoinLedgerTypeEnum::PROMO]),
+            'coins_refunded' => $sumOf([CoinLedgerTypeEnum::CREDIT]),
             'coins_redeemed' => -$sumOf([CoinLedgerTypeEnum::DEBIT]),
             'coins_expired' => -$sumOf([CoinLedgerTypeEnum::EXPIRY]),
             'outstanding_liability' => (int) CoinLedgerEntry::where('created_at', '<=', $to)->sum('amount'),

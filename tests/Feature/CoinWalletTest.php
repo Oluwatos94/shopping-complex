@@ -128,7 +128,7 @@ class CoinWalletTest extends TestCase
         $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
         $w->credit($vendor, CoinLedgerTypeEnum::BONUS, 20);
         $w->debit($vendor, 35);
-        $w->credit($vendor, CoinLedgerTypeEnum::CREDIT, 5);
+        $w->credit($vendor, CoinLedgerTypeEnum::PROMO, 5);
         $w->debit($vendor, 40);
 
         $this->assertSame(50, $w->balance($vendor));
@@ -175,6 +175,30 @@ class CoinWalletTest extends TestCase
         $this->wallets()->credit($this->vendor(), CoinLedgerTypeEnum::DEBIT, 10);
     }
 
+    public function test_a_credit_cannot_be_issued_outside_a_refund(): void
+    {
+        // Otherwise a bare CREDIT would be indistinguishable from a real refund
+        // and would show up in the refunded column of the finance report.
+        $this->expectException(InvalidArgumentException::class);
+        $this->wallets()->credit($this->vendor(), CoinLedgerTypeEnum::CREDIT, 10);
+    }
+
+    public function test_every_credit_entry_names_the_charge_it_reverses(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
+
+        $lead = $this->lead($vendor);
+        $w->debit($vendor, 10, $lead);
+        $w->refund($vendor, $lead);
+
+        $credits = CoinLedgerEntry::where('type', CoinLedgerTypeEnum::CREDIT->value)->get();
+
+        $this->assertCount(1, $credits);
+        $this->assertSame(0, $credits->whereNull('reference_id')->count());
+    }
+
     public function test_amounts_must_be_positive(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -199,6 +223,34 @@ class CoinWalletTest extends TestCase
 
         $this->assertSame(100, $entry->fresh()?->amount);
         $this->assertSame(1, CoinLedgerEntry::count());
+    }
+
+    public function test_the_ledger_cannot_be_rewritten_in_bulk_either(): void
+    {
+        $vendor = $this->vendor();
+        $this->wallets()->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
+
+        // Bulk writes never hydrate a model, so they miss the model event guards.
+        try {
+            CoinLedgerEntry::where('vendor_id', $vendor->id)->update(['amount' => 999]);
+            $this->fail('expected a bulk update to be refused');
+        } catch (LedgerIsAppendOnlyException) {
+        }
+
+        try {
+            CoinLedgerEntry::where('vendor_id', $vendor->id)->delete();
+            $this->fail('expected a bulk delete to be refused');
+        } catch (LedgerIsAppendOnlyException) {
+        }
+
+        try {
+            CoinLedgerEntry::where('vendor_id', $vendor->id)->increment('amount');
+            $this->fail('expected a bulk increment to be refused');
+        } catch (LedgerIsAppendOnlyException) {
+        }
+
+        $this->assertSame(1, CoinLedgerEntry::count());
+        $this->assertSame(100, CoinLedgerEntry::sole()->amount);
     }
 
     public function test_reading_a_balance_does_not_create_a_wallet(): void
@@ -291,13 +343,16 @@ class CoinWalletTest extends TestCase
         // One hour past the deadline, before the nightly sweep has run.
         $this->travelTo(Carbon::parse('2027-01-15 10:00'));
 
-        $this->expectException(InsufficientCoinsException::class);
-
         try {
             $w->debit($vendor, 10);
-        } finally {
-            $this->assertSame(0, CoinLedgerEntry::where('type', CoinLedgerTypeEnum::DEBIT->value)->count());
+            $this->fail('expected the debit to be refused');
+        } catch (InsufficientCoinsException) {
         }
+
+        $this->assertSame(0, CoinLedgerEntry::where('type', CoinLedgerTypeEnum::DEBIT->value)->count());
+
+        $this->assertSame(0, $w->balance($vendor));
+        $this->assertSame(50, -CoinLedgerEntry::where('type', CoinLedgerTypeEnum::EXPIRY->value)->sum('amount'));
     }
 
     public function test_a_partly_expired_lot_still_pays_for_what_it_can(): void
@@ -422,6 +477,27 @@ class CoinWalletTest extends TestCase
         $this->assertSame(20, $w->balance($vendor));
     }
 
+    public function test_refunding_an_already_expired_lot_leaves_no_spendable_value(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+
+        $this->travelTo(Carbon::parse('2026-01-15 09:00'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 50);
+
+        $lead = $this->lead($vendor);
+        $w->debit($vendor, 10, $lead);
+
+        // The lot's deadline passes before anyone gets round to the refund.
+        $this->travelTo(Carbon::parse('2027-02-01'));
+        $credits = $w->refund($vendor, $lead);
+
+        // The credit is still recorded for audit, but it must not inflate the balance.
+        $this->assertCount(1, $credits);
+        $this->assertSame(0, $w->balance($vendor));
+        $this->assertSame(0, $this->ledger()->replayBalance($vendor->id));
+    }
+
     public function test_a_reference_is_only_refunded_once(): void
     {
         $vendor = $this->vendor();
@@ -472,6 +548,7 @@ class CoinWalletTest extends TestCase
 
         $this->assertSame(150, $march['coins_sold']);
         $this->assertSame(10, $march['coins_granted']);
+        $this->assertSame(0, $march['coins_refunded']);
         $this->assertSame(50, $march['coins_redeemed']);
         $this->assertSame(0, $march['coins_expired']);
         $this->assertSame(110, $march['outstanding_liability']);
@@ -481,6 +558,29 @@ class CoinWalletTest extends TestCase
         $this->assertSame(40, $april['coins_sold']);
         $this->assertSame(0, $april['coins_redeemed']);
         $this->assertSame(150, $april['outstanding_liability']);
+    }
+
+    public function test_a_refund_is_reported_as_a_refund_not_a_grant(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+
+        $this->travelTo(Carbon::parse('2026-05-01'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
+        $w->credit($vendor, CoinLedgerTypeEnum::BONUS, 20);
+
+        $lead = $this->lead($vendor);
+        $w->debit($vendor, 30, $lead);
+        $w->refund($vendor, $lead);
+
+        $report = $this->ledger()->report(Carbon::parse('2026-05-01'), Carbon::parse('2026-05-31 23:59:59'));
+
+        // Returning a vendor's own coins is not the platform granting new ones.
+        $this->assertSame(20, $report['coins_granted']);
+        $this->assertSame(30, $report['coins_refunded']);
+        $this->assertSame(30, $report['coins_redeemed']);
+        $this->assertSame(100, $report['coins_sold']);
+        $this->assertSame(120, $report['outstanding_liability']);
     }
 
     // ==================== Paying for leads ====================

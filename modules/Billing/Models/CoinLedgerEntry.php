@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Query\Builder;
 use ModulesShoppingComplex\Billing\Enums\CoinLedgerTypeEnum;
 use ModulesShoppingComplex\Billing\Exceptions\LedgerIsAppendOnlyException;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -65,6 +66,21 @@ class CoinLedgerEntry extends Model
             'expires_at' => 'datetime',
             'created_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Bulk writes never hydrate a model, so they would miss the event guards
+     * below. Route them through a builder that refuses instead.
+     *
+     * @param  Builder  $query
+     * @return AppendOnlyBuilder<self>
+     */
+    public function newEloquentBuilder($query): AppendOnlyBuilder
+    {
+        /** @var AppendOnlyBuilder<self> $builder */
+        $builder = new AppendOnlyBuilder($query);
+
+        return $builder;
     }
 
     protected static function booted(): void

@@ -40,7 +40,11 @@ final class CoinWalletService
         ?Model $reference = null,
         ?CarbonInterface $expiresAt = null,
     ): CoinLedgerEntry {
-        if (! $type->addsCoins()) {
+        if ($type === CoinLedgerTypeEnum::CREDIT) {
+            throw new InvalidArgumentException('Refunds must go through refund(), so every credit names the charge it reverses.');
+        }
+
+        if (! $type->isDirectGrant()) {
             throw new InvalidArgumentException("{$type->value} does not add coins.");
         }
 
@@ -65,14 +69,13 @@ final class CoinWalletService
     public function debit(User $vendor, int $coins, ?Model $reference = null): Collection
     {
         $this->assertPositive($coins);
-
-        return DB::transaction(function () use ($vendor, $coins, $reference): Collection {
+        $outcome = DB::transaction(function () use ($vendor, $coins, $reference): Collection|InsufficientCoinsException {
             $wallet = $this->lockedWallet($vendor);
 
             $spendable = $this->expireDue($wallet, now());
 
             if ($wallet->balance < $coins) {
-                throw new InsufficientCoinsException($wallet->balance, $coins);
+                return new InsufficientCoinsException($wallet->balance, $coins);
             }
 
             /** @var Collection<int, CoinLedgerEntry> $entries */
@@ -95,6 +98,12 @@ final class CoinWalletService
 
             return $entries;
         });
+
+        if ($outcome instanceof InsufficientCoinsException) {
+            throw $outcome;
+        }
+
+        return $outcome;
     }
 
     /**
@@ -113,7 +122,7 @@ final class CoinWalletService
                 return new Collection;
             }
 
-            return $this->ledger->debitsFor($vendor->id, $reference)->map(
+            $credits = $this->ledger->debitsFor($vendor->id, $reference)->map(
                 fn (CoinLedgerEntry $debit): CoinLedgerEntry => $this->write(
                     $wallet,
                     CoinLedgerTypeEnum::CREDIT,
@@ -122,6 +131,10 @@ final class CoinWalletService
                     $debit->lot->expires_at ?? $this->defaultExpiry(),
                 )
             );
+
+            $this->expireDue($wallet, now());
+
+            return $credits;
         });
     }
 
