@@ -8,6 +8,8 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use ModulesShoppingComplex\Billing\Enums\CoinLedgerTypeEnum;
 use ModulesShoppingComplex\Billing\Models\CoinLedgerEntry;
@@ -26,12 +28,9 @@ class CoinLedgerRepository
      */
     public function openLots(int $vendorId): array
     {
-        $drawnDown = CoinLedgerEntry::query()
-            ->selectRaw('lot_id, -SUM(amount) as drawn')
+        $drawnDown = $this->drawdownPerLot()
             ->where('vendor_id', $vendorId)
-            ->whereNotNull('lot_id')
-            ->groupBy('lot_id')
-            ->pluck('drawn', 'lot_id');
+            ->pluck('total', 'lot_id');
 
         return CoinLedgerEntry::query()
             ->where('vendor_id', $vendorId)
@@ -69,14 +68,16 @@ class CoinLedgerRepository
      */
     public function vendorsWithExpiredLots(CarbonInterface $asOf): LazyCollection
     {
-        return CoinLedgerEntry::query()
-            ->select('vendor_id')
-            ->where('expires_at', '<=', $asOf)
-            ->where('amount', '>', 0)
+        return DB::table(CoinLedgerEntry::getTableName().' as lot')
+            ->select('lot.vendor_id')
+            ->leftJoinSub($this->drawdownPerLot(), 'drawn', 'drawn.lot_id', '=', 'lot.id')
+            ->where('lot.expires_at', '<=', $asOf)
+            ->where('lot.amount', '>', 0)
+            ->whereRaw('lot.amount > COALESCE(drawn.total, 0)')
             ->distinct()
-            ->orderBy('vendor_id')
+            ->orderBy('lot.vendor_id')
             ->cursor()
-            ->map(fn (CoinLedgerEntry $entry): int => $entry->vendor_id);
+            ->map(fn (object $row): int => (int) $row->vendor_id);
     }
 
     /**
@@ -97,6 +98,17 @@ class CoinLedgerRepository
             'coins_expired' => -$sumOf([CoinLedgerTypeEnum::EXPIRY]),
             'outstanding_liability' => (int) CoinLedgerEntry::where('created_at', '<=', $to)->sum('amount'),
         ];
+    }
+
+    /**
+     * Coins taken out of each lot, by debits and by expiry alike.
+     */
+    private function drawdownPerLot(): QueryBuilder
+    {
+        return DB::table(CoinLedgerEntry::getTableName())
+            ->selectRaw('lot_id, -SUM(amount) as total')
+            ->whereNotNull('lot_id')
+            ->groupBy('lot_id');
     }
 
     /**

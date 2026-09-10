@@ -69,6 +69,8 @@ final class CoinWalletService
         return DB::transaction(function () use ($vendor, $coins, $reference): Collection {
             $wallet = $this->lockedWallet($vendor);
 
+            $spendable = $this->expireDue($wallet, now());
+
             if ($wallet->balance < $coins) {
                 throw new InsufficientCoinsException($wallet->balance, $coins);
             }
@@ -77,7 +79,7 @@ final class CoinWalletService
             $entries = new Collection;
             $outstanding = $coins;
 
-            foreach ($this->ledger->openLots($vendor->id) as [$lot, $remaining]) {
+            foreach ($spendable as [$lot, $remaining]) {
                 if ($outstanding < 1) {
                     break;
                 }
@@ -129,19 +131,35 @@ final class CoinWalletService
 
         return DB::transaction(function () use ($vendor, $asOf): int {
             $wallet = $this->lockedWallet($vendor);
-            $expired = 0;
+            $before = $wallet->balance;
 
-            foreach ($this->ledger->openLots($vendor->id) as [$lot, $remaining]) {
-                if ($lot->expires_at === null || $lot->expires_at->gt($asOf)) {
-                    continue;
-                }
+            $this->expireDue($wallet, $asOf);
 
+            return $before - $wallet->balance;
+        });
+    }
+
+    /**
+     * Retires every lot past $asOf and hands back the ones still spendable.
+     * Caller must already hold the wallet lock.
+     *
+     * @return list<array{0: CoinLedgerEntry, 1: int}>
+     */
+    private function expireDue(CoinWallet $wallet, CarbonInterface $asOf): array
+    {
+        $spendable = [];
+
+        foreach ($this->ledger->openLots($wallet->vendor_id) as [$lot, $remaining]) {
+            if ($lot->expires_at !== null && $lot->expires_at->lte($asOf)) {
                 $this->write($wallet, CoinLedgerTypeEnum::EXPIRY, -$remaining, null, null, $lot);
-                $expired += $remaining;
+
+                continue;
             }
 
-            return $expired;
-        });
+            $spendable[] = [$lot, $remaining];
+        }
+
+        return $spendable;
     }
 
     private function write(

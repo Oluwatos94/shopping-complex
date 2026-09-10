@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use InvalidArgumentException;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
@@ -276,6 +278,78 @@ class CoinWalletTest extends TestCase
         $this->travelTo(Carbon::parse('2027-07-01'));
         $this->assertSame(10, $w->expire($vendor));
         $this->assertSame(0, $w->balance($vendor));
+    }
+
+    public function test_a_debit_cannot_spend_coins_past_their_deadline(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+
+        $this->travelTo(Carbon::parse('2026-01-15 09:00'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 50);
+
+        // One hour past the deadline, before the nightly sweep has run.
+        $this->travelTo(Carbon::parse('2027-01-15 10:00'));
+
+        $this->expectException(InsufficientCoinsException::class);
+
+        try {
+            $w->debit($vendor, 10);
+        } finally {
+            $this->assertSame(0, CoinLedgerEntry::where('type', CoinLedgerTypeEnum::DEBIT->value)->count());
+        }
+    }
+
+    public function test_a_partly_expired_lot_still_pays_for_what_it_can(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+
+        $this->travelTo(Carbon::parse('2026-01-15'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 40);
+
+        $this->travelTo(Carbon::parse('2026-09-15'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 30);
+
+        // January's lot is past its date; September's is not.
+        $this->travelTo(Carbon::parse('2027-02-01'));
+        $entries = $w->debit($vendor, 25);
+
+        $this->assertSame(-25, $entries->sum('amount'));
+        $this->assertSame(5, $w->balance($vendor));
+        $this->assertSame(40, -CoinLedgerEntry::where('type', CoinLedgerTypeEnum::EXPIRY->value)->sum('amount'));
+    }
+
+    public function test_a_fully_expired_vendor_drops_out_of_the_nightly_sweep(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+
+        $this->travelTo(Carbon::parse('2026-01-15'));
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 50);
+
+        $this->travelTo(Carbon::parse('2027-02-01'));
+        $this->assertTrue($this->ledger()->vendorsWithExpiredLots(now())->contains($vendor->id));
+
+        $w->expire($vendor);
+
+        // Otherwise the sweep revisits this vendor every night, forever.
+        $this->assertFalse($this->ledger()->vendorsWithExpiredLots(now())->contains($vendor->id));
+    }
+
+    public function test_ledger_history_outlives_an_attempt_to_delete_the_vendor(): void
+    {
+        $vendor = $this->vendor();
+        $this->wallets()->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 50);
+
+        // A cascade would bypass the model guard and erase committed history.
+        $this->expectException(QueryException::class);
+
+        try {
+            DB::table('users')->where('id', $vendor->id)->delete();
+        } finally {
+            $this->assertSame(1, CoinLedgerEntry::count());
+        }
     }
 
     public function test_the_scheduled_job_expires_every_affected_vendor(): void

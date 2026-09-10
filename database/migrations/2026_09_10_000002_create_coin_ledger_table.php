@@ -15,7 +15,9 @@ return new class extends Migration
     {
         Schema::create(CoinLedgerEntry::getTableName(), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vendor_id')->constrained(User::getTableName())->cascadeOnDelete();
+            // Restrict, not cascade: a cascade deletes committed financial history
+            // without ever passing through the model's append-only guard.
+            $table->foreignId('vendor_id')->constrained(User::getTableName())->restrictOnDelete();
             $table->enum('type', CoinLedgerTypeEnum::values());
             $table->integer('amount');
             $table->unsignedInteger('balance_after');
