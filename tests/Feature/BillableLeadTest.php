@@ -16,9 +16,9 @@ use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
+use ModulesShoppingComplex\Billing\Services\CoinLeadDebitor;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\LeadBillingService;
-use ModulesShoppingComplex\Billing\Services\NullLeadDebitor;
 use ModulesShoppingComplex\Identity\Models\User;
 use Tests\TestCase;
 
@@ -183,10 +183,10 @@ class BillableLeadTest extends TestCase
         $this->assertTrue($click->fresh()?->is_billable);
     }
 
-    public function test_without_a_wallet_the_lead_is_unbilled_but_still_deduplicated(): void
+    public function test_a_vendor_with_no_coins_gets_an_unbilled_lead_that_still_deduplicates(): void
     {
         $this->withoutBillingListener();
-        $this->app->bind(LeadDebitor::class, NullLeadDebitor::class);
+        $this->app->bind(LeadDebitor::class, CoinLeadDebitor::class);
         $vendor = $this->vendor();
 
         $lead = app(LeadBillingService::class)->bill($this->click($vendor));

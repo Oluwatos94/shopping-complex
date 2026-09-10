@@ -23,7 +23,7 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarProvider;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
-use ModulesShoppingComplex\Billing\Services\NullLeadDebitor;
+use ModulesShoppingComplex\Billing\Services\CoinLeadDebitor;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
@@ -58,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WhatsAppApiService::class);
         $this->app->bind(WhatsAppSender::class, WhatsAppApiService::class);
 
-        $this->app->bind(LeadDebitor::class, NullLeadDebitor::class);
+        $this->app->bind(LeadDebitor::class, CoinLeadDebitor::class);
 
         $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
             apiKey: (string) config('services.claude.api_key'),

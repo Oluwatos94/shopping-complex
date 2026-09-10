@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use ModulesShoppingComplex\Billing\Models\CoinWallet;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Catalog\Models\Product;
@@ -185,6 +186,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function subscriptions(): HasMany
     {
         return $this->hasMany(VendorSubscription::class, 'vendor_id');
+    }
+
+    public function coinWallet(): HasOne
+    {
+        return $this->hasOne(CoinWallet::class, 'vendor_id');
     }
 
     public function referrer(): BelongsTo
