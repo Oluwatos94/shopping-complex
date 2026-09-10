@@ -24,4 +24,16 @@ enum CoinLedgerTypeEnum: string
             self::DEBIT, self::EXPIRY => false,
         };
     }
+
+    /**
+     * Coins that may be handed out directly. CREDIT is excluded because it
+     * means "refund", and a refund only exists against the charge it reverses.
+     */
+    public function isDirectGrant(): bool
+    {
+        return match ($this) {
+            self::PURCHASE, self::BONUS, self::PROMO => true,
+            self::CREDIT, self::DEBIT, self::EXPIRY => false,
+        };
+    }
 }

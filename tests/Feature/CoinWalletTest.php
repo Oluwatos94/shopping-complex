@@ -128,7 +128,7 @@ class CoinWalletTest extends TestCase
         $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
         $w->credit($vendor, CoinLedgerTypeEnum::BONUS, 20);
         $w->debit($vendor, 35);
-        $w->credit($vendor, CoinLedgerTypeEnum::CREDIT, 5);
+        $w->credit($vendor, CoinLedgerTypeEnum::PROMO, 5);
         $w->debit($vendor, 40);
 
         $this->assertSame(50, $w->balance($vendor));
@@ -173,6 +173,30 @@ class CoinWalletTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->wallets()->credit($this->vendor(), CoinLedgerTypeEnum::DEBIT, 10);
+    }
+
+    public function test_a_credit_cannot_be_issued_outside_a_refund(): void
+    {
+        // Otherwise a bare CREDIT would be indistinguishable from a real refund
+        // and would show up in the refunded column of the finance report.
+        $this->expectException(InvalidArgumentException::class);
+        $this->wallets()->credit($this->vendor(), CoinLedgerTypeEnum::CREDIT, 10);
+    }
+
+    public function test_every_credit_entry_names_the_charge_it_reverses(): void
+    {
+        $vendor = $this->vendor();
+        $w = $this->wallets();
+        $w->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 100);
+
+        $lead = $this->lead($vendor);
+        $w->debit($vendor, 10, $lead);
+        $w->refund($vendor, $lead);
+
+        $credits = CoinLedgerEntry::where('type', CoinLedgerTypeEnum::CREDIT->value)->get();
+
+        $this->assertCount(1, $credits);
+        $this->assertSame(0, $credits->whereNull('reference_id')->count());
     }
 
     public function test_amounts_must_be_positive(): void

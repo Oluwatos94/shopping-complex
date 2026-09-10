@@ -40,7 +40,11 @@ final class CoinWalletService
         ?Model $reference = null,
         ?CarbonInterface $expiresAt = null,
     ): CoinLedgerEntry {
-        if (! $type->addsCoins()) {
+        if ($type === CoinLedgerTypeEnum::CREDIT) {
+            throw new InvalidArgumentException('Refunds must go through refund(), so every credit names the charge it reverses.');
+        }
+
+        if (! $type->isDirectGrant()) {
             throw new InvalidArgumentException("{$type->value} does not add coins.");
         }
 

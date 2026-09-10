@@ -7,6 +7,14 @@ namespace ModulesShoppingComplex\Billing\Models;
 use Illuminate\Database\Eloquent\Builder;
 use ModulesShoppingComplex\Billing\Exceptions\LedgerIsAppendOnlyException;
 
+/**
+ * Model events only fire on hydrated instances, so a bulk update() or delete()
+ * walks straight past them. This closes that path for ledger tables.
+ *
+ * @template TModel of \Illuminate\Database\Eloquent\Model
+ *
+ * @extends Builder<TModel>
+ */
 final class AppendOnlyBuilder extends Builder
 {
     /** {@inheritdoc} */
