@@ -101,6 +101,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'max_thinking_tokens' => env('GEMINI_MAX_THINKING_TOKENS', 0),
     ],
 
     'ai_bot' => [

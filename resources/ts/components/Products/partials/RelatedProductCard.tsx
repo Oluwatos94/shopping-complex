@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Product } from '@/types/product';
+import VideoThumbnail from '@/components/Media/VideoThumbnail';
 
 export default function RelatedProductCard({ product }: { product: Product }) {
     const primaryMedia = product.images?.find((img) => img.is_primary) ?? product.images?.[0];
@@ -17,12 +18,9 @@ export default function RelatedProductCard({ product }: { product: Product }) {
                 <div className="relative aspect-square overflow-hidden bg-gray-100">
                     {isVideo ? (
                         <>
-                            <video
+                            <VideoThumbnail
                                 src={primaryImage}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                muted
-                                playsInline
-                                preload="metadata"
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-colors">

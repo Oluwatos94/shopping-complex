@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { ProductImage } from '@/types/product';
+import VideoThumbnail from '@/components/Media/VideoThumbnail';
 
 interface ImageGalleryProps {
     images: ProductImage[];
@@ -69,12 +70,10 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
                 >
                     {/* Main Media */}
                     {currentIsVideo ? (
-                        <video
+                        <VideoThumbnail
                             src={currentImage.url}
                             className="w-full h-full object-cover"
                             controls
-                            playsInline
-                            preload="metadata"
                         />
                     ) : (
                         <img

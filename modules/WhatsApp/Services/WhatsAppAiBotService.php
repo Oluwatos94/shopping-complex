@@ -40,6 +40,8 @@ final readonly class WhatsAppAiBotService
 
     private const SEARCH_RADII_KM = [5.0, 15.0, 30.0];
 
+    private const BUSY_REPLY = "I'm having trouble reaching my system right now. Please send that again in a moment.";
+
     public function __construct(
         private WhatsAppApiService $apiService,
         private WhatsAppSessionRepository $sessionRepository,
@@ -116,7 +118,16 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
+        try {
+            $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
+        } catch (\Throwable $e) {
+            Log::warning('WhatsApp AI reply failed', ['from' => $from, 'error' => $e->getMessage()]);
+
+            $this->sessionRepository->save($session);
+            $this->apiService->sendText($from, self::BUSY_REPLY);
+
+            return;
+        }
 
         $history[] = [
             'role' => 'assistant',
@@ -211,7 +222,12 @@ final readonly class WhatsAppAiBotService
             }
         }
 
-        return "Sorry, I couldn't process your request. Please try again.";
+        Log::warning('AI returned no text reply', [
+            'from' => $from,
+            'stop_reason' => $response['stop_reason'] ?? null,
+        ]);
+
+        return self::BUSY_REPLY;
     }
 
     /**
