@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function VideoThumbnail({ src, className = 'h-full w-full object-cover', poster, controls = false }: Props) {
-    const [failed, setFailed] = useState(false);
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
     const withFrameHint = src.includes('#') ? src : `${src}#t=0.1`;
 
@@ -23,8 +23,8 @@ export default function VideoThumbnail({ src, className = 'h-full w-full object-
         }
     };
 
-    if (failed) {
-        return <div className={`${className} bg-gray-200`} aria-hidden="true" />;
+    if (failedSrc === src) {
+        return <div className={`${className} bg-gray-200`} role="img" aria-label="Video unavailable" />;
     }
 
     return (
@@ -38,7 +38,7 @@ export default function VideoThumbnail({ src, className = 'h-full w-full object-
             disablePictureInPicture={!controls}
             preload="metadata"
             onLoadedMetadata={seekToFirstFrame}
-            onError={() => setFailed(true)}
+            onError={() => setFailedSrc(src)}
         />
     );
 }
