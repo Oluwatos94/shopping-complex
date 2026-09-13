@@ -25,7 +25,8 @@ class SupportMessageRepository extends BasePageRepository
     ): LengthAwarePaginator {
         $query = SupportMessage::query()
             ->where('support_conversation_id', $conversationId)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc');
 
         if (! empty($relations)) {
             $query->with($relations);
@@ -97,6 +98,7 @@ class SupportMessageRepository extends BasePageRepository
         return SupportMessage::query()
             ->where('support_conversation_id', $conversationId)
             ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->first();
     }
 
@@ -111,6 +113,7 @@ class SupportMessageRepository extends BasePageRepository
             ->where('support_conversation_id', $conversationId)
             ->where('id', '>', $afterMessageId)
             ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
             ->with('sender')
             ->get();
     }

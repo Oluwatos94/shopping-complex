@@ -97,6 +97,42 @@ class SupportApiTest extends TestCase
             ->assertJsonPath('conversation.status', SupportConversationStatusEnum::BOT->value);
     }
 
+    public function test_messages_sharing_a_timestamp_come_back_newest_first(): void
+    {
+        $user = User::factory()->create(['role' => 'customer']);
+        $conversation = SupportConversation::factory()->forUser($user)->create();
+
+        $sameSecond = now()->startOfSecond();
+        foreach (['first', 'second', 'third', 'fourth'] as $content) {
+            SupportMessage::factory()->create([
+                'support_conversation_id' => $conversation->id,
+                'role' => SupportMessageRoleEnum::USER,
+                'content' => $content,
+                'created_at' => $sameSecond,
+                'updated_at' => $sameSecond,
+            ]);
+        }
+
+        $ordering = [];
+        for ($i = 0; $i < 3; $i++) {
+            $response = $this->actingAs($user)
+                ->getJson("/api/support/conversations/{$conversation->id}/messages")
+                ->assertOk();
+
+            $ordering[] = array_column($response->json('messages'), 'id');
+        }
+
+        $expected = SupportMessage::query()
+            ->where('support_conversation_id', $conversation->id)
+            ->orderByDesc('id')
+            ->pluck('id')
+            ->all();
+
+        foreach ($ordering as $ids) {
+            $this->assertSame($expected, $ids);
+        }
+    }
+
     public function test_another_user_cannot_touch_someone_elses_conversation(): void
     {
         $this->bindFakeAi();

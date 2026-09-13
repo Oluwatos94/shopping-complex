@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Product } from '@/types/product';
+import VideoThumbnail from '@/components/Media/VideoThumbnail';
 
 interface ProductCardProps {
     product: Product;
@@ -21,13 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="relative aspect-square overflow-hidden bg-brand-surface">
                 {isVideo ? (
                     <>
-                        <video
-                            src={primaryImage}
-                            className="h-full w-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                        />
+                        <VideoThumbnail src={primaryImage} className="h-full w-full object-cover" />
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 transition-colors group-hover:bg-black/70">
                                 <svg className="ml-0.5 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">

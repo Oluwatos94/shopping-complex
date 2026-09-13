@@ -68,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(GeminiClient::class, fn () => new GeminiClient(
             apiKey: (string) config('services.gemini.api_key'),
             model: (string) config('services.gemini.model', 'gemini-2.5-flash'),
+            maxThinkingTokens: (int) config('services.gemini.max_thinking_tokens', 0),
         ));
 
         $this->app->singleton(AiChatClient::class, fn ($app) => match (config('services.ai_bot.driver')) {

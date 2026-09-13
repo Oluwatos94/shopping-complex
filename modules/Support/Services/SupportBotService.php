@@ -154,6 +154,11 @@ final readonly class SupportBotService
                     return (string) $block['text'];
                 }
             }
+
+            Log::warning('Support bot got no text reply', [
+                'conversation_id' => $conversation->id,
+                'stop_reason' => $response['stop_reason'] ?? null,
+            ]);
         } catch (\Throwable $e) {
             Log::warning('Support bot reply failed', [
                 'conversation_id' => $conversation->id,
