@@ -32,16 +32,23 @@ final class PaystackClient
         string $email,
         int $amountInKobo,
         array $metadata,
-        string $callbackUrl
+        string $callbackUrl,
+        ?string $reference = null,
     ): string {
+        $payload = [
+            'email' => $email,
+            'amount' => $amountInKobo,
+            'metadata' => $metadata,
+            'callback_url' => $callbackUrl,
+        ];
+
+        if ($reference !== null) {
+            $payload['reference'] = $reference;
+        }
+
         $response = Http::withToken($this->secretKey)
             ->timeout(self::TIMEOUT_SECONDS)
-            ->post(self::INITIALIZE_URL, [
-                'email' => $email,
-                'amount' => $amountInKobo,
-                'metadata' => $metadata,
-                'callback_url' => $callbackUrl,
-            ]);
+            ->post(self::INITIALIZE_URL, $payload);
 
         if (! $response->successful() || ! $response->json('status')) {
             Log::error('Paystack initialization failed', ['response' => $response->json()]);
