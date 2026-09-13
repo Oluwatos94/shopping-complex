@@ -8,6 +8,7 @@ import { recordVendorContact } from '@/utils/contact';
 import UploadProductFab from './partials/UploadProductFab';
 import EditProfileModal from './partials/EditProfileModal';
 import ReviewCard from '@/components/Vendors/ReviewCard';
+import VideoThumbnail from '@/components/Media/VideoThumbnail';
 
 interface Props {
     vendor: VendorProfile;
@@ -378,7 +379,7 @@ export default function VendorProfilePage({
                                                 <div className="relative aspect-square overflow-hidden bg-brand-surface">
                                                     {isVideo ? (
                                                         <>
-                                                            <video src={primaryImage} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                                            <VideoThumbnail src={primaryImage} className="w-full h-full object-cover" />
                                                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                                                 <div className="w-10 h-10 bg-black/60 rounded-full flex items-center justify-center">
                                                                     <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">

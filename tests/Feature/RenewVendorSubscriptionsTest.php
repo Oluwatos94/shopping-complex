@@ -257,7 +257,8 @@ class RenewVendorSubscriptionsTest extends TestCase
 
     public function test_renewal_without_whatsapp_number_sends_nothing(): void
     {
-        $this->dueStellarSubscription(price: 5000);
+        [$subscription] = $this->dueStellarSubscription(price: 5000);
+        $subscription->vendor->update(['whatsapp_number' => null]);
 
         $this->runJob($this->fakeCharger(succeeds: true));
 

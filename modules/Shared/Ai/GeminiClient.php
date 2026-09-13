@@ -16,6 +16,7 @@ final readonly class GeminiClient implements AiChatClient
     public function __construct(
         private string $apiKey,
         private string $model = 'gemini-2.5-flash',
+        private int $maxThinkingTokens = 0,
     ) {}
 
     /**
@@ -82,8 +83,20 @@ final readonly class GeminiClient implements AiChatClient
             $request['tools'] = [['functionDeclarations' => $tools]];
         }
 
+        $generationConfig = [];
+
         if (isset($payload['max_tokens'])) {
-            $request['generationConfig'] = ['maxOutputTokens' => (int) $payload['max_tokens']];
+            $generationConfig['maxOutputTokens'] = (int) $payload['max_tokens'];
+        }
+
+        // Thinking tokens are charged against maxOutputTokens; uncapped, they can
+        // consume it entirely and return a candidate with no parts.
+        if ($this->maxThinkingTokens >= 0) {
+            $generationConfig['thinkingConfig'] = ['thinkingBudget' => $this->maxThinkingTokens];
+        }
+
+        if ($generationConfig !== []) {
+            $request['generationConfig'] = $generationConfig;
         }
 
         return $request;
@@ -180,6 +193,10 @@ final readonly class GeminiClient implements AiChatClient
         $hasToolUse = false;
 
         foreach ($parts as $part) {
+            if (($part['thought'] ?? false) === true) {
+                continue;
+            }
+
             if (isset($part['functionCall'])) {
                 $hasToolUse = true;
                 $name = (string) ($part['functionCall']['name'] ?? '');
@@ -198,10 +215,29 @@ final readonly class GeminiClient implements AiChatClient
             }
         }
 
+        $finishReason = (string) data_get($data, 'candidates.0.finishReason', '');
+
+        if ($content === []) {
+            Log::warning('Gemini returned no usable content', [
+                'finish_reason' => $finishReason,
+                'block_reason' => data_get($data, 'promptFeedback.blockReason'),
+                'usage' => data_get($data, 'usageMetadata'),
+            ]);
+        }
+
         return [
-            'stop_reason' => $hasToolUse ? 'tool_use' : 'end_turn',
+            'stop_reason' => $hasToolUse ? 'tool_use' : $this->toStopReason($finishReason),
             'content' => $content,
         ];
+    }
+
+    private function toStopReason(string $finishReason): string
+    {
+        return match ($finishReason) {
+            'MAX_TOKENS' => 'max_tokens',
+            'STOP', '' => 'end_turn',
+            default => 'stop_'.mb_strtolower($finishReason),
+        };
     }
 
     private function nameFromToolUseId(string $toolUseId): string

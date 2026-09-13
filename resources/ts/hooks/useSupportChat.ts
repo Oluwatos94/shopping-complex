@@ -24,6 +24,19 @@ function locationBody(origin: SearchOrigin | null): Record<string, number> {
     };
 }
 
+function mergeById(prev: SupportMessage[], incoming: SupportMessage[], keepPending: boolean): SupportMessage[] {
+    const confirmed = new Map<number, SupportMessage>();
+    for (const message of prev) {
+        if (message.id > 0) confirmed.set(message.id, message);
+    }
+    for (const message of incoming) {
+        confirmed.set(message.id, message);
+    }
+
+    const merged = [...confirmed.values()].sort((a, b) => a.id - b.id);
+    return keepPending ? [...merged, ...prev.filter(m => m.id < 0)] : merged;
+}
+
 export function useSupportChat(isOpen: boolean) {
     const [conversation, setConversation] = useState<SupportConversation | null>(null);
     const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -56,15 +69,7 @@ export function useSupportChat(isOpen: boolean) {
         const data: { messages: SupportMessage[]; meta: { last_page: number } } = await res.json();
         setHasOlderMessages(oldestPageRef.current < data.meta.last_page);
 
-        setMessages(prev => {
-            const server = [...data.messages].reverse();
-            const oldestServerId = server[0]?.id;
-            const older = oldestServerId === undefined
-                ? []
-                : prev.filter(m => m.id > 0 && m.id < oldestServerId);
-            const pending = keepPending ? prev.filter(m => m.id < 0) : [];
-            return [...older, ...server, ...pending];
-        });
+        setMessages(prev => mergeById(prev, data.messages, keepPending));
     }, []);
 
     const loadOlderMessages = useCallback(async () => {
@@ -80,11 +85,7 @@ export function useSupportChat(isOpen: boolean) {
             const data: { messages: SupportMessage[]; meta: { current_page: number; last_page: number } } = await res.json();
             oldestPageRef.current = data.meta.current_page;
             setHasOlderMessages(data.meta.current_page < data.meta.last_page);
-            setMessages(prev => {
-                const ids = new Set(prev.map(m => m.id));
-                const older = [...data.messages].reverse().filter(m => !ids.has(m.id));
-                return older.length > 0 ? [...older, ...prev] : prev;
-            });
+            setMessages(prev => mergeById(prev, data.messages, true));
         } finally {
             loadingOlderRef.current = false;
         }

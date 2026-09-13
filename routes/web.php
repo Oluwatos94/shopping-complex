@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use ModulesShoppingComplex\Analytics\Http\Controllers\AnalyticsController;
+use ModulesShoppingComplex\Billing\Http\Controllers\ContactRedirectController;
 use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\CategoryController;
@@ -35,6 +36,12 @@ Route::post('/webhook/whatsapp', [WhatsAppController::class, 'receive'])->name('
 
 // Paystack Webhook (public — authenticated by the x-paystack-signature header)
 Route::post('/webhook/paystack', [PaystackWebhookController::class, 'handle'])->name('paystack.webhook');
+
+// Signed vendor contact redirect (public — the buyer is anonymous)
+Route::get('/c/{token}', ContactRedirectController::class)
+    ->where('token', '[A-Za-z0-9]{32}')
+    ->middleware('throttle:guest')
+    ->name('contact.redirect');
 
 // Static pages
 Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');

@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
+use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
+use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
 use ModulesShoppingComplex\Billing\Listeners\SendSubscriptionPaymentWhatsApp;
 use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
@@ -20,6 +23,7 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarProvider;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
+use ModulesShoppingComplex\Billing\Services\CoinLeadDebitor;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
@@ -54,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WhatsAppApiService::class);
         $this->app->bind(WhatsAppSender::class, WhatsAppApiService::class);
 
+        $this->app->bind(LeadDebitor::class, CoinLeadDebitor::class);
+
         $this->app->singleton(ClaudeClient::class, fn () => new ClaudeClient(
             apiKey: (string) config('services.claude.api_key'),
             model: (string) config('services.claude.model', 'claude-haiku-4-5-20251001'),
@@ -62,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(GeminiClient::class, fn () => new GeminiClient(
             apiKey: (string) config('services.gemini.api_key'),
             model: (string) config('services.gemini.model', 'gemini-2.5-flash'),
+            maxThinkingTokens: (int) config('services.gemini.max_thinking_tokens', 0),
         ));
 
         $this->app->singleton(AiChatClient::class, fn ($app) => match (config('services.ai_bot.driver')) {
@@ -93,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(SubscriptionPaymentSucceeded::class, SendSubscriptionPaymentWhatsApp::class);
         Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
+        Event::listen(VendorContactClicked::class, RecordBillableLead::class);
     }
 
     /**

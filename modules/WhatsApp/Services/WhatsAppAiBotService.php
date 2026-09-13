@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
+use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
@@ -39,6 +40,8 @@ final readonly class WhatsAppAiBotService
 
     private const SEARCH_RADII_KM = [5.0, 15.0, 30.0];
 
+    private const BUSY_REPLY = "I'm having trouble reaching my system right now. Please send that again in a moment.";
+
     public function __construct(
         private WhatsAppApiService $apiService,
         private WhatsAppSessionRepository $sessionRepository,
@@ -47,6 +50,7 @@ final readonly class WhatsAppAiBotService
         private AnalyticsService $analyticsService,
         private AiChatClient $ai,
         private GeoLocationService $geo,
+        private ContactLinkService $contactLinks,
     ) {}
 
     /**
@@ -114,7 +118,16 @@ final readonly class WhatsAppAiBotService
             'search_query' => mb_substr($userText, 0, 255),
         ]);
 
-        $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
+        try {
+            $reply = $this->runAiWithTools($from, $history, $session, $isFirstTime);
+        } catch (\Throwable $e) {
+            Log::warning('WhatsApp AI reply failed', ['from' => $from, 'error' => $e->getMessage()]);
+
+            $this->sessionRepository->save($session);
+            $this->apiService->sendText($from, self::BUSY_REPLY);
+
+            return;
+        }
 
         $history[] = [
             'role' => 'assistant',
@@ -209,7 +222,12 @@ final readonly class WhatsAppAiBotService
             }
         }
 
-        return "Sorry, I couldn't process your request. Please try again.";
+        Log::warning('AI returned no text reply', [
+            'from' => $from,
+            'stop_reason' => $response['stop_reason'] ?? null,
+        ]);
+
+        return self::BUSY_REPLY;
     }
 
     /**
@@ -492,17 +510,15 @@ final readonly class WhatsAppAiBotService
         $name = $vendor->business_name ?? $vendor->name;
         $profileUrl = $vendor->slug ? url('/vendors/'.$vendor->slug) : null;
 
-        $digits = empty($vendor->whatsapp_number)
-            ? null
-            : $this->normalizeWhatsAppNumber((string) $vendor->whatsapp_number);
+        $contactUrl = $this->contactLinks->urlFor($vendor, ViewSourceEnum::WHATSAPP, buyerIdentity: $from);
 
-        if ($digits === null && $profileUrl === null) {
+        if ($contactUrl === null && $profileUrl === null) {
             return "{$name} has not added a WhatsApp number or a public profile yet. Tell the buyer this in their own language.";
         }
 
         $lines = ["*{$name}*"];
-        if ($digits !== null) {
-            $lines[] = "WhatsApp: https://wa.me/{$digits}";
+        if ($contactUrl !== null) {
+            $lines[] = "WhatsApp: {$contactUrl}";
         }
         if ($profileUrl !== null) {
             $lines[] = "Profile: {$profileUrl}";
@@ -510,9 +526,9 @@ final readonly class WhatsAppAiBotService
 
         $this->apiService->sendText($from, implode("\n", $lines));
 
-        if ($digits !== null && $profileUrl !== null) {
+        if ($contactUrl !== null && $profileUrl !== null) {
             $shared = 'their WhatsApp link and profile link';
-        } elseif ($digits !== null) {
+        } elseif ($contactUrl !== null) {
             $shared = 'their WhatsApp link';
         } else {
             $shared = 'their profile link (no usable WhatsApp number on file)';
@@ -521,29 +537,6 @@ final readonly class WhatsAppAiBotService
         return "Already sent {$name}'s contact card ({$shared}) to the buyer in a separate message. "
             ."In your reply, just confirm in the buyer's own language that you've shared {$name}'s details — "
             .'do NOT type out any link or phone number yourself; the buyer already has the exact one.';
-    }
-
-    private function normalizeWhatsAppNumber(string $number): ?string
-    {
-        $digits = (string) preg_replace('/[^0-9]/', '', $number);
-
-        if (str_starts_with($digits, '00')) {
-            $digits = substr($digits, 2);
-        }
-
-        $national = match (true) {
-            str_starts_with($digits, '2340') && strlen($digits) === 14 => substr($digits, 4),
-            str_starts_with($digits, '234') && strlen($digits) === 13 => substr($digits, 3),
-            str_starts_with($digits, '0') && strlen($digits) === 11 => substr($digits, 1),
-            strlen($digits) === 10 => $digits,
-            default => null,
-        };
-
-        if ($national === null || preg_match('/^[789]\d{9}$/', $national) !== 1) {
-            return null;
-        }
-
-        return '234'.$national;
     }
 
     /**

@@ -40,6 +40,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'customer',
+            'whatsapp_number' => '0'.fake()->randomElement(['70', '80', '81', '90', '91']).fake()->numerify('########'),
             'remember_token' => Str::random(10),
         ];
     }

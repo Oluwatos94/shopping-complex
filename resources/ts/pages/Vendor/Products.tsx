@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import { Product } from '@/types/product';
 import NotificationModal from '@/components/NotificationModal';
+import VideoThumbnail from '@/components/Media/VideoThumbnail';
 import UploadProductFab from './partials/UploadProductFab';
 
 interface PaginatedVendorProducts {
@@ -77,7 +78,7 @@ export default function VendorProducts({ products, product_limit, active_product
                                             {primary ? (
                                                 isVideo ? (
                                                     <>
-                                                        <video src={primary.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                                        <VideoThumbnail src={primary.url} className="w-full h-full object-cover" />
                                                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                                             <svg className="w-8 h-8 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
                                                                 <path d="M8 5v14l11-7z" />
