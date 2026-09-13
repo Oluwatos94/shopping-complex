@@ -40,9 +40,11 @@ final readonly class SupportBotService
 
     private const LOCATION_AVAILABLE = 'BUYER LOCATION: shared and available for this message. Never tell the buyer you cannot see their location or ask them to share it again. If you asked for it earlier in this chat, acknowledge that you have it now and run the search straight away.';
 
-    private const LOCATION_MISSING = 'BUYER LOCATION: not shared for this message. Before suggesting any vendor or product, ask the buyer to tap the location pin button beside the message box and resend their request.';
+    private const LOCATION_CONTROL = 'the "Where are you?" box just above the message box (they type their area and pick it from the suggestions; on a phone it also offers to use their device location)';
 
-    private const ASK_FOR_LOCATION = 'NO RESULTS YET — the buyer has not shared their device location. Do not suggest any vendors or products yet. First ask the buyer, in your own words, to tap the location pin button beside the message box and resend their request, so you can find the options nearest to them. Only if the buyer declines or cannot share their location, call the tool again with allow_global set to true to search all of Jiidaa instead.';
+    private const LOCATION_MISSING = 'BUYER LOCATION: not shared for this message. Before suggesting any vendor or product, ask the buyer to set their location using '.self::LOCATION_CONTROL.', then send their request again.';
+
+    private const ASK_FOR_LOCATION = 'NO RESULTS YET — the buyer has not shared their location. Do not suggest any vendors or products yet. First ask the buyer, in your own words, to set their location using '.self::LOCATION_CONTROL.' and send their request again, so you can find the options nearest to them. Only if the buyer declines or cannot share their location, call the tool again with allow_global set to true to search all of Jiidaa instead.';
 
     public function __construct(
         private AiChatClient $ai,
@@ -448,7 +450,7 @@ final readonly class SupportBotService
 
     private function systemPrompt(): string
     {
-        return <<<'PROMPT'
+        $prompt = <<<'PROMPT'
 You are the customer support assistant for Jiidaa, a Nigerian GPS-powered, WhatsApp-native marketplace that connects buyers to trusted local vendors near them.
 
 WHAT YOU HELP WITH:
@@ -459,7 +461,7 @@ WHAT YOU HELP WITH:
 
 TOOLS:
 - Use search_products / search_vendors to answer product or vendor questions with live platform data instead of guessing. search_vendors also matches what vendors sell, so it is the tool for "who sells X near me".
-- LOCATION FIRST: Jiidaa connects buyers to vendors NEAR them. When a buyer asks for a product or vendor and has not shared their device location, do not suggest any vendors or products yet — first ask them to tap the location pin button next to the message box and resend their message, so you can recommend the nearest options. Only if they decline or cannot share it, search again with allow_global true and present platform-wide results.
+- LOCATION FIRST: Jiidaa connects buyers to vendors NEAR them. When a buyer asks for a product or vendor and has not shared their location, do not suggest any vendors or products yet — first ask them to set it using {LOCATION_CONTROL}, then send their message again, so you can recommend the nearest options. Only if they decline or cannot share it, search again with allow_global true and present platform-wide results.
 - Tool results are raw data plus notes addressed to YOU. Never repeat tool output word-for-word — always rewrite it as your own natural reply to the buyer.
 - When the user asks about a subscription payment and gives its payment reference, use get_payment_status. For their current plan, use get_my_subscription. These tools are already scoped to the signed-in user — never ask for or accept another person's account details.
 - If a lookup returns nothing, say so plainly and suggest what to try next — never present invented data as a result.
@@ -477,5 +479,7 @@ HUMAN HANDOFF:
 - If you cannot resolve the issue, if the user is frustrated, or if they ask for a person, offer to connect them to a human support agent and ask them to confirm they want that.
 - Once they confirm (or clearly ask for a human), call the request_human tool — do not just say an agent is coming without calling it.
 PROMPT;
+
+        return str_replace('{LOCATION_CONTROL}', self::LOCATION_CONTROL, $prompt);
     }
 }

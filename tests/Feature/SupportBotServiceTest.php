@@ -212,7 +212,7 @@ class SupportBotServiceTest extends TestCase
                 ],
                 [
                     'stop_reason' => 'end_turn',
-                    'content' => [['type' => 'text', 'text' => 'Please tap the location pin so I can find shoes near you.']],
+                    'content' => [['type' => 'text', 'text' => 'Please set your location above so I can find shoes near you.']],
                 ],
             ]);
 
@@ -221,7 +221,7 @@ class SupportBotServiceTest extends TestCase
             $this->app->make(SupportBotService::class)->reply($conversation, 'I need shoes');
 
             $toolResult = (string) end($fake->payloads[1]['messages'])['content'][0]['content'];
-            $this->assertStringContainsString('location pin button', $toolResult, $tool);
+            $this->assertStringContainsString('"Where are you?" box', $toolResult, $tool);
             $this->assertStringContainsString('allow_global', $toolResult, $tool);
             $this->assertStringNotContainsString('Shoe Palace', $toolResult, $tool);
         }
