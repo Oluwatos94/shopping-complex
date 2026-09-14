@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use ModulesShoppingComplex\Analytics\Http\Controllers\AnalyticsController;
+use ModulesShoppingComplex\Billing\Http\Controllers\CoinPurchaseController;
 use ModulesShoppingComplex\Billing\Http\Controllers\ContactRedirectController;
 use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
@@ -305,6 +306,9 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('vendor.subscription.index');
     Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
     Route::get('/subscription/stellar/status', [SubscriptionController::class, 'stellarStatus'])->name('vendor.subscription.stellar.status');
+
+    Route::get('/coins', [CoinPurchaseController::class, 'packs'])->name('vendor.coins.packs');
+    Route::get('/coins/callback', [CoinPurchaseController::class, 'callback'])->name('vendor.coins.callback');
 });
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
@@ -312,6 +316,7 @@ Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function
     Route::post('/subscription/auto-renew', [SubscriptionController::class, 'enableAutoRenew'])->name('vendor.subscription.autorenew.enable');
     Route::post('/subscription/auto-renew/revoke', [SubscriptionController::class, 'disableAutoRenew'])->name('vendor.subscription.autorenew.disable');
     Route::post('/subscription/{plan}', [SubscriptionController::class, 'checkout'])->name('vendor.subscription.checkout');
+    Route::post('/coins/{pack}', [CoinPurchaseController::class, 'checkout'])->name('vendor.coins.checkout');
 });
 
 // Vendor follow toggle
