@@ -12,6 +12,7 @@ use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Models\VendorSubscription;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Billing\Payments\PaystackProvider;
+use ModulesShoppingComplex\Billing\Payments\PaystackUnavailableException;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\WhatsApp\Jobs\SendWhatsAppMessage;
@@ -89,12 +90,12 @@ class PaystackPaymentTest extends TestCase
         $this->assertSame('https://checkout.paystack.com/abc123', $url);
     }
 
-    public function test_initialize_http_failure_throws(): void
+    public function test_initialize_gateway_server_error_is_retryable(): void
     {
         Http::fake(['api.paystack.co/transaction/initialize' => Http::response([], 500)]);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Payment initialization failed');
+        // A 5xx is a transient gateway failure, distinct from a definitive rejection.
+        $this->expectException(PaystackUnavailableException::class);
 
         $this->client()->initializeTransaction('vendor@example.com', 500000, [], 'https://jiidaa.test/callback');
     }

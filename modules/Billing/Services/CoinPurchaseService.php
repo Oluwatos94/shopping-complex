@@ -13,6 +13,7 @@ use ModulesShoppingComplex\Billing\Events\CoinPackPurchased;
 use ModulesShoppingComplex\Billing\Models\CoinPurchase;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
+use ModulesShoppingComplex\Billing\Payments\PaystackUnavailableException;
 use ModulesShoppingComplex\Identity\Models\User;
 
 final class CoinPurchaseService
@@ -50,6 +51,9 @@ final class CoinPurchaseService
                 callbackUrl: $callbackUrl,
                 reference: $reference,
             );
+        } catch (PaystackUnavailableException $e) {
+
+            throw $e;
         } catch (\Throwable $e) {
             $purchase->delete();
 
@@ -73,12 +77,12 @@ final class CoinPurchaseService
             throw new \RuntimeException('Unknown coin purchase reference.');
         }
 
-        if ($purchase->isCompleted()) {
-            return $purchase;
-        }
-
         if ($purchase->vendor_id !== $vendor->id) {
             throw new \RuntimeException('Payment reference does not belong to your account.');
+        }
+
+        if ($purchase->isCompleted()) {
+            return $purchase;
         }
 
         $data = $this->paystack->verifyTransaction($reference);

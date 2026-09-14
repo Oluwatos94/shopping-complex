@@ -302,6 +302,51 @@ class CoinPackPurchaseTest extends TestCase
         $this->assertSame(0, CoinPurchase::count());
     }
 
+    public function test_a_vendor_cannot_probe_another_vendors_completed_reference(): void
+    {
+        $owner = $this->vendor();
+        $intruder = $this->vendor();
+
+        // Owner's purchase is already completed.
+        $this->pendingPurchase($owner, 'growth', 'coin_ref_owner')->forceFill([
+            'status' => CoinPurchaseStatusEnum::COMPLETED,
+            'paid_at' => now(),
+        ])->save();
+
+        $this->actingAs($intruder)
+            ->get('/vendor/coins/callback?reference=coin_ref_owner')
+            ->assertRedirect()
+            ->assertSessionHas('error')
+            ->assertSessionMissing('success');
+    }
+
+    // ==================== Transient gateway failures ====================
+
+    public function test_a_gateway_error_during_verify_defers_the_webhook_for_retry(): void
+    {
+        $vendor = $this->vendor();
+        $this->pendingPurchase($vendor, 'growth', 'coin_ref_1');
+        Http::fake(['api.paystack.co/transaction/verify/*' => Http::response('upstream error', 502)]);
+
+        // 503 tells Paystack to redeliver rather than treating a paid charge as done.
+        $this->postWebhook($this->coinWebhookData('coin_ref_1', $vendor->id))->assertStatus(503);
+
+        $this->assertSame(0, $this->wallet()->balance($vendor));
+        $this->assertSame(CoinPurchaseStatusEnum::PENDING, CoinPurchase::sole()->status);
+    }
+
+    public function test_an_ambiguous_init_failure_keeps_the_pending_purchase(): void
+    {
+        Http::fake(['api.paystack.co/transaction/initialize' => Http::response('upstream error', 503)]);
+
+        $this->actingAs($this->vendor())->post('/vendor/coins/growth')->assertRedirect();
+
+        // Paystack may have created the transaction, so the row must survive for
+        // a later payment's webhook to reconcile against.
+        $this->assertSame(1, CoinPurchase::count());
+        $this->assertSame(CoinPurchaseStatusEnum::PENDING, CoinPurchase::sole()->status);
+    }
+
     // ==================== Receipt ====================
 
     public function test_a_receipt_event_is_dispatched_on_success(): void

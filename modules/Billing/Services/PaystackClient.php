@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Billing\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Billing\Payments\PaystackUnavailableException;
 
 /**
  * Thin HTTP client for the Paystack API.
@@ -46,9 +48,17 @@ final class PaystackClient
             $payload['reference'] = $reference;
         }
 
-        $response = Http::withToken($this->secretKey)
-            ->timeout(self::TIMEOUT_SECONDS)
-            ->post(self::INITIALIZE_URL, $payload);
+        try {
+            $response = Http::withToken($this->secretKey)
+                ->timeout(self::TIMEOUT_SECONDS)
+                ->post(self::INITIALIZE_URL, $payload);
+        } catch (ConnectionException $e) {
+            throw new PaystackUnavailableException('Payment gateway is temporarily unreachable.', previous: $e);
+        }
+
+        if ($response->serverError()) {
+            throw new PaystackUnavailableException('Payment gateway returned a server error.');
+        }
 
         if (! $response->successful() || ! $response->json('status')) {
             Log::error('Paystack initialization failed', ['response' => $response->json()]);
@@ -57,9 +67,6 @@ final class PaystackClient
 
         $url = (string) $response->json('data.authorization_url');
 
-        // Guard against an open-redirect if the Paystack response is ever tampered with.
-        // Match the apex domain or a real subdomain — NOT any host merely ending in the
-        // string (e.g. "evilpaystack.com" must not pass).
         $parsed = parse_url($url);
         $host = $parsed['host'] ?? '';
         $isPaystackHost = $host === 'paystack.com' || str_ends_with($host, '.paystack.com');
@@ -80,9 +87,17 @@ final class PaystackClient
      */
     public function verifyTransaction(string $reference): array
     {
-        $response = Http::withToken($this->secretKey)
-            ->timeout(self::TIMEOUT_SECONDS)
-            ->get(self::VERIFY_URL.$reference);
+        try {
+            $response = Http::withToken($this->secretKey)
+                ->timeout(self::TIMEOUT_SECONDS)
+                ->get(self::VERIFY_URL.$reference);
+        } catch (ConnectionException $e) {
+            throw new PaystackUnavailableException('Payment gateway is temporarily unreachable.', previous: $e);
+        }
+
+        if ($response->serverError()) {
+            throw new PaystackUnavailableException('Payment gateway returned a server error.');
+        }
 
         if (! $response->successful() || ! $response->json('status')) {
             Log::warning('Paystack verification failed', [

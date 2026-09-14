@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
+use ModulesShoppingComplex\Billing\Payments\PaystackUnavailableException;
 use ModulesShoppingComplex\Billing\Services\CoinPurchaseService;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Identity\Repositories\UserRepository;
@@ -64,7 +65,17 @@ class PaystackWebhookController extends Controller
             } else {
                 $this->subscriptionService->handleCallback(PaymentMethodEnum::PAYSTACK, $reference, $vendor);
             }
+        } catch (PaystackUnavailableException $e) {
+
+            Log::warning('Paystack webhook deferred: gateway unavailable', [
+                'reference' => $reference,
+                'vendor_id' => $vendorId,
+                'type' => $type,
+            ]);
+
+            return response('Gateway unavailable, retry later.', 503);
         } catch (\RuntimeException $e) {
+
             Log::error('Paystack webhook processing failed', [
                 'reference' => $reference,
                 'vendor_id' => $vendorId,
