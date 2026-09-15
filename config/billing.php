@@ -3,7 +3,7 @@
 return [
 
     'leads' => [
-        'coin_cost' => (int) env('LEAD_COIN_COST', 10),
+        'default_cost' => (int) env('LEAD_DEFAULT_COST', 5),
     ],
 
     'coins' => [

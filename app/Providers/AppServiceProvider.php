@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
+use ModulesShoppingComplex\Billing\Events\CategoryLeadCostChanged;
 use ModulesShoppingComplex\Billing\Events\CoinPackPurchased;
 use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
+use ModulesShoppingComplex\Billing\Listeners\AnnounceLeadCostChange;
 use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Listeners\SendCoinPurchaseReceipt;
 use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
@@ -104,6 +106,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SubscriptionRenewalFailed::class, SendRenewalFailedWhatsApp::class);
         Event::listen(VendorContactClicked::class, RecordBillableLead::class);
         Event::listen(CoinPackPurchased::class, SendCoinPurchaseReceipt::class);
+        Event::listen(CategoryLeadCostChanged::class, AnnounceLeadCostChange::class);
     }
 
     /**

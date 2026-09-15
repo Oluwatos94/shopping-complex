@@ -41,6 +41,7 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property string|null $bio
  * @property string|null $business_name
  * @property int|null $category_id
+ * @property int|null $lead_coin_cost_override
  * @property string|null $available_hours
  * @property string|null $referral_code
  * @property int|null $referred_by
@@ -84,6 +85,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'bio',
         'business_name',
         'category_id',
+        'lead_coin_cost_override',
         'available_hours',
         'email_verified_at',
     ];
@@ -101,6 +103,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'lead_coin_cost_override' => 'integer',
         ];
     }
 

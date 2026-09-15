@@ -17,6 +17,7 @@ final class LeadBillingService
 
     public function __construct(
         private readonly LeadDebitor $debitor,
+        private readonly LeadPricingService $pricing,
     ) {}
 
     public function bill(ContactClick $click): ?BillableLead
@@ -50,7 +51,7 @@ final class LeadBillingService
                 'last_click_at' => now(),
             ]);
 
-            $charged = $this->debitor->debit($vendor, $lead, (int) config('billing.leads.coin_cost'));
+            $charged = $this->debitor->debit($vendor, $lead, $this->pricing->costFor($vendor));
 
             if ($charged > 0) {
                 $lead->forceFill([
