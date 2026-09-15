@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
+use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -28,8 +29,10 @@ final class LeadBillingService
         }
 
         $wasCharged = false;
+        $wasMissed = false;
+        $attemptedCost = 0;
 
-        $lead = DB::transaction(function () use ($click, &$wasCharged): ?BillableLead {
+        $lead = DB::transaction(function () use ($click, &$wasCharged, &$wasMissed, &$attemptedCost): ?BillableLead {
             $vendor = User::whereKey($click->vendor_id)->lockForUpdate()->first();
 
             if ($vendor === null) {
@@ -54,7 +57,8 @@ final class LeadBillingService
                 'last_click_at' => now(),
             ]);
 
-            $charged = $this->debitor->debit($vendor, $lead, $this->pricing->costFor($vendor));
+            $attemptedCost = $this->pricing->costFor($vendor);
+            $charged = $this->debitor->debit($vendor, $lead, $attemptedCost);
 
             if ($charged > 0) {
                 $lead->forceFill([
@@ -63,6 +67,8 @@ final class LeadBillingService
                 ])->save();
 
                 $wasCharged = true;
+            } else {
+                $wasMissed = true;
             }
 
             return $lead;
@@ -70,6 +76,10 @@ final class LeadBillingService
 
         if ($wasCharged && $lead !== null) {
             VendorLeadCharged::dispatch($lead);
+        }
+
+        if ($wasMissed && $lead !== null) {
+            VendorLeadMissed::dispatch($lead, $attemptedCost);
         }
 
         return $lead;

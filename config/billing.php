@@ -4,6 +4,8 @@ return [
 
     'leads' => [
         'default_cost' => (int) env('LEAD_DEFAULT_COST', 5),
+
+        'low_balance_leads' => (int) env('LEAD_LOW_BALANCE_LEADS', 3),
     ],
 
     'coins' => [

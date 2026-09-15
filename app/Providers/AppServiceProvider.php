@@ -13,12 +13,15 @@ use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
+use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
 use ModulesShoppingComplex\Billing\Listeners\AnnounceLeadCostChange;
 use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Listeners\SendCoinPurchaseReceipt;
+use ModulesShoppingComplex\Billing\Listeners\SendMissedLeadAlert;
 use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
 use ModulesShoppingComplex\Billing\Listeners\SendSubscriptionPaymentWhatsApp;
 use ModulesShoppingComplex\Billing\Listeners\SendVendorLeadAlert;
+use ModulesShoppingComplex\Billing\Listeners\WarnLowCoinBalance;
 use ModulesShoppingComplex\Billing\Payments\PaymentProviderManager;
 use ModulesShoppingComplex\Billing\Payments\PaystackProvider;
 use ModulesShoppingComplex\Billing\Payments\Stellar\AnchorClient;
@@ -110,6 +113,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(CoinPackPurchased::class, SendCoinPurchaseReceipt::class);
         Event::listen(CategoryLeadCostChanged::class, AnnounceLeadCostChange::class);
         Event::listen(VendorLeadCharged::class, SendVendorLeadAlert::class);
+        Event::listen(VendorLeadCharged::class, WarnLowCoinBalance::class);
+        Event::listen(VendorLeadMissed::class, SendMissedLeadAlert::class);
     }
 
     /**
