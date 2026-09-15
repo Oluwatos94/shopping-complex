@@ -25,7 +25,7 @@ export default function CoinPricing({ categories, defaultCost }: Props) {
     const save = (category: CategoryLeadPricing) => {
         const value = draft[category.id];
 
-        if (value === category.lead_coin_cost || !isValidCost(value)) return;
+        if (value === undefined || value === category.lead_coin_cost || !isValidCost(value)) return;
 
         router.patch(
             `/admin/coin-pricing/categories/${category.id}`,
