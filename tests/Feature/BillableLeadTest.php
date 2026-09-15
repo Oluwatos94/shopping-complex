@@ -34,7 +34,7 @@ class BillableLeadTest extends TestCase
     {
         parent::setUp();
 
-        config(['billing.leads.coin_cost' => 10]);
+        config(['billing.leads.default_cost' => 10]);
 
         $this->debitor = new SpyLeadDebitor;
         $this->app->instance(LeadDebitor::class, $this->debitor);

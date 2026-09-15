@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use ModulesShoppingComplex\Analytics\Http\Controllers\AnalyticsController;
+use ModulesShoppingComplex\Billing\Http\Controllers\Admin\CoinPricingController;
 use ModulesShoppingComplex\Billing\Http\Controllers\CoinPurchaseController;
 use ModulesShoppingComplex\Billing\Http\Controllers\ContactRedirectController;
 use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
@@ -238,6 +239,9 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/referral/participants/{user}', [AdminController::class, 'referralParticipant'])->name('admin.referral.participant');
     Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+
+    Route::get('/coin-pricing', [CoinPricingController::class, 'index'])->name('admin.coin-pricing');
+    Route::patch('/coin-pricing/categories/{category}', [CoinPricingController::class, 'updateCategory'])->name('admin.coin-pricing.category.update');
 
     // Support agent inbox
     Route::get('/support', [AdminSupportController::class, 'index'])->name('admin.support');

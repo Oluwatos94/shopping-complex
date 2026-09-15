@@ -14,6 +14,7 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property string $name
  * @property string $slug
  * @property string|null $description
+ * @property int $lead_coin_cost
  * @property Carbon $created_at
  * @property Carbon|null $updated_at
  */
@@ -26,7 +27,16 @@ class Category extends Model
         'name',
         'description',
         'slug',
+        'lead_coin_cost',
     ];
+
+    /** {@inheritdoc} */
+    protected function casts(): array
+    {
+        return [
+            'lead_coin_cost' => 'integer',
+        ];
+    }
 
     /**
      * Create a new factory instance for the model.

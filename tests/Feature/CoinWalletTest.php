@@ -38,7 +38,7 @@ class CoinWalletTest extends TestCase
         parent::setUp();
 
         config([
-            'billing.leads.coin_cost' => 10,
+            'billing.leads.default_cost' => 10,
             'billing.coins.expiry_months' => 12,
         ]);
     }
