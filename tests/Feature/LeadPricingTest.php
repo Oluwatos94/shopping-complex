@@ -105,6 +105,17 @@ class LeadPricingTest extends TestCase
         $this->assertSame(30, $costOf('real-estate-property'));
     }
 
+    public function test_re_seeding_does_not_reset_an_admin_managed_rate(): void
+    {
+        $this->seed(CategorySeeder::class);
+
+        Category::where('slug', 'electronics-repairs')->update(['lead_coin_cost' => 15]);
+
+        $this->seed(CategorySeeder::class);
+
+        $this->assertSame(15, (int) Category::where('slug', 'electronics-repairs')->value('lead_coin_cost'));
+    }
+
     // ==================== Charging through the real debit path ====================
 
     public function test_a_lead_charges_the_vendors_category_rate(): void

@@ -39,22 +39,21 @@ return new class extends Migration
             DB::table(Category::getTableName())->where('slug', $slug)->update(['lead_coin_cost' => $cost]);
         }
 
-        DB::table(Category::getTableName())->updateOrInsert(
-            ['slug' => 'real-estate-property'],
-            [
+        if (! DB::table(Category::getTableName())->where('slug', 'real-estate-property')->exists()) {
+            DB::table(Category::getTableName())->insert([
+                'id' => 18,
                 'name' => 'Real Estate & Property',
+                'slug' => 'real-estate-property',
                 'description' => 'Property sales, rentals, and real estate services',
                 'lead_coin_cost' => 30,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-        );
+            ]);
+        }
     }
 
     public function down(): void
     {
-        DB::table(Category::getTableName())->where('slug', 'real-estate-property')->delete();
-
         Schema::table(Category::getTableName(), function (Blueprint $table) {
             $table->dropColumn('lead_coin_cost');
         });

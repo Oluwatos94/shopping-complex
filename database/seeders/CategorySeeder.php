@@ -39,9 +39,17 @@ class CategorySeeder extends Seeder
         $now = now()->toDateTimeString();
 
         foreach ($categories as $category) {
-            DB::table('categories')->updateOrInsert(
-                ['id' => $category['id']],
-                array_merge(['lead_coin_cost' => 5], $category, ['created_at' => $now, 'updated_at' => $now]),
+            $tier = $category['lead_coin_cost'] ?? 5;
+            $metadata = ['name' => $category['name'], 'slug' => $category['slug'], 'description' => $category['description']];
+
+            if (DB::table('categories')->where('id', $category['id'])->exists()) {
+                DB::table('categories')->where('id', $category['id'])->update($metadata + ['updated_at' => $now]);
+
+                continue;
+            }
+
+            DB::table('categories')->insert(
+                $metadata + ['id' => $category['id'], 'lead_coin_cost' => $tier, 'created_at' => $now, 'updated_at' => $now],
             );
         }
 
