@@ -20,10 +20,12 @@ export default function CoinPricing({ categories, defaultCost }: Props) {
     );
     const [savingId, setSavingId] = useState<number | null>(null);
 
+    const isValidCost = (value: number) => Number.isInteger(value) && value >= 1 && value <= 1000;
+
     const save = (category: CategoryLeadPricing) => {
         const value = draft[category.id];
 
-        if (value === category.lead_coin_cost) return;
+        if (value === category.lead_coin_cost || !isValidCost(value)) return;
 
         router.patch(
             `/admin/coin-pricing/categories/${category.id}`,
@@ -85,7 +87,7 @@ export default function CoinPricing({ categories, defaultCost }: Props) {
                                         <td className="px-5 py-3 text-right">
                                             <button
                                                 onClick={() => save(category)}
-                                                disabled={!changed || savingId === category.id || value < 1}
+                                                disabled={!changed || savingId === category.id || !isValidCost(value)}
                                                 className="rounded-lg bg-brand-green px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {savingId === category.id ? 'Saving…' : 'Save'}
