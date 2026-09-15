@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
+use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Models\BillableLead;
+use ModulesShoppingComplex\Billing\Services\CoinWalletService;
 use ModulesShoppingComplex\Billing\Services\SubscriptionService;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Http\Requests\UpdateVendorProfileRequest;
@@ -26,6 +29,7 @@ class VendorDashboardController extends Controller
         private readonly AnalyticsService $analyticsService,
         private readonly SubscriptionService $subscriptionService,
         private readonly ReferralService $referralService,
+        private readonly CoinWalletService $wallet,
     ) {}
 
     public function dashboard(): Response
@@ -54,6 +58,13 @@ class VendorDashboardController extends Controller
         $referralCode = $this->referralService->codeFor($user);
         $referralTally = $this->referralService->referralTallyFor($user);
 
+        $balance = $this->wallet->balance($user);
+        $lowBalanceThreshold = (int) config('billing.leads.low_balance_leads', 3)
+            * (int) config('billing.leads.default_cost', 5);
+        $missedLeadsCount = BillableLead::where('vendor_id', $user->id)
+            ->where('state', BillableLeadStateEnum::UNBILLED)
+            ->count();
+
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
                 'name' => $user->name,
@@ -80,6 +91,13 @@ class VendorDashboardController extends Controller
                 'active_products' => $activeProductsCount,
                 'catalogue_views_this_week' => $profileViewMetrics['total'],
                 'contact_requests_this_week' => $chatContactMetrics['total'],
+            ],
+            'coins' => [
+                'balance' => $balance,
+                'low_balance' => $balance < $lowBalanceThreshold,
+                'low_balance_threshold' => $lowBalanceThreshold,
+                'missed_leads' => $missedLeadsCount,
+                'top_up_link' => route('vendor.coins.packs'),
             ],
         ]);
     }
