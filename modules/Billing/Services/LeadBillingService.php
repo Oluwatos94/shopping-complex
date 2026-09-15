@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Billing\Services;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -26,7 +27,9 @@ final class LeadBillingService
             return null;
         }
 
-        return DB::transaction(function () use ($click): ?BillableLead {
+        $wasCharged = false;
+
+        $lead = DB::transaction(function () use ($click, &$wasCharged): ?BillableLead {
             $vendor = User::whereKey($click->vendor_id)->lockForUpdate()->first();
 
             if ($vendor === null) {
@@ -58,10 +61,18 @@ final class LeadBillingService
                     'coins_charged' => $charged,
                     'state' => BillableLeadStateEnum::CHARGED,
                 ])->save();
+
+                $wasCharged = true;
             }
 
             return $lead;
         });
+
+        if ($wasCharged && $lead !== null) {
+            VendorLeadCharged::dispatch($lead);
+        }
+
+        return $lead;
     }
 
     private function openLeadFor(ContactClick $click): ?BillableLead

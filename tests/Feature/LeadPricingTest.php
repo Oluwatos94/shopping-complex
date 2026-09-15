@@ -18,6 +18,8 @@ use ModulesShoppingComplex\Billing\Services\LeadBillingService;
 use ModulesShoppingComplex\Billing\Services\LeadPricingService;
 use ModulesShoppingComplex\Catalog\Models\Category;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use Tests\Support\NullWhatsAppSender;
 use Tests\TestCase;
 
 class LeadPricingTest extends TestCase
@@ -31,6 +33,9 @@ class LeadPricingTest extends TestCase
         parent::setUp();
 
         config(['billing.leads.default_cost' => 5, 'billing.coins.expiry_months' => 12]);
+
+        // A charged lead now fires the vendor alert; keep it off the network here.
+        $this->app->instance(WhatsAppSender::class, new NullWhatsAppSender);
     }
 
     private function pricing(): LeadPricingService
