@@ -30,8 +30,9 @@ final class LeadBillingService
 
         $wasCharged = false;
         $wasMissed = false;
+        $attemptedCost = 0;
 
-        $lead = DB::transaction(function () use ($click, &$wasCharged, &$wasMissed): ?BillableLead {
+        $lead = DB::transaction(function () use ($click, &$wasCharged, &$wasMissed, &$attemptedCost): ?BillableLead {
             $vendor = User::whereKey($click->vendor_id)->lockForUpdate()->first();
 
             if ($vendor === null) {
@@ -56,7 +57,8 @@ final class LeadBillingService
                 'last_click_at' => now(),
             ]);
 
-            $charged = $this->debitor->debit($vendor, $lead, $this->pricing->costFor($vendor));
+            $attemptedCost = $this->pricing->costFor($vendor);
+            $charged = $this->debitor->debit($vendor, $lead, $attemptedCost);
 
             if ($charged > 0) {
                 $lead->forceFill([
@@ -77,7 +79,7 @@ final class LeadBillingService
         }
 
         if ($wasMissed && $lead !== null) {
-            VendorLeadMissed::dispatch($lead);
+            VendorLeadMissed::dispatch($lead, $attemptedCost);
         }
 
         return $lead;

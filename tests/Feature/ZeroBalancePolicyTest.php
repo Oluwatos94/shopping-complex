@@ -160,7 +160,7 @@ class ZeroBalancePolicyTest extends TestCase
         $vendor = $this->vendor();
         $lead = $this->billLead($vendor);
 
-        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead));
+        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead, 10));
 
         $notification = Notification::where('user_id', $vendor->id)->where('type', 'lead_missed')->firstOrFail();
         $this->assertSame('top_up', $notification->data['action']);
@@ -176,10 +176,33 @@ class ZeroBalancePolicyTest extends TestCase
         $vendor = $this->vendor();
         $lead = $this->billLead($vendor);
 
-        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead));
-        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead));
+        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead, 10));
+        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead, 10));
 
         $this->assertSame(1, Notification::where('type', 'lead_missed')->count());
+    }
+
+    public function test_the_missed_alert_uses_the_cost_from_the_billing_attempt(): void
+    {
+        Event::fake([VendorLeadMissed::class]);
+        $vendor = $this->vendor();
+
+        $this->billLead($vendor);
+
+        Event::assertDispatched(VendorLeadMissed::class, fn (VendorLeadMissed $e) => $e->attemptedCost === 10);
+    }
+
+    public function test_the_missed_message_describes_insufficient_not_zero_balance(): void
+    {
+        Queue::fake([SendNotificationEmailJob::class]);
+        Event::fake([VendorLeadMissed::class]);
+        $vendor = $this->funded($this->vendor(), 3); // 3 coins, lead costs 10: has coins, just not enough
+        $lead = $this->billLead($vendor);
+
+        app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($lead, 10));
+
+        $message = Notification::where('type', 'lead_missed')->firstOrFail()->message;
+        $this->assertStringContainsString('did not have enough coins', $message);
     }
 
     // ==================== Low-balance warning ====================

@@ -14,5 +14,6 @@ class VendorLeadMissed
 
     public function __construct(
         public readonly BillableLead $lead,
+        public readonly int $attemptedCost,
     ) {}
 }

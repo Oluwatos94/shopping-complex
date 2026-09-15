@@ -9,7 +9,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
 use ModulesShoppingComplex\Billing\Services\CoinWalletService;
 use ModulesShoppingComplex\Identity\Models\User;
-use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationRepository;
 
 class WarnLowCoinBalance implements ShouldQueue
@@ -42,24 +41,21 @@ class WarnLowCoinBalance implements ShouldQueue
             return;
         }
 
-        if ($this->hasUnreadWarning($vendor)) {
-            return;
-        }
-
-        $this->notifications->create([
-            'user_id' => $vendor->id,
-            'type' => self::TYPE,
-            'message' => sprintf(
+        $this->notifications->createOrUpdateGrouped(
+            userId: $vendor->id,
+            type: self::TYPE,
+            message: sprintf(
                 'Your coin balance is low: %d coins left. Top up to keep claiming paid leads.',
                 $balance,
             ),
-            'data' => [
+            data: [
                 'action' => 'top_up',
                 'url' => route('vendor.coins.packs'),
                 'balance' => $balance,
                 'threshold' => $threshold,
             ],
-        ]);
+            groupKey: self::TYPE.':'.$vendor->id,
+        );
     }
 
     private function threshold(): int
@@ -68,13 +64,5 @@ class WarnLowCoinBalance implements ShouldQueue
         $standardCost = (int) config('billing.leads.default_cost', 5);
 
         return $leads * $standardCost;
-    }
-
-    private function hasUnreadWarning(User $vendor): bool
-    {
-        return Notification::where('user_id', $vendor->id)
-            ->where('type', self::TYPE)
-            ->whereNull('read_at')
-            ->exists();
     }
 }
