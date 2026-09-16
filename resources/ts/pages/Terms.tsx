@@ -51,7 +51,20 @@ const Terms: React.FC = () => {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">5. Buyer Responsibilities</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">5. Lead Charges &amp; Coin Credits</h2>
+                            <p>Vendors pay in coins for each new buyer introduction. The charge is for the introduction itself — a working way to reach the buyer — and not for any outcome. Whether the buyer purchases, negotiates and leaves, or never replies is the vendor&apos;s side of the trade and is never refundable.</p>
+                            <p className="mt-2">Coins are returned automatically, with no claim or request, only when jiidaa failed to deliver a working introduction, in these cases:</p>
+                            <ul className="list-disc pl-5 space-y-2 mt-2">
+                                <li>The contact card was charged but could not be sent.</li>
+                                <li>The vendor&apos;s delivered number was invalid or unreachable.</li>
+                                <li>The same buyer was billed twice for the same vendor inside the deduplication window.</li>
+                                <li>The click came from activity our abuse checks flag as a burner or a rival.</li>
+                            </ul>
+                            <p className="mt-2">These credits are detected from our own logs and issued automatically. jiidaa does not operate a refund request process for lead outcomes it cannot observe.</p>
+                        </section>
+
+                        <section>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">6. Buyer Responsibilities</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Buyers interact directly with vendors for purchases, delivery, and payment.</li>
                                 <li>jiidaa is a discovery platform and is not a party to transactions between buyers and vendors.</li>
@@ -60,12 +73,12 @@ const Terms: React.FC = () => {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">6. WhatsApp Bot</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">7. WhatsApp Bot</h2>
                             <p>By messaging our WhatsApp bot, you consent to receiving automated responses. The bot uses your location (when shared) to find nearby vendors. Standard WhatsApp messaging rates from your carrier may apply.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">7. Prohibited Conduct</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">8. Prohibited Conduct</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Spamming, harassing, or abusing other users or vendors.</li>
                                 <li>Posting false, misleading, or fraudulent content.</li>
@@ -75,17 +88,17 @@ const Terms: React.FC = () => {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">8. Limitation of Liability</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">9. Limitation of Liability</h2>
                             <p>jiidaa is not liable for any disputes, losses, or damages arising from transactions between buyers and vendors. The platform is provided "as is" without warranties of any kind.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">9. Changes to Terms</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">10. Changes to Terms</h2>
                             <p>We may update these Terms at any time. Continued use of the platform after changes constitutes acceptance of the new terms.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-brand-ink mb-3">10. Contact</h2>
+                            <h2 className="text-xl font-semibold text-brand-ink mb-3">11. Contact</h2>
                             <p>For questions about these Terms, contact us at:<br />
                             <a href="mailto:hello@jiidaa.com" className="text-brand-green hover:underline">hello@jiidaa.com</a></p>
                         </section>

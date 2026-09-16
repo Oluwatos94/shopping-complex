@@ -24,6 +24,11 @@ return [
         ],
     ],
 
+    'credits' => [
+        'lookback_days' => (int) env('LEAD_CREDIT_LOOKBACK_DAYS', 35),
+        'alert_rate' => (float) env('LEAD_CREDIT_ALERT_RATE', 0.05),
+    ],
+
     'coins' => [
         'expiry_months' => (int) env('COIN_EXPIRY_MONTHS', 12),
 
