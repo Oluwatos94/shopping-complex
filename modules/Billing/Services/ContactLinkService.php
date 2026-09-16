@@ -109,8 +109,10 @@ final class ContactLinkService
         $to = 'user_'.$userId;
 
         try {
-            BillableLead::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
-            ContactClick::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
+            DB::transaction(function () use ($from, $to): void {
+                BillableLead::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
+                ContactClick::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
+            });
         } catch (\Throwable $e) {
             Log::warning('Visitor identity merge failed', [
                 'visitor_id' => $visitorId,

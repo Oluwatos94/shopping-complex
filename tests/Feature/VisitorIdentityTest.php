@@ -98,6 +98,16 @@ class VisitorIdentityTest extends TestCase
         $this->assertSame(BillableLeadStateEnum::CHARGED, $lead->state);
     }
 
+    public function test_the_first_contact_redirect_attributes_the_new_visitor(): void
+    {
+        $vendor = $this->vendor();
+
+        $this->get(route('contact.redirect', ['token' => $this->webLink($vendor)]))->assertRedirect();
+
+        $lead = BillableLead::where('vendor_id', $vendor->id)->firstOrFail();
+        $this->assertStringStartsWith('visitor_', $lead->buyer_identity);
+    }
+
     public function test_the_same_browser_deduplicates_across_hits(): void
     {
         $vendor = $this->vendor();

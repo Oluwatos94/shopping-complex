@@ -18,11 +18,16 @@ class AttachVisitorId
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->cookie(ContactLinkService::VISITOR_COOKIE) === null) {
+            $visitorId = (string) Str::uuid();
+            $request->cookies->set(ContactLinkService::VISITOR_COOKIE, $visitorId);
+
             Cookie::queue(cookie(
                 ContactLinkService::VISITOR_COOKIE,
-                (string) Str::uuid(),
+                $visitorId,
                 self::ONE_YEAR_MINUTES,
+                secure: $request->isSecure(),
                 httpOnly: true,
+                sameSite: 'lax',
             ));
         }
 
