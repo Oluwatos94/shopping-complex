@@ -64,6 +64,10 @@ class VendorDashboardController extends Controller
         $missedLeadsCount = BillableLead::where('vendor_id', $user->id)
             ->where('state', BillableLeadStateEnum::UNBILLED)
             ->count();
+        $chargedToday = (int) BillableLead::where('vendor_id', $user->id)
+            ->where('state', BillableLeadStateEnum::CHARGED)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->sum('coins_charged');
 
         return Inertia::render('Vendor/Dashboard', [
             'vendor' => [
@@ -97,6 +101,8 @@ class VendorDashboardController extends Controller
                 'low_balance' => $balance < $lowBalanceThreshold,
                 'low_balance_threshold' => $lowBalanceThreshold,
                 'missed_leads' => $missedLeadsCount,
+                'daily_coin_cap' => $user->daily_coin_cap,
+                'charged_today' => $chargedToday,
                 'top_up_link' => route('vendor.coins.packs'),
             ],
         ]);
@@ -145,6 +151,7 @@ class VendorDashboardController extends Controller
                 'business_name' => $request->input('business_name'),
                 'bio' => $request->input('bio'),
                 'whatsapp_number' => $request->input('whatsapp_number'),
+                'daily_coin_cap' => $request->input('daily_coin_cap'),
             ]);
 
             Address::updateOrCreate(

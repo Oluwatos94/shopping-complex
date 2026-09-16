@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Billing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 
 class ContactRedirectController extends Controller
@@ -26,11 +27,25 @@ class ContactRedirectController extends Controller
         $destination = $this->links->destinationFor($vendor, $link->prefilled_message);
         abort_if($destination === null, 404);
 
-        // A HEAD request is a link preview or a scanner, never a buyer.
-        if (! $request->isMethod('HEAD')) {
+        if (! $request->isMethod('HEAD') && $this->withinRateLimit($vendor->id, $link->buyer_identity ?? (string) $request->ip())) {
             $this->links->recordClick($link, $request->ip());
         }
 
         return redirect()->away($destination);
+    }
+
+    private function withinRateLimit(int $vendorId, string $identity): bool
+    {
+        $key = 'contact-redirect:'.$vendorId.':'.$identity;
+        $max = (int) config('billing.guards.rate_limit.max', 5);
+        $seconds = (int) config('billing.guards.rate_limit.seconds', 60);
+
+        if (RateLimiter::tooManyAttempts($key, $max)) {
+            return false;
+        }
+
+        RateLimiter::hit($key, $seconds);
+
+        return true;
     }
 }

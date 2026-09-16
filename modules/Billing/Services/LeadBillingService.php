@@ -7,6 +7,7 @@ namespace ModulesShoppingComplex\Billing\Services;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Enums\LeadUnbilledReasonEnum;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
 use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
@@ -20,6 +21,7 @@ final class LeadBillingService
     public function __construct(
         private readonly LeadDebitor $debitor,
         private readonly LeadPricingService $pricing,
+        private readonly CoinBurnGuard $guard,
     ) {}
 
     public function bill(ContactClick $click): ?BillableLead
@@ -58,6 +60,15 @@ final class LeadBillingService
             ]);
 
             $attemptedCost = $this->pricing->costFor($vendor);
+
+            $blockReason = $this->guard->blockReason($click, $vendor, $attemptedCost, $this->chargedToday($vendor));
+
+            if ($blockReason !== null) {
+                $lead->forceFill(['unbilled_reason' => $blockReason])->save();
+
+                return $lead;
+            }
+
             $charged = $this->debitor->debit($vendor, $lead, $attemptedCost);
 
             if ($charged > 0) {
@@ -68,6 +79,8 @@ final class LeadBillingService
 
                 $wasCharged = true;
             } else {
+                $lead->forceFill(['unbilled_reason' => LeadUnbilledReasonEnum::INSUFFICIENT_BALANCE])->save();
+
                 $wasMissed = true;
             }
 
@@ -83,6 +96,14 @@ final class LeadBillingService
         }
 
         return $lead;
+    }
+
+    private function chargedToday(User $vendor): int
+    {
+        return (int) BillableLead::where('vendor_id', $vendor->id)
+            ->where('state', BillableLeadStateEnum::CHARGED)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->sum('coins_charged');
     }
 
     private function openLeadFor(ContactClick $click): ?BillableLead
