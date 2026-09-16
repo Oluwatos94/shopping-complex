@@ -8,6 +8,22 @@ return [
         'low_balance_leads' => (int) env('LEAD_LOW_BALANCE_LEADS', 3),
     ],
 
+    // Guards against a rival draining a vendor's balance by clicking their link.
+    'guards' => [
+        'velocity_buyer' => [
+            'vendors' => (int) env('GUARD_VELOCITY_BUYER_VENDORS', 4),
+            'minutes' => (int) env('GUARD_VELOCITY_BUYER_MINUTES', 5),
+        ],
+        'velocity_ip' => [
+            'identities' => (int) env('GUARD_VELOCITY_IP_IDENTITIES', 6),
+            'minutes' => (int) env('GUARD_VELOCITY_IP_MINUTES', 10),
+        ],
+        'rate_limit' => [
+            'max' => (int) env('GUARD_REDIRECT_MAX', 5),
+            'seconds' => (int) env('GUARD_REDIRECT_SECONDS', 60),
+        ],
+    ],
+
     'coins' => [
         'expiry_months' => (int) env('COIN_EXPIRY_MONTHS', 12),
 
