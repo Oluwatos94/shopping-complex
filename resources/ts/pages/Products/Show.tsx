@@ -7,6 +7,7 @@ import Breadcrumb, { BreadcrumbItem } from '@/components/Products/Breadcrumb';
 import ImageGallery from '@/components/Products/partials/ImageGallery';
 import ProductInfo from '@/components/Products/ProductInfo';
 import RelatedProducts from '@/components/Products/RelatedProducts';
+import { contactHref } from '@/utils/contact';
 
 interface ProductShowProps {
     product: Product;
@@ -35,7 +36,7 @@ export default function ProductShow({
     breadcrumbItems.push({ label: product.name });
 
     const whatsAppHref = vendor.whatsapp_number
-        ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${vendor.business_name}, I'm interested in "${product.name}".`)}`
+        ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I'm interested in "${product.name}".`)
         : null;
 
     return (

@@ -1,5 +1,15 @@
 import { getCsrfToken } from './csrf';
 
+export function contactHref(vendorSlug: string | undefined | null, message?: string): string | null {
+    if (!vendorSlug) {
+        return null;
+    }
+
+    const query = message ? `?message=${encodeURIComponent(message)}` : '';
+
+    return `/contact/${encodeURIComponent(vendorSlug)}${query}`;
+}
+
 /**
  * Record that the current user contacted a vendor via an on-platform contact
  * button (e.g. the WhatsApp "Message" links). Fire-and-forget: it only succeeds

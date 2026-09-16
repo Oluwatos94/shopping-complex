@@ -13,6 +13,7 @@ use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
 use ModulesShoppingComplex\Billing\Enums\CoinLedgerTypeEnum;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
+use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Billing\Services\CoinWalletService;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -130,6 +131,48 @@ class VisitorIdentityTest extends TestCase
 
         $this->assertGuest();
         $this->get(route('contact.redirect', ['token' => $this->webLink($vendor)]))->assertRedirect();
+    }
+
+    // ==================== Web contact button -> signed redirect ====================
+
+    public function test_the_web_contact_route_issues_a_signed_redirect_with_the_message(): void
+    {
+        $vendor = $this->vendor();
+
+        $response = $this->get('/contact/'.$vendor->slug.'?message='.urlencode('Hi there'));
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('/c/', (string) $response->headers->get('Location'));
+
+        $link = ContactLink::firstOrFail();
+        $this->assertSame($vendor->id, $link->vendor_id);
+        $this->assertSame(ViewSourceEnum::WEB, $link->source);
+        $this->assertSame('Hi there', $link->prefilled_message);
+        $this->assertNull($link->buyer_identity);
+    }
+
+    public function test_a_vendor_without_a_number_has_no_web_contact_route(): void
+    {
+        $vendor = User::factory()->create(['role' => 'vendor', 'whatsapp_number' => null]);
+
+        $this->get('/contact/'.$vendor->slug)->assertNotFound();
+    }
+
+    public function test_the_web_button_records_a_billable_lead_attributed_to_the_visitor(): void
+    {
+        $vendor = $this->vendor();
+
+        $target = (string) $this->get('/contact/'.$vendor->slug)->headers->get('Location');
+        $path = parse_url($target, PHP_URL_PATH).'?'.(parse_url($target, PHP_URL_QUERY) ?? '');
+
+        $this->withoutMiddleware(EncryptCookies::class)
+            ->withUnencryptedCookie(ContactLinkService::VISITOR_COOKIE, 'browser-web')
+            ->get($path)
+            ->assertRedirect();
+
+        $lead = BillableLead::where('vendor_id', $vendor->id)->firstOrFail();
+        $this->assertSame('visitor_browser-web', $lead->buyer_identity);
+        $this->assertSame(BillableLeadStateEnum::CHARGED, $lead->state);
     }
 
     // ==================== Merge on login ====================

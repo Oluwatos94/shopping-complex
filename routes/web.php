@@ -45,6 +45,10 @@ Route::get('/c/{token}', ContactRedirectController::class)
     ->middleware('throttle:guest')
     ->name('contact.redirect');
 
+Route::get('/contact/{vendorSlug}', [ContactRedirectController::class, 'issue'])
+    ->middleware('throttle:guest')
+    ->name('contact.issue');
+
 // Static pages
 Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');
 Route::get('/terms', fn () => inertia('Terms'))->name('terms');
