@@ -40,12 +40,6 @@ class ContactRedirectController extends Controller
         $max = (int) config('billing.guards.rate_limit.max', 5);
         $seconds = (int) config('billing.guards.rate_limit.seconds', 60);
 
-        if (RateLimiter::tooManyAttempts($key, $max)) {
-            return false;
-        }
-
-        RateLimiter::hit($key, $seconds);
-
-        return true;
+        return RateLimiter::hit($key, $seconds) <= $max;
     }
 }

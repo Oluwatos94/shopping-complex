@@ -147,12 +147,17 @@ class VendorDashboardController extends Controller
         $user = Auth::user();
 
         DB::transaction(function () use ($user, $request) {
-            $user->update([
+            $attributes = [
                 'business_name' => $request->input('business_name'),
                 'bio' => $request->input('bio'),
                 'whatsapp_number' => $request->input('whatsapp_number'),
-                'daily_coin_cap' => $request->input('daily_coin_cap'),
-            ]);
+            ];
+
+            if ($request->has('daily_coin_cap')) {
+                $attributes['daily_coin_cap'] = $request->input('daily_coin_cap');
+            }
+
+            $user->update($attributes);
 
             Address::updateOrCreate(
                 ['user_id' => $user->id],
