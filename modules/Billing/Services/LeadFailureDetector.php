@@ -8,7 +8,6 @@ use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
 use ModulesShoppingComplex\Billing\Enums\LeadCreditReasonEnum;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
-use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 final class LeadFailureDetector
 {
@@ -41,9 +40,7 @@ final class LeadFailureDetector
 
     private function hasUnreachableNumber(BillableLead $lead): bool
     {
-        $vendor = $lead->vendor;
-
-        return $vendor === null || WhatsAppPhone::toE164((string) ($vendor->whatsapp_number ?? '')) === null;
+        return $lead->delivered_number === null;
     }
 
     private function isFlagged(BillableLead $lead): bool

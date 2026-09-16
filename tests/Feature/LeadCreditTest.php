@@ -18,6 +18,7 @@ use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\LeadCreditService;
 use ModulesShoppingComplex\Billing\Services\LeadFailureDetector;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 use Tests\TestCase;
 
 class LeadCreditTest extends TestCase
@@ -56,6 +57,7 @@ class LeadCreditTest extends TestCase
             'channel' => ViewSourceEnum::WHATSAPP,
             'coins_charged' => $coins,
             'state' => BillableLeadStateEnum::CHARGED,
+            'delivered_number' => WhatsAppPhone::toE164((string) $vendor->whatsapp_number),
             'window_start' => $windowStart ?? now(),
             'repeat_count' => 0,
             'last_click_at' => now(),
@@ -117,6 +119,16 @@ class LeadCreditTest extends TestCase
         $lead = $this->chargeLead($vendor, '2348011112222');
 
         $this->assertSame(LeadCreditReasonEnum::INVALID_NUMBER, $this->detector()->reasonFor($lead));
+    }
+
+    public function test_the_number_check_uses_the_delivered_value_not_the_current_one(): void
+    {
+        $vendor = $this->vendor('08031234567');
+        $lead = $this->chargeLead($vendor, '2348011112222');
+
+        $vendor->forceFill(['whatsapp_number' => 'broken-later'])->save();
+
+        $this->assertNull($this->detector()->reasonFor($lead->fresh()));
     }
 
     public function test_a_flagged_burst_is_credited(): void

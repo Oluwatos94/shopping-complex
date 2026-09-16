@@ -28,6 +28,7 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property BillableLeadStateEnum $state
  * @property LeadUnbilledReasonEnum|null $unbilled_reason
  * @property LeadCreditReasonEnum|null $credit_reason
+ * @property string|null $delivered_number
  * @property Carbon $window_start
  * @property int $repeat_count
  * @property Carbon|null $last_click_at
@@ -53,6 +54,7 @@ class BillableLead extends Model
         'state',
         'unbilled_reason',
         'credit_reason',
+        'delivered_number',
         'window_start',
         'repeat_count',
         'last_click_at',
