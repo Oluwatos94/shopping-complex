@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
@@ -33,6 +34,7 @@ use ModulesShoppingComplex\Billing\Payments\Stellar\StellarSigner;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarTestnetFunder;
 use ModulesShoppingComplex\Billing\Payments\Stellar\StellarWalletService;
 use ModulesShoppingComplex\Billing\Services\CoinLeadDebitor;
+use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\PaystackClient;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
@@ -115,6 +117,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(VendorLeadCharged::class, SendVendorLeadAlert::class);
         Event::listen(VendorLeadCharged::class, WarnLowCoinBalance::class);
         Event::listen(VendorLeadMissed::class, SendMissedLeadAlert::class);
+
+        Event::listen(Login::class, function (Login $event): void {
+            app(ContactLinkService::class)->mergeVisitorIntoAccount(
+                (string) request()->cookie(ContactLinkService::VISITOR_COOKIE),
+                (int) $event->user->getAuthIdentifier(),
+            );
+        });
     }
 
     /**

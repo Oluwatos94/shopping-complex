@@ -27,8 +27,10 @@ class ContactRedirectController extends Controller
         $destination = $this->links->destinationFor($vendor, $link->prefilled_message);
         abort_if($destination === null, 404);
 
-        if (! $request->isMethod('HEAD') && $this->withinRateLimit($vendor->id, $link->buyer_identity ?? (string) $request->ip())) {
-            $this->links->recordClick($link, $request->ip());
+        $identity = $link->buyer_identity ?? $this->links->resolveBuyerIdentity($request);
+
+        if (! $request->isMethod('HEAD') && $this->withinRateLimit($vendor->id, $identity)) {
+            $this->links->recordClick($link, $request->ip(), $identity);
         }
 
         return redirect()->away($destination);
