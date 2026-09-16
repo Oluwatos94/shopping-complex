@@ -13,6 +13,7 @@ use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 final class LeadBillingService
 {
@@ -54,6 +55,7 @@ final class LeadBillingService
                 'channel' => $click->source,
                 'coins_charged' => 0,
                 'state' => BillableLeadStateEnum::UNBILLED,
+                'delivered_number' => WhatsAppPhone::toE164((string) ($vendor->whatsapp_number ?? '')),
                 'window_start' => now(),
                 'repeat_count' => 0,
                 'last_click_at' => now(),

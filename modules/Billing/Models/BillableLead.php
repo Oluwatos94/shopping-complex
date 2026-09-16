@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Enums\LeadCreditReasonEnum;
 use ModulesShoppingComplex\Billing\Enums\LeadUnbilledReasonEnum;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
@@ -26,6 +27,8 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property int $coins_charged
  * @property BillableLeadStateEnum $state
  * @property LeadUnbilledReasonEnum|null $unbilled_reason
+ * @property LeadCreditReasonEnum|null $credit_reason
+ * @property string|null $delivered_number
  * @property Carbon $window_start
  * @property int $repeat_count
  * @property Carbon|null $last_click_at
@@ -50,6 +53,8 @@ class BillableLead extends Model
         'coins_charged',
         'state',
         'unbilled_reason',
+        'credit_reason',
+        'delivered_number',
         'window_start',
         'repeat_count',
         'last_click_at',
@@ -62,6 +67,7 @@ class BillableLead extends Model
             'channel' => ViewSourceEnum::class,
             'state' => BillableLeadStateEnum::class,
             'unbilled_reason' => LeadUnbilledReasonEnum::class,
+            'credit_reason' => LeadCreditReasonEnum::class,
             'coins_charged' => 'integer',
             'repeat_count' => 'integer',
             'window_start' => 'datetime',
@@ -88,5 +94,14 @@ class BillableLead extends Model
     public function scopeFlagged(Builder $query): Builder
     {
         return $query->whereIn('unbilled_reason', LeadUnbilledReasonEnum::flagged());
+    }
+
+    /**
+     * @param  Builder<BillableLead>  $query
+     * @return Builder<BillableLead>
+     */
+    public function scopeCredited(Builder $query): Builder
+    {
+        return $query->whereNotNull('credit_reason');
     }
 }
