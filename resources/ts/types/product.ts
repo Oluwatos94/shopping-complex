@@ -112,6 +112,7 @@ export interface Category {
     description?: string;
     icon?: string;
     parent_id?: number;
+    lead_coin_cost?: number;
     products_count: number;
     vendors_count: number;
     created_at: string;

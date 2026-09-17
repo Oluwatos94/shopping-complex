@@ -7,9 +7,13 @@ namespace ModulesShoppingComplex\Billing\Services;
 use Illuminate\Support\Facades\DB;
 use ModulesShoppingComplex\Billing\Contracts\LeadDebitor;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Enums\LeadUnbilledReasonEnum;
+use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
+use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 final class LeadBillingService
 {
@@ -17,6 +21,8 @@ final class LeadBillingService
 
     public function __construct(
         private readonly LeadDebitor $debitor,
+        private readonly LeadPricingService $pricing,
+        private readonly CoinBurnGuard $guard,
     ) {}
 
     public function bill(ContactClick $click): ?BillableLead
@@ -25,7 +31,11 @@ final class LeadBillingService
             return null;
         }
 
-        return DB::transaction(function () use ($click): ?BillableLead {
+        $wasCharged = false;
+        $wasMissed = false;
+        $attemptedCost = 0;
+
+        $lead = DB::transaction(function () use ($click, &$wasCharged, &$wasMissed, &$attemptedCost): ?BillableLead {
             $vendor = User::whereKey($click->vendor_id)->lockForUpdate()->first();
 
             if ($vendor === null) {
@@ -45,22 +55,57 @@ final class LeadBillingService
                 'channel' => $click->source,
                 'coins_charged' => 0,
                 'state' => BillableLeadStateEnum::UNBILLED,
+                'delivered_number' => WhatsAppPhone::toE164((string) ($vendor->whatsapp_number ?? '')),
                 'window_start' => now(),
                 'repeat_count' => 0,
                 'last_click_at' => now(),
             ]);
 
-            $charged = $this->debitor->debit($vendor, $lead, (int) config('billing.leads.coin_cost'));
+            $attemptedCost = $this->pricing->costFor($vendor);
+
+            $blockReason = $this->guard->blockReason($click, $vendor, $attemptedCost, $this->chargedToday($vendor));
+
+            if ($blockReason !== null) {
+                $lead->forceFill(['unbilled_reason' => $blockReason])->save();
+
+                return $lead;
+            }
+
+            $charged = $this->debitor->debit($vendor, $lead, $attemptedCost);
 
             if ($charged > 0) {
                 $lead->forceFill([
                     'coins_charged' => $charged,
                     'state' => BillableLeadStateEnum::CHARGED,
                 ])->save();
+
+                $wasCharged = true;
+            } else {
+                $lead->forceFill(['unbilled_reason' => LeadUnbilledReasonEnum::INSUFFICIENT_BALANCE])->save();
+
+                $wasMissed = true;
             }
 
             return $lead;
         });
+
+        if ($wasCharged && $lead !== null) {
+            VendorLeadCharged::dispatch($lead);
+        }
+
+        if ($wasMissed && $lead !== null) {
+            VendorLeadMissed::dispatch($lead, $attemptedCost);
+        }
+
+        return $lead;
+    }
+
+    private function chargedToday(User $vendor): int
+    {
+        return (int) BillableLead::where('vendor_id', $vendor->id)
+            ->where('state', BillableLeadStateEnum::CHARGED)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->sum('coins_charged');
     }
 
     private function openLeadFor(ContactClick $click): ?BillableLead

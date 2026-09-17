@@ -97,6 +97,8 @@ class NotificationController extends Controller
         return Inertia::render('Vendor/Settings', [
             'preferences' => $preferences,
             'availableTypes' => $types,
+            'daily_coin_cap' => $request->user()->daily_coin_cap,
+            'coin_naira_value' => (int) config('billing.coins.naira_value', 50),
         ]);
     }
 

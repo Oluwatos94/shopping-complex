@@ -11,6 +11,8 @@ export * from './vendor';
 
 export * from './common';
 
+export * from './billing';
+
 export * from './landing';
 
 export * from './growth';

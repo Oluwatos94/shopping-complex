@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Billing\Services;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
+use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Models\ContactClick;
 use ModulesShoppingComplex\Billing\Models\ContactLink;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -17,6 +20,8 @@ use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 final class ContactLinkService
 {
     public const TOKEN_TTL_DAYS = 30;
+
+    public const VISITOR_COOKIE = 'visitor_id';
 
     private const TOKEN_LENGTH = 32;
 
@@ -77,10 +82,52 @@ final class ContactLinkService
         return ContactLink::where('token', $token)->first();
     }
 
-    public function recordClick(ContactLink $link, ?string $ipAddress = null): ?ContactClick
+    public function resolveBuyerIdentity(Request $request): string
     {
+        $userId = Auth::id();
+
+        if ($userId !== null) {
+            return 'user_'.$userId;
+        }
+
+        $visitorId = (string) $request->cookie(self::VISITOR_COOKIE);
+
+        if ($visitorId !== '') {
+            return 'visitor_'.$visitorId;
+        }
+
+        return 'anon_'.substr(hash('sha256', $request->ip().'|'.(string) $request->userAgent()), 0, 40);
+    }
+
+    public function mergeVisitorIntoAccount(string $visitorId, int $userId): void
+    {
+        if ($visitorId === '') {
+            return;
+        }
+
+        $from = 'visitor_'.$visitorId;
+        $to = 'user_'.$userId;
+
         try {
-            $click = DB::transaction(function () use ($link, $ipAddress): ContactClick {
+            DB::transaction(function () use ($from, $to): void {
+                BillableLead::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
+                ContactClick::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Visitor identity merge failed', [
+                'visitor_id' => $visitorId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function recordClick(ContactLink $link, ?string $ipAddress = null, ?string $buyerIdentity = null): ?ContactClick
+    {
+        $identity = $buyerIdentity ?? $link->buyer_identity;
+
+        try {
+            $click = DB::transaction(function () use ($link, $ipAddress, $identity): ContactClick {
 
                 User::whereKey($link->vendor_id)->lockForUpdate()->first();
 
@@ -88,8 +135,8 @@ final class ContactLinkService
                     'contact_link_id' => $link->id,
                     'vendor_id' => $link->vendor_id,
                     'source' => $link->source,
-                    'buyer_identity' => $link->buyer_identity,
-                    'is_billable' => ! $link->hasExpired() && ! $this->anonymousRepeat($link, $ipAddress),
+                    'buyer_identity' => $identity,
+                    'is_billable' => ! $link->hasExpired() && ! $this->anonymousRepeat($identity, $link->vendor_id, $ipAddress),
                     'ip_address' => $ipAddress,
                     'created_at' => now(),
                 ]);
@@ -113,13 +160,13 @@ final class ContactLinkService
      * Identified buyers are deduplicated by the lead ledger. Anonymous web
      * buyers have no identity to key on yet, so they get a short IP window.
      */
-    private function anonymousRepeat(ContactLink $link, ?string $ipAddress): bool
+    private function anonymousRepeat(?string $identity, int $vendorId, ?string $ipAddress): bool
     {
-        if ($link->buyer_identity !== null || $ipAddress === null) {
+        if ($identity !== null || $ipAddress === null) {
             return false;
         }
 
-        return ContactClick::where('vendor_id', $link->vendor_id)
+        return ContactClick::where('vendor_id', $vendorId)
             ->whereNull('buyer_identity')
             ->where('ip_address', $ipAddress)
             ->where('is_billable', true)

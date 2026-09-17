@@ -4,7 +4,7 @@ import { PaginatedProducts, Product, VendorReview, PaginatedVendorReviews } from
 import { VendorProfile, VendorStats } from '@/types/vendor';
 import VendorSidebar from '@/components/VendorSidebar';
 import { getCsrfToken } from '@/utils/csrf';
-import { recordVendorContact } from '@/utils/contact';
+import { contactHref, recordVendorContact } from '@/utils/contact';
 import UploadProductFab from './partials/UploadProductFab';
 import EditProfileModal from './partials/EditProfileModal';
 import ReviewCard from '@/components/Vendors/ReviewCard';
@@ -62,7 +62,7 @@ export default function VendorProfilePage({
     const [reviewError, setReviewError] = useState<string | null>(null);
 
     const whatsAppHref = vendor.whatsapp_number
-        ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${vendor.business_name}, I found you on jiidaa.`)}`
+        ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I found you on jiidaa.`)
         : null;
 
     const handleToggleFollow = useCallback(async () => {

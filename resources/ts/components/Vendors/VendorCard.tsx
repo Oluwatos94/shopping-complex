@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { NearbyVendor } from '@/types';
-import { recordVendorContact } from '@/utils/contact';
+import { contactHref, recordVendorContact } from '@/utils/contact';
 
 interface VendorCardProps {
     vendor: NearbyVendor;
@@ -10,7 +10,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
     const profileImage = vendor.business_logo || '/images/default-vendor.png';
 
     const whatsAppHref = vendor.whatsapp_number
-        ? `https://wa.me/${vendor.whatsapp_number.replace(/[^0-9]/g, '')}?text=Hi, I found you on jiidaa`
+        ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I found you on jiidaa`)
         : null;
 
     const distance = vendor.distance_formatted;

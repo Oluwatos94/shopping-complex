@@ -7,13 +7,29 @@ namespace ModulesShoppingComplex\Billing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class ContactRedirectController extends Controller
 {
     public function __construct(
         private readonly ContactLinkService $links,
     ) {}
+
+    public function issue(Request $request, string $vendorSlug): RedirectResponse
+    {
+        $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
+        abort_if($vendor === null, 404);
+
+        $message = $request->query('message');
+        $url = $this->links->urlFor($vendor, ViewSourceEnum::WEB, null, is_string($message) ? $message : null);
+
+        abort_if($url === null, 404);
+
+        return redirect($url);
+    }
 
     public function __invoke(Request $request, string $token): RedirectResponse
     {
@@ -26,11 +42,21 @@ class ContactRedirectController extends Controller
         $destination = $this->links->destinationFor($vendor, $link->prefilled_message);
         abort_if($destination === null, 404);
 
-        // A HEAD request is a link preview or a scanner, never a buyer.
-        if (! $request->isMethod('HEAD')) {
-            $this->links->recordClick($link, $request->ip());
+        $identity = $link->buyer_identity ?? $this->links->resolveBuyerIdentity($request);
+
+        if (! $request->isMethod('HEAD') && $this->withinRateLimit($vendor->id, $identity)) {
+            $this->links->recordClick($link, $request->ip(), $identity);
         }
 
         return redirect()->away($destination);
+    }
+
+    private function withinRateLimit(int $vendorId, string $identity): bool
+    {
+        $key = 'contact-redirect:'.$vendorId.':'.$identity;
+        $max = (int) config('billing.guards.rate_limit.max', 5);
+        $seconds = (int) config('billing.guards.rate_limit.seconds', 60);
+
+        return RateLimiter::hit($key, $seconds) <= $max;
     }
 }

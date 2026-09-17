@@ -20,6 +20,8 @@ use ModulesShoppingComplex\Billing\Services\CoinLeadDebitor;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\LeadBillingService;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use Tests\Support\NullWhatsAppSender;
 use Tests\TestCase;
 
 class BillableLeadTest extends TestCase
@@ -34,10 +36,13 @@ class BillableLeadTest extends TestCase
     {
         parent::setUp();
 
-        config(['billing.leads.coin_cost' => 10]);
+        config(['billing.leads.default_cost' => 10]);
 
         $this->debitor = new SpyLeadDebitor;
         $this->app->instance(LeadDebitor::class, $this->debitor);
+
+        // A charged lead now fires the vendor alert; keep it off the network here.
+        $this->app->instance(WhatsAppSender::class, new NullWhatsAppSender);
     }
 
     private function vendor(): User

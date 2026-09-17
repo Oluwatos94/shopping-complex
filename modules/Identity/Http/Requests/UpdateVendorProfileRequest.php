@@ -19,6 +19,7 @@ class UpdateVendorProfileRequest extends FormRequest
             'business_name' => ['required', 'string', 'max:255'],
             'bio' => ['required', 'string', 'max:1000'],
             'whatsapp_number' => ['required', 'string', 'max:20'],
+            'daily_coin_cap' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'address' => ['required', 'string', 'max:500'],

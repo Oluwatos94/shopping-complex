@@ -25,6 +25,8 @@ use ModulesShoppingComplex\Billing\Services\CoinWalletService;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Billing\Services\LeadBillingService;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
+use Tests\Support\NullWhatsAppSender;
 use Tests\TestCase;
 
 class CoinWalletTest extends TestCase
@@ -38,9 +40,12 @@ class CoinWalletTest extends TestCase
         parent::setUp();
 
         config([
-            'billing.leads.coin_cost' => 10,
+            'billing.leads.default_cost' => 10,
             'billing.coins.expiry_months' => 12,
         ]);
+
+        // A charged lead now fires the vendor alert; keep it off the network here.
+        $this->app->instance(WhatsAppSender::class, new NullWhatsAppSender);
     }
 
     private function vendor(): User

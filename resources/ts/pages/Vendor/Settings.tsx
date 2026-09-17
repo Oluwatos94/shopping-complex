@@ -13,7 +13,12 @@ interface NotificationPreference {
 interface SettingsProps {
     preferences: Record<string, NotificationPreference>;
     availableTypes: Record<string, { label: string; description: string }>;
+    daily_coin_cap: number | null;
+    coin_naira_value: number;
 }
+
+const naira = (n: number) => `₦${n.toLocaleString('en-US')}`;
+const DEFAULT_CAP = 40;
 
 interface Toggle {
     type: string;
@@ -48,11 +53,31 @@ const CHANNEL_LABELS: Record<string, string> = {
     in_app_enabled: 'In-App',
 };
 
-export default function VendorSettings({ preferences, availableTypes }: SettingsProps) {
+export default function VendorSettings({ preferences, availableTypes, daily_coin_cap, coin_naira_value }: SettingsProps) {
     const { auth } = usePage<{ auth: { user: any } | null }>().props;
     const [localPrefs, setLocalPrefs] = useState(preferences);
     const [saving, setSaving] = useState<Toggle | null>(null);
     const [flash, setFlash] = useState<string | null>(null);
+
+    const [capEnabled, setCapEnabled] = useState(daily_coin_cap !== null);
+    const [capValue, setCapValue] = useState(daily_coin_cap ?? DEFAULT_CAP);
+    const [savingCap, setSavingCap] = useState(false);
+
+    const capIsValid = Number.isInteger(capValue) && capValue >= 1 && capValue <= 100000;
+
+    const saveCap = () => {
+        if (capEnabled && !capIsValid) return;
+        setSavingCap(true);
+        router.post(
+            '/vendor/coin-cap',
+            { daily_coin_cap: capEnabled ? capValue : null },
+            {
+                preserveScroll: true,
+                onSuccess: () => setFlash(capEnabled ? 'Daily spend cap saved' : 'Daily spend cap removed'),
+                onFinish: () => setSavingCap(false),
+            },
+        );
+    };
 
     const update = (type: string, channel: Toggle['channel'], value: boolean) => {
         const toggle: Toggle = { type, channel, value };
@@ -161,6 +186,69 @@ export default function VendorSettings({ preferences, availableTypes }: Settings
                                 ))}
                             </div>
                         ))}
+                    </section>
+
+                    {/* Coin spending cap */}
+                    <section className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-brand-green/10 flex items-center justify-center">
+                                    <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-semibold text-gray-900">Daily spend cap</h2>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        The most coins you can be charged for leads in a single day.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-5">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">Limit my daily spend</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        Turn off for no cap — every lead is charged at your rate.
+                                    </p>
+                                </div>
+                                <ToggleSwitch checked={capEnabled} onChange={() => setCapEnabled((v) => !v)} disabled={savingCap} />
+                            </div>
+
+                            {capEnabled && (
+                                <div className="mt-5 flex flex-wrap items-end gap-4">
+                                    <label className="block">
+                                        <span className="text-xs font-medium text-gray-500">Cap (coins per day)</span>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={100000}
+                                            value={capValue}
+                                            onChange={(e) => setCapValue(Number(e.target.value))}
+                                            className="mt-1 block w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
+                                        />
+                                    </label>
+                                    <p className="pb-2 text-sm text-gray-500">
+                                        ≈ <span className="font-semibold text-gray-800">{naira(capValue * coin_naira_value)}</span> per day
+                                    </p>
+                                </div>
+                            )}
+
+                            <p className="mt-4 rounded-lg bg-gray-50 px-3 py-2.5 text-xs text-gray-500">
+                                Leads beyond your cap are still delivered to buyers — you simply aren&apos;t charged for them.
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={saveCap}
+                                disabled={savingCap || (capEnabled && !capIsValid)}
+                                className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-brand-green px-5 text-sm font-bold text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {savingCap ? 'Saving…' : 'Save cap'}
+                            </button>
+                        </div>
                     </section>
 
                     {/* Account section placeholder */}

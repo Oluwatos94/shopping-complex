@@ -67,34 +67,41 @@ class ProductSeeder extends Seeder
                 'email' => 'fashion@example.com',
                 'business_name' => 'Fashion Hub',
                 'bio' => 'Your one-stop shop for trendy clothing and accessories. We offer the latest fashion trends at affordable prices.',
+                'category' => 'fashion-clothing',
             ],
             [
                 'name' => 'Tech Store',
                 'email' => 'tech@example.com',
                 'business_name' => 'Tech Store',
                 'bio' => 'Latest electronics and gadgets at competitive prices. Quality guaranteed with excellent customer service.',
+                'category' => 'electronics-repairs',
             ],
             [
                 'name' => 'Home Decor Plus',
                 'email' => 'homedecor@example.com',
                 'business_name' => 'Home Decor Plus',
                 'bio' => 'Beautiful home furnishings and garden supplies to transform your living space into a paradise.',
+                'category' => 'furniture-appliances',
             ],
             [
                 'name' => 'Beauty Haven',
                 'email' => 'beauty@example.com',
                 'business_name' => 'Beauty Haven',
                 'bio' => 'Premium beauty and personal care products from top brands. Look your best every day.',
+                'category' => 'health-beauty',
             ],
             [
                 'name' => 'Sports Central',
                 'email' => 'sports@example.com',
                 'business_name' => 'Sports Central',
                 'bio' => 'All your sporting needs in one place. From fitness equipment to outdoor gear.',
+                'category' => 'outdoors-entertainment',
             ],
         ];
 
         foreach ($vendorData as $data) {
+            $categoryId = Category::where('slug', $data['category'])->value('id');
+
             $vendor = User::firstOrCreate(
                 ['email' => $data['email']],
                 [
@@ -104,9 +111,14 @@ class ProductSeeder extends Seeder
                     'role' => 'vendor',
                     'business_name' => $data['business_name'],
                     'bio' => $data['bio'],
+                    'category_id' => $categoryId,
                     'email_verified_at' => now(),
                 ]
             );
+
+            if ($vendor->category_id === null && $categoryId !== null) {
+                $vendor->update(['category_id' => $categoryId]);
+            }
 
             // Add vendor logo only if not exists
             if ($vendor->media()->where('type', 'avatar')->doesntExist()) {

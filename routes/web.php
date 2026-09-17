@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use ModulesShoppingComplex\Analytics\Http\Controllers\AnalyticsController;
+use ModulesShoppingComplex\Billing\Http\Controllers\Admin\CoinPricingController;
+use ModulesShoppingComplex\Billing\Http\Controllers\CoinPurchaseController;
 use ModulesShoppingComplex\Billing\Http\Controllers\ContactRedirectController;
 use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
+use ModulesShoppingComplex\Billing\Http\Controllers\VendorLeadHistoryController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\CategoryController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\ProductController;
 use ModulesShoppingComplex\Catalog\Http\Controllers\VendorProductController;
@@ -42,6 +45,10 @@ Route::get('/c/{token}', ContactRedirectController::class)
     ->where('token', '[A-Za-z0-9]{32}')
     ->middleware('throttle:guest')
     ->name('contact.redirect');
+
+Route::get('/contact/{vendorSlug}', [ContactRedirectController::class, 'issue'])
+    ->middleware('throttle:guest')
+    ->name('contact.issue');
 
 // Static pages
 Route::get('/privacy', fn () => inertia('Privacy'))->name('privacy');
@@ -238,6 +245,9 @@ Route::middleware(['auth', 'admin', 'throttle:auth'])->prefix('admin')->group(fu
     Route::get('/bot-monitor', [AdminController::class, 'botMonitor'])->name('admin.bot.monitor');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
 
+    Route::get('/coin-pricing', [CoinPricingController::class, 'index'])->name('admin.coin-pricing');
+    Route::patch('/coin-pricing/categories/{category}', [CoinPricingController::class, 'updateCategory'])->name('admin.coin-pricing.category.update');
+
     // Support agent inbox
     Route::get('/support', [AdminSupportController::class, 'index'])->name('admin.support');
     Route::get('/support/conversations', [AdminSupportController::class, 'conversations'])->name('admin.support.conversations');
@@ -276,6 +286,7 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
     Route::post('/register', [VendorRegistrationController::class, 'storeRegistration'])->name('vendor.register.store');
     Route::post('/profile/update', [VendorDashboardController::class, 'updateProfile'])->name('vendor.profile.update');
+    Route::post('/coin-cap', [VendorDashboardController::class, 'updateCoinCap'])->name('vendor.coin-cap.update');
     Route::post('/products/upload', [VendorProductController::class, 'uploadProduct'])->name('vendor.products.upload');
     Route::post('/products/{productId}/update', [VendorProductController::class, 'updateProduct'])->name('vendor.products.update');
     Route::delete('/products/{productId}', [VendorProductController::class, 'deleteProduct'])->name('vendor.products.delete');
@@ -305,6 +316,12 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('vendor.subscription.index');
     Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
     Route::get('/subscription/stellar/status', [SubscriptionController::class, 'stellarStatus'])->name('vendor.subscription.stellar.status');
+
+    Route::get('/wallet', [CoinPurchaseController::class, 'wallet'])->name('vendor.wallet');
+    Route::get('/leads', [VendorLeadHistoryController::class, 'index'])->name('vendor.leads');
+    Route::get('/leads/export', [VendorLeadHistoryController::class, 'export'])->name('vendor.leads.export');
+    Route::get('/coins', [CoinPurchaseController::class, 'packs'])->name('vendor.coins.packs');
+    Route::get('/coins/callback', [CoinPurchaseController::class, 'callback'])->name('vendor.coins.callback');
 });
 
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
@@ -312,6 +329,7 @@ Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function
     Route::post('/subscription/auto-renew', [SubscriptionController::class, 'enableAutoRenew'])->name('vendor.subscription.autorenew.enable');
     Route::post('/subscription/auto-renew/revoke', [SubscriptionController::class, 'disableAutoRenew'])->name('vendor.subscription.autorenew.disable');
     Route::post('/subscription/{plan}', [SubscriptionController::class, 'checkout'])->name('vendor.subscription.checkout');
+    Route::post('/coins/{pack}', [CoinPurchaseController::class, 'checkout'])->name('vendor.coins.checkout');
 });
 
 // Vendor follow toggle

@@ -5,14 +5,15 @@ import {
     BarsIcon,
     ChevronLeftIcon,
     CloseIcon,
+    ClipboardIcon,
     CogIcon,
     CubeIcon,
-    CardIcon,
     GridIcon,
     MenuIcon,
     SignOutIcon,
     TrophyIcon,
     UserIcon,
+    WalletIcon,
 } from '@/components/icons';
 import { SidebarContentProps, SidebarItem, SidebarPageProps, VendorSidebarProps } from '@/types';
 
@@ -115,7 +116,8 @@ export default function VendorSidebar({ businessName, businessLogo }: VendorSide
         { label: 'Dashboard', href: '/vendor', exact: true, icon: <GridIcon className={NAV_ICON} /> },
         { label: 'Store', href: storeHref, exact: true, icon: <BagIcon className={NAV_ICON} /> },
         { label: 'My Products', href: '/vendor/products', icon: <CubeIcon className={NAV_ICON} /> },
-        { label: 'Subscription', href: '/vendor/subscription', icon: <CardIcon className={NAV_ICON} /> },
+        { label: 'Wallet', href: '/vendor/wallet', icon: <WalletIcon className={NAV_ICON} /> },
+        { label: 'Leads', href: '/vendor/leads', icon: <ClipboardIcon className={NAV_ICON} /> },
         { label: 'Analytics', href: '/vendor/analytics', icon: <BarsIcon className={NAV_ICON} /> },
         { label: 'Leaderboard', href: '/vendor/referral/leaderboard', icon: <TrophyIcon className={NAV_ICON} /> },
         { label: 'Settings', href: '/vendor/settings', icon: <CogIcon className={NAV_ICON} /> },
