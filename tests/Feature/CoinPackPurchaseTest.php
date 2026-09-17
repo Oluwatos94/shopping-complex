@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia;
 use ModulesShoppingComplex\Billing\Enums\CoinLedgerTypeEnum;
 use ModulesShoppingComplex\Billing\Enums\CoinPurchaseStatusEnum;
 use ModulesShoppingComplex\Billing\Events\CoinPackPurchased;
@@ -392,15 +393,18 @@ class CoinPackPurchaseTest extends TestCase
 
     // ==================== Packs endpoint ====================
 
-    public function test_the_packs_endpoint_returns_packs_and_balance(): void
+    public function test_the_coins_page_shows_packs_and_balance(): void
     {
         $vendor = $this->vendor();
         $this->wallet()->credit($vendor, CoinLedgerTypeEnum::PURCHASE, 25);
 
-        $this->actingAs($vendor)->getJson('/vendor/coins')
-            ->assertOk()
-            ->assertJsonPath('balance', 25)
-            ->assertJsonPath('packs.1.key', 'growth')
-            ->assertJsonPath('packs.1.total_coins', 440);
+        $this->actingAs($vendor)->get('/vendor/coins')->assertInertia(
+            fn (AssertableInertia $page) => $page
+                ->component('Vendor/Coins', false)
+                ->where('balance', 25)
+                ->where('packs.1.key', 'growth')
+                ->where('packs.1.total_coins', 440)
+                ->has('packs.1.leads_at_rate')
+        );
     }
 }

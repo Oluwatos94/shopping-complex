@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Billing\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,15 +90,24 @@ class CoinPurchaseController extends Controller
      * The purchasable packs and the vendor's current balance — the data source
      * for the coin purchase UI.
      */
-    public function packs(): JsonResponse|RedirectResponse
+    public function packs(): InertiaResponse|RedirectResponse
     {
         if ($redirect = $this->denyNonVendor()) {
             return $redirect;
         }
 
-        return response()->json([
-            'balance' => $this->wallet->balance(Auth::user()),
-            'packs' => array_map($this->presentPack(...), array_values($this->packs->all())),
+        $vendor = Auth::user();
+        $rate = $this->pricing->costFor($vendor);
+        $category = $vendor->category_id === null ? null : Category::find($vendor->category_id);
+
+        return Inertia::render('Vendor/Coins', [
+            'balance' => $this->wallet->balance($vendor),
+            'lead_rate' => $rate,
+            'category_name' => $category?->name,
+            'packs' => array_map(
+                fn (CoinPack $pack): array => $this->presentPack($pack) + ['leads_at_rate' => intdiv($pack->totalCoins(), max(1, $rate))],
+                array_values($this->packs->all()),
+            ),
         ]);
     }
 
@@ -141,18 +149,18 @@ class CoinPurchaseController extends Controller
         $reference = (string) $request->query('reference', '');
 
         if ($reference === '') {
-            return redirect()->route('vendor.dashboard')->with('error', 'Invalid payment reference.');
+            return redirect()->route('vendor.coins.packs')->with('error', 'Invalid payment reference.');
         }
 
         try {
             $purchase = $this->purchases->fulfill($reference, Auth::user());
         } catch (\RuntimeException $e) {
-            return redirect()->route('vendor.dashboard')->with('error', $e->getMessage());
+            return redirect()->route('vendor.coins.packs')->with('error', $e->getMessage());
         }
 
-        return redirect()->route('vendor.dashboard')->with(
+        return redirect()->route('vendor.coins.packs')->with(
             'success',
-            sprintf('%s coins added to your wallet.', number_format($purchase->totalCoins())),
+            sprintf('%s coins added to your wallet. Your balance is up to date below.', number_format($purchase->totalCoins())),
         );
     }
 
