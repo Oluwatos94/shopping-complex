@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use ModulesShoppingComplex\Analytics\Http\Controllers\AnalyticsController;
 use ModulesShoppingComplex\Billing\Http\Controllers\Admin\CoinPricingController;
 use ModulesShoppingComplex\Billing\Http\Controllers\CoinPurchaseController;
+use ModulesShoppingComplex\Billing\Http\Controllers\VendorLeadHistoryController;
 use ModulesShoppingComplex\Billing\Http\Controllers\ContactRedirectController;
 use ModulesShoppingComplex\Billing\Http\Controllers\PaystackWebhookController;
 use ModulesShoppingComplex\Billing\Http\Controllers\SubscriptionController;
@@ -317,6 +318,8 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
     Route::get('/subscription/stellar/status', [SubscriptionController::class, 'stellarStatus'])->name('vendor.subscription.stellar.status');
 
     Route::get('/wallet', [CoinPurchaseController::class, 'wallet'])->name('vendor.wallet');
+    Route::get('/leads', [VendorLeadHistoryController::class, 'index'])->name('vendor.leads');
+    Route::get('/leads/export', [VendorLeadHistoryController::class, 'export'])->name('vendor.leads.export');
     Route::get('/coins', [CoinPurchaseController::class, 'packs'])->name('vendor.coins.packs');
     Route::get('/coins/callback', [CoinPurchaseController::class, 'callback'])->name('vendor.coins.callback');
 });

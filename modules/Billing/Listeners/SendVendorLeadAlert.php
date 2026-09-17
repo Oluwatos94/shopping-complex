@@ -56,6 +56,11 @@ class SendVendorLeadAlert implements ShouldQueue
         [$search, $area] = $this->buyerContext($lead);
         $balance = $this->wallet->balance($vendor);
 
+        $lead->forceFill([
+            'buyer_search' => $search === 'a product or service' ? null : $search,
+            'buyer_area' => $area === 'your area' ? null : $area,
+        ])->save();
+
         $notification = $this->recordInApp($lead, $vendor, $search, $area, $balance);
 
         $to = WhatsAppPhone::toE164((string) ($vendor->whatsapp_number ?? ''));

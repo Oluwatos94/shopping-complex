@@ -28,6 +28,10 @@ class CoinWalletSeeder extends Seeder
         'sports@example.com' => 'outdoors-entertainment',
     ];
 
+    private const SEARCHES = ['phone screen repair', 'laptop charger', 'bluetooth speaker', 'ankara gown', 'office chair', 'birthday cake'];
+
+    private const AREAS = ['Yaba, Lagos', 'Ikeja, Lagos', 'Wuse, Abuja', 'Surulere, Lagos', 'Port Harcourt', 'Lekki, Lagos'];
+
     public function run(): void
     {
         $this->backfillCategories();
@@ -111,6 +115,8 @@ class CoinWalletSeeder extends Seeder
                 'coins_charged' => 0,
                 'state' => BillableLeadStateEnum::UNBILLED,
                 'unbilled_reason' => LeadUnbilledReasonEnum::INSUFFICIENT_BALANCE,
+                'buyer_search' => self::SEARCHES[$seq % count(self::SEARCHES)],
+                'buyer_area' => self::AREAS[$seq % count(self::AREAS)],
                 'window_start' => Carbon::now(),
             ]);
         }
@@ -129,6 +135,8 @@ class CoinWalletSeeder extends Seeder
             'coins_charged' => $rate,
             'state' => BillableLeadStateEnum::CHARGED,
             'delivered_number' => '2348030000000',
+            'buyer_search' => self::SEARCHES[$seq % count(self::SEARCHES)],
+            'buyer_area' => self::AREAS[$seq % count(self::AREAS)],
             'window_start' => $day,
         ]);
 

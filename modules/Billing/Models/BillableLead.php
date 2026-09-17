@@ -29,6 +29,8 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property LeadUnbilledReasonEnum|null $unbilled_reason
  * @property LeadCreditReasonEnum|null $credit_reason
  * @property string|null $delivered_number
+ * @property string|null $buyer_search
+ * @property string|null $buyer_area
  * @property Carbon $window_start
  * @property int $repeat_count
  * @property Carbon|null $last_click_at
@@ -55,6 +57,8 @@ class BillableLead extends Model
         'unbilled_reason',
         'credit_reason',
         'delivered_number',
+        'buyer_search',
+        'buyer_area',
         'window_start',
         'repeat_count',
         'last_click_at',

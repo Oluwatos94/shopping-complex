@@ -25,6 +25,25 @@ export interface CoinPacksProps {
     packs: CoinPack[];
 }
 
+export interface LeadRow {
+    id: number;
+    date: string;
+    search: string | null;
+    area: string | null;
+    channel: 'bot' | 'web';
+    coins_charged: number;
+    state: string;
+    unbilled_reason: string | null;
+    credit_reason: string | null;
+    repeat_count: number;
+}
+
+export interface LeadHistoryProps {
+    leads: LaravelPaginated<LeadRow>;
+    states: string[];
+    filters: { state: string; from: string; to: string };
+}
+
 export interface VendorWalletProps {
     vendor: { business_name: string };
     balance: number;
