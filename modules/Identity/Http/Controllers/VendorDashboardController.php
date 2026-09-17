@@ -6,6 +6,7 @@ namespace ModulesShoppingComplex\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -103,6 +104,7 @@ class VendorDashboardController extends Controller
                 'missed_leads' => $missedLeadsCount,
                 'daily_coin_cap' => $user->daily_coin_cap,
                 'charged_today' => $chargedToday,
+                'coin_naira_value' => (int) config('billing.coins.naira_value', 50),
                 'top_up_link' => route('vendor.coins.packs'),
             ],
         ]);
@@ -193,5 +195,23 @@ class VendorDashboardController extends Controller
         });
 
         return redirect()->back()->with('success', 'Profile updated successfully.');
+    }
+
+    public function updateCoinCap(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'vendor') {
+            return redirect()->route('home');
+        }
+
+        $request->validate([
+            'daily_coin_cap' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ]);
+
+        $cap = $request->input('daily_coin_cap');
+        $user->update(['daily_coin_cap' => $cap === null ? null : (int) $cap]);
+
+        return back()->with('success', $cap === null ? 'Daily spend cap removed.' : 'Daily spend cap updated.');
     }
 }

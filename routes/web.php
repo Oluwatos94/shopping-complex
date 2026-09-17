@@ -285,6 +285,7 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
 Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function () {
     Route::post('/register', [VendorRegistrationController::class, 'storeRegistration'])->name('vendor.register.store');
     Route::post('/profile/update', [VendorDashboardController::class, 'updateProfile'])->name('vendor.profile.update');
+    Route::post('/coin-cap', [VendorDashboardController::class, 'updateCoinCap'])->name('vendor.coin-cap.update');
     Route::post('/products/upload', [VendorProductController::class, 'uploadProduct'])->name('vendor.products.upload');
     Route::post('/products/{productId}/update', [VendorProductController::class, 'updateProduct'])->name('vendor.products.update');
     Route::delete('/products/{productId}', [VendorProductController::class, 'deleteProduct'])->name('vendor.products.delete');

@@ -32,6 +32,8 @@ return [
     'coins' => [
         'expiry_months' => (int) env('COIN_EXPIRY_MONTHS', 12),
 
+        'naira_value' => (int) env('COIN_NAIRA_VALUE', 50),
+
         // The coin stays a stable ₦50 unit of account. Discounts are delivered
         // as bonus coins, never as a cheaper coin, so 'coins' is always price/50
         // and 'bonus_coins' is what the pack throws in on top.
