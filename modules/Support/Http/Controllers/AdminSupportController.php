@@ -6,9 +6,14 @@ namespace ModulesShoppingComplex\Support\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use ModulesShoppingComplex\Notifications\Services\NotificationEmailService;
 use ModulesShoppingComplex\Support\Models\SupportConversation;
 use ModulesShoppingComplex\Support\Repositories\SupportConversationRepository;
 
@@ -18,6 +23,7 @@ class AdminSupportController extends Controller
 
     public function __construct(
         private readonly SupportConversationRepository $conversationRepository,
+        private readonly NotificationEmailService $email,
     ) {}
 
     public function index(): Response
@@ -42,6 +48,42 @@ class AdminSupportController extends Controller
         $this->conversationRepository->save($conversation);
 
         return response()->json(['success' => true]);
+    }
+
+    public function emailCustomer(Request $request, SupportConversation $conversation): RedirectResponse
+    {
+        $this->authorize('actAsAgent', $conversation);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:200'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $customer = $conversation->user;
+
+        if ($customer === null || empty($customer->email)) {
+            return back()->with('error', 'This conversation has no customer email on file.');
+        }
+
+        try {
+            $this->email->sendSupportReply($customer, $validated['subject'], $validated['message']);
+        } catch (\Throwable $e) {
+            Log::error('Support customer email failed', [
+                'conversation_id' => $conversation->id,
+                'customer_id' => $customer->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'The email could not be sent. Please try again.');
+        }
+
+        Log::info('Admin emailed a support customer', [
+            'conversation_id' => $conversation->id,
+            'customer_id' => $customer->id,
+            'agent_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Email sent to '.$customer->name.'.');
     }
 
     /**
