@@ -8,13 +8,28 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
+use ModulesShoppingComplex\Identity\Models\User;
 
 class ContactRedirectController extends Controller
 {
     public function __construct(
         private readonly ContactLinkService $links,
     ) {}
+
+    public function issue(Request $request, string $vendorSlug): RedirectResponse
+    {
+        $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
+        abort_if($vendor === null, 404);
+
+        $message = $request->query('message');
+        $url = $this->links->urlFor($vendor, ViewSourceEnum::WEB, null, is_string($message) ? $message : null);
+
+        abort_if($url === null, 404);
+
+        return redirect($url);
+    }
 
     public function __invoke(Request $request, string $token): RedirectResponse
     {
