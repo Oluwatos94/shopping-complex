@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             ReferralSeeder::class,
             SubscriptionPlanSeeder::class,
+            CoinWalletSeeder::class,
         ]);
     }
 }

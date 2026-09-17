@@ -315,6 +315,7 @@ Route::middleware(['auth', 'throttle:auth'])->prefix('vendor')->group(function (
     Route::get('/subscription/callback', [SubscriptionController::class, 'callback'])->name('vendor.subscription.callback');
     Route::get('/subscription/stellar/status', [SubscriptionController::class, 'stellarStatus'])->name('vendor.subscription.stellar.status');
 
+    Route::get('/wallet', [CoinPurchaseController::class, 'wallet'])->name('vendor.wallet');
     Route::get('/coins', [CoinPurchaseController::class, 'packs'])->name('vendor.coins.packs');
     Route::get('/coins/callback', [CoinPurchaseController::class, 'callback'])->name('vendor.coins.callback');
 });
