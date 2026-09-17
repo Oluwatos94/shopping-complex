@@ -97,6 +97,25 @@ class VendorLeadHistoryTest extends TestCase
         $this->assertStringContainsString('Ikeja, Lagos', $body);
     }
 
+    public function test_the_csv_export_neutralises_formula_injection(): void
+    {
+        $vendor = $this->vendor();
+        $this->lead($vendor, ['buyer_search' => '=HYPERLINK("http://evil")', 'buyer_area' => '+1234']);
+
+        $body = $this->actingAs($vendor)->get('/vendor/leads/export')->streamedContent();
+
+        $this->assertStringContainsString("'=HYPERLINK", $body);
+        $this->assertStringContainsString("'+1234", $body);
+        $this->assertStringNotContainsString(',=HYPERLINK', $body);
+    }
+
+    public function test_an_invalid_date_filter_is_rejected_not_fatal(): void
+    {
+        $vendor = $this->vendor();
+
+        $this->actingAs($vendor)->get('/vendor/leads?from=not-a-date')->assertSessionHasErrors('from');
+    }
+
     public function test_a_non_vendor_cannot_view_leads(): void
     {
         $user = User::factory()->create(['role' => 'customer']);

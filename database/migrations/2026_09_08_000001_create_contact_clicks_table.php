@@ -27,6 +27,7 @@ return new class extends Migration
             $table->index(['vendor_id', 'created_at']);
             $table->index(['buyer_identity', 'vendor_id', 'created_at']);
             $table->index(['is_billable', 'created_at']);
+            $table->index(['ip_address', 'created_at']);
         });
     }
 

@@ -60,8 +60,8 @@ class VendorLeadHistoryController extends Controller
                 foreach ($leads as $lead) {
                     fputcsv($out, [
                         $lead->created_at->toDateTimeString(),
-                        $lead->buyer_search ?? '',
-                        $lead->buyer_area ?? '',
+                        $this->csvSafe($lead->buyer_search),
+                        $this->csvSafe($lead->buyer_area),
                         $this->channel($lead),
                         $lead->coins_charged,
                         $this->stateLabel($lead),
@@ -79,6 +79,12 @@ class VendorLeadHistoryController extends Controller
      */
     private function filtered(Request $request): Builder
     {
+        $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'state' => ['nullable', 'in:'.implode(',', self::STATES)],
+        ]);
+
         $query = BillableLead::where('vendor_id', Auth::id());
 
         if (($from = $request->query('from')) !== null && $from !== '') {
@@ -131,6 +137,22 @@ class VendorLeadHistoryController extends Controller
     private function channel(BillableLead $lead): string
     {
         return $lead->channel === ViewSourceEnum::WHATSAPP ? 'bot' : 'web';
+    }
+
+    /**
+     * Neutralise spreadsheet formula injection: a buyer-typed search that starts
+     * with =, +, -, @ or a control char must not execute when the vendor opens
+     * the CSV in Excel or Sheets.
+     */
+    private function csvSafe(?string $value): string
+    {
+        $value = (string) $value;
+
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 
     private function denyNonVendor(): ?RedirectResponse
