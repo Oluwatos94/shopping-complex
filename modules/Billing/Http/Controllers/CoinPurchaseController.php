@@ -10,11 +10,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use ModulesShoppingComplex\Billing\Data\CoinPack;
+use ModulesShoppingComplex\Billing\Enums\CoinLedgerTypeEnum;
+use ModulesShoppingComplex\Billing\Enums\LeadUnbilledReasonEnum;
+use ModulesShoppingComplex\Billing\Models\BillableLead;
+use ModulesShoppingComplex\Billing\Models\CoinLedgerEntry;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Billing\Services\CoinPackRegistry;
 use ModulesShoppingComplex\Billing\Services\CoinPurchaseService;
 use ModulesShoppingComplex\Billing\Services\CoinWalletService;
+use ModulesShoppingComplex\Billing\Services\LeadPricingService;
+use ModulesShoppingComplex\Catalog\Models\Category;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class CoinPurchaseController extends Controller
@@ -23,7 +30,62 @@ class CoinPurchaseController extends Controller
         private readonly CoinPackRegistry $packs,
         private readonly CoinPurchaseService $purchases,
         private readonly CoinWalletService $wallet,
+        private readonly LeadPricingService $pricing,
     ) {}
+
+    public function wallet(): InertiaResponse|RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        $vendor = Auth::user();
+        $balance = $this->wallet->balance($vendor);
+        $rate = $this->pricing->costFor($vendor);
+
+        $category = $vendor->category_id === null ? null : Category::find($vendor->category_id);
+
+        $lowThreshold = (int) config('billing.leads.low_balance_leads', 3) * (int) config('billing.leads.default_cost', 5);
+
+        $ledger = CoinLedgerEntry::where('vendor_id', $vendor->id)
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->through(fn (CoinLedgerEntry $entry): array => [
+                'id' => $entry->id,
+                'type' => $entry->type->value,
+                'amount' => $entry->amount,
+                'balance_after' => $entry->balance_after,
+                'date' => $entry->created_at->toIso8601String(),
+            ]);
+
+        $spent = CoinLedgerEntry::where('vendor_id', $vendor->id)
+            ->where('type', CoinLedgerTypeEnum::DEBIT)
+            ->where('created_at', '>=', now()->subDays(30)->startOfDay())
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy(fn (CoinLedgerEntry $entry): string => $entry->created_at->toDateString())
+            ->map(fn ($group, string $date): array => [
+                'date' => $date,
+                'count' => (int) $group->sum(fn (CoinLedgerEntry $entry): int => -$entry->amount),
+            ])
+            ->values();
+
+        return Inertia::render('Vendor/Wallet', [
+            'vendor' => ['business_name' => $vendor->business_name ?? $vendor->name],
+            'balance' => $balance,
+            'lead_rate' => $rate,
+            'leads_affordable' => intdiv($balance, max(1, $rate)),
+            'category' => $category === null ? null : ['name' => $category->name, 'cost' => (int) $category->lead_coin_cost],
+            'low_balance' => $balance < $lowThreshold,
+            'low_balance_threshold' => $lowThreshold,
+            'unbilled_out_of_coins' => BillableLead::where('vendor_id', $vendor->id)
+                ->where('unbilled_reason', LeadUnbilledReasonEnum::INSUFFICIENT_BALANCE)
+                ->count(),
+            'spent_series' => $spent,
+            'ledger' => $ledger,
+            'top_up_link' => route('vendor.coins.packs'),
+        ]);
+    }
 
     /**
      * The purchasable packs and the vendor's current balance — the data source
