@@ -71,7 +71,7 @@ class AdminSupportController extends Controller
             Log::error('Support customer email failed', [
                 'conversation_id' => $conversation->id,
                 'customer_id' => $customer->id,
-                'error' => $e->getMessage(),
+                'exception' => $e::class,
             ]);
 
             return back()->with('error', 'The email could not be sent. Please try again.');

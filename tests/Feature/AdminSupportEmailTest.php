@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Support\Models\SupportConversation;
 use Tests\TestCase;
@@ -43,6 +44,14 @@ class AdminSupportEmailTest extends TestCase
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
+
+        $messages = Mail::getSymfonyTransport()->messages();
+        $this->assertCount(1, $messages);
+
+        $email = $messages->first()->getOriginalMessage();
+        $this->assertSame('Re: your enquiry', $email->getSubject());
+        $this->assertSame('jane@example.com', $email->getTo()[0]->getAddress());
+        $this->assertStringContainsString('information you asked for', (string) $email->getHtmlBody());
     }
 
     public function test_it_validates_the_subject_and_message(): void

@@ -68,10 +68,13 @@ export default function Support({ conversations }: Props) {
             { subject: emailSubject, message: emailBody },
             {
                 preserveScroll: true,
-                onSuccess: () => {
-                    setEmailSubject('');
-                    setEmailBody('');
-                    setEmailing(false);
+                onSuccess: (page) => {
+                    const sent = (page.props as { flash?: { success?: string } }).flash?.success;
+                    if (sent) {
+                        setEmailSubject('');
+                        setEmailBody('');
+                        setEmailing(false);
+                    }
                 },
                 onFinish: () => setEmailSending(false),
             },
