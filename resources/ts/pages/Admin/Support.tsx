@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { KeyboardEvent as ReactKeyboardEvent, useMemo, useState } from 'react';
 import AdminLayout from '@/components/Admin/AdminLayout';
 import SupportThread from '@/components/Support/SupportThread';
@@ -53,6 +53,33 @@ export default function Support({ conversations }: Props) {
     } = useSupportInbox(initial);
 
     const [draft, setDraft] = useState('');
+
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+    const [emailing, setEmailing] = useState(false);
+    const [emailSubject, setEmailSubject] = useState('');
+    const [emailBody, setEmailBody] = useState('');
+    const [emailSending, setEmailSending] = useState(false);
+
+    const sendEmail = () => {
+        if (!selected || emailSubject.trim() === '' || emailBody.trim() === '') return;
+        setEmailSending(true);
+        router.post(
+            `/admin/support/conversations/${selected.id}/email`,
+            { subject: emailSubject, message: emailBody },
+            {
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    const sent = (page.props as { flash?: { success?: string } }).flash?.success;
+                    if (sent) {
+                        setEmailSubject('');
+                        setEmailBody('');
+                        setEmailing(false);
+                    }
+                },
+                onFinish: () => setEmailSending(false),
+            },
+        );
+    };
 
     // Unread first, then most-recent activity — mirrors the backend ordering so
     // the queue stays stable between poll refreshes.
@@ -169,15 +196,71 @@ export default function Support({ conversations }: Props) {
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={resolve}
-                                        disabled={isResolved || isResolving}
-                                        className="flex-shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        {isResolved ? 'Resolved' : isResolving ? 'Resolving…' : 'Resolve'}
-                                    </button>
+                                    <div className="flex flex-shrink-0 items-center gap-2">
+                                        {selected.user && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setEmailing((v) => !v)}
+                                                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-primary-olive hover:bg-emerald-50 hover:text-primary-dark"
+                                            >
+                                                Email customer
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={resolve}
+                                            disabled={isResolved || isResolving}
+                                            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            {isResolved ? 'Resolved' : isResolving ? 'Resolving…' : 'Resolve'}
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {(flash?.success || flash?.error) && (
+                                    <div className={`px-5 py-2 text-xs ${flash.success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                                        {flash.success ?? flash.error}
+                                    </div>
+                                )}
+
+                                {emailing && selected.user && (
+                                    <div className="space-y-3 border-b border-gray-100 bg-gray-50 px-5 py-4">
+                                        <p className="text-xs font-semibold text-gray-600">Email {selected.user.name}</p>
+                                        <input
+                                            type="text"
+                                            value={emailSubject}
+                                            onChange={(e) => setEmailSubject(e.target.value)}
+                                            maxLength={200}
+                                            placeholder="Subject"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-olive focus:outline-none focus:ring-1 focus:ring-primary-olive"
+                                        />
+                                        <textarea
+                                            value={emailBody}
+                                            onChange={(e) => setEmailBody(e.target.value)}
+                                            maxLength={5000}
+                                            rows={4}
+                                            placeholder="Write your message to the customer…"
+                                            className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-olive focus:outline-none focus:ring-1 focus:ring-primary-olive"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={sendEmail}
+                                                disabled={emailSending || emailSubject.trim() === '' || emailBody.trim() === ''}
+                                                className="rounded-lg bg-primary-olive px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {emailSending ? 'Sending…' : 'Send email'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEmailing(false)}
+                                                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:text-gray-700"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Messages */}
                                 {isThreadLoading && messages.length === 0 ? (

@@ -260,6 +260,7 @@ Route::middleware(['auth', 'admin', 'throttle:writes'])->prefix('admin')->group(
     Route::post('/vendors/{user}/approve', [AdminController::class, 'approveVendor'])->name('admin.vendors.approve');
     Route::post('/vendors/{user}/reject', [AdminController::class, 'rejectVendor'])->name('admin.vendors.reject');
     Route::post('/support/conversations/{conversation}/read', [AdminSupportController::class, 'markRead'])->name('admin.support.read');
+    Route::post('/support/conversations/{conversation}/email', [AdminSupportController::class, 'emailCustomer'])->name('admin.support.email');
 });
 
 // Review Moderation Routes - Admin only
