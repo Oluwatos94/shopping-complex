@@ -162,7 +162,15 @@ class AppServiceProvider extends ServiceProvider
                 (string) config('services.stellar.platform_wallet_public'),
                 (string) config('services.stellar.platform_wallet_secret'),
             ),
+            sdk: $app->make(StellarSDK::class),
+            network: $app->make(Network::class),
+            distributionSigner: new StellarSigner(
+                (string) config('services.stellar.distribution_public'),
+                (string) config('services.stellar.distribution_secret'),
+            ),
             ngncAssetCode: (string) config('services.stellar.ngnc_asset_code'),
+            ngncIssuer: (string) config('services.stellar.ngnc_issuer'),
+            platformWalletPublic: (string) config('services.stellar.platform_wallet_public'),
         ));
 
         $this->app->singleton(SorobanServer::class, fn () => new SorobanServer(

@@ -33,9 +33,9 @@ import FlashBanner from '@/components/FlashBanner';
 import type { AutoRenewState, PaymentMethod, SubscriptionPlan, VendorSubscription } from '@/types/vendor';
 import AutoRenewCard from './partials/AutoRenewCard';
 import CurrentPlanCard from './partials/CurrentPlanCard';
+import StellarDepositModal from '@/components/StellarDepositModal';
 import PaymentMethodSelector from './partials/PaymentMethodSelector';
 import PlanCard from './partials/PlanCard';
-import StellarDepositModal from './partials/StellarDepositModal';
 
 interface Props {
     plans: SubscriptionPlan[];
@@ -97,6 +97,8 @@ export default function SubscriptionIndex({ plans, currentSubscription, products
                 <StellarDepositModal
                     url={stellarCheckout.url}
                     reference={stellarCheckout.reference}
+                    statusUrl="/vendor/subscription/stellar/status"
+                    completedMessage="Payment confirmed — activating your plan…"
                     onClose={() => setStellarCheckout(null)}
                     onCompleted={handleStellarCompleted}
                 />

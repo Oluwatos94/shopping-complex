@@ -19,6 +19,7 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property int $id
  * @property int $vendor_id
  * @property int|null $plan_id
+ * @property int|null $coin_purchase_id
  * @property string|null $sep24_id
  * @property AnchorTransactionKindEnum $kind
  * @property string|null $billing_period
@@ -41,6 +42,7 @@ class AnchorTransaction extends Model
     protected $fillable = [
         'vendor_id',
         'plan_id',
+        'coin_purchase_id',
         'sep24_id',
         'kind',
         'billing_period',
@@ -70,6 +72,11 @@ class AnchorTransaction extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'plan_id');
+    }
+
+    public function coinPurchase(): BelongsTo
+    {
+        return $this->belongsTo(CoinPurchase::class, 'coin_purchase_id');
     }
 
     public function isCompleted(): bool
