@@ -102,7 +102,7 @@ class AdminController extends Controller
     {
         $filters = $request->only(['method', 'per_page']);
         $data = [
-            'subscriptions' => $this->adminAnalyticsService->getPaidSubscriptions($filters),
+            'payments' => $this->adminAnalyticsService->getPaidCoinPurchases($filters),
             'stellarNetwork' => (string) config('services.stellar.network', 'testnet'),
         ];
 

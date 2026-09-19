@@ -53,7 +53,7 @@ const CHANNEL_LABELS: Record<string, string> = {
     in_app_enabled: 'In-App',
 };
 
-export default function VendorSettings({ preferences, availableTypes, daily_coin_cap, coin_naira_value }: SettingsProps) {
+export default function VendorSettings({ preferences, daily_coin_cap, coin_naira_value }: SettingsProps) {
     const { auth } = usePage<{ auth: { user: any } | null }>().props;
     const [localPrefs, setLocalPrefs] = useState(preferences);
     const [saving, setSaving] = useState<Toggle | null>(null);
@@ -86,7 +86,7 @@ export default function VendorSettings({ preferences, availableTypes, daily_coin
         // Optimistic update
         setLocalPrefs((prev) => ({
             ...prev,
-            [type]: { ...prev[type], [channel]: value },
+            [type]: { ...prev[type]!, [channel]: value },
         }));
 
         router.post(
@@ -104,7 +104,7 @@ export default function VendorSettings({ preferences, availableTypes, daily_coin
                     // Revert on error
                     setLocalPrefs((prev) => ({
                         ...prev,
-                        [type]: { ...prev[type], [channel]: !value },
+                        [type]: { ...prev[type]!, [channel]: !value },
                     }));
                     setSaving(null);
                 },
