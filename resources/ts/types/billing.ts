@@ -19,6 +19,7 @@ export interface CoinPack {
 }
 
 export interface CoinPacksProps {
+    vendor: { business_name: string; email: string };
     balance: number;
     lead_rate: number;
     category_name: string | null;

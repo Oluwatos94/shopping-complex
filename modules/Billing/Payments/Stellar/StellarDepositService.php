@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModulesShoppingComplex\Billing\Payments\Stellar;
 
+use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Enums\AnchorReconciliationEnum;
 use ModulesShoppingComplex\Billing\Enums\AnchorTransactionKindEnum;
 use ModulesShoppingComplex\Billing\Enums\Sep24StatusEnum;
@@ -12,20 +13,25 @@ use ModulesShoppingComplex\Billing\Models\SubscriptionPlan;
 use ModulesShoppingComplex\Billing\Payments\CheckoutSession;
 use ModulesShoppingComplex\Billing\Payments\CheckoutTypeEnum;
 use ModulesShoppingComplex\Identity\Models\User;
+use Soneso\StellarSDK\Asset;
+use Soneso\StellarSDK\Crypto\KeyPair;
+use Soneso\StellarSDK\Memo;
+use Soneso\StellarSDK\Network;
+use Soneso\StellarSDK\PaymentOperationBuilder;
+use Soneso\StellarSDK\StellarSDK;
+use Soneso\StellarSDK\TransactionBuilder;
 
-/**
- * Owns the Anchor (SEP-24) payment lifecycle: opening an interactive deposit and reconciling
- * its status. The vendor pays in Naira and the NGNC settles into Jiidaa's platform wallet
- * ($signer) — this is a direct payment to Jiidaa, not a top-up of the vendor's wallet (that
- * per-vendor custodial flow belongs to MPP). Each deposit is tracked against its vendor + plan
- * in {@see AnchorTransaction} so completion activates the right subscription.
- */
-final class StellarDepositService
+class StellarDepositService
 {
     public function __construct(
         private readonly AnchorClient $anchor,
         private readonly StellarSigner $platformSigner,
+        private readonly StellarSDK $sdk,
+        private readonly Network $network,
+        private readonly StellarSigner $distributionSigner,
         private readonly string $ngncAssetCode,
+        private readonly string $ngncIssuer,
+        private readonly string $platformWalletPublic,
     ) {}
 
     /**
@@ -50,6 +56,33 @@ final class StellarDepositService
         ]);
 
         return new CheckoutSession(CheckoutTypeEnum::INTERACTIVE, $interactive->url, $interactive->id);
+    }
+
+    public function settleNgncToPlatform(float $amount, string $memo): string
+    {
+        try {
+            $asset = Asset::createNonNativeAsset($this->ngncAssetCode, $this->ngncIssuer);
+            $source = $this->sdk->requestAccount($this->distributionSigner->publicKey);
+
+            $payment = (new PaymentOperationBuilder(
+                $this->platformWalletPublic,
+                $asset,
+                number_format($amount, 7, '.', ''),
+            ))->build();
+
+            $transaction = (new TransactionBuilder($source))
+                ->addOperation($payment)
+                ->addMemo(Memo::text($memo))
+                ->build();
+
+            $transaction->sign(KeyPair::fromSeed($this->distributionSigner->secret), $this->network);
+
+            return $this->sdk->submitTransaction($transaction)->getHash();
+        } catch (\Throwable $e) {
+            Log::error('Stellar coin settlement failed', ['amount' => $amount, 'error' => $e->getMessage()]);
+
+            throw new \RuntimeException('The on-chain payment could not be completed. Please try again.');
+        }
     }
 
     /**
