@@ -25,6 +25,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (AnchorTransaction::query()->where('kind', AnchorTransactionKindEnum::COIN_DEPOSIT->value)->exists()) {
+            throw new RuntimeException('Cannot roll back: coin_deposit anchor_transactions exist. Reassign or delete them before reverting the kind enum.');
+        }
+
         DB::statement('ALTER TABLE '.AnchorTransaction::getTableName()." MODIFY kind ENUM('deposit','mpp_charge') NOT NULL");
 
         Schema::table(AnchorTransaction::getTableName(), function (Blueprint $table) {
