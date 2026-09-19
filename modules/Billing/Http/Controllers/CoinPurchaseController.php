@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModulesShoppingComplex\Billing\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -101,6 +102,7 @@ class CoinPurchaseController extends Controller
         $category = $vendor->category_id === null ? null : Category::find($vendor->category_id);
 
         return Inertia::render('Vendor/Coins', [
+            'vendor' => ['business_name' => $vendor->business_name ?? $vendor->name, 'email' => $vendor->email],
             'balance' => $this->wallet->balance($vendor),
             'lead_rate' => $rate,
             'category_name' => $category?->name,
@@ -138,6 +140,34 @@ class CoinPurchaseController extends Controller
         }
 
         return back()->with('error', 'Unable to start the payment.');
+    }
+
+    public function stellarSettle(string $pack): JsonResponse
+    {
+        if ($this->denyNonVendor() !== null) {
+            return response()->json(['status' => 'error', 'message' => 'Only vendors can buy coins.'], 403);
+        }
+
+        $coinPack = $this->packs->find($pack);
+
+        if ($coinPack === null) {
+            return response()->json(['status' => 'error', 'message' => 'That coin pack is not available.'], 404);
+        }
+
+        $vendor = Auth::user();
+
+        try {
+            $result = $this->purchases->settleWithStellar($vendor, $coinPack);
+        } catch (\RuntimeException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'status' => 'completed',
+            'coins' => $result['purchase']->totalCoins(),
+            'balance' => $this->wallet->balance($vendor),
+            'tx_hash' => $result['tx_hash'],
+        ]);
     }
 
     public function callback(Request $request): RedirectResponse

@@ -3,15 +3,24 @@ import { useEffect, useRef, useState } from 'react';
 interface Props {
     url: string;
     reference: string;
+    statusUrl: string;
     onClose: () => void;
     onCompleted: () => void;
+    completedMessage?: string;
 }
 
 type PollState = 'waiting' | 'completed' | 'failed';
 
 const POLL_INTERVAL_MS = 4000;
 
-export default function StellarDepositModal({ url, reference, onClose, onCompleted }: Props) {
+export default function StellarDepositModal({
+    url,
+    reference,
+    statusUrl,
+    onClose,
+    onCompleted,
+    completedMessage = 'Payment confirmed — finishing up…',
+}: Props) {
     const [state, setState] = useState<PollState>('waiting');
     const [message, setMessage] = useState<string | null>(null);
     const onCompletedRef = useRef(onCompleted);
@@ -27,7 +36,7 @@ export default function StellarDepositModal({ url, reference, onClose, onComplet
             inFlightRef.current = true;
             try {
                 const res = await fetch(
-                    `/vendor/subscription/stellar/status?reference=${encodeURIComponent(reference)}`,
+                    `${statusUrl}?reference=${encodeURIComponent(reference)}`,
                     { headers: { Accept: 'application/json' } },
                 );
                 const data = (await res.json()) as { status: 'pending' | 'completed' | 'failed' | 'error'; message?: string };
@@ -55,7 +64,7 @@ export default function StellarDepositModal({ url, reference, onClose, onComplet
             active = false;
             clearInterval(interval);
         };
-    }, [reference, state]);
+    }, [reference, state, statusUrl]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -65,7 +74,7 @@ export default function StellarDepositModal({ url, reference, onClose, onComplet
                         <h2 className="text-base font-semibold text-gray-900">Complete your payment</h2>
                         <p className="text-xs text-gray-500 mt-0.5">
                             {state === 'waiting' && 'Complete the transfer below — this updates automatically.'}
-                            {state === 'completed' && 'Payment confirmed — activating your plan…'}
+                            {state === 'completed' && completedMessage}
                             {state === 'failed' && (message ?? 'The payment could not be completed.')}
                         </p>
                     </div>

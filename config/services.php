@@ -62,6 +62,8 @@ return [
         'ngnc_sac' => env('STELLAR_NGNC_SAC', ''),
 
         'distribution_public' => env('STELLAR_PLATFORM_DISTRIBUTION_PUBLIC', ''),
+        // Holds the NGNC float; signs the on-chain settlement of a coin-pack payment.
+        'distribution_secret' => env('STELLAR_PLATFORM_DISTRIBUTION_SECRET', ''),
 
         // Jiidaa's wallet that receives Anchor (SEP-24) subscription payments. The platform
         // authenticates SEP-10 as this wallet and the deposit settles NGNC into it.

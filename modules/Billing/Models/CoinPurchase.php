@@ -12,9 +12,10 @@ use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\HasTableName;
 
 /**
- * One vendor's attempt to buy a coin pack through Paystack. Created pending at
- * checkout and flipped to completed exactly once when payment is confirmed, so
- * a replayed webhook cannot credit twice. An abandoned payment simply stays
+ * One vendor's attempt to buy a coin pack, through Paystack (redirect) or the
+ * Stellar anchor (SEP-24 deposit). Created pending at checkout and flipped to
+ * completed exactly once when payment is confirmed, so a replayed webhook or a
+ * repeated status poll cannot credit twice. An abandoned payment simply stays
  * pending and credits nothing.
  *
  * @property int $id

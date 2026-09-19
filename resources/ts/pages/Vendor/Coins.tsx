@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
 import FlashBanner from '@/components/FlashBanner';
-import { CoinPacksProps } from '@/types';
+import CoinConfirmModal from '@/components/CoinConfirmModal';
+import { CoinPack, CoinPacksProps } from '@/types';
 
 interface SharedProps {
     flash: { success?: string; error?: string };
@@ -12,19 +13,26 @@ interface SharedProps {
 const naira = (n: number) => `₦${n.toLocaleString('en-US')}`;
 const coins = (n: number) => n.toLocaleString('en-US');
 
-export default function Coins({ balance, lead_rate, category_name, packs }: CoinPacksProps) {
+export default function Coins({ vendor, balance, lead_rate, category_name, packs }: CoinPacksProps) {
     const { flash } = usePage<SharedProps>().props;
-    const [processing, setProcessing] = useState<string | null>(null);
-
-    const buy = (key: string) => {
-        setProcessing(key);
-        router.post(`/vendor/coins/${key}`, {}, { onFinish: () => setProcessing(null) });
-    };
+    const [selectedPack, setSelectedPack] = useState<CoinPack | null>(null);
 
     return (
         <>
             <Head title="Buy Coins" />
             <VendorSidebar />
+
+            {selectedPack && (
+                <CoinConfirmModal
+                    pack={selectedPack}
+                    vendor={vendor}
+                    onClose={() => setSelectedPack(null)}
+                    onDone={() => {
+                        setSelectedPack(null);
+                        router.reload();
+                    }}
+                />
+            )}
 
             <main className="md:ml-[260px] min-h-screen bg-brand-surface pb-20 md:pb-0">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -80,11 +88,10 @@ export default function Coins({ balance, lead_rate, category_name, packs }: Coin
                                         <p className="mb-3 text-2xl font-extrabold text-brand-ink">{naira(pack.price)}</p>
                                         <button
                                             type="button"
-                                            onClick={() => buy(pack.key)}
-                                            disabled={processing !== null}
-                                            className="flex h-12 items-center justify-center rounded-xl bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                                            onClick={() => setSelectedPack(pack)}
+                                            className="flex h-12 items-center justify-center rounded-xl bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark"
                                         >
-                                            {processing === pack.key ? 'Redirecting…' : 'Buy pack'}
+                                            Buy pack
                                         </button>
                                     </div>
                                 </div>
@@ -93,7 +100,7 @@ export default function Coins({ balance, lead_rate, category_name, packs }: Coin
                     </div>
 
                     <p className="mt-6 text-center text-xs text-brand-muted">
-                        Payments are processed securely by Paystack. Coins are added the moment your payment is confirmed.
+                        Payments settle securely on the Stellar network in Naira. Coins are added the moment your payment is confirmed.
                     </p>
                 </div>
             </main>
