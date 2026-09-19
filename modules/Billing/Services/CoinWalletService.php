@@ -59,6 +59,33 @@ final class CoinWalletService
         ));
     }
 
+    public function grantFreeTier(User $vendor, int $coins): bool
+    {
+        $this->assertPositive($coins);
+
+        return DB::transaction(function () use ($vendor, $coins): bool {
+            $wallet = $this->lockedWallet($vendor);
+
+            if (! $this->isFreeTierEligible($vendor)) {
+                return false;
+            }
+
+            $this->write($wallet, CoinLedgerTypeEnum::PROMO, $coins, null, $this->defaultExpiry());
+
+            return true;
+        });
+    }
+
+    /**
+     * Eligible only before the vendor has claimed the free tier (PROMO) or bought any pack (PURCHASE).
+     */
+    public function isFreeTierEligible(User $vendor): bool
+    {
+        return ! CoinLedgerEntry::where('vendor_id', $vendor->id)
+            ->whereIn('type', [CoinLedgerTypeEnum::PROMO->value, CoinLedgerTypeEnum::PURCHASE->value])
+            ->exists();
+    }
+
     /**
      * Draws coins oldest lot first, one entry per lot touched.
      *
