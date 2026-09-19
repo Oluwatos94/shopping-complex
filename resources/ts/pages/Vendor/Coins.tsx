@@ -13,9 +13,15 @@ interface SharedProps {
 const naira = (n: number) => `₦${n.toLocaleString('en-US')}`;
 const coins = (n: number) => n.toLocaleString('en-US');
 
-export default function Coins({ vendor, balance, lead_rate, category_name, packs }: CoinPacksProps) {
+export default function Coins({ vendor, balance, lead_rate, category_name, free_tier, packs }: CoinPacksProps) {
     const { flash } = usePage<SharedProps>().props;
     const [selectedPack, setSelectedPack] = useState<CoinPack | null>(null);
+    const [claiming, setClaiming] = useState(false);
+
+    const claimFree = () => {
+        setClaiming(true);
+        router.post('/vendor/coins/free', {}, { preserveScroll: true, onFinish: () => setClaiming(false) });
+    };
 
     return (
         <>
@@ -57,6 +63,36 @@ export default function Coins({ vendor, balance, lead_rate, category_name, packs
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        {free_tier.available && (
+                            <div className="flex flex-col rounded-2xl border-2 border-brand-green/40 bg-white p-6">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-base font-bold text-brand-ink">Free tier</h2>
+                                    <span className="rounded-full bg-brand-green/10 px-2.5 py-1 text-xs font-bold text-brand-green-dark">
+                                        Free
+                                    </span>
+                                </div>
+
+                                <p className="mt-4 text-3xl font-extrabold text-brand-ink">{coins(free_tier.coins)}</p>
+                                <p className="text-sm text-brand-muted">coins</p>
+
+                                <p className="mt-4 text-sm font-medium text-brand-ink">
+                                    ≈ {coins(Math.floor(free_tier.coins / Math.max(1, lead_rate)))} leads at your rate
+                                </p>
+
+                                <div className="mt-6 flex flex-1 flex-col justify-end">
+                                    <p className="mb-3 text-2xl font-extrabold text-brand-ink">₦0</p>
+                                    <button
+                                        type="button"
+                                        onClick={claimFree}
+                                        disabled={claiming}
+                                        className="flex h-12 items-center justify-center rounded-xl bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {claiming ? 'Claiming…' : 'Claim free coins'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {packs.map((pack) => {
                             const bonusPct = pack.coins > 0 ? Math.round((pack.bonus_coins / pack.coins) * 100) : 0;
 

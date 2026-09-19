@@ -106,11 +106,30 @@ class CoinPurchaseController extends Controller
             'balance' => $this->wallet->balance($vendor),
             'lead_rate' => $rate,
             'category_name' => $category?->name,
+            'free_tier' => [
+                'coins' => (int) config('billing.coins.free_tier_coins', 30),
+                'available' => $this->wallet->isFreeTierEligible($vendor),
+            ],
             'packs' => array_map(
                 fn (CoinPack $pack): array => $this->presentPack($pack) + ['leads_at_rate' => intdiv($pack->totalCoins(), max(1, $rate))],
                 array_values($this->packs->all()),
             ),
         ]);
+    }
+
+    public function claimFree(): RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        $coins = (int) config('billing.coins.free_tier_coins', 30);
+
+        if (! $this->wallet->grantFreeTier(Auth::user(), $coins)) {
+            return back()->with('error', 'The free coins are no longer available on your account.');
+        }
+
+        return back()->with('success', sprintf('%s free coins added to your wallet.', number_format($coins)));
     }
 
     public function checkout(Request $request, string $pack): RedirectResponse|SymfonyResponse
