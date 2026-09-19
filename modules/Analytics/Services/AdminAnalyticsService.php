@@ -6,10 +6,10 @@ namespace ModulesShoppingComplex\Analytics\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use ModulesShoppingComplex\Billing\Enums\PaymentMethodEnum;
-use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
+use ModulesShoppingComplex\Billing\Enums\AnchorTransactionKindEnum;
+use ModulesShoppingComplex\Billing\Enums\CoinPurchaseStatusEnum;
 use ModulesShoppingComplex\Billing\Models\AnchorTransaction;
-use ModulesShoppingComplex\Billing\Models\VendorSubscription;
+use ModulesShoppingComplex\Billing\Models\CoinPurchase;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Identity\Models\User;
@@ -242,57 +242,63 @@ final readonly class AdminAnalyticsService
     }
 
     /**
-     * Get paginated paid vendor subscriptions. Stellar-rail rows carry their on-chain
-     * transaction history (deposit + each mpp_charge) with settled tx hashes.
-     *
-     * @param  array<string, mixed>  $filters
-     * @return LengthAwarePaginator<VendorSubscription>
+     *      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, array<string, mixed>>
      */
-    public function getPaidSubscriptions(array $filters): LengthAwarePaginator
+    public function getPaidCoinPurchases(array $filters): LengthAwarePaginator
     {
-        $query = VendorSubscription::query()
-            ->with(['vendor:id,name,business_name,email', 'plan:id,name,price'])
-            ->whereNotNull('amount_paid');
+        $stellarPurchaseIds = AnchorTransaction::query()
+            ->where('kind', AnchorTransactionKindEnum::COIN_DEPOSIT->value)
+            ->whereNotNull('coin_purchase_id')
+            ->pluck('coin_purchase_id');
 
-        if (! empty($filters['method']) && PaymentMethodEnum::tryFrom($filters['method']) !== null) {
-            $query->where('payment_method', $filters['method']);
+        $query = CoinPurchase::query()
+            ->with('vendor:id,name,business_name,email')
+            ->where('status', CoinPurchaseStatusEnum::COMPLETED->value);
+
+        $method = $filters['method'] ?? null;
+
+        if ($method === 'stellar') {
+            $query->whereIn('id', $stellarPurchaseIds);
+        } elseif ($method === 'paystack') {
+            $query->whereNotIn('id', $stellarPurchaseIds);
         }
 
         $perPage = PageSize::resolve($filters['per_page'] ?? null, max: self::MAX_PER_PAGE);
-        $subscriptions = $query->latest()->paginate($perPage);
+        $purchases = $query->latest('paid_at')->paginate($perPage);
 
-        $stellarVendorIds = $subscriptions->getCollection()
-            ->where('payment_method', PaymentMethodEnum::STELLAR)
-            ->pluck('vendor_id')
-            ->unique()
-            ->values();
+        $hashes = AnchorTransaction::query()
+            ->whereIn('coin_purchase_id', $purchases->getCollection()->pluck('id'))
+            ->where('kind', AnchorTransactionKindEnum::COIN_DEPOSIT->value)
+            ->whereNotNull('stellar_tx_hash')
+            ->pluck('stellar_tx_hash', 'coin_purchase_id');
 
-        $hashesByVendor = $stellarVendorIds->isEmpty()
-            ? collect()
-            : AnchorTransaction::query()
-                ->whereIn('vendor_id', $stellarVendorIds)
-                ->whereNotNull('stellar_tx_hash')
-                ->orderBy('completed_at')
-                ->get(['vendor_id', 'kind', 'amount', 'billing_period', 'stellar_tx_hash', 'completed_at'])
-                ->groupBy('vendor_id');
+        /** @var list<array<string, mixed>> $items */
+        $items = $purchases->getCollection()->map(function (CoinPurchase $purchase) use ($hashes): array {
+            $vendor = $purchase->vendor;
 
-        $subscriptions->getCollection()->transform(function (VendorSubscription $sub) use ($hashesByVendor) {
-            $history = $hashesByVendor->get($sub->vendor_id, collect())
-                ->map(fn (AnchorTransaction $tx): array => [
-                    'kind' => $tx->kind->value,
-                    'amount' => (float) $tx->amount,
-                    'billing_period' => $tx->billing_period,
-                    'hash' => $tx->stellar_tx_hash,
-                    'completed_at' => $tx->completed_at?->toIso8601String(),
-                ])
-                ->values();
+            return [
+                'id' => $purchase->id,
+                'vendor' => [
+                    'name' => $vendor === null ? 'Unknown' : ($vendor->business_name ?? $vendor->name),
+                    'email' => $vendor?->email,
+                ],
+                'pack' => $purchase->pack,
+                'coins' => $purchase->totalCoins(),
+                'amount' => $purchase->price,
+                'method' => $hashes->has($purchase->id) ? 'stellar' : 'paystack',
+                'tx_hash' => $hashes->get($purchase->id),
+                'paid_at' => $purchase->paid_at?->toIso8601String(),
+            ];
+        })->all();
 
-            $sub->setAttribute('stellar_transactions', $history);
-
-            return $sub;
-        });
-
-        return $subscriptions;
+        return new LengthAwarePaginator(
+            $items,
+            $purchases->total(),
+            $purchases->perPage(),
+            $purchases->currentPage(),
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
     }
 
     /**
@@ -302,7 +308,6 @@ final readonly class AdminAnalyticsService
      */
     public function getPlatformBotStats(): array
     {
-        $activeStatus = VendorSubscriptionStatusEnum::ACTIVE->value;
         $startOfMonth = now()->startOfMonth();
 
         $eventCounts = DB::table('whatsapp_interactions')
@@ -316,11 +321,17 @@ final readonly class AdminAnalyticsService
             ->groupBy('event_type')
             ->pluck('total', 'event_type');
 
-        $subscriptionStats = DB::table('vendor_subscriptions')
-            ->where('status', $activeStatus)
-            ->where('expires_at', '>', now())
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(amount_paid), 0) as revenue')
-            ->first();
+        $completed = CoinPurchaseStatusEnum::COMPLETED->value;
+
+        $monthlyRevenue = DB::table('coin_purchases')
+            ->where('status', $completed)
+            ->where('paid_at', '>=', $startOfMonth)
+            ->sum('price');
+
+        $paidVendors = DB::table('coin_purchases')
+            ->where('status', $completed)
+            ->distinct()
+            ->count('vendor_id');
 
         return [
             'total_searches' => (int) ($eventCounts[WhatsAppInteractionEventEnum::SEARCH->value] ?? 0),
@@ -328,8 +339,8 @@ final readonly class AdminAnalyticsService
             'total_no_results' => (int) ($eventCounts[WhatsAppInteractionEventEnum::NO_RESULTS->value] ?? 0),
             'searches_this_month' => (int) ($monthlyEventCounts[WhatsAppInteractionEventEnum::SEARCH->value] ?? 0),
             'contacts_this_month' => (int) ($monthlyEventCounts[WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value] ?? 0),
-            'active_subscribed_vendors' => (int) ($subscriptionStats->count ?? 0),
-            'monthly_revenue' => round((float) ($subscriptionStats->revenue ?? 0), 2),
+            'paid_vendors' => (int) $paidVendors,
+            'monthly_revenue' => round((float) $monthlyRevenue, 2),
         ];
     }
 

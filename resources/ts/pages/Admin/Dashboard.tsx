@@ -11,7 +11,7 @@ interface Props {
         total_no_results: number;
         searches_this_month: number;
         contacts_this_month: number;
-        active_subscribed_vendors: number;
+        paid_vendors: number;
         monthly_revenue: number;
     };
 }
@@ -140,7 +140,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
         return (
             <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg text-sm">
                 <p className="text-gray-500 text-xs mb-0.5">{label}</p>
-                <p className="font-semibold text-gray-900">{payload[0].value.toLocaleString()}</p>
+                <p className="font-semibold text-gray-900">{(payload[0]?.value ?? 0).toLocaleString()}</p>
             </div>
         );
     }
@@ -160,7 +160,7 @@ export default function Dashboard({ users, vendors, botStats }: Props) {
         { name: 'Connections', value: botStats.total_contacts_made },
         { name: 'Monthly Contacts', value: botStats.contacts_this_month },
         { name: 'No Results', value: botStats.total_no_results },
-        { name: 'Active Vendors', value: botStats.active_subscribed_vendors },
+        { name: 'Paid Vendors', value: botStats.paid_vendors },
     ];
 
     const barColors = [OLIVE, OLIVE, PEACH, PEACH, BROWN, LIGHT];
@@ -198,9 +198,9 @@ export default function Dashboard({ users, vendors, botStats }: Props) {
             color: 'bg-primary-brown',
         },
         {
-            label: 'Active Subscribed Vendors',
-            value: botStats.active_subscribed_vendors.toLocaleString(),
-            sub: 'On WhatsApp Bot',
+            label: 'Paid Vendors',
+            value: botStats.paid_vendors.toLocaleString(),
+            sub: 'Bought a coin pack',
             color: 'bg-primary-light',
         },
     ];
@@ -221,7 +221,7 @@ export default function Dashboard({ users, vendors, botStats }: Props) {
                         label="Monthly Revenue"
                         value={formatCurrency(botStats.monthly_revenue)}
                         trend="up"
-                        trendLabel="Active subscriptions"
+                        trendLabel="Coin pack sales"
                         icon={
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -239,10 +239,10 @@ export default function Dashboard({ users, vendors, botStats }: Props) {
                         }
                     />
                     <KpiCard
-                        label="Active Vendors"
-                        value={vendors.approved.toLocaleString()}
-                        trend={vendors.pending_review > 0 ? 'neutral' : 'up'}
-                        trendLabel={vendors.pending_review > 0 ? `${vendors.pending_review} pending` : 'all clear'}
+                        label="Paid Vendors"
+                        value={botStats.paid_vendors.toLocaleString()}
+                        trend={botStats.paid_vendors > 0 ? 'up' : 'neutral'}
+                        trendLabel={`${vendors.approved.toLocaleString()} approved`}
                         icon={
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -422,12 +422,12 @@ export default function Dashboard({ users, vendors, botStats }: Props) {
                                 <div
                                     className="bg-primary-olive h-2 rounded-full transition-all"
                                     style={{
-                                        width: `${Math.min(100, botStats.active_subscribed_vendors > 0 ? 70 : 10)}%`,
+                                        width: `${Math.min(100, botStats.paid_vendors > 0 ? 70 : 10)}%`,
                                     }}
                                 />
                             </div>
                             <p className="text-[10px] text-gray-400 mt-1">
-                                From {botStats.active_subscribed_vendors.toLocaleString()} active subscriptions
+                                From {botStats.paid_vendors.toLocaleString()} paid vendors
                             </p>
                         </div>
                     </div>

@@ -103,7 +103,7 @@ export default function VendorCard({
                         {vendor.products_count !== undefined
                             ? vendor.products_count
                             : vendor.physical_address
-                              ? vendor.physical_address.split(',').at(-1)?.trim() || '—'
+                              ? vendor.physical_address.split(',').slice(-1)[0]?.trim() || '—'
                               : '—'}
                     </p>
                 </div>

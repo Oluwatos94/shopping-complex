@@ -17,7 +17,7 @@ export default function FlagModal({
     onClose: () => void;
     onSubmit: (id: number, reason: string, notes: string) => void;
 }) {
-    const [selectedReason, setSelectedReason] = useState<string>(FLAG_REASONS[0]);
+    const [selectedReason, setSelectedReason] = useState<string>(FLAG_REASONS[0] ?? '');
     const [notes, setNotes] = useState('');
 
     if (!product) return null;
@@ -25,7 +25,7 @@ export default function FlagModal({
     const handleSubmit = () => {
         onSubmit(product.id, selectedReason, notes);
         setNotes('');
-        setSelectedReason(FLAG_REASONS[0]);
+        setSelectedReason(FLAG_REASONS[0] ?? '');
         onClose();
     };
 

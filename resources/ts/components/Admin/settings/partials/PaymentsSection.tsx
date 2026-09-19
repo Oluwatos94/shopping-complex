@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Toggle from '@/components/Forms/Toggle';
 
 export default function PaymentsSection() {
     const [commission, setCommission] = useState(12.5);
