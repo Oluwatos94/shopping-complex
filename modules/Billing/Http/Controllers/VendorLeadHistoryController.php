@@ -54,14 +54,13 @@ class VendorLeadHistoryController extends Controller
 
         return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Date', 'Searched for', 'Buyer area', 'Channel', 'Coins charged', 'State', 'Repeat contacts']);
+            fputcsv($out, ['Date', 'Searched for', 'Channel', 'Coins charged', 'State', 'Repeat contacts']);
 
             $query->chunk(500, function ($leads) use ($out): void {
                 foreach ($leads as $lead) {
                     fputcsv($out, [
                         $lead->created_at->toDateTimeString(),
                         $this->csvSafe($lead->buyer_search),
-                        $this->csvSafe($lead->buyer_area),
                         $this->channel($lead),
                         $lead->coins_charged,
                         $this->stateLabel($lead),

@@ -94,18 +94,16 @@ class VendorLeadHistoryTest extends TestCase
         $body = $response->streamedContent();
         $this->assertStringContainsString('Searched for', $body);
         $this->assertStringContainsString('phone repair', $body);
-        $this->assertStringContainsString('Ikeja, Lagos', $body);
     }
 
     public function test_the_csv_export_neutralises_formula_injection(): void
     {
         $vendor = $this->vendor();
-        $this->lead($vendor, ['buyer_search' => '=HYPERLINK("http://evil")', 'buyer_area' => '+1234']);
+        $this->lead($vendor, ['buyer_search' => '=HYPERLINK("http://evil")']);
 
         $body = $this->actingAs($vendor)->get('/vendor/leads/export')->streamedContent();
 
         $this->assertStringContainsString("'=HYPERLINK", $body);
-        $this->assertStringContainsString("'+1234", $body);
         $this->assertStringNotContainsString(',=HYPERLINK', $body);
     }
 

@@ -78,14 +78,16 @@ class VendorLeadAlertTest extends TestCase
         return $vendor;
     }
 
-    private function loggedSearch(string $phone, string $query): void
+    private function loggedSearch(User $vendor, string $phone, string $query): void
     {
-        WhatsAppInteraction::create([
+        WhatsAppInteraction::insert([
             'phone_number' => $phone,
-            'event_type' => WhatsAppInteractionEventEnum::SEARCH,
+            'event_type' => WhatsAppInteractionEventEnum::VENDOR_VIEWED->value,
+            'vendor_id' => $vendor->id,
             'search_query' => $query,
             'buyer_latitude' => 6.5,
             'buyer_longitude' => 3.37,
+            'created_at' => now(),
         ]);
     }
 
@@ -137,7 +139,7 @@ class VendorLeadAlertTest extends TestCase
     public function test_the_alert_sends_a_whatsapp_template_with_the_lead_details(): void
     {
         $vendor = $this->funded($this->vendor());
-        $this->loggedSearch(self::BUYER, 'ankara gown');
+        $this->loggedSearch($vendor, self::BUYER, 'ankara gown');
         $lead = $this->chargeALead($vendor);
 
         app(SendVendorLeadAlert::class)->handle(new VendorLeadCharged($lead));
