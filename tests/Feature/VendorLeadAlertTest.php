@@ -80,13 +80,14 @@ class VendorLeadAlertTest extends TestCase
 
     private function loggedSearch(User $vendor, string $phone, string $query): void
     {
-        WhatsAppInteraction::create([
+        WhatsAppInteraction::insert([
             'phone_number' => $phone,
-            'event_type' => WhatsAppInteractionEventEnum::VENDOR_VIEWED,
+            'event_type' => WhatsAppInteractionEventEnum::VENDOR_VIEWED->value,
             'vendor_id' => $vendor->id,
             'search_query' => $query,
             'buyer_latitude' => 6.5,
             'buyer_longitude' => 3.37,
+            'created_at' => now(),
         ]);
     }
 
