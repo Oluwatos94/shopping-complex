@@ -137,12 +137,12 @@ class SendVendorLeadAlert implements ShouldQueue
         $search = 'a product or service';
         $area = 'your area';
 
-        // The buyer's most recent search — the alert fires within seconds of the
-        // contact, so this is the search that led here. No created_at filter: the
-        // interaction's timestamp comes from the DB clock, not the app clock.
+        // The query that actually surfaced this vendor to the buyer (and the location it used),
+        // not a raw chat reply — logged when the bot showed them, so it's the real "searched for".
         $interaction = WhatsAppInteraction::query()
             ->where('phone_number', $lead->buyer_identity)
-            ->where('event_type', WhatsAppInteractionEventEnum::SEARCH->value)
+            ->where('event_type', WhatsAppInteractionEventEnum::VENDOR_VIEWED->value)
+            ->where('vendor_id', $lead->vendor_id)
             ->latest('id')
             ->first();
 

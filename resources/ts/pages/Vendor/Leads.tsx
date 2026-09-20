@@ -128,7 +128,6 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                                         <tr>
                                             <th className="px-5 py-3 font-semibold">Date</th>
                                             <th className="px-5 py-3 font-semibold">Searched for</th>
-                                            <th className="px-5 py-3 font-semibold">Area</th>
                                             <th className="px-5 py-3 font-semibold">Channel</th>
                                             <th className="px-5 py-3 text-right font-semibold">Coins</th>
                                             <th className="px-5 py-3 font-semibold">State</th>
@@ -145,7 +144,6 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                                                     })}
                                                 </td>
                                                 <td className="px-5 py-3 text-brand-ink">{lead.search ?? '—'}</td>
-                                                <td className="px-5 py-3 text-brand-muted">{lead.area ?? '—'}</td>
                                                 <td className="px-5 py-3 text-brand-muted capitalize">{lead.channel}</td>
                                                 <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-brand-ink">
                                                     {lead.coins_charged > 0 ? lead.coins_charged : '—'}
