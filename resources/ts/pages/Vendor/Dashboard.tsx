@@ -26,9 +26,11 @@ interface Props {
         catalogue_views_this_week: number;
     };
     coins: {
+        balance: number;
         daily_coin_cap: number | null;
         charged_today: number;
         coin_naira_value: number;
+        top_up_link: string;
     };
 }
 
@@ -77,20 +79,20 @@ export default function VendorDashboard({ vendor, referral, subscription, stats,
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        {/* Subscription */}
+                        {/* Wallet */}
                         <div className="bg-white rounded-2xl p-5 shadow-sm col-span-2 sm:col-span-1">
-                            <p className="text-xs text-gray-500 mb-3">Subscription</p>
+                            <p className="text-xs text-gray-500 mb-3">Wallet</p>
                             <p className="text-lg font-bold text-gray-900 mb-1">
-                                {subscription.plan_name ?? 'No Plan'}
+                                {coins(wallet.balance)} coins
                             </p>
                             <p className="text-xs text-gray-400 mb-4">
-                                Expires: {subscription.expires_at ?? 'N/A'}
+                                {wallet.balance > 0 ? 'Active' : 'No coins yet'}
                             </p>
                             <Link
-                                href="/vendor/subscription"
+                                href={wallet.top_up_link}
                                 className="block text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-lg py-1.5 hover:bg-gray-50 transition-colors"
                             >
-                                Upgrade
+                                Buy coins
                             </Link>
                         </div>
 
