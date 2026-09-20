@@ -40,7 +40,7 @@ export default function Wallet({
                         </p>
                     </div>
 
-                    {(unbilled_out_of_coins > 0 || low_balance) && (
+                    {low_balance && (
                         <div
                             className={`mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
                                 unbilled_out_of_coins > 0 ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'
