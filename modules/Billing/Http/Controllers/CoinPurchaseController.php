@@ -110,6 +110,7 @@ class CoinPurchaseController extends Controller
                 'coins' => (int) config('billing.coins.free_tier_coins', 30),
                 'available' => $this->wallet->isFreeTierEligible($vendor),
             ],
+            'can_purchase' => $this->wallet->balance($vendor) < (int) config('billing.coins.repurchase_ceiling', 100),
             'packs' => array_map(
                 fn (CoinPack $pack): array => $this->presentPack($pack) + ['leads_at_rate' => intdiv($pack->totalCoins(), max(1, $rate))],
                 array_values($this->packs->all()),

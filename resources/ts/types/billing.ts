@@ -24,6 +24,7 @@ export interface CoinPacksProps {
     lead_rate: number;
     category_name: string | null;
     free_tier: { coins: number; available: boolean };
+    can_purchase: boolean;
     packs: CoinPack[];
 }
 

@@ -67,12 +67,12 @@ class CoinPurchaseStellarTest extends TestCase
         $vendor = $this->vendor();
 
         $this->actingAs($vendor)
-            ->postJson('/vendor/coins/growth/stellar')
+            ->postJson('/vendor/coins/starter/stellar')
             ->assertOk()
-            ->assertJson(['status' => 'completed', 'coins' => 440, 'balance' => 440])
+            ->assertJson(['status' => 'completed', 'coins' => 100, 'balance' => 100])
             ->assertJsonStructure(['tx_hash']);
 
-        $this->assertSame(440, $this->wallet()->balance($vendor));
+        $this->assertSame(100, $this->wallet()->balance($vendor));
 
         $purchase = CoinPurchase::sole();
         $this->assertSame(CoinPurchaseStatusEnum::COMPLETED, $purchase->status);
@@ -82,8 +82,8 @@ class CoinPurchaseStellarTest extends TestCase
         $this->assertSame(AnchorTransactionKindEnum::COIN_DEPOSIT, $tx->kind);
         $this->assertNotNull($tx->stellar_tx_hash);
 
-        // Purchase + bonus ledger entries only.
-        $this->assertSame(2, CoinLedgerEntry::count());
+        // Starter has no bonus, so a single purchase ledger entry.
+        $this->assertSame(1, CoinLedgerEntry::count());
     }
 
     public function test_a_failed_settlement_credits_nothing_and_leaves_no_purchase(): void
@@ -92,7 +92,7 @@ class CoinPurchaseStellarTest extends TestCase
         $vendor = $this->vendor();
 
         $this->actingAs($vendor)
-            ->postJson('/vendor/coins/growth/stellar')
+            ->postJson('/vendor/coins/starter/stellar')
             ->assertStatus(422);
 
         $this->assertSame(0, $this->wallet()->balance($vendor));

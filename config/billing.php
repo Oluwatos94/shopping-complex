@@ -39,6 +39,10 @@ return [
         // and 'bonus_coins' is what the pack throws in on top.
         'free_tier_coins' => (int) env('COIN_FREE_TIER_COINS', 30),
 
+        // Testnet anti-abuse: block a fresh Stellar coin purchase while the vendor still holds
+        // this many coins, so free testnet coins can't be restacked. Raise/remove for mainnet.
+        'repurchase_ceiling' => (int) env('COIN_REPURCHASE_CEILING', 100),
+
         'packs' => [
             'starter' => ['name' => 'Starter', 'price' => 5000, 'coins' => 100, 'bonus_coins' => 0],
             // 'growth' => ['name' => 'Growth', 'price' => 20000, 'coins' => 400, 'bonus_coins' => 40],

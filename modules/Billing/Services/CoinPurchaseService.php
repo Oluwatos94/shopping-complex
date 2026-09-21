@@ -98,6 +98,12 @@ final class CoinPurchaseService
 
     public function settleWithStellar(User $vendor, CoinPack $pack): array
     {
+        $ceiling = (int) config('billing.coins.repurchase_ceiling', 100);
+
+        if ($this->wallet->balance($vendor) >= $ceiling) {
+            throw new \RuntimeException('You still have enough coins — top up again once your balance runs low.');
+        }
+
         $purchase = CoinPurchase::create([
             'vendor_id' => $vendor->id,
             'pack' => $pack->key,
