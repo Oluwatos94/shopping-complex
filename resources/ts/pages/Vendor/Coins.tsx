@@ -13,7 +13,7 @@ interface SharedProps {
 const naira = (n: number) => `₦${n.toLocaleString('en-US')}`;
 const coins = (n: number) => n.toLocaleString('en-US');
 
-export default function Coins({ vendor, balance, lead_rate, category_name, free_tier, packs }: CoinPacksProps) {
+export default function Coins({ vendor, balance, lead_rate, category_name, free_tier, can_purchase, packs }: CoinPacksProps) {
     const { flash } = usePage<SharedProps>().props;
     const [selectedPack, setSelectedPack] = useState<CoinPack | null>(null);
     const [claiming, setClaiming] = useState(false);
@@ -125,7 +125,8 @@ export default function Coins({ vendor, balance, lead_rate, category_name, free_
                                         <button
                                             type="button"
                                             onClick={() => setSelectedPack(pack)}
-                                            className="flex h-12 items-center justify-center rounded-xl bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark"
+                                            disabled={!can_purchase}
+                                            className="flex h-12 items-center justify-center rounded-xl bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Buy pack
                                         </button>
@@ -135,7 +136,13 @@ export default function Coins({ vendor, balance, lead_rate, category_name, free_
                         })}
                     </div>
 
-                    <p className="mt-6 text-center text-xs text-brand-muted">
+                    {!can_purchase && (
+                        <p className="mt-6 text-center text-xs font-medium text-brand-ink">
+                            You still have enough coins — top up again once your balance runs low.
+                        </p>
+                    )}
+
+                    <p className="mt-3 text-center text-xs text-brand-muted">
                         Payments settle securely on the Stellar network in Naira. Coins are added the moment your payment is confirmed.
                     </p>
                 </div>
