@@ -75,16 +75,22 @@ class ReferralRepository
 
     private function referredVendorsWithQualification(?int $referrerId = null): QueryBuilder
     {
-        $nthProduct = Product::query()
-            ->select('products.created_at')
-            ->whereColumn('products.vendor_id', 'referred.id')
-            ->orderBy('products.created_at')
-            ->offset(max(0, User::minReferralProducts() - 1))
-            ->limit(1);
+        $minProducts = User::minReferralProducts();
 
-        $referred = DB::table('users as referred')
-            ->select('referred.referred_by')
-            ->selectSub($nthProduct, 'qualified_at');
+        $referred = DB::table('users as referred')->select('referred.referred_by');
+
+        if ($minProducts <= 0) {
+            $referred->addSelect('referred.created_at as qualified_at');
+        } else {
+            $nthProduct = Product::query()
+                ->select('products.created_at')
+                ->whereColumn('products.vendor_id', 'referred.id')
+                ->orderBy('products.created_at')
+                ->offset($minProducts - 1)
+                ->limit(1);
+
+            $referred->selectSub($nthProduct, 'qualified_at');
+        }
 
         $this->onlyReferredVendors($referred, 'referred');
 

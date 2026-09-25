@@ -50,8 +50,7 @@ export default function Growth({
                         <h2 className="text-3xl font-bold tracking-tight text-gray-900">Growth</h2>
                         <p className="text-gray-500 mt-1">
                             How supply, demand and revenue have moved since {range.start}.
-                            {headline.period_label &&
-                                ` Comparisons use the last complete ${periodWord} (${headline.period_label}).`}
+                            {` Cards show this ${periodWord} so far (${headline.current_range}), compared with the same days last ${periodWord} (${headline.comparison_range}).`}
                         </p>
                     </div>
                     <GranularityToggle value={granularity} onChange={setGranularity} />
@@ -61,7 +60,6 @@ export default function Growth({
                     <HeadlineMetrics
                         headline={headline}
                         granularity={granularity}
-                        registeredVendors={supply.registered_vendors}
                     />
                 </div>
 

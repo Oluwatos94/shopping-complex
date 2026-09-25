@@ -169,11 +169,18 @@ export default function ReferralCard({ referral, businessName }: Props) {
                                     aria-controls="referral-breakdown"
                                     className="flex w-full items-center justify-between gap-3 text-left"
                                 >
-                                    <span className="text-sm text-gray-700">
-                                        <span className="font-semibold text-gray-900">{count}</span> of{' '}
-                                        <span className="font-semibold text-gray-900">{referred_count}</span>{' '}
-                                        {referred_count === 1 ? 'business has' : 'businesses have'} listed {min_products}+ products
-                                    </span>
+                                    {min_products > 0 ? (
+                                        <span className="text-sm text-gray-700">
+                                            <span className="font-semibold text-gray-900">{count}</span> of{' '}
+                                            <span className="font-semibold text-gray-900">{referred_count}</span>{' '}
+                                            {referred_count === 1 ? 'business has' : 'businesses have'} listed {min_products}+ products
+                                        </span>
+                                    ) : (
+                                        <span className="text-sm text-gray-700">
+                                            <span className="font-semibold text-gray-900">{count}</span>{' '}
+                                            {count === 1 ? 'business has' : 'businesses have'} joined through your link
+                                        </span>
+                                    )}
                                     <ChevronDownIcon className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${showReferrals ? 'rotate-180' : ''}`} />
                                 </button>
 
