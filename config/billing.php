@@ -45,8 +45,8 @@ return [
 
         'packs' => [
             'starter' => ['name' => 'Starter', 'price' => 5000, 'coins' => 100, 'bonus_coins' => 0],
-            // 'growth' => ['name' => 'Growth', 'price' => 20000, 'coins' => 400, 'bonus_coins' => 40],
-            // 'scale' => ['name' => 'Scale', 'price' => 50000, 'coins' => 1000, 'bonus_coins' => 150],
+            'growth' => ['name' => 'Growth', 'price' => 20000, 'coins' => 400, 'bonus_coins' => 40],
+            'scale' => ['name' => 'Scale', 'price' => 50000, 'coins' => 1000, 'bonus_coins' => 150],
         ],
     ],
 

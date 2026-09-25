@@ -65,7 +65,7 @@ export default function Subscriptions({ payments, stellarNetwork }: Props) {
     const methodTabs = [
         { label: 'All Payments', value: '' },
         { label: 'Direct payment', value: 'stellar' },
-        { label: 'Paystack', value: 'paystack' },
+        // { label: 'Paystack', value: 'paystack' },
     ];
 
     return (
