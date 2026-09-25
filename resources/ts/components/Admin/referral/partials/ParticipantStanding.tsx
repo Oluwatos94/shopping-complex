@@ -39,9 +39,11 @@ export default function ParticipantStanding({ participant }: { participant: Camp
                         <p className="text-[10px] uppercase tracking-widest text-gray-400">
                             Vendors they brought in
                         </p>
-                        <p className="text-[10px] text-gray-400 tabular-nums">
-                            Counts at {min_products}+ products
-                        </p>
+                        {min_products > 0 && (
+                            <p className="text-[10px] text-gray-400 tabular-nums">
+                                Counts at {min_products}+ products
+                            </p>
+                        )}
                     </div>
 
                     <ul className="border border-gray-100 rounded-lg divide-y divide-gray-100 overflow-hidden">

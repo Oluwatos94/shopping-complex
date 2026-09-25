@@ -1,7 +1,7 @@
 import { GrowthGranularity, GrowthHeadline, GrowthHeadlineMetric } from '@/types';
 import MetricCard from './MetricCard';
 
-const EMPTY_METRIC: GrowthHeadlineMetric = { value: 0, previous: 0, change_pct: null, in_progress: 0 };
+const EMPTY_METRIC: GrowthHeadlineMetric = { value: 0, previous: 0, change_pct: null, last_complete: 0 };
 
 const CARDS: { key: string; label: string }[] = [
     { key: 'new_vendors', label: 'New vendors' },
@@ -15,22 +15,16 @@ const CARDS: { key: string; label: string }[] = [
 interface Props {
     headline: GrowthHeadline;
     granularity: GrowthGranularity;
-    registeredVendors: number;
 }
 
-export default function HeadlineMetrics({ headline, granularity, registeredVendors }: Props) {
+export default function HeadlineMetrics({ headline, granularity }: Props) {
     const periodWord = granularity === 'week' ? 'week' : 'month';
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {CARDS.map((card) => {
                 const metric = headline.metrics[card.key] ?? EMPTY_METRIC;
-                const footnote =
-                    card.key === 'active_vendors'
-                        ? `of ${registeredVendors.toLocaleString()} registered`
-                        : headline.in_progress_label
-                        ? `${metric.in_progress.toLocaleString()} so far this ${periodWord}`
-                        : undefined;
+                const footnote = `vs ${metric.previous.toLocaleString()} same days last ${periodWord} · ${metric.last_complete.toLocaleString()} all last ${periodWord}`;
 
                 return (
                     <MetricCard

@@ -22,13 +22,12 @@ return [
     | What Counts As A Referral
     |--------------------------------------------------------------------------
     |
-    | Signing someone up is not the win — a vendor who lists nothing is not a
-    | vendor. A referral is only counted once the referred business has listed
-    | this many products, so a referrer's number reflects businesses actually
-    | trading rather than dormant accounts.
+    | A referral counts once the referred vendor has registered and verified
+    | their email. Set this above zero to also require the referred business
+    | to list that many products before the referral counts.
     |
     */
 
-    'min_products' => env('REFERRAL_MIN_PRODUCTS', 5),
+    'min_products' => env('REFERRAL_MIN_PRODUCTS', 0),
 
 ];

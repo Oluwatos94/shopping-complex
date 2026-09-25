@@ -25,8 +25,6 @@ final readonly class GrowthAnalyticsService
 
     private const ACTIVE_WINDOW_DAYS = 30;
 
-    private const DAYS_PER_MONTH = 30.44;
-
     private const HEADLINE_METRICS = [
         'new_vendors',
         'new_customers',
@@ -67,7 +65,7 @@ final readonly class GrowthAnalyticsService
                 'end' => CarbonImmutable::now()->toDateString(),
             ],
             'series' => $series,
-            'headline' => $this->headline($series),
+            'headline' => $this->headline($series, $buckets),
             'funnel' => $this->funnel($registered, $everContacted),
             'supply' => $this->supplyHealth($registered, $everContacted),
             'revenue' => $this->revenue(),
@@ -111,7 +109,8 @@ final readonly class GrowthAnalyticsService
             $buckets
         );
         $contacts = $this->rollup(
-            $this->repository->interactionsByDate(WhatsAppInteractionEventEnum::CONTACT_REQUESTED, $since),
+            $this->repository->interactionsByDate(WhatsAppInteractionEventEnum::CONTACT_REQUESTED, $since)
+                ->concat($this->repository->webContactsByDate($since)),
             $buckets
         );
         $noResults = $this->rollup(
@@ -195,34 +194,51 @@ final readonly class GrowthAnalyticsService
         return null;
     }
 
-    private function headline(array $series): array
+    private function headline(array $series, array $buckets): array
     {
-        $complete = array_values(array_filter($series, static fn (array $row): bool => $row['is_partial'] === false));
-        $partial = array_values(array_filter($series, static fn (array $row): bool => $row['is_partial'] === true));
+        $current = $series[count($series) - 1];
+        $lastComplete = $series[count($series) - 2] ?? null;
+        $currentBucket = $buckets[count($buckets) - 1];
+        $previousBucket = $buckets[count($buckets) - 2];
 
-        $latest = $complete[count($complete) - 1] ?? null;
-        $previous = $complete[count($complete) - 2] ?? null;
-        $inProgress = $partial[0] ?? null;
+        $elapsedDays = (int) $currentBucket['start']->diffInDays(CarbonImmutable::now()->startOfDay()) + 1;
+        $comparisonEnd = $previousBucket['start']->addDays($elapsedDays)->min($previousBucket['end']);
+
+        $comparisonBucket = [
+            'key' => 'comparison',
+            'label' => '',
+            'start' => $previousBucket['start'],
+            'end' => $comparisonEnd,
+            'is_partial' => false,
+        ];
+        $comparison = $this->series([$comparisonBucket], Carbon::instance($previousBucket['start']))[0];
 
         $metrics = [];
 
         foreach (self::HEADLINE_METRICS as $metric) {
-            $current = (int) ($latest[$metric] ?? 0);
-            $prior = (int) ($previous[$metric] ?? 0);
+            $value = (int) $current[$metric];
+            $prior = (int) $comparison[$metric];
 
             $metrics[$metric] = [
-                'value' => $current,
+                'value' => $value,
                 'previous' => $prior,
-                'change_pct' => $prior > 0 ? round((($current - $prior) / $prior) * 100, 1) : null,
-                'in_progress' => (int) ($inProgress[$metric] ?? 0),
+                'change_pct' => $prior > 0 ? round((($value - $prior) / $prior) * 100, 1) : null,
+                'last_complete' => (int) ($lastComplete[$metric] ?? 0),
             ];
         }
 
         return [
-            'period_label' => $latest['label'] ?? null,
-            'in_progress_label' => $inProgress['label'] ?? null,
+            'current_range' => $this->rangeLabel($currentBucket['start'], CarbonImmutable::now()),
+            'comparison_range' => $this->rangeLabel($previousBucket['start'], $comparisonEnd->subDay()),
             'metrics' => $metrics,
         ];
+    }
+
+    private function rangeLabel(CarbonImmutable $from, CarbonImmutable $to): string
+    {
+        return $from->isSameDay($to)
+            ? $from->format('j M')
+            : $from->format('j M').' – '.$to->format('j M');
     }
 
     private function funnel(int $registered, int $everContacted): array
@@ -263,23 +279,14 @@ final readonly class GrowthAnalyticsService
 
     private function revenue(): array
     {
-        $active = $this->repository->activeSubscriptionPeriods(Carbon::now());
-        $monthlyRecurring = 0.0;
-
-        foreach ($active as $subscription) {
-            $days = CarbonImmutable::parse($subscription->started_at)
-                ->diffInDays(CarbonImmutable::parse($subscription->expires_at));
-            $months = max(1.0, $days / self::DAYS_PER_MONTH);
-            $monthlyRecurring += (float) ($subscription->amount_paid ?? 0) / $months;
-        }
-
-        $payingVendors = $active->count();
+        $payingVendors = $this->repository->countPayingVendors();
+        $lifetime = $this->repository->collectedSince();
 
         return [
             'paying_vendors' => $payingVendors,
-            'monthly_recurring' => round($monthlyRecurring, 2),
-            'average_per_vendor' => $payingVendors > 0 ? round($monthlyRecurring / $payingVendors, 2) : 0.0,
-            'lifetime_collected' => $this->repository->lifetimeCollected(),
+            'collected_this_month' => $this->repository->collectedSince(Carbon::now()->startOfMonth()),
+            'average_per_vendor' => $payingVendors > 0 ? round($lifetime / $payingVendors, 2) : 0.0,
+            'lifetime_collected' => $lifetime,
         ];
     }
 

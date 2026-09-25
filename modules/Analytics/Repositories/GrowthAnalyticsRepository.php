@@ -8,7 +8,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use ModulesShoppingComplex\Billing\Enums\VendorSubscriptionStatusEnum;
+use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
+use ModulesShoppingComplex\Billing\Enums\CoinPurchaseStatusEnum;
 use ModulesShoppingComplex\Identity\Enums\UserEnum;
 use ModulesShoppingComplex\Identity\Enums\VendorOnboardingStatusEnum;
 use ModulesShoppingComplex\Shared\Repositories\BasePageRepository;
@@ -25,6 +26,10 @@ class GrowthAnalyticsRepository extends BasePageRepository
     private const SUBSCRIPTIONS = 'vendor_subscriptions';
 
     private const ONBOARDINGS = 'vendor_onboardings';
+
+    private const CONTACT_CLICKS = 'contact_clicks';
+
+    private const COIN_PURCHASES = 'coin_purchases';
 
     public function newVendorsByDate(Carbon $since): Collection
     {
@@ -46,6 +51,11 @@ class GrowthAnalyticsRepository extends BasePageRepository
         return $this->dailyTotals(self::INTERACTIONS, $since, $this->eventIs($event));
     }
 
+    public function webContactsByDate(Carbon $since): Collection
+    {
+        return $this->dailyTotals(self::CONTACT_CLICKS, $since, $this->webClick());
+    }
+
     public function newSubscriptionsByDate(Carbon $since): Collection
     {
         return $this->dailyTotals(self::SUBSCRIPTIONS, $since);
@@ -63,10 +73,8 @@ class GrowthAnalyticsRepository extends BasePageRepository
 
     public function activeVendorDays(Carbon $since): Collection
     {
-        return DB::table(self::INTERACTIONS)
-            ->where('event_type', WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value)
-            ->where('created_at', '>=', $since)
-            ->whereNotNull('vendor_id')
+        return DB::query()
+            ->fromSub($this->contactedVendors($since), 'contacted')
             ->selectRaw('vendor_id, DATE(created_at) as date')
             ->distinct()
             ->get();
@@ -98,34 +106,55 @@ class GrowthAnalyticsRepository extends BasePageRepository
 
     public function countContactedVendors(?Carbon $from = null, ?Carbon $to = null): int
     {
-        $query = DB::table(self::INTERACTIONS)
+        return DB::query()
+            ->fromSub($this->contactedVendors($from, $to), 'contacted')
+            ->distinct()
+            ->count('vendor_id');
+    }
+
+    private function contactedVendors(?Carbon $from = null, ?Carbon $to = null): Builder
+    {
+        $bot = DB::table(self::INTERACTIONS)
             ->where('event_type', WhatsAppInteractionEventEnum::CONTACT_REQUESTED->value)
-            ->whereNotNull('vendor_id');
+            ->whereNotNull('vendor_id')
+            ->select('vendor_id', 'created_at');
 
-        if ($from !== null) {
-            $query->where('created_at', '>=', $from);
+        $web = DB::table(self::CONTACT_CLICKS)
+            ->where('source', ViewSourceEnum::WEB->value)
+            ->select('vendor_id', 'created_at');
+
+        foreach ([$bot, $web] as $query) {
+            if ($from !== null) {
+                $query->where('created_at', '>=', $from);
+            }
+
+            if ($to !== null) {
+                $query->where('created_at', '<', $to);
+            }
         }
 
-        if ($to !== null) {
-            $query->where('created_at', '<', $to);
+        return $bot->unionAll($web);
+    }
+
+    public function countPayingVendors(): int
+    {
+        return $this->completedCoinPurchases()->distinct()->count('vendor_id');
+    }
+
+    public function collectedSince(?Carbon $since = null): float
+    {
+        $query = $this->completedCoinPurchases();
+
+        if ($since !== null) {
+            $query->where('paid_at', '>=', $since);
         }
 
-        return $query->distinct()->count('vendor_id');
+        return round((float) $query->sum('price'), 2);
     }
 
-    public function activeSubscriptionPeriods(Carbon $asOf): Collection
+    private function completedCoinPurchases(): Builder
     {
-        return DB::table(self::SUBSCRIPTIONS)
-            ->where('status', VendorSubscriptionStatusEnum::ACTIVE->value)
-            ->where('expires_at', '>', $asOf)
-            ->where('amount_paid', '>', 0)
-            ->select('amount_paid', 'started_at', 'expires_at')
-            ->get();
-    }
-
-    public function lifetimeCollected(): float
-    {
-        return round((float) DB::table(self::SUBSCRIPTIONS)->sum('amount_paid'), 2);
+        return DB::table(self::COIN_PURCHASES)->where('status', CoinPurchaseStatusEnum::COMPLETED->value);
     }
 
     public function topUnmetSearches(Carbon $since, int $limit): Collection
@@ -176,6 +205,11 @@ class GrowthAnalyticsRepository extends BasePageRepository
     private function eventIs(WhatsAppInteractionEventEnum $event): callable
     {
         return static fn (Builder $query) => $query->where('event_type', $event->value);
+    }
+
+    private function webClick(): callable
+    {
+        return static fn (Builder $query) => $query->where('source', ViewSourceEnum::WEB->value);
     }
 
     private function liveProduct(): callable

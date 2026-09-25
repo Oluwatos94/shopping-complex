@@ -294,6 +294,17 @@ class ReferralTest extends TestCase
         $this->assertSame(1, $this->referralService->referralCountFor($vendor));
     }
 
+    public function test_a_referral_counts_on_registration_when_no_listing_is_required(): void
+    {
+        config(['referral.min_products' => 0]);
+
+        $vendor = $this->vendorWithoutCode();
+        $this->referredUsers($vendor, 2, products: 0);
+
+        $this->assertSame(2, $this->referralService->referralCountFor($vendor));
+        $this->assertSame(1, $this->referralService->rankFor($vendor));
+    }
+
     public function test_a_referred_customer_never_counts_however_it_is_dressed_up(): void
     {
         $vendor = $this->vendorWithoutCode();

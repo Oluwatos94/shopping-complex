@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Product, VendorRatingStats } from '@/types/product';
 import { Vendor } from '@/types/user';
 import Header from '@/components/Header';
@@ -35,7 +35,10 @@ export default function ProductShow({
 
     breadcrumbItems.push({ label: product.name });
 
-    const whatsAppHref = vendor.whatsapp_number
+    const { auth } = usePage<{ auth?: { user?: { id: number } | null } }>().props;
+    const isOwner = auth?.user?.id === vendor.id;
+
+    const whatsAppHref = vendor.whatsapp_number && !isOwner
         ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I'm interested in "${product.name}".`)
         : null;
 

@@ -20,12 +20,12 @@ export interface GrowthHeadlineMetric {
     value: number;
     previous: number;
     change_pct: number | null;
-    in_progress: number;
+    last_complete: number;
 }
 
 export interface GrowthHeadline {
-    period_label: string | null;
-    in_progress_label: string | null;
+    current_range: string;
+    comparison_range: string;
     metrics: Record<string, GrowthHeadlineMetric>;
 }
 
@@ -45,7 +45,7 @@ export interface GrowthSupplyHealth {
 
 export interface GrowthRevenueSummary {
     paying_vendors: number;
-    monthly_recurring: number;
+    collected_this_month: number;
     average_per_vendor: number;
     lifetime_collected: number;
 }

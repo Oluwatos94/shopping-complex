@@ -211,7 +211,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public static function minReferralProducts(): int
     {
-        return (int) config('referral.min_products', 5);
+        return (int) config('referral.min_products', 0);
     }
 
     /**

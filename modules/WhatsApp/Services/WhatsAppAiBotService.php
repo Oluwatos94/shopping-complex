@@ -358,6 +358,8 @@ final readonly class WhatsAppAiBotService
                 }
             }
 
+            $this->logNoResults($from, $query, null, null);
+
             return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
         }
 
@@ -395,7 +397,20 @@ final readonly class WhatsAppAiBotService
             }
         }
 
+        $this->logNoResults($from, $query, $lat, $lng);
+
         return "No vendor on Jiidaa currently has \"{$query}\" listed. This is specific to THIS search term only — it does NOT mean the platform is empty or has no vendors. Tell the buyer nothing matches this item yet, suggest a related term, and do NOT invent any vendors or claim there are no vendors at all.";
+    }
+
+    private function logNoResults(string $from, string $query, ?float $lat, ?float $lng): void
+    {
+        $this->interactionRepository->log([
+            'phone_number' => $from,
+            'event_type' => WhatsAppInteractionEventEnum::NO_RESULTS,
+            'search_query' => mb_substr($query, 0, 255),
+            'buyer_latitude' => $lat,
+            'buyer_longitude' => $lng,
+        ]);
     }
 
     /**
