@@ -182,6 +182,21 @@ class ZeroBalancePolicyTest extends TestCase
         $this->assertSame(1, Notification::where('type', 'lead_missed')->count());
     }
 
+    public function test_a_burst_of_missed_leads_collapses_into_one_notification_and_one_email(): void
+    {
+        Queue::fake([SendNotificationEmailJob::class]);
+        Event::fake([VendorLeadMissed::class]);
+        $vendor = $this->vendor();
+
+        foreach (['2348011110001', '2348011110002', '2348011110003'] as $buyer) {
+            app(SendMissedLeadAlert::class)->handle(new VendorLeadMissed($this->billLead($vendor, $buyer), 10));
+        }
+
+        $notification = Notification::where('user_id', $vendor->id)->where('type', 'lead_missed')->sole();
+        $this->assertSame(3, $notification->group_count);
+        Queue::assertPushed(SendNotificationEmailJob::class, 1);
+    }
+
     public function test_the_missed_alert_uses_the_cost_from_the_billing_attempt(): void
     {
         Event::fake([VendorLeadMissed::class]);

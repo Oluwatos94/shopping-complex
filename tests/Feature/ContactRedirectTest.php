@@ -275,6 +275,71 @@ class ContactRedirectTest extends TestCase
         $this->get($url)->assertNotFound();
     }
 
+    // ==================== Crawlers ====================
+
+    private const GOOGLEBOT = 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.52 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+
+    private const BROWSER = 'Mozilla/5.0 (Linux; Android 13; SM-A145F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36';
+
+    public function test_a_crawler_following_the_button_mints_no_token(): void
+    {
+        $vendor = $this->vendor();
+
+        $this->withHeader('User-Agent', self::GOOGLEBOT)
+            ->get('/contact/'.$vendor->slug)
+            ->assertRedirect('https://wa.me/2348031234567');
+
+        $this->assertDatabaseCount(ContactLink::getTableName(), 0);
+        $this->assertDatabaseCount(ContactClick::getTableName(), 0);
+    }
+
+    public function test_a_crawler_hitting_a_token_is_not_recorded(): void
+    {
+        $vendor = $this->vendor();
+        $url = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WEB);
+
+        $this->withHeader('User-Agent', self::GOOGLEBOT)->get($url)->assertRedirect('https://wa.me/2348031234567');
+        $this->withHeader('User-Agent', '')->get($url)->assertRedirect('https://wa.me/2348031234567');
+
+        $this->assertDatabaseCount(ContactClick::getTableName(), 0);
+    }
+
+    public function test_a_client_that_drops_cookies_is_billed_once(): void
+    {
+        $vendor = $this->vendor();
+
+        foreach (range(1, 3) as $ignored) {
+            $token = $this->withHeader('User-Agent', self::BROWSER)->get('/contact/'.$vendor->slug)->headers->get('Location');
+            $this->withHeader('User-Agent', self::BROWSER)->get((string) $token);
+        }
+
+        $this->assertSame(3, ContactClick::count());
+        $this->assertSame(1, ContactClick::distinct()->count('buyer_identity'));
+        $this->assertStringStartsWith('anon_', (string) ContactClick::value('buyer_identity'));
+    }
+
+    public function test_a_returning_visitor_keeps_their_cookie_identity(): void
+    {
+        $vendor = $this->vendor();
+        $url = (string) $this->links()->urlFor($vendor, ViewSourceEnum::WEB);
+
+        $this->withHeader('User-Agent', self::BROWSER)
+            ->withCookie(ContactLinkService::VISITOR_COOKIE, 'abc-123')
+            ->get($url);
+
+        $this->assertSame('visitor_abc-123', ContactClick::value('buyer_identity'));
+    }
+
+    public function test_the_click_records_the_user_agent(): void
+    {
+        $vendor = $this->vendor();
+
+        $this->withHeader('User-Agent', self::BROWSER)
+            ->get((string) $this->links()->urlFor($vendor, ViewSourceEnum::WHATSAPP, self::BUYER));
+
+        $this->assertSame(self::BROWSER, ContactClick::value('user_agent'));
+    }
+
     // ==================== Bot integration ====================
 
     public function test_the_bot_contact_card_links_through_the_redirect(): void

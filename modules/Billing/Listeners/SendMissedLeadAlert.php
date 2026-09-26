@@ -48,7 +48,8 @@ class SendMissedLeadAlert implements ShouldQueue
                 'lead_id' => $lead->id,
                 'missed_cost' => $event->attemptedCost,
             ],
-            groupKey: self::TYPE.':'.$lead->id,
+
+            groupKey: self::TYPE.':'.$vendor->id,
         );
 
         if ($notification->wasRecentlyCreated) {

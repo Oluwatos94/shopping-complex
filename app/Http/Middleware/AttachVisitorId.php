@@ -20,6 +20,7 @@ class AttachVisitorId
         if ($request->cookie(ContactLinkService::VISITOR_COOKIE) === null) {
             $visitorId = (string) Str::uuid();
             $request->cookies->set(ContactLinkService::VISITOR_COOKIE, $visitorId);
+            $request->attributes->set(ContactLinkService::FRESH_VISITOR_ATTRIBUTE, true);
 
             Cookie::queue(cookie(
                 ContactLinkService::VISITOR_COOKIE,

@@ -303,7 +303,7 @@ export default function VendorProfilePage({
                                                 <a
                                                     href={whatsAppHref}
                                                     target="_blank"
-                                                    rel="noopener noreferrer"
+                                                    rel="nofollow noopener noreferrer"
                                                     onClick={() => recordVendorContact(vendor.slug)}
                                                     className="inline-flex items-center justify-center gap-2 bg-white border border-brand-line text-brand-ink px-6 py-3 rounded-full text-sm font-bold hover:border-brand-ink transition-colors"
                                                 >
