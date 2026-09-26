@@ -53,7 +53,13 @@ class ContactRedirectController extends Controller
             && ! CrawlerDetector::isCrawler($request->userAgent())
             && $this->withinRateLimit($vendor->id, $identity)
         ) {
-            $this->links->recordClick($link, $request->ip(), $identity, $request->userAgent());
+            $this->links->recordClick(
+                $link,
+                $request->ip(),
+                $identity,
+                $request->userAgent(),
+                $link->buyer_identity === null ? $this->links->issuedVisitorId($request) : null,
+            );
         }
 
         return redirect()->away($destination);

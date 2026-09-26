@@ -12,14 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table(ContactClick::getTableName(), function (Blueprint $table) {
+            $table->string('issued_visitor_id', 64)->nullable()->after('buyer_identity');
             $table->string('user_agent', 255)->nullable()->after('ip_address');
+            $table->index('issued_visitor_id');
         });
     }
 
     public function down(): void
     {
         Schema::table(ContactClick::getTableName(), function (Blueprint $table) {
-            $table->dropColumn('user_agent');
+            $table->dropIndex(['issued_visitor_id']);
+            $table->dropColumn(['issued_visitor_id', 'user_agent']);
         });
     }
 };

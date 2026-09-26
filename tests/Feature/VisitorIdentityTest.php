@@ -111,21 +111,63 @@ class VisitorIdentityTest extends TestCase
         $this->assertStringStartsWith('anon_', $lead->buyer_identity);
     }
 
-    public function test_a_cookieless_first_hit_is_not_billed_again_once_the_cookie_returns(): void
+    private function firstHitWithoutCookie(string $token): string
+    {
+        $this->get(route('contact.redirect', ['token' => $token]));
+
+        return (string) ContactClick::latest('id')->value('issued_visitor_id');
+    }
+
+    private function returnWithCookie(string $token, string $visitorId): void
+    {
+        $this->withoutMiddleware(EncryptCookies::class)
+            ->withUnencryptedCookie(ContactLinkService::VISITOR_COOKIE, $visitorId)
+            ->get(route('contact.redirect', ['token' => $token]));
+    }
+
+    public function test_a_cookieless_first_hit_is_not_billed_again_once_its_cookie_returns(): void
     {
         $vendor = $this->vendor();
         $token = $this->webLink($vendor);
 
-        $this->get(route('contact.redirect', ['token' => $token]));
+        $issued = $this->firstHitWithoutCookie($token);
+        $this->assertNotSame('', $issued);
 
-        $this->withoutMiddleware(EncryptCookies::class)
-            ->withUnencryptedCookie(ContactLinkService::VISITOR_COOKIE, 'browser-1')
-            ->get(route('contact.redirect', ['token' => $token]));
+        $this->returnWithCookie($token, $issued);
 
         $lead = BillableLead::where('vendor_id', $vendor->id)->sole();
-        $this->assertSame('visitor_browser-1', $lead->buyer_identity);
+        $this->assertSame('visitor_'.$issued, $lead->buyer_identity);
         $this->assertSame(1, $lead->repeat_count);
         $this->assertSame(990, app(CoinWalletService::class)->balance($vendor));
+    }
+
+    public function test_another_buyer_on_the_same_ip_and_browser_does_not_claim_the_lead(): void
+    {
+        $vendor = $this->vendor();
+        $token = $this->webLink($vendor);
+
+        $this->firstHitWithoutCookie($token);
+        $this->returnWithCookie($token, 'someone-else');
+
+        $this->assertSame(2, BillableLead::where('vendor_id', $vendor->id)->count());
+        $this->assertStringStartsWith('anon_', (string) BillableLead::oldest('id')->value('buyer_identity'));
+    }
+
+    public function test_logging_in_claims_the_cookieless_first_hit(): void
+    {
+        $vendor = $this->vendor();
+        $user = User::factory()->create();
+
+        $issued = $this->firstHitWithoutCookie($this->webLink($vendor));
+
+        $request = Request::create('/login', 'POST');
+        $request->cookies->set(ContactLinkService::VISITOR_COOKIE, $issued);
+        $this->app->instance('request', $request);
+
+        event(new Login('web', $user, false));
+
+        $this->assertSame('user_'.$user->id, BillableLead::where('vendor_id', $vendor->id)->sole()->buyer_identity);
+        $this->assertSame('user_'.$user->id, ContactClick::sole()->buyer_identity);
     }
 
     public function test_the_same_browser_deduplicates_across_hits(): void

@@ -23,6 +23,7 @@ final class LeadBillingService
         private readonly LeadDebitor $debitor,
         private readonly LeadPricingService $pricing,
         private readonly CoinBurnGuard $guard,
+        private readonly ContactLinkService $links,
     ) {}
 
     public function bill(ContactClick $click): ?BillableLead
@@ -110,18 +111,13 @@ final class LeadBillingService
 
     private function openLeadFor(ContactClick $click): ?BillableLead
     {
-        $lead = $this->openLeadForIdentity($click, (string) $click->buyer_identity);
+        $identity = (string) $click->buyer_identity;
 
-        if ($lead !== null || ! str_starts_with((string) $click->buyer_identity, 'visitor_')) {
-            return $lead;
+        if (str_starts_with($identity, 'visitor_')) {
+            $this->links->claimIssuedVisitor(substr($identity, strlen('visitor_')), $identity);
         }
 
-        // A first hit without a cookie is billed under the IP + user-agent hash;
-        // when that browser returns with its cookie, carry the lead over.
-        $lead = $this->openLeadForIdentity($click, ContactLinkService::anonymousIdentity($click->ip_address, $click->user_agent));
-        $lead?->forceFill(['buyer_identity' => $click->buyer_identity])->save();
-
-        return $lead;
+        return $this->openLeadForIdentity($click, $identity);
     }
 
     private function openLeadForIdentity(ContactClick $click, string $identity): ?BillableLead
