@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Shared\Support\CrawlerDetector;
 
 class ContactRedirectController extends Controller
 {
@@ -23,8 +24,11 @@ class ContactRedirectController extends Controller
         $vendor = User::where('slug', $vendorSlug)->where('role', 'vendor')->first();
         abort_if($vendor === null, 404);
 
-        $message = $request->query('message');
-        $url = $this->links->urlFor($vendor, ViewSourceEnum::WEB, null, is_string($message) ? $message : null);
+        $message = is_string($request->query('message')) ? $request->query('message') : null;
+
+        $url = CrawlerDetector::isCrawler($request->userAgent())
+            ? $this->links->destinationFor($vendor, $message)
+            : $this->links->urlFor($vendor, ViewSourceEnum::WEB, null, $message);
 
         abort_if($url === null, 404);
 
@@ -44,8 +48,18 @@ class ContactRedirectController extends Controller
 
         $identity = $link->buyer_identity ?? $this->links->resolveBuyerIdentity($request);
 
-        if (! $request->isMethod('HEAD') && $this->withinRateLimit($vendor->id, $identity)) {
-            $this->links->recordClick($link, $request->ip(), $identity);
+        if (
+            ! $request->isMethod('HEAD')
+            && ! CrawlerDetector::isCrawler($request->userAgent())
+            && $this->withinRateLimit($vendor->id, $identity)
+        ) {
+            $this->links->recordClick(
+                $link,
+                $request->ip(),
+                $identity,
+                $request->userAgent(),
+                $link->buyer_identity === null ? $this->links->issuedVisitorId($request) : null,
+            );
         }
 
         return redirect()->away($destination);

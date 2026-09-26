@@ -23,6 +23,8 @@ final class ContactLinkService
 
     public const VISITOR_COOKIE = 'visitor_id';
 
+    public const FRESH_VISITOR_ATTRIBUTE = 'visitor_id_fresh';
+
     private const TOKEN_LENGTH = 32;
 
     private const MAX_PREFILLED_MESSAGE = 500;
@@ -92,11 +94,35 @@ final class ContactLinkService
 
         $visitorId = (string) $request->cookie(self::VISITOR_COOKIE);
 
-        if ($visitorId !== '') {
+        if ($visitorId !== '' && ! $request->attributes->get(self::FRESH_VISITOR_ATTRIBUTE, false)) {
             return 'visitor_'.$visitorId;
         }
 
         return 'anon_'.substr(hash('sha256', $request->ip().'|'.(string) $request->userAgent()), 0, 40);
+    }
+
+    public function issuedVisitorId(Request $request): ?string
+    {
+        if (Auth::check() || ! $request->attributes->get(self::FRESH_VISITOR_ATTRIBUTE, false)) {
+            return null;
+        }
+
+        return $this->trimToNull((string) $request->cookie(self::VISITOR_COOKIE), 64);
+    }
+
+    /**
+     * Re-key the anonymous leads and clicks first recorded when this cookie was
+     * issued. Only touches anon_ rows, so a claimed lead is never taken twice.
+     */
+    public function claimIssuedVisitor(string $visitorId, string $identity): void
+    {
+        $clicks = ContactClick::where('issued_visitor_id', $visitorId)->where('buyer_identity', 'like', 'anon_%');
+
+        BillableLead::whereIn('contact_click_id', (clone $clicks)->select('id'))
+            ->where('buyer_identity', 'like', 'anon_%')
+            ->update(['buyer_identity' => $identity]);
+
+        $clicks->update(['buyer_identity' => $identity]);
     }
 
     public function mergeVisitorIntoAccount(string $visitorId, int $userId): void
@@ -109,7 +135,8 @@ final class ContactLinkService
         $to = 'user_'.$userId;
 
         try {
-            DB::transaction(function () use ($from, $to): void {
+            DB::transaction(function () use ($visitorId, $from, $to): void {
+                $this->claimIssuedVisitor($visitorId, $to);
                 BillableLead::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
                 ContactClick::where('buyer_identity', $from)->update(['buyer_identity' => $to]);
             });
@@ -122,12 +149,17 @@ final class ContactLinkService
         }
     }
 
-    public function recordClick(ContactLink $link, ?string $ipAddress = null, ?string $buyerIdentity = null): ?ContactClick
-    {
+    public function recordClick(
+        ContactLink $link,
+        ?string $ipAddress = null,
+        ?string $buyerIdentity = null,
+        ?string $userAgent = null,
+        ?string $issuedVisitorId = null,
+    ): ?ContactClick {
         $identity = $buyerIdentity ?? $link->buyer_identity;
 
         try {
-            $click = DB::transaction(function () use ($link, $ipAddress, $identity): ContactClick {
+            $click = DB::transaction(function () use ($link, $ipAddress, $identity, $userAgent, $issuedVisitorId): ContactClick {
 
                 User::whereKey($link->vendor_id)->lockForUpdate()->first();
 
@@ -136,8 +168,10 @@ final class ContactLinkService
                     'vendor_id' => $link->vendor_id,
                     'source' => $link->source,
                     'buyer_identity' => $identity,
+                    'issued_visitor_id' => $issuedVisitorId,
                     'is_billable' => ! $link->hasExpired() && ! $this->anonymousRepeat($identity, $link->vendor_id, $ipAddress),
                     'ip_address' => $ipAddress,
+                    'user_agent' => $this->trimToNull($userAgent, 255),
                     'created_at' => now(),
                 ]);
             });

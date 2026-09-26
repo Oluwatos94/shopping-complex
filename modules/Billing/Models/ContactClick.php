@@ -20,8 +20,10 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property int $vendor_id
  * @property ViewSourceEnum $source
  * @property string|null $buyer_identity E.164 phone for bot leads, visitor_id for web
+ * @property string|null $issued_visitor_id Visitor cookie first issued on this click, when it had none
  * @property bool $is_billable
  * @property string|null $ip_address
+ * @property string|null $user_agent
  * @property Carbon $created_at
  * @property-read User|null $vendor
  * @property-read ContactLink|null $link
@@ -42,8 +44,10 @@ class ContactClick extends Model
         'vendor_id',
         'source',
         'buyer_identity',
+        'issued_visitor_id',
         'is_billable',
         'ip_address',
+        'user_agent',
         'created_at',
     ];
 

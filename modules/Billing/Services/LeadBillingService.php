@@ -23,6 +23,7 @@ final class LeadBillingService
         private readonly LeadDebitor $debitor,
         private readonly LeadPricingService $pricing,
         private readonly CoinBurnGuard $guard,
+        private readonly ContactLinkService $links,
     ) {}
 
     public function bill(ContactClick $click): ?BillableLead
@@ -110,7 +111,18 @@ final class LeadBillingService
 
     private function openLeadFor(ContactClick $click): ?BillableLead
     {
-        return BillableLead::where('buyer_identity', $click->buyer_identity)
+        $identity = (string) $click->buyer_identity;
+
+        if (str_starts_with($identity, 'visitor_')) {
+            $this->links->claimIssuedVisitor(substr($identity, strlen('visitor_')), $identity);
+        }
+
+        return $this->openLeadForIdentity($click, $identity);
+    }
+
+    private function openLeadForIdentity(ContactClick $click, string $identity): ?BillableLead
+    {
+        return BillableLead::where('buyer_identity', $identity)
             ->where('vendor_id', $click->vendor_id)
             ->where('window_start', '>', now()->subDays(self::WINDOW_DAYS))
             ->lockForUpdate()
