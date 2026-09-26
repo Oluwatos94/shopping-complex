@@ -111,6 +111,23 @@ class VisitorIdentityTest extends TestCase
         $this->assertStringStartsWith('anon_', $lead->buyer_identity);
     }
 
+    public function test_a_cookieless_first_hit_is_not_billed_again_once_the_cookie_returns(): void
+    {
+        $vendor = $this->vendor();
+        $token = $this->webLink($vendor);
+
+        $this->get(route('contact.redirect', ['token' => $token]));
+
+        $this->withoutMiddleware(EncryptCookies::class)
+            ->withUnencryptedCookie(ContactLinkService::VISITOR_COOKIE, 'browser-1')
+            ->get(route('contact.redirect', ['token' => $token]));
+
+        $lead = BillableLead::where('vendor_id', $vendor->id)->sole();
+        $this->assertSame('visitor_browser-1', $lead->buyer_identity);
+        $this->assertSame(1, $lead->repeat_count);
+        $this->assertSame(990, app(CoinWalletService::class)->balance($vendor));
+    }
+
     public function test_the_same_browser_deduplicates_across_hits(): void
     {
         $vendor = $this->vendor();

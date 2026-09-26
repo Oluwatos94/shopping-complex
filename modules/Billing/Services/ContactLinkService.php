@@ -98,7 +98,14 @@ final class ContactLinkService
             return 'visitor_'.$visitorId;
         }
 
-        return 'anon_'.substr(hash('sha256', $request->ip().'|'.(string) $request->userAgent()), 0, 40);
+        return self::anonymousIdentity($request->ip(), $request->userAgent());
+    }
+
+    public static function anonymousIdentity(?string $ipAddress, ?string $userAgent): string
+    {
+        $userAgent = mb_substr(trim((string) $userAgent), 0, 255);
+
+        return 'anon_'.substr(hash('sha256', $ipAddress.'|'.$userAgent), 0, 40);
     }
 
     public function mergeVisitorIntoAccount(string $visitorId, int $userId): void
