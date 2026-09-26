@@ -22,6 +22,7 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property string|null $buyer_identity E.164 phone for bot leads, visitor_id for web
  * @property bool $is_billable
  * @property string|null $ip_address
+ * @property string|null $user_agent
  * @property Carbon $created_at
  * @property-read User|null $vendor
  * @property-read ContactLink|null $link
@@ -44,6 +45,7 @@ class ContactClick extends Model
         'buyer_identity',
         'is_billable',
         'ip_address',
+        'user_agent',
         'created_at',
     ];
 

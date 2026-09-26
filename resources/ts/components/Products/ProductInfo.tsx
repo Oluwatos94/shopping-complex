@@ -152,7 +152,7 @@ export default function ProductInfo({ product, vendor, vendorStats, whatsAppHref
                         <a
                             href={whatsAppHref}
                             target="_blank"
-                            rel="noopener noreferrer"
+                            rel="nofollow noopener noreferrer"
                             onClick={() => recordVendorContact(vendor.slug)}
                             className="flex-1 px-4 py-2.5 bg-brand-green text-white rounded-lg hover:bg-brand-ink transition-colors font-medium text-sm flex items-center justify-center gap-2"
                         >

@@ -23,6 +23,8 @@ final class ContactLinkService
 
     public const VISITOR_COOKIE = 'visitor_id';
 
+    public const FRESH_VISITOR_ATTRIBUTE = 'visitor_id_fresh';
+
     private const TOKEN_LENGTH = 32;
 
     private const MAX_PREFILLED_MESSAGE = 500;
@@ -92,11 +94,18 @@ final class ContactLinkService
 
         $visitorId = (string) $request->cookie(self::VISITOR_COOKIE);
 
-        if ($visitorId !== '') {
+        if ($visitorId !== '' && ! $request->attributes->get(self::FRESH_VISITOR_ATTRIBUTE, false)) {
             return 'visitor_'.$visitorId;
         }
 
-        return 'anon_'.substr(hash('sha256', $request->ip().'|'.(string) $request->userAgent()), 0, 40);
+        return self::anonymousIdentity($request->ip(), $request->userAgent());
+    }
+
+    public static function anonymousIdentity(?string $ipAddress, ?string $userAgent): string
+    {
+        $userAgent = mb_substr(trim((string) $userAgent), 0, 255);
+
+        return 'anon_'.substr(hash('sha256', $ipAddress.'|'.$userAgent), 0, 40);
     }
 
     public function mergeVisitorIntoAccount(string $visitorId, int $userId): void
@@ -122,12 +131,16 @@ final class ContactLinkService
         }
     }
 
-    public function recordClick(ContactLink $link, ?string $ipAddress = null, ?string $buyerIdentity = null): ?ContactClick
-    {
+    public function recordClick(
+        ContactLink $link,
+        ?string $ipAddress = null,
+        ?string $buyerIdentity = null,
+        ?string $userAgent = null,
+    ): ?ContactClick {
         $identity = $buyerIdentity ?? $link->buyer_identity;
 
         try {
-            $click = DB::transaction(function () use ($link, $ipAddress, $identity): ContactClick {
+            $click = DB::transaction(function () use ($link, $ipAddress, $identity, $userAgent): ContactClick {
 
                 User::whereKey($link->vendor_id)->lockForUpdate()->first();
 
@@ -138,6 +151,7 @@ final class ContactLinkService
                     'buyer_identity' => $identity,
                     'is_billable' => ! $link->hasExpired() && ! $this->anonymousRepeat($identity, $link->vendor_id, $ipAddress),
                     'ip_address' => $ipAddress,
+                    'user_agent' => $this->trimToNull($userAgent, 255),
                     'created_at' => now(),
                 ]);
             });

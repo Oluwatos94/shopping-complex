@@ -97,7 +97,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                     <a
                         href={whatsAppHref}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel="nofollow noopener noreferrer"
                         onClick={() => recordVendorContact(vendor.slug)}
                         className="mt-auto flex h-12 items-center justify-center gap-2 rounded-[13px] bg-brand-green text-sm font-bold text-white transition hover:bg-brand-green-dark sm:h-[52px] sm:gap-2.5 sm:text-[15px]"
                     >

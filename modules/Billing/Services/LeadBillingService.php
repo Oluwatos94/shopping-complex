@@ -110,7 +110,23 @@ final class LeadBillingService
 
     private function openLeadFor(ContactClick $click): ?BillableLead
     {
-        return BillableLead::where('buyer_identity', $click->buyer_identity)
+        $lead = $this->openLeadForIdentity($click, (string) $click->buyer_identity);
+
+        if ($lead !== null || ! str_starts_with((string) $click->buyer_identity, 'visitor_')) {
+            return $lead;
+        }
+
+        // A first hit without a cookie is billed under the IP + user-agent hash;
+        // when that browser returns with its cookie, carry the lead over.
+        $lead = $this->openLeadForIdentity($click, ContactLinkService::anonymousIdentity($click->ip_address, $click->user_agent));
+        $lead?->forceFill(['buyer_identity' => $click->buyer_identity])->save();
+
+        return $lead;
+    }
+
+    private function openLeadForIdentity(ContactClick $click, string $identity): ?BillableLead
+    {
+        return BillableLead::where('buyer_identity', $identity)
             ->where('vendor_id', $click->vendor_id)
             ->where('window_start', '>', now()->subDays(self::WINDOW_DAYS))
             ->lockForUpdate()
