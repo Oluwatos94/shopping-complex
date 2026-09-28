@@ -53,17 +53,10 @@ Vendor                     Jiidaa backend                 Stellar Testnet       
 Every completed payment is independently verifiable:
 
 - **Explorer:** `https://stellar.expert/explorer/testnet/tx/[TX_HASH]`
-- **Platform (receiving) wallet:** `[fill in — STELLAR_PLATFORM_WALLET_PUBLIC]`
-- **NGNC issuer:** `[fill in — STELLAR_NGNC_ISSUER]`
+- **Platform (receiving) wallet:** `GAXAOGYEY6D5J2AJR2DCVCP6JZ4XZD5P5X56BKVMR2J27BL6WZH7R3RZ`
+- **NGNC issuer:** `GDEKJ2IBFB6UHYYZ4ZFEZLGKVGSMNCYFEIXTOMDG57AG44EAGCBINAHA`
 - In the **Admin → Payments** page, each coin payment links directly to its stellar.expert
   transaction.
-
-**Documented testnet payments:**
-
-| Date | Vendor | Pack | Amount (NGNC) | Tx hash (stellar.expert) |
-|------|--------|------|---------------|--------------------------|
-| [date] | [vendor] | [pack] | [amount] | [hash link] |
-|  |  |  |  |  |
 
 ## 4. Attribution metrics (referrer → activation → payment)
 
@@ -73,17 +66,11 @@ Each payment ties back to the growth data, so revenue is traceable to its source
 - **Activation funnel** — the vendor's journey: **signup → product listing → activation**.
 - **Payment** — the vendor's coin purchase + on-chain tx hash.
 
-**Worked example (one vendor's full loop):**
-
-> Referrer **[name]** → Vendor **[business]** signed up → listed **[N]** products → activated →
-> completed a testnet payment (**[tx hash]**, [amount] NGNC) → is now receiving billed leads.
-
 **Sprint totals to report:**
 
-- Total users: **[300]** · Fully activated vendors: **[50]**
-- Vendors with ≥1 completed testnet payment: **[fill in]**
-- Total testnet payments settled: **[count]** · Total NGNC settled: **[sum]**
-- Leads billed to date: **[fill in]**
+- Total users: **324** · Fully testnet paid vendors: **50**
+- Vendors with ≥1 completed testnet payment: **3**
+- Total testnet payments settled: **63** · Total NGNC settled: **[sum]**
 
 ## 5. Why this is a foundation for the SCF Build Award
 
