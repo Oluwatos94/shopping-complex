@@ -14,10 +14,15 @@ use ModulesShoppingComplex\Billing\Events\SubscriptionPaymentSucceeded;
 use ModulesShoppingComplex\Billing\Events\SubscriptionRenewalFailed;
 use ModulesShoppingComplex\Billing\Events\VendorContactClicked;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
+use ModulesShoppingComplex\Billing\Events\VendorLeadDeclined;
+use ModulesShoppingComplex\Billing\Events\VendorLeadExpired;
 use ModulesShoppingComplex\Billing\Events\VendorLeadMissed;
+use ModulesShoppingComplex\Billing\Events\VendorLeadRequested;
 use ModulesShoppingComplex\Billing\Listeners\AnnounceLeadCostChange;
+use ModulesShoppingComplex\Billing\Listeners\NotifyBuyerOfLeadOutcome;
 use ModulesShoppingComplex\Billing\Listeners\RecordBillableLead;
 use ModulesShoppingComplex\Billing\Listeners\SendCoinPurchaseReceipt;
+use ModulesShoppingComplex\Billing\Listeners\SendLeadRequestToVendor;
 use ModulesShoppingComplex\Billing\Listeners\SendMissedLeadAlert;
 use ModulesShoppingComplex\Billing\Listeners\SendRenewalFailedWhatsApp;
 use ModulesShoppingComplex\Billing\Listeners\SendSubscriptionPaymentWhatsApp;
@@ -117,6 +122,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(VendorLeadCharged::class, SendVendorLeadAlert::class);
         Event::listen(VendorLeadCharged::class, WarnLowCoinBalance::class);
         Event::listen(VendorLeadMissed::class, SendMissedLeadAlert::class);
+        Event::listen(VendorLeadRequested::class, SendLeadRequestToVendor::class);
+        Event::listen(VendorLeadCharged::class, NotifyBuyerOfLeadOutcome::class);
+        Event::listen(VendorLeadDeclined::class, NotifyBuyerOfLeadOutcome::class);
+        Event::listen(VendorLeadExpired::class, NotifyBuyerOfLeadOutcome::class);
 
         Event::listen(Login::class, function (Login $event): void {
             app(ContactLinkService::class)->mergeVisitorIntoAccount(

@@ -6,18 +6,15 @@ namespace ModulesShoppingComplex\Billing\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Billing\Events\VendorLeadCharged;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
 use ModulesShoppingComplex\Billing\Services\CoinWalletService;
-use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
+use ModulesShoppingComplex\Billing\Services\LeadBuyerContextResolver;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Notifications\Models\Notification;
 use ModulesShoppingComplex\Notifications\Repositories\NotificationRepository;
 use ModulesShoppingComplex\Notifications\Services\NotificationEmailService;
 use ModulesShoppingComplex\WhatsApp\Contracts\WhatsAppSender;
-use ModulesShoppingComplex\WhatsApp\Enums\WhatsAppInteractionEventEnum;
-use ModulesShoppingComplex\WhatsApp\Models\WhatsAppInteraction;
 use ModulesShoppingComplex\WhatsApp\Support\WhatsAppPhone;
 
 /**
@@ -41,25 +38,27 @@ class SendVendorLeadAlert implements ShouldQueue
         private readonly NotificationRepository $notifications,
         private readonly NotificationEmailService $emailFallback,
         private readonly WhatsAppSender $whatsApp,
-        private readonly GeoLocationService $geo,
+        private readonly LeadBuyerContextResolver $context,
     ) {}
 
     public function handle(VendorLeadCharged $event): void
     {
         $lead = $event->lead;
+
+        // Accept mode: the vendor just accepted this lead themselves and got the buyer's
+        // contact in reply (WhatsApp) or on the Leads page, so a "new lead" alert is noise.
+        if ($lead->wasAccepted()) {
+            return;
+        }
+
         $vendor = User::find($lead->vendor_id);
 
         if ($vendor === null) {
             return;
         }
 
-        [$search, $area] = $this->buyerContext($lead);
+        [$search, $area] = $this->context->resolveAndStore($lead);
         $balance = $this->wallet->balance($vendor);
-
-        $lead->forceFill([
-            'buyer_search' => $search === 'a product or service' ? null : $search,
-            'buyer_area' => $area === 'your area' ? null : $area,
-        ])->save();
 
         $notification = $this->recordInApp($lead, $vendor, $search, $area, $balance);
 
@@ -123,47 +122,5 @@ class SendVendorLeadAlert implements ShouldQueue
                 'balance' => $balance,
             ],
         ]);
-    }
-
-    /**
-     * The buyer's last search before this contact, and a rough area for it.
-     * Best-effort: web leads and buyers with no logged search fall back to
-     * neutral wording so no template parameter is ever empty.
-     *
-     * @return array{0: string, 1: string}
-     */
-    private function buyerContext(BillableLead $lead): array
-    {
-        $search = 'a product or service';
-        $area = 'your area';
-
-        $interaction = WhatsAppInteraction::query()
-            ->where('phone_number', $lead->buyer_identity)
-            ->where('event_type', WhatsAppInteractionEventEnum::VENDOR_VIEWED->value)
-            ->where('vendor_id', $lead->vendor_id)
-            ->where('created_at', '<=', $lead->created_at)
-            ->latest('id')
-            ->first();
-
-        if ($interaction === null) {
-            return [$search, $area];
-        }
-
-        if (! empty($interaction->search_query)) {
-            $search = (string) $interaction->search_query;
-        }
-
-        if ($interaction->buyer_latitude !== null && $interaction->buyer_longitude !== null) {
-            try {
-                $label = $this->geo->reverseGeocode($interaction->buyer_latitude, $interaction->buyer_longitude);
-                if ($label !== null && $label !== '') {
-                    $area = $label;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Lead alert reverse-geocode failed', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
-            }
-        }
-
-        return [$search, $area];
     }
 }

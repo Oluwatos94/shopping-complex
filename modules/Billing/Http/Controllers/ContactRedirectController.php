@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
+use ModulesShoppingComplex\Billing\Services\LeadAcceptanceService;
 use ModulesShoppingComplex\Identity\Models\User;
 use ModulesShoppingComplex\Shared\Support\CrawlerDetector;
 
@@ -25,6 +26,10 @@ class ContactRedirectController extends Controller
         abort_if($vendor === null, 404);
 
         $message = is_string($request->query('message')) ? $request->query('message') : null;
+
+        if (LeadAcceptanceService::isEnabled()) {
+            return $this->requestThroughPlatform($request, $vendor, $message);
+        }
 
         $url = CrawlerDetector::isCrawler($request->userAgent())
             ? $this->links->destinationFor($vendor, $message)
@@ -42,6 +47,16 @@ class ContactRedirectController extends Controller
 
         $vendor = $link->vendor;
         abort_if($vendor === null, 404);
+
+        // Accept mode: old bot links are no longer a direct line to the vendor (that
+        // was the chargeable click). Send the buyer to the platform chat instead.
+        if (LeadAcceptanceService::isEnabled()) {
+            $platform = $this->links->platformChatUrl($link);
+
+            return $platform === null
+                ? redirect()->route('vendor.show', $vendor->slug)
+                : redirect()->away($platform);
+        }
 
         $destination = $this->links->destinationFor($vendor, $link->prefilled_message);
         abort_if($destination === null, 404);
@@ -63,6 +78,27 @@ class ContactRedirectController extends Controller
         }
 
         return redirect()->away($destination);
+    }
+
+    /**
+     * Accept mode: the buyer is sent to a chat with Jiidaa's own number, prefilled with
+     * a reference to this vendor. The bot turns that message into a lead request for the
+     * vendor to accept, so nothing is charged and no vendor number is revealed here.
+     */
+    private function requestThroughPlatform(Request $request, User $vendor, ?string $message): RedirectResponse
+    {
+        if (CrawlerDetector::isCrawler($request->userAgent())) {
+            return redirect()->route('vendor.show', $vendor->slug);
+        }
+
+        $url = $this->links->platformRequestUrl($vendor, ViewSourceEnum::WEB, $message);
+
+        if ($url === null) {
+            return redirect()->route('vendor.show', $vendor->slug)
+                ->with('error', 'This vendor cannot be contacted right now. Please try again later.');
+        }
+
+        return redirect()->away($url);
     }
 
     private function withinRateLimit(int $vendorId, string $identity): bool
