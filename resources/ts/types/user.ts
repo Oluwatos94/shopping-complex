@@ -35,7 +35,8 @@ export interface Vendor extends BaseUser {
     is_online: boolean;
     available_hours?: string | null;
     location?: VendorLocation;
-    whatsapp_number?: string | null;
+    /** A contact button can be shown. The number itself is never sent to buyers. */
+    has_whatsapp?: boolean;
 }
 
 export interface Admin extends BaseUser {
