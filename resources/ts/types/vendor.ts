@@ -12,13 +12,15 @@ export interface VendorProfile {
     id: number;
     slug: string;
     name: string;
-    email: string;
     business_name: string;
     business_description?: string;
     business_logo?: string;
     banner_image?: string | null;
     is_verified: boolean;
     created_at: string;
+    /** A contact button can be shown. The number itself is never sent to buyers. */
+    has_whatsapp?: boolean;
+    /** Only present when the vendor is viewing their own profile (for the edit form). */
     whatsapp_number?: string | null;
     address?: string | null;
     city?: string | null;

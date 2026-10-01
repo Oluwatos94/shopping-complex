@@ -14,12 +14,18 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Billing\Enums\BillableLeadStateEnum;
+use ModulesShoppingComplex\Billing\Enums\LeadAcceptStatusEnum;
 use ModulesShoppingComplex\Billing\Models\BillableLead;
+use ModulesShoppingComplex\Billing\Services\LeadAcceptanceService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VendorLeadHistoryController extends Controller
 {
-    private const STATES = ['billed', 'repeat', 'unbilled', 'credited'];
+    private const STATES = ['pending', 'billed', 'repeat', 'unbilled', 'declined', 'expired', 'credited'];
+
+    public function __construct(
+        private readonly LeadAcceptanceService $acceptance,
+    ) {}
 
     public function index(Request $request): InertiaResponse|RedirectResponse
     {
@@ -74,6 +80,42 @@ class VendorLeadHistoryController extends Controller
     }
 
     /**
+     * Accept mode: the vendor accepts a lead request from the Leads page. They are
+     * charged now and the buyer's contact appears in the row.
+     */
+    public function accept(BillableLead $lead): RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        abort_unless($lead->vendor_id === Auth::id(), 404);
+
+        $result = $this->acceptance->accept($lead);
+
+        return match ($result->status) {
+            LeadAcceptStatusEnum::ACCEPTED => back()->with('success', sprintf('Lead accepted: %d coins charged. The buyer\'s WhatsApp contact is now in the list, and we sent them yours.', $result->cost)),
+            LeadAcceptStatusEnum::ALREADY_ACCEPTED => back()->with('success', 'You already accepted this lead.'),
+            LeadAcceptStatusEnum::CLOSED => back()->with('error', 'This request has expired or was declined. No coins were charged.'),
+            LeadAcceptStatusEnum::INSUFFICIENT_BALANCE => back()->with('error', sprintf('You need %d coins to accept this lead but have %d. Top up and try again before it expires.', $result->cost, $result->balance)),
+            LeadAcceptStatusEnum::DAILY_CAP => back()->with('error', sprintf('Accepting this lead (%d coins) would go over your daily coin limit. Raise the limit on your dashboard to accept it.', $result->cost)),
+        };
+    }
+
+    public function decline(BillableLead $lead): RedirectResponse
+    {
+        if ($redirect = $this->denyNonVendor()) {
+            return $redirect;
+        }
+
+        abort_unless($lead->vendor_id === Auth::id(), 404);
+
+        return $this->acceptance->decline($lead)
+            ? back()->with('success', 'Request declined. No coins were charged.')
+            : back()->with('error', 'This request is already closed.');
+    }
+
+    /**
      * @return Builder<BillableLead>
      */
     private function filtered(Request $request): Builder
@@ -98,6 +140,13 @@ class VendorLeadHistoryController extends Controller
             'billed' => $query->where('state', BillableLeadStateEnum::CHARGED)->whereNull('credit_reason'),
             'credited' => $query->whereNotNull('credit_reason'),
             'unbilled' => $query->where('state', BillableLeadStateEnum::UNBILLED),
+            'pending' => $query->awaitingVendor(),
+            'declined' => $query->where('state', BillableLeadStateEnum::DECLINED),
+            'expired' => $query->where(fn (Builder $q) => $q
+                ->where('state', BillableLeadStateEnum::EXPIRED)
+                ->orWhere(fn (Builder $overdue) => $overdue
+                    ->where('state', BillableLeadStateEnum::PENDING)
+                    ->where('expires_at', '<=', now()))),
             'repeat' => $query->where('repeat_count', '>', 0),
             default => null,
         };
@@ -121,6 +170,10 @@ class VendorLeadHistoryController extends Controller
             'unbilled_reason' => $lead->unbilled_reason?->value,
             'credit_reason' => $lead->credit_reason?->value,
             'repeat_count' => $lead->repeat_count,
+            'expires_at' => $lead->state === BillableLeadStateEnum::PENDING ? $lead->expires_at?->toIso8601String() : null,
+            'can_respond' => $this->stateLabel($lead) === 'pending',
+            // Only once the vendor has accepted (and paid for) the lead.
+            'buyer_contact' => $this->acceptance->buyerContactFor($lead),
         ];
     }
 
@@ -129,6 +182,10 @@ class VendorLeadHistoryController extends Controller
         return match (true) {
             $lead->credit_reason !== null => 'credited',
             $lead->state === BillableLeadStateEnum::CHARGED => 'billed',
+            // The expiry sweep runs on the scheduler; don't show an overdue request as actionable meanwhile.
+            $lead->state === BillableLeadStateEnum::PENDING => $lead->expires_at !== null && $lead->expires_at->isPast() ? 'expired' : 'pending',
+            $lead->state === BillableLeadStateEnum::DECLINED => 'declined',
+            $lead->state === BillableLeadStateEnum::EXPIRED => 'expired',
             default => 'unbilled',
         };
     }

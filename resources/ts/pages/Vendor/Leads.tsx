@@ -1,19 +1,80 @@
 import { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import VendorSidebar from '@/components/VendorSidebar';
-import { LeadHistoryProps } from '@/types';
+import { LeadHistoryProps, LeadRow } from '@/types';
 
 const STATE_BADGE: Record<string, string> = {
+    pending: 'bg-brand-ink text-white',
     billed: 'bg-brand-green/10 text-brand-green-dark',
     credited: 'bg-blue-50 text-blue-700',
     unbilled: 'bg-amber-50 text-amber-700',
+    declined: 'bg-gray-100 text-gray-600',
+    expired: 'bg-gray-100 text-gray-500',
 };
 
 const STATE_LABEL: Record<string, string> = {
+    pending: 'Waiting for you',
     billed: 'Billed',
     credited: 'Credited',
     unbilled: 'Unbilled',
+    declined: 'Declined',
+    expired: 'Expired',
 };
+
+function expiresIn(iso: string | null): string {
+    if (!iso) return '';
+    const minutes = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000));
+    if (minutes < 60) return `${minutes} min left`;
+    return `${Math.floor(minutes / 60)} h left`;
+}
+
+function LeadActions({ lead }: { lead: LeadRow }) {
+    const [busy, setBusy] = useState(false);
+
+    if (lead.buyer_contact) {
+        return (
+            <a
+                href={lead.buyer_contact.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-brand-green-dark hover:underline"
+            >
+                Chat {lead.buyer_contact.phone}
+            </a>
+        );
+    }
+
+    if (!lead.can_respond) {
+        return <span className="text-brand-muted">—</span>;
+    }
+
+    const respond = (action: 'accept' | 'decline') => {
+        setBusy(true);
+        router.post(`/vendor/leads/${lead.id}/${action}`, {}, { preserveScroll: true, onFinish: () => setBusy(false) });
+    };
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                disabled={busy}
+                onClick={() => respond('accept')}
+                className="h-8 rounded-lg bg-brand-green px-3 text-xs font-bold text-white transition hover:bg-brand-green-dark disabled:opacity-50"
+            >
+                Accept
+            </button>
+            <button
+                type="button"
+                disabled={busy}
+                onClick={() => respond('decline')}
+                className="h-8 rounded-lg border border-brand-line bg-white px-3 text-xs font-semibold text-brand-ink transition hover:bg-brand-surface disabled:opacity-50"
+            >
+                Decline
+            </button>
+            <span className="text-xs text-brand-muted">{expiresIn(lead.expires_at)}</span>
+        </div>
+    );
+}
 
 const REASON_LABEL: Record<string, string> = {
     insufficient_balance: 'out of coins',
@@ -24,6 +85,7 @@ const REASON_LABEL: Record<string, string> = {
 };
 
 export default function Leads({ leads, states, filters }: LeadHistoryProps) {
+    const { flash } = usePage<{ flash?: { success?: string | null; error?: string | null } }>().props;
     const [state, setState] = useState(filters.state);
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
@@ -57,7 +119,7 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                         <div>
                             <h1 className="text-2xl font-extrabold tracking-tight text-brand-ink">Leads</h1>
                             <p className="mt-1 text-sm text-brand-muted">
-                                Every buyer we introduced to you — what they wanted, and what it cost.
+                                Every buyer who asked to contact you — what they wanted, and what it cost.
                             </p>
                         </div>
                         <a
@@ -67,6 +129,17 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                             Export CSV
                         </a>
                     </div>
+
+                    {flash?.success && (
+                        <div className="mb-4 rounded-xl border border-brand-green/30 bg-brand-green/10 px-4 py-3 text-sm text-brand-green-dark">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            {flash.error}
+                        </div>
+                    )}
 
                     <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-brand-line bg-white p-4">
                         <label className="block">
@@ -116,8 +189,8 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                             <h2 className="text-base font-bold text-brand-ink">No leads yet</h2>
                             <p className="mx-auto mt-2 max-w-md text-sm text-brand-muted">
                                 A lead is recorded whenever a buyer asks to contact you — through the WhatsApp bot or a
-                                button on your storefront. Each new buyer is charged at your rate; repeat contacts from
-                                the same buyer are free.
+                                button on your storefront. You are only charged for requests you accept; repeat contacts
+                                from the same buyer are free.
                             </p>
                         </div>
                     ) : (
@@ -131,6 +204,7 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                                             <th className="px-5 py-3 font-semibold">Channel</th>
                                             <th className="px-5 py-3 text-right font-semibold">Coins</th>
                                             <th className="px-5 py-3 font-semibold">State</th>
+                                            <th className="px-5 py-3 font-semibold">Buyer</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-brand-line">
@@ -160,6 +234,9 @@ export default function Leads({ leads, states, filters }: LeadHistoryProps) {
                                                             +{lead.repeat_count} repeat, free
                                                         </span>
                                                     )}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <LeadActions lead={lead} />
                                                 </td>
                                             </tr>
                                         ))}

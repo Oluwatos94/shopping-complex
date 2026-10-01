@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -65,6 +66,10 @@ class ProductController extends Controller
                     $product->distance_formatted = DistanceLabel::format($dist, $accuracy);
                 }
             }
+
+            // Public listing: expose only what the product card shows, not the vendor's
+            // email, phone, WhatsApp number or exact address.
+            $product->vendor?->setVisible(['id', 'name', 'slug', 'business_name']);
 
             return $product;
         });
@@ -142,7 +147,9 @@ class ProductController extends Controller
             ->get();
 
         // Transform product images for frontend
-        $productData = $product->toArray();
+        // The eager-loaded vendor would serialise the whole user row (email, phone,
+        // WhatsApp number). The page gets a curated $vendorData below instead.
+        $productData = Arr::except($product->toArray(), ['vendor']);
         $productData['images'] = $product->media->map(fn ($media) => [
             'id' => $media->id,
             'url' => $this->mediaService->getMediaUrl($media),
@@ -164,7 +171,8 @@ class ProductController extends Controller
             'products_count' => $vendor->products_count ?? 0,
             'is_verified' => $vendor->isVendorVerified(),
             'is_online' => false,
-            'whatsapp_number' => $vendor->whatsapp_number ?? null,
+            // Whether a contact button can be shown; never the number itself.
+            'has_whatsapp' => filled($vendor->whatsapp_number),
         ];
 
         $relatedProductsData = $relatedProducts->map(function ($related) {

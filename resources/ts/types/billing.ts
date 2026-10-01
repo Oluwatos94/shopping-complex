@@ -39,6 +39,12 @@ export interface LeadRow {
     unbilled_reason: string | null;
     credit_reason: string | null;
     repeat_count: number;
+    /** Pending requests only: when the request lapses unbilled. */
+    expires_at: string | null;
+    /** The vendor can still accept or decline this request. */
+    can_respond: boolean;
+    /** Only after the vendor accepted (and paid for) the lead. */
+    buyer_contact: { phone: string; whatsapp_url: string } | null;
 }
 
 export interface LeadHistoryProps {

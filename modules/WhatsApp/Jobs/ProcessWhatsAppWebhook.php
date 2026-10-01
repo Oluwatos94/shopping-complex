@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use ModulesShoppingComplex\Billing\Services\LeadAcceptanceService;
 use ModulesShoppingComplex\WhatsApp\Services\WhatsAppAiBotService;
 
 class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
@@ -38,7 +39,7 @@ class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
         return (string) data_get($this->payload, 'entry.0.changes.0.value.messages.0.id', '');
     }
 
-    public function handle(WhatsAppAiBotService $botService): void
+    public function handle(WhatsAppAiBotService $botService, LeadAcceptanceService $leads): void
     {
         /** @var array<string, mixed>|null $status */
         $status = data_get($this->payload, 'entry.0.changes.0.value.statuses.0');
@@ -70,8 +71,17 @@ class ProcessWhatsAppWebhook implements ShouldBeUnique, ShouldQueue
                 ?? $message['interactive']['button_reply']['id']
                 ?? ''
             ),
+            // Quick-reply button on a template (e.g. Accept / Decline on lead_request).
+            'button' => (string) ($message['button']['payload'] ?? $message['button']['text'] ?? ''),
             default => null,
         };
+
+        // A vendor answering a lead request is not a buyer conversation.
+        if (in_array($messageType, ['button', 'interactive'], true)
+            && is_string($messageBody)
+            && $leads->respondFromWhatsApp($from, $messageBody)) {
+            return;
+        }
 
         $botService->handle($from, $messageType, $messageBody, $message);
     }

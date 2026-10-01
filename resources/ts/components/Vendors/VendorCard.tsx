@@ -9,7 +9,7 @@ interface VendorCardProps {
 export default function VendorCard({ vendor }: VendorCardProps) {
     const profileImage = vendor.business_logo || '/images/default-vendor.png';
 
-    const whatsAppHref = vendor.whatsapp_number
+    const whatsAppHref = vendor.has_whatsapp
         ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I found you on jiidaa`)
         : null;
 
