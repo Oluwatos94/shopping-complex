@@ -96,7 +96,7 @@ class ReviewController extends Controller
             );
 
             return response()->json([
-                'review' => $review->load('vendor'),
+                'review' => $review->load('vendor:id,name,slug,business_name'),
                 'message' => 'Review submitted successfully.',
             ], 201);
         } catch (\InvalidArgumentException $e) {

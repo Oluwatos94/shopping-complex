@@ -333,6 +333,8 @@ Route::middleware(['auth', 'throttle:writes'])->prefix('vendor')->group(function
     Route::post('/coins/free', [CoinPurchaseController::class, 'claimFree'])->name('vendor.coins.free');
     Route::post('/coins/{pack}', [CoinPurchaseController::class, 'checkout'])->name('vendor.coins.checkout');
     Route::post('/coins/{pack}/stellar', [CoinPurchaseController::class, 'stellarSettle'])->name('vendor.coins.stellar');
+    Route::post('/leads/{lead}/accept', [VendorLeadHistoryController::class, 'accept'])->whereNumber('lead')->name('vendor.leads.accept');
+    Route::post('/leads/{lead}/decline', [VendorLeadHistoryController::class, 'decline'])->whereNumber('lead')->name('vendor.leads.decline');
 });
 
 // Vendor follow toggle

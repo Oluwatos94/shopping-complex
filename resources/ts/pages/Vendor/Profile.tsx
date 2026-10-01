@@ -61,7 +61,7 @@ export default function VendorProfilePage({
     const [reviewDone, setReviewDone] = useState(false);
     const [reviewError, setReviewError] = useState<string | null>(null);
 
-    const whatsAppHref = vendor.whatsapp_number
+    const whatsAppHref = vendor.has_whatsapp
         ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I found you on jiidaa.`)
         : null;
 

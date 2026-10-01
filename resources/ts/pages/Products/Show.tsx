@@ -38,7 +38,7 @@ export default function ProductShow({
     const { auth } = usePage<{ auth?: { user?: { id: number } | null } }>().props;
     const isOwner = auth?.user?.id === vendor.id;
 
-    const whatsAppHref = vendor.whatsapp_number && !isOwner
+    const whatsAppHref = vendor.has_whatsapp && !isOwner
         ? contactHref(vendor.slug, `Hi ${vendor.business_name}, I'm interested in "${product.name}".`)
         : null;
 

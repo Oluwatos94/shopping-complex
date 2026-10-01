@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use ModulesShoppingComplex\Billing\Jobs\CreditFailedLeads;
 use ModulesShoppingComplex\Billing\Jobs\ExpireCoins;
+use ModulesShoppingComplex\Billing\Jobs\ExpirePendingLeads;
 use ModulesShoppingComplex\Billing\Jobs\ExpireVendorSubscriptions;
 use ModulesShoppingComplex\Billing\Jobs\RenewVendorSubscriptions;
 
@@ -17,3 +18,6 @@ Schedule::job(RenewVendorSubscriptions::class)->dailyAt('00:00');
 Schedule::job(ExpireVendorSubscriptions::class)->dailyAt('00:05');
 Schedule::job(ExpireCoins::class)->dailyAt('00:10');
 Schedule::job(CreditFailedLeads::class)->dailyAt('00:15');
+
+// Accept mode: close lead requests the vendor did not answer in time (no charge) and tell the buyer.
+Schedule::job(ExpirePendingLeads::class)->everyFifteenMinutes();

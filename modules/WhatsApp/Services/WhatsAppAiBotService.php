@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use ModulesShoppingComplex\Analytics\Enums\ViewSourceEnum;
 use ModulesShoppingComplex\Analytics\Services\AnalyticsService;
+use ModulesShoppingComplex\Billing\Data\LeadRequestResult;
+use ModulesShoppingComplex\Billing\Enums\LeadRequestStatusEnum;
 use ModulesShoppingComplex\Billing\Services\ContactLinkService;
+use ModulesShoppingComplex\Billing\Services\LeadAcceptanceService;
 use ModulesShoppingComplex\Catalog\Models\Product;
 use ModulesShoppingComplex\Discovery\Services\GeoLocationService;
 use ModulesShoppingComplex\Discovery\Services\VendorService;
@@ -51,6 +54,7 @@ final readonly class WhatsAppAiBotService
         private AiChatClient $ai,
         private GeoLocationService $geo,
         private ContactLinkService $contactLinks,
+        private LeadAcceptanceService $leadAcceptance,
     ) {}
 
     /**
@@ -112,6 +116,21 @@ final readonly class WhatsAppAiBotService
 
         $history[] = ['role' => 'user', 'content' => $userText];
 
+        // Accept mode: a message from a web contact button ("... Ref: <token>") is a
+        // contact request for one specific vendor — answer it directly, no AI turn.
+        if ($messageType === 'text' && LeadAcceptanceService::isEnabled()) {
+            $request = $this->leadAcceptance->requestByReference($userText, $from);
+
+            if ($request !== null) {
+                $reply = $this->referenceReply($request, $from);
+                $history[] = ['role' => 'assistant', 'content' => $reply];
+                $this->saveHistory($session, $history);
+                $this->apiService->sendText($from, $reply);
+
+                return;
+            }
+        }
+
         $this->interactionRepository->log([
             'phone_number' => $from,
             'event_type' => WhatsAppInteractionEventEnum::SEARCH,
@@ -134,16 +153,24 @@ final readonly class WhatsAppAiBotService
             'content' => $reply === '' ? '(Sent the buyer a button to share their location.)' : $reply,
         ];
 
+        $this->saveHistory($session, $history);
+
+        if ($reply !== '') {
+            $this->apiService->sendText($from, $reply);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $history
+     */
+    private function saveHistory(WhatsAppSession $session, array $history): void
+    {
         while (count($history) > self::MAX_HISTORY_MESSAGES) {
             array_splice($history, 0, 2);
         }
 
         $session->data = array_merge((array) ($session->data ?? []), ['history' => $history]);
         $this->sessionRepository->save($session);
-
-        if ($reply !== '') {
-            $this->apiService->sendText($from, $reply);
-        }
     }
 
     /**
@@ -522,6 +549,10 @@ final readonly class WhatsAppAiBotService
             'vendor_id' => $vendorId,
         ]);
 
+        if (LeadAcceptanceService::isEnabled()) {
+            return $this->requestContact($vendor, $from);
+        }
+
         $name = $vendor->business_name ?? $vendor->name;
         $profileUrl = $vendor->slug ? url('/vendors/'.$vendor->slug) : null;
 
@@ -552,6 +583,114 @@ final readonly class WhatsAppAiBotService
         return "Already sent {$name}'s contact card ({$shared}) to the buyer in a separate message. "
             ."In your reply, just confirm in the buyer's own language that you've shared {$name}'s details — "
             .'do NOT type out any link or phone number yourself; the buyer already has the exact one.';
+    }
+
+    /**
+     * Accept mode: the buyer asked for a vendor's contact. The vendor's number is only
+     * shared once the vendor accepts (and pays for) the lead. Returns the tool result.
+     */
+    private function requestContact(User $vendor, string $from): string
+    {
+        $name = $vendor->business_name ?? $vendor->name;
+        $result = $this->leadAcceptance->request($vendor, $from, ViewSourceEnum::WHATSAPP);
+        $noLinks = 'Do NOT type any phone number or link yourself.';
+
+        switch ($result->status) {
+            case LeadRequestStatusEnum::REQUESTED:
+                $this->apiService->sendText($from, $this->requestSentText($vendor));
+
+                return "Already told the buyer in a separate message that their request was sent to {$name} and that "
+                    ."they will get {$name}'s WhatsApp contact here as soon as {$name} accepts. Just confirm this briefly "
+                    ."in the buyer's language. {$noLinks}";
+
+            case LeadRequestStatusEnum::ALREADY_ACCEPTED:
+                $this->apiService->sendText($from, $this->contactCardText($vendor));
+
+                return "{$name} already accepted this buyer, so their WhatsApp link was sent to the buyer in a separate "
+                    ."message. Just confirm briefly in the buyer's language. {$noLinks}";
+
+            case LeadRequestStatusEnum::ALREADY_PENDING:
+                return "The buyer already has a request waiting for {$name} to accept. Tell them we're waiting and that "
+                    ."they'll get the contact here automatically once {$name} accepts; offer to show other vendors meanwhile. {$noLinks}";
+
+            case LeadRequestStatusEnum::DECLINED:
+                return "{$name} is not taking this buyer's request right now. Tell the buyer politely and offer to find "
+                    ."other vendors. {$noLinks}";
+
+            case LeadRequestStatusEnum::TOO_MANY_PENDING:
+                return 'The buyer already has several requests waiting for vendors to accept. Ask them to wait for those '
+                    ."replies (they arrive here automatically) before requesting more vendors. {$noLinks}";
+
+            case LeadRequestStatusEnum::SELF:
+                return "This is the buyer's own business, so no request was sent. Tell them so briefly.";
+
+            default:
+                return "{$name} has not added a WhatsApp number yet. Tell the buyer this in their own language and offer "
+                    ."other vendors. NEVER substitute another vendor's contact.";
+        }
+    }
+
+    /**
+     * Accept mode: the buyer-facing reply to a "Ref: <token>" message from a web
+     * contact button.
+     */
+    private function referenceReply(LeadRequestResult $result, string $from): string
+    {
+        $vendor = $result->vendor;
+        $name = $vendor === null ? 'that vendor' : '*'.($vendor->business_name ?? $vendor->name).'*';
+
+        if ($vendor !== null && $result->status === LeadRequestStatusEnum::REQUESTED) {
+            $this->interactionRepository->log([
+                'phone_number' => $from,
+                'event_type' => WhatsAppInteractionEventEnum::CONTACT_REQUESTED,
+                'vendor_id' => $vendor->id,
+            ]);
+        }
+
+        return match ($result->status) {
+            LeadRequestStatusEnum::REQUESTED => $this->requestSentText($vendor),
+            LeadRequestStatusEnum::ALREADY_ACCEPTED => $vendor === null ? '' : $this->contactCardText($vendor),
+            LeadRequestStatusEnum::ALREADY_PENDING => "Your request to {$name} is still waiting for them to accept. I'll message you here as soon as they do.",
+            LeadRequestStatusEnum::DECLINED => "{$name} isn't taking new requests right now. Tell me what you're looking for and I'll find other vendors near you.",
+            LeadRequestStatusEnum::TOO_MANY_PENDING => "You already have a few requests waiting for vendors. I'll update you here as they reply.",
+            LeadRequestStatusEnum::SELF => "That's your own business 🙂",
+            LeadRequestStatusEnum::NO_CONTACT => "{$name} hasn't set up their WhatsApp contact yet. Tell me what you're looking for and I'll find other vendors near you.",
+            LeadRequestStatusEnum::UNKNOWN_REFERENCE => "I couldn't find that vendor. Tell me what you're looking for and I'll help you find one near you.",
+        };
+    }
+
+    private function requestSentText(?User $vendor): string
+    {
+        $name = $vendor === null ? 'the vendor' : '*'.($vendor->business_name ?? $vendor->name).'*';
+
+        $lines = [
+            "📨 I've sent your request to {$name}.",
+            "As soon as they accept, I'll send you their WhatsApp contact right here.",
+        ];
+
+        if ($vendor?->slug) {
+            $lines[] = 'Profile: '.url('/vendors/'.$vendor->slug);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The vendor's direct contact, for a buyer the vendor has already accepted.
+     */
+    private function contactCardText(User $vendor): string
+    {
+        $lines = ['*'.($vendor->business_name ?? $vendor->name).'*'];
+
+        if (($whatsApp = $this->contactLinks->destinationFor($vendor)) !== null) {
+            $lines[] = "WhatsApp: {$whatsApp}";
+        }
+
+        if ($vendor->slug) {
+            $lines[] = 'Profile: '.url('/vendors/'.$vendor->slug);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -588,7 +727,7 @@ final readonly class WhatsAppAiBotService
             ],
             [
                 'name' => 'get_vendor_contact',
-                'description' => "Get a vendor's WhatsApp contact link and Jiidaa profile link so the buyer can reach them. Identify the vendor by their POSITION in the most recent search results (1 = first listed, 2 = second, etc.) — this is how the buyer refers to them. Returns only the requested vendor's real details.",
+                'description' => "Get a vendor's WhatsApp contact link and Jiidaa profile link so the buyer can reach them (or, when the vendor must accept first, send the vendor a contact request on the buyer's behalf). Identify the vendor by their POSITION in the most recent search results (1 = first listed, 2 = second, etc.) — this is how the buyer refers to them. Returns only the requested vendor's real details.",
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -652,7 +791,7 @@ REFERRING TO RESULTS:
 - You may show the buyer the numbers so they can refer back easily. There are no internal IDs for you to handle — you identify vendors only by their position in the latest results.
 
 CONTACT & ACCURACY (very important):
-- To share a vendor's contact, call get_vendor_contact for that exact vendor (by its position in the results). The tool sends the buyer the WhatsApp link and profile link DIRECTLY in a separate message — you will NOT receive the link or number, and you must NEVER type out, guess, invent, or reformat any link or phone number yourself. Doing so risks sending a corrupted, dead link.
+- To share a vendor's contact, call get_vendor_contact for that exact vendor (by its position in the results). The tool messages the buyer DIRECTLY in a separate message (the vendor's links, or a note that a contact request was sent and the vendor must accept first — follow what the tool result tells you) — you will NOT receive the link or number, and you must NEVER type out, guess, invent, or reformat any link or phone number yourself. Doing so risks sending a corrupted, dead link.
 - After calling get_vendor_contact, simply confirm to the buyer, in their own language, that you've shared the vendor's contact details (e.g. "I've sent you The Elite Laundry's contact 👍"). The buyer already has the exact, correct details from the tool's message.
 - If the tool says the vendor has no WhatsApp number or profile, relay that plainly in the buyer's language. NEVER substitute another vendor's contact.
 
