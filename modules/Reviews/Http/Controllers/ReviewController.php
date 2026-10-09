@@ -110,7 +110,7 @@ class ReviewController extends Controller
     {
         $this->authorize('view', $review);
 
-        $review->load(['customer', 'vendor']);
+        $review->load(['customer:id,name,slug', 'vendor:id,name,slug,business_name']);
 
         $userVote = null;
         if ($user = $request->user()) {

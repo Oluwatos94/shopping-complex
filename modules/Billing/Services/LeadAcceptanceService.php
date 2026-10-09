@@ -112,7 +112,7 @@ final class LeadAcceptanceService
                 'window_start' => now(),
                 'repeat_count' => 0,
                 'last_click_at' => now(),
-                'expires_at' => now()->addHours(max(1, (int) config('billing.leads.accept_window_hours', 12))),
+                'expires_at' => now()->addHours(max(1, (int) config('billing.leads.accept_window_hours', 3))),
             ]);
 
             return new LeadRequestResult(LeadRequestStatusEnum::REQUESTED, $lead, $vendor);

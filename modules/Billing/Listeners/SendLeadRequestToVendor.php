@@ -56,7 +56,7 @@ class SendLeadRequestToVendor implements ShouldQueue
         $area = $lead->buyer_area ?? LeadBuyerContextResolver::DEFAULT_AREA;
         $cost = $this->pricing->costFor($vendor);
         $balance = $this->wallet->balance($vendor);
-        $hours = max(1, (int) config('billing.leads.accept_window_hours', 12));
+        $hours = max(1, (int) config('billing.leads.accept_window_hours', 3));
 
         $notification = $this->recordInApp($lead->id, $vendor, $search, $area, $cost, $balance, $hours);
 

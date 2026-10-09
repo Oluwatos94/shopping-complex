@@ -7,7 +7,9 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use ModulesShoppingComplex\Catalog\Models\Product;
+use ModulesShoppingComplex\Identity\Models\Address;
 use ModulesShoppingComplex\Identity\Models\User;
+use ModulesShoppingComplex\Reviews\Models\Review;
 use Tests\TestCase;
 
 /**
@@ -66,5 +68,41 @@ class PublicVendorPrivacyTest extends TestCase
             ->missing('products.data.0.vendor.phone')
             ->missing('products.data.0.vendor.whatsapp_number')
             ->missing('products.data.0.vendor.address'));
+    }
+
+    public function test_the_public_vendor_listing_does_not_expose_contact_details(): void
+    {
+        $vendor = $this->vendor();
+        Address::create([
+            'user_id' => $vendor->id,
+            'street' => '1 Test Road',
+            'city' => 'Lagos',
+            'state' => 'Lagos',
+            'country' => 'Nigeria',
+            'latitude' => 6.5244,
+            'longitude' => 3.3792,
+        ]);
+
+        $this->get('/vendors?latitude=6.5244&longitude=3.3792')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('vendors.data.0.has_whatsapp', true)
+            ->missing('vendors.data.0.email')
+            ->missing('vendors.data.0.whatsapp_number'));
+    }
+
+    public function test_public_reviews_do_not_expose_reviewer_contact_details(): void
+    {
+        $vendor = $this->vendor();
+        $review = Review::factory()->forVendor($vendor)->approved()->create();
+
+        $this->getJson('/vendors/'.$vendor->slug.'/reviews')->assertOk()
+            ->assertJsonPath('reviews.0.customer.id', $review->customer_id)
+            ->assertJsonMissingPath('reviews.0.customer.email')
+            ->assertJsonMissingPath('reviews.0.customer.phone');
+
+        $this->actingAs(User::factory()->create(['role' => 'customer']))
+            ->getJson('/reviews/'.$review->id)->assertOk()
+            ->assertJsonMissingPath('review.customer.email')
+            ->assertJsonMissingPath('review.vendor.email')
+            ->assertJsonMissingPath('review.vendor.whatsapp_number');
     }
 }

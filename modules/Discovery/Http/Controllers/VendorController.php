@@ -50,7 +50,6 @@ class VendorController extends Controller
                 'id' => $vendor->id,
                 'slug' => $vendor->slug,
                 'name' => $vendor->name,
-                'email' => $vendor->email,
                 'created_at' => $vendor->created_at->toISOString(),
 
                 'role' => 'vendor',

@@ -17,7 +17,7 @@ return [
         // A pending request expires (no charge) if the vendor does not answer in time.
         // Keep this under 24h: the buyer is told about the outcome with a free-form
         // message, which WhatsApp only allows inside the 24h customer-service window.
-        'accept_window_hours' => (int) env('LEAD_ACCEPT_WINDOW_HOURS', 12),
+        'accept_window_hours' => (int) env('LEAD_ACCEPT_WINDOW_HOURS', 3),
 
         // A single buyer cannot have more than this many open requests at once, so one
         // phone number cannot flood vendors with request templates.

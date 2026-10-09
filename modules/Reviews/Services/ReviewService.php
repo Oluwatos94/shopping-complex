@@ -28,7 +28,7 @@ final readonly class ReviewService
             $vendorId,
             ReviewStatusEnum::APPROVED,
             $perPage,
-            ['customer']
+            ['customer:id,name,slug']
         );
     }
 
@@ -38,7 +38,7 @@ final readonly class ReviewService
             $vendorId,
             null,
             $perPage,
-            ['customer']
+            ['customer:id,name,slug']
         );
     }
 
