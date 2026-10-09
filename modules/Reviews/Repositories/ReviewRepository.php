@@ -317,7 +317,7 @@ class ReviewRepository extends BasePageRepository
     {
         return Review::query()
             ->where('customer_id', $customerId)
-            ->with(['vendor', 'conversation'])
+            ->with(['vendor:id,name,slug,business_name', 'conversation'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }

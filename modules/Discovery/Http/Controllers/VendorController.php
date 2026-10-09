@@ -50,7 +50,6 @@ class VendorController extends Controller
                 'id' => $vendor->id,
                 'slug' => $vendor->slug,
                 'name' => $vendor->name,
-                'email' => $vendor->email,
                 'created_at' => $vendor->created_at->toISOString(),
 
                 'role' => 'vendor',
@@ -62,7 +61,9 @@ class VendorController extends Controller
                 'products_count' => $vendor->products_count ?? 0,
                 'is_verified' => $vendor->isVendorVerified(),
                 'is_online' => true,
-                'whatsapp_number' => $vendor->whatsapp_number ?? null,
+                // Only whether a contact button can be shown; the number itself stays server-side
+                // so buyers cannot bypass the paid contact flow.
+                'has_whatsapp' => filled($vendor->whatsapp_number),
 
                 'distance_km' => $vendor->distance_km !== null ? round((float) $vendor->distance_km, 2) : null,
                 'distance_formatted' => $vendor->distance_km !== null
@@ -107,6 +108,10 @@ class VendorController extends Controller
                 'is_primary' => true,
             ])->values()->all();
 
+            // Public page: the product card needs the vendor's name, not their email,
+            // phone or WhatsApp number.
+            $product->vendor?->setVisible(['id', 'name', 'slug', 'business_name']);
+
             return $product;
         });
 
@@ -141,14 +146,17 @@ class VendorController extends Controller
                 'id' => $vendor->id,
                 'slug' => $vendor->slug,
                 'name' => $vendor->name,
-                'email' => $vendor->email,
                 'business_name' => $vendor->business_name ?? $vendor->name,
                 'business_description' => $vendor->bio,
                 'business_logo' => $avatarMedia ? $this->mediaService->getMediaUrl($avatarMedia) : null,
                 'banner_image' => $bannerMedia ? $this->mediaService->getMediaUrl($bannerMedia) : null,
                 'is_verified' => $vendor->isVendorVerified(),
                 'created_at' => $vendor->created_at->toISOString(),
-                'whatsapp_number' => $vendor->whatsapp_number ?? null,
+                // Only whether a contact button can be shown; the number itself stays server-side
+                // so buyers cannot bypass the paid contact flow.
+                'has_whatsapp' => filled($vendor->whatsapp_number),
+                // The owner edits their own number on this page; nobody else receives it.
+                ...($isOwner ? ['whatsapp_number' => $vendor->whatsapp_number] : []),
                 'address' => $vendor->address?->street,
                 'city' => $vendor->address?->city,
                 'state' => $vendor->address?->state,

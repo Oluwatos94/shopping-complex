@@ -34,6 +34,9 @@ use ModulesShoppingComplex\Shared\Support\HasTableName;
  * @property Carbon $window_start
  * @property int $repeat_count
  * @property Carbon|null $last_click_at
+ * @property Carbon|null $expires_at accept mode: deadline for the vendor to answer
+ * @property Carbon|null $accepted_at accept mode: when the vendor accepted (and was charged)
+ * @property Carbon|null $responded_at accept mode: when the vendor accepted or declined
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read User|null $vendor
@@ -62,6 +65,9 @@ class BillableLead extends Model
         'window_start',
         'repeat_count',
         'last_click_at',
+        'expires_at',
+        'accepted_at',
+        'responded_at',
     ];
 
     /** {@inheritdoc} */
@@ -76,6 +82,9 @@ class BillableLead extends Model
             'repeat_count' => 'integer',
             'window_start' => 'datetime',
             'last_click_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'accepted_at' => 'datetime',
+            'responded_at' => 'datetime',
         ];
     }
 
@@ -98,6 +107,24 @@ class BillableLead extends Model
     public function scopeFlagged(Builder $query): Builder
     {
         return $query->whereIn('unbilled_reason', LeadUnbilledReasonEnum::flagged());
+    }
+
+    /**
+     * Requests still waiting for the vendor and not yet past their deadline.
+     *
+     * @param  Builder<BillableLead>  $query
+     * @return Builder<BillableLead>
+     */
+    public function scopeAwaitingVendor(Builder $query): Builder
+    {
+        return $query->where('state', BillableLeadStateEnum::PENDING)
+            ->where('expires_at', '>', now());
+    }
+
+    /** True once a vendor explicitly accepted this lead (accept mode), as opposed to a billed click. */
+    public function wasAccepted(): bool
+    {
+        return $this->accepted_at !== null;
     }
 
     /**

@@ -6,6 +6,22 @@ return [
         'default_cost' => (int) env('LEAD_DEFAULT_COST', 5),
 
         'low_balance_leads' => (int) env('LEAD_LOW_BALANCE_LEADS', 3),
+
+        // How a lead becomes chargeable:
+        //  - 'click'  (legacy): the buyer's tap on a contact link is billed immediately.
+        //  - 'accept': the buyer's tap only sends a request; the vendor is charged when
+        //              they accept it (WhatsApp button or the Leads page). Requires the
+        //              approved `lead_request` WhatsApp template and PLATFORM_WHATSAPP_NUMBER.
+        'mode' => env('LEAD_BILLING_MODE', 'click'),
+
+        // A pending request expires (no charge) if the vendor does not answer in time.
+        // Keep this under 24h: the buyer is told about the outcome with a free-form
+        // message, which WhatsApp only allows inside the 24h customer-service window.
+        'accept_window_hours' => (int) env('LEAD_ACCEPT_WINDOW_HOURS', 3),
+
+        // A single buyer cannot have more than this many open requests at once, so one
+        // phone number cannot flood vendors with request templates.
+        'max_pending_per_buyer' => (int) env('LEAD_MAX_PENDING_PER_BUYER', 5),
     ],
 
     // Guards against a rival draining a vendor's balance by clicking their link.

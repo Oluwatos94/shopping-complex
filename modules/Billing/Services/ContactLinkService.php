@@ -27,6 +27,13 @@ final class ContactLinkService
 
     private const TOKEN_LENGTH = 32;
 
+    /**
+     * Accept mode: web contact buttons open a chat with Jiidaa's own number and carry
+     * a short reference so the bot knows which vendor the buyer wants. Short because
+     * it sits in the buyer's prefilled message.
+     */
+    public const REFERENCE_LENGTH = 10;
+
     private const MAX_PREFILLED_MESSAGE = 500;
 
     private const ANONYMOUS_REPEAT_MINUTES = 60;
@@ -36,6 +43,7 @@ final class ContactLinkService
         ViewSourceEnum $source,
         ?string $buyerIdentity = null,
         ?string $prefilledMessage = null,
+        int $tokenLength = self::TOKEN_LENGTH,
     ): ?ContactLink {
         if ($this->vendorDigits($vendor) === null) {
             return null;
@@ -43,7 +51,7 @@ final class ContactLinkService
 
         try {
             return ContactLink::create([
-                'token' => Str::random(self::TOKEN_LENGTH),
+                'token' => Str::random($tokenLength),
                 'vendor_id' => $vendor->id,
                 'source' => $source,
                 'buyer_identity' => $this->trimToNull($buyerIdentity, 64),
@@ -77,6 +85,48 @@ final class ContactLinkService
         return $link === null
             ? $this->destinationFor($vendor, $prefilledMessage)
             : route('contact.redirect', ['token' => $link->token]);
+    }
+
+    /**
+     * Accept mode: the URL a web contact button sends the buyer to — a chat with
+     * Jiidaa's platform number, prefilled with a reference to the vendor. Null when
+     * the vendor has no usable number or the platform number is not configured.
+     */
+    public function platformRequestUrl(User $vendor, ViewSourceEnum $source, ?string $prefilledMessage = null): ?string
+    {
+        if ($this->platformDigits() === null) {
+            return null;
+        }
+
+        $link = $this->mint($vendor, $source, null, $prefilledMessage, self::REFERENCE_LENGTH);
+
+        return $link === null ? null : $this->platformChatUrl($link);
+    }
+
+    /**
+     * Accept mode: a wa.me link to Jiidaa's platform number whose prefilled text ends
+     * with "Ref: <token>", which the bot redeems into a lead request.
+     */
+    public function platformChatUrl(ContactLink $link): ?string
+    {
+        $platform = $this->platformDigits();
+
+        if ($platform === null) {
+            return null;
+        }
+
+        $vendor = $link->vendor;
+        $vendorName = $vendor === null ? 'this vendor' : ($vendor->business_name ?? $vendor->name);
+        $intro = $link->prefilled_message ?? "Hi Jiidaa, I'd like to contact {$vendorName}.";
+
+        return 'https://wa.me/'.$platform.'?text='.rawurlencode($intro."\n\nRef: ".$link->token);
+    }
+
+    private function platformDigits(): ?string
+    {
+        $digits = (string) preg_replace('/\D/', '', (string) config('services.whatsapp.platform_number', ''));
+
+        return $digits === '' ? null : $digits;
     }
 
     public function resolve(string $token): ?ContactLink
